@@ -1,0 +1,1 @@
+import{r as n,be as a}from"./index-BOycD4kd.js";function d(t){return t&&t.ownerDocument||document}let u=0;function r(t){const[e,s]=n.useState(t),c=t||e;return n.useEffect(()=>{e==null&&(u+=1,s(`mui-${u}`))},[e]),c}const f={...a},o=f.useId;function I(t){if(o!==void 0){const e=o();return t??e}return r(t)}export{d as o,I as u};

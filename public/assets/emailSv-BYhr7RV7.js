@@ -1,0 +1,1 @@
+import{c as a}from"./createReactComponent-DJ-alZeM.js";var o=a("folder","IconFolder",[["path",{d:"M5 4h4l3 3h7a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-11a2 2 0 0 1 2 -2",key:"svg-0"}]]);const r="/assets/emailSv-B2Hxq08K.png";export{o as I,r as e};

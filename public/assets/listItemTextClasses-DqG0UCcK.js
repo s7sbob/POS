@@ -1,0 +1,1 @@
+import{g as s,c as e}from"./Typography-BDkkff4Z.js";function a(t){return e("MuiListItemIcon",t)}const n=s("MuiListItemIcon",["root","alignItemsFlexStart"]);function l(t){return e("MuiListItemText",t)}const o=s("MuiListItemText",["root","multiline","dense","inset","primary","secondary"]);export{n as a,a as b,l as g,o as l};

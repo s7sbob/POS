@@ -1,0 +1,1 @@
+import{c as e}from"./createReactComponent-DJ-alZeM.js";var t=e("chevrons-left","IconChevronsLeft",[["path",{d:"M11 7l-5 5l5 5",key:"svg-0"}],["path",{d:"M17 7l-5 5l5 5",key:"svg-1"}]]),h=e("chevrons-right","IconChevronsRight",[["path",{d:"M7 7l5 5l-5 5",key:"svg-0"}],["path",{d:"M13 7l5 5l-5 5",key:"svg-1"}]]);export{h as I,t as a};
