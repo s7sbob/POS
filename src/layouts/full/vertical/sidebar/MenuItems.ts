@@ -53,7 +53,6 @@ import {
   IconRotate,
   IconBox,
   IconShoppingCart,
-  IconAperture,
   IconLayout,
   IconSettings,
   IconHelp,
@@ -70,21 +69,82 @@ import {
   IconChartPpf,
   IconChartArcs3,
   IconListTree,
+  IconDashboard,
+  IconLayoutGrid,
+  IconLayoutGridAdd,
+  IconFolder,
+  IconFolderFilled,
+  IconFolders,
+  IconCash,
+  IconFileInvoice,
+  IconFilePercent
 } from '@tabler/icons-react';
 
 const Menuitems: MenuitemsType[] = [
-  {
-    navlabel: true,
-    subheader: 'Home',
-  },
+  // {
+  //   navlabel: true,
+  //   subheader: 'Home',
+  // },
 
   {
     id: uniqueId(),
-    title: 'Modern',
-    icon: IconAperture,
+    title: 'Admin dashboard',
+    icon: IconDashboard,
     href: '/dashboards/modern',
     chip: 'New',
     chipColor: 'secondary',
+  },
+  {
+    id: uniqueId(),
+    title: 'Stock',
+    icon: IconLayoutGrid,
+    href: '/stock-pages/',
+    children: [
+      {
+        id: uniqueId(),
+        title: 'Add Stock',
+        icon: IconLayoutGridAdd,
+        href: '/stock-pages/add-stock',
+      },
+      {
+        id: uniqueId(),
+        title: 'Current Stock Products',
+        icon: IconFolderFilled,
+        href: '/stock-pages/current-products',
+      },
+      {
+        id: uniqueId(),
+        title: 'Out Of Stock Products',
+        icon: IconFolder,
+        href: '/stock-pages/ouofstock-products',
+      },
+      {
+        id: uniqueId(),
+        title: 'All Products',
+        icon: IconFolders,
+        href: '/stock-pages/products',
+      }
+    ],
+  },
+  {
+    id: uniqueId(),
+    title: 'Billing',
+    icon: IconCash,
+    href: '/billing-pages/',
+    children: [
+      {
+        id: uniqueId(),
+        title: 'Add Invoice',
+        icon: IconFileInvoice,
+        href: '/billing-pages/add-invoice',
+      },
+      {
+        id: uniqueId(),
+        title: 'Invoices',
+        icon: IconFilePercent,
+        href: '/billing-pages/invoices',
+      },
+    ],
   },
   {
     id: uniqueId(),
