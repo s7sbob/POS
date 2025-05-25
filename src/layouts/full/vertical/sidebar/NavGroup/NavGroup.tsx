@@ -1,35 +1,40 @@
+import React from 'react';
 import { ListSubheader, styled, Theme } from '@mui/material';
 import { IconDots } from '@tabler/icons-react';
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-import React from 'react';
+import { useTranslation } from 'react-i18next';
 
-type NavGroup = {
-  navlabel?: boolean;
-  subheader?: string;
-};
+// -----------------------------------------------------------------------------
+// NavGroup component: renders a section header inside the sidebar.
+// If the sidebar is collapsed (hideMenu === true) we show a simple Dots icon.
+// Otherwise we translate and display the sub‑header label using i18next.
+// -----------------------------------------------------------------------------
 
-interface ItemType {
-  item: NavGroup;
-  hideMenu: string | boolean;
+interface NavGroupProps {
+  item: {
+    navlabel?: boolean;
+    subheader?: string; // i18n key, e.g. 'sidebar.inventory'
+  };
+  hideMenu: boolean | string; // string when mui-breakpoint class, but treated as boolean
 }
 
-const NavGroup = ({ item, hideMenu }: ItemType) => {
-  const ListSubheaderStyle = styled((props: Theme | any) => (
-    <ListSubheader disableSticky {...props} />
-  ))(({ theme }) => ({
-    ...theme.typography.overline,
-    fontWeight: '700',
-    marginTop: theme.spacing(3),
-    marginBottom: theme.spacing(0),
-    color: 'text.Primary',
-    lineHeight: '26px',
-    padding: '3px 12px',
-    marginLeft: hideMenu ? '' : '-10px',
-  }));
+// Styled once (outside component) so it doesn’t recreate on every render
+const ListSubheaderStyle = styled(ListSubheader)(({ theme }: { theme: Theme }) => ({
+  ...theme.typography.overline,
+  fontWeight: 700,
+  marginTop: theme.spacing(3),
+  marginBottom: 0,
+  color: theme.palette.text.primary,
+  lineHeight: '26px',
+  padding: '3px 12px',
+}));
+
+const NavGroup: React.FC<NavGroupProps> = ({ item, hideMenu }) => {
+  const { t } = useTranslation();
 
   return (
-    <ListSubheaderStyle>{hideMenu ? <IconDots size="14" /> : item?.subheader}</ListSubheaderStyle>
+    <ListSubheaderStyle sx={{ ml: hideMenu ? 0 : '-10px' }} disableSticky>
+      {hideMenu ? <IconDots size={14} /> : t(item.subheader ?? '')}
+    </ListSubheaderStyle>
   );
 };
 

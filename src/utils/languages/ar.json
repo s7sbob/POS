@@ -18,5 +18,84 @@
     "Notes": "ملاحظات",
     "Calendar": "التقويم",
     "Email": "بريد إلكتروني",
-    "Tickets": "تذاكر"
+    "Tickets": "تذاكر",
+
+
+  "sidebar": {
+    "inventory": "المخزون",
+    "stock": "المخزون",
+    "sales": "المبيعات",
+    "promo": "العروض",
+    "purchases": "المشتريات",
+    "finance": "المالية والحسابات",
+    "peoples": "الأشخاص",
+    "hrm": "الموارد البشرية",
+    "reports": "التقارير",
+
+    "products": "المنتجات",
+    "createProduct": "إنشاء منتج",
+    "expiredProducts": "منتجات منتهية الصلاحية",
+    "lowStocks": "مخزون منخفض",
+    "category": "الفئات",
+    "subCategory": "الفئات الفرعية",
+    "brands": "العلامات التجارية",
+    "units": "الوحدات",
+    "variantAttributes": "سمات المتغير",
+    "warranties": "الضمانات",
+    "printBarcode": "طباعة الباركود",
+    "printQrCode": "طباعة رمز QR",
+
+    "manageStock": "إدارة المخزون",
+    "stockAdjustment": "تعديل المخزون",
+    "stockTransfer": "تحويل المخزون",
+
+    "invoices": "الفواتير",
+    "salesReturn": "مرتجعات المبيعات",
+    "quotation": "عرض سعر",
+    "pos": "نقطة البيع",
+
+    "coupons": "كوبونات",
+    "giftCards": "بطاقات الهدايا",
+    "discount": "خصم",
+
+    "purchaseOrder": "أمر شراء",
+    "purchaseReturn": "مرتجعات المشتريات",
+
+    "expenses": "المصروفات",
+    "income": "الإيرادات",
+    "bankAccounts": "الحسابات البنكية",
+    "moneyTransfer": "تحويل الأموال",
+    "balanceSheet": "الميزانية العمومية",
+    "trialBalance": "ميزان المراجعة",
+    "cashFlow": "التدفق النقدي",
+    "accountStatement": "كشف الحساب",
+
+    "customers": "العملاء",
+    "billers": "المفوترون",
+    "suppliers": "الموردون",
+    "stores": "المتاجر",
+    "warehouses": "المخازن",
+
+    "employees": "الموظفون",
+    "departments": "الأقسام",
+    "designation": "المسميات الوظيفية",
+    "shifts": "الورديات",
+    "attendance": "الحضور",
+    "leaves": "الإجازات",
+    "holidays": "العطلات",
+    "payroll": "الرواتب",
+
+    "salesReport": "تقرير المبيعات",
+    "purchaseReport": "تقرير المشتريات",
+    "inventoryReport": "تقرير المخزون",
+    "invoiceReport": "تقرير الفواتير",
+    "supplierReport": "تقرير الموردين",
+    "customerReport": "تقرير العملاء",
+    "productReport": "تقرير المنتجات",
+    "expenseReport": "تقرير المصروفات",
+    "incomeReport": "تقرير الإيرادات",
+    "taxReport": "تقرير الضرائب",
+    "profitLoss": "الأرباح والخسائر",
+    "annualReport": "التقرير السنوي"
+  }
 }

@@ -1,1030 +1,496 @@
-import { uniqueId } from 'lodash';
+/* --------------------------------------------------------------------------
+ * Sidebar Menu Configuration
+ * --------------------------------------------------------------------------
+ * Match the visual hierarchy shown in the reference screenshots (Inventory →
+ * Reports) while preserving the first two Admin Dashboard links.  All strings
+ * are provided as i18n keys (eg. "sidebar.inventory") so that `react-i18next`
+ * can supply Arabic ↔︎ English translations at runtime.
+ * --------------------------------------------------------------------------*/
 
-interface MenuitemsType {
-  [x: string]: any;
-  id?: string;
-  navlabel?: boolean;
-  subheader?: string;
+import { uniqueId } from 'lodash';
+import {
+  IconDashboard,
+  IconPackage,
+  IconLayoutGridAdd,
+  IconClock,
+  IconTrendingDown,
+  IconCategory,
+  IconHierarchy2,
+  IconTrademark,
+  IconRuler,
+  IconAdjustments,
+  IconCertificate,
+  IconBarcode,
+  IconQrcode,
+  IconStack3,
+  IconArrowsShuffle,
+  IconShoppingCart,
+  IconFileInvoice,
+  IconRotate,
+  IconFileText,
+  IconPoint,
+  IconTicket,
+  IconGift,
+  IconDiscount2,
+  IconTruck,
+  IconBoxSeam,
+  IconArrowBackUp,
+  IconCash,
+  IconReport,
+  IconBan,
+  IconTransfer,
+  IconLane,
+  IconNews,
+  IconUsers,
+  IconBuildingStore,
+  IconBuildingWarehouse,
+  IconUser,
+  IconBriefcase,
+  IconClockHour3,
+  IconCalendar,
+  IconWallet,
+  IconListDetails,
+  IconChartLine,
+  IconChartHistogram,
+  IconChartPie,
+  IconChartCandle
+} from '@tabler/icons-react';
+
+interface MenuItem {
+  id: string;
   title?: string;
+  // i18n translation key; if omitted, `title` is treated as the key itself
+  tKey?: string;
   icon?: any;
   href?: string;
-  children?: MenuitemsType[];
+  navlabel?: boolean;
+  subheader?: string; // i18n key for section heading
+  children?: MenuItem[];
   chip?: string;
   chipColor?: string;
   variant?: string;
   external?: boolean;
+  disabled?: boolean;
 }
-import {
-  IconPoint,
-  IconUserCircle,
-  IconPackage,
-  IconMessage2,
-  IconBasket,
-  IconChartDonut3,
-  IconAppWindow,
-  IconFileCheck,
-  IconDashboard,
-  IconLayoutGrid,
-  IconLayoutGridAdd,
-  IconFolder,
-  IconFolderFilled,
-  IconFolders,
-  IconCash,
-  IconFileInvoice,
-  IconFilePercent
-} from '@tabler/icons-react';
 
-const Menuitems: MenuitemsType[] = [
-  // {
-  //   navlabel: true,
-  //   subheader: 'Home',
-  // },
 
+const SidebarConfig: MenuItem[] = [
+  /* ---------------------------------------------------------------------- */
+  /*  Core Dashboards                                                        */
+  /* ---------------------------------------------------------------------- */
   {
     id: uniqueId(),
     title: 'Admin dashboard',
     icon: IconDashboard,
     href: '/dashboards/modern',
     chip: 'New',
-    chipColor: 'secondary',
+    chipColor: 'secondary'
   },
-    {
+  {
     id: uniqueId(),
     title: 'Admin dashboard 2',
     icon: IconDashboard,
-    href: '/dashboards/ecommerce',
-  },
-  {
-    id: uniqueId(),
-    title: 'Stock',
-    icon: IconLayoutGrid,
-    href: '/stock-pages/',
-    children: [
-      {
-        id: uniqueId(),
-        title: 'Add Stock',
-        icon: IconLayoutGridAdd,
-        href: '/stock-pages/add-stock',
-      },
-      {
-        id: uniqueId(),
-        title: 'Current Stock Products',
-        icon: IconFolderFilled,
-        href: '/stock-pages/current-products',
-      },
-      {
-        id: uniqueId(),
-        title: 'Out Of Stock Products',
-        icon: IconFolder,
-        href: '/stock-pages/ouofstock-products',
-      },
-      {
-        id: uniqueId(),
-        title: 'All Products',
-        icon: IconFolders,
-        href: '/stock-pages/products',
-      }
-    ],
-  },
-  {
-    id: uniqueId(),
-    title: 'Billing',
-    icon: IconCash,
-    href: '/billing-pages/',
-    children: [
-      {
-        id: uniqueId(),
-        title: 'Add Invoice',
-        icon: IconFileInvoice,
-        href: '/billing-pages/add-invoice',
-      },
-      {
-        id: uniqueId(),
-        title: 'Invoices',
-        icon: IconFilePercent,
-        href: '/billing-pages/invoices',
-      },
-    ],
+    href: '/dashboards/ecommerce'
   },
 
+  /* ---------------------------------------------------------------------- */
+  /*  Inventory                                                             */
+  /* ---------------------------------------------------------------------- */
+  { navlabel: true, subheader: 'sidebar.inventory', id: uniqueId() },
   {
     id: uniqueId(),
-    title: 'Frontend pages',
-    icon: IconAppWindow,
-    href: '/frontend-pages/',
-    children: [
-      {
-        id: uniqueId(),
-        title: 'Homepage',
-        icon: IconPoint,
-        href: '/frontend-pages/homepage',
-      },
-      {
-        id: uniqueId(),
-        title: 'About Us',
-        icon: IconPoint,
-        href: '/frontend-pages/about',
-      },
-      {
-        id: uniqueId(),
-        title: 'Blog',
-        icon: IconPoint,
-        href: '/frontend-pages/blog',
-      },
-      {
-        id: uniqueId(),
-        title: 'Blog Details',
-        icon: IconPoint,
-        href: '/frontend-pages/blog/detail/streaming-video-way-before-it-was-cool-go-dark-tomorrow',
-      },
-      {
-        id: uniqueId(),
-        title: 'Contact',
-        icon: IconPoint,
-        href: '/frontend-pages/contact',
-      },
-      {
-        id: uniqueId(),
-        title: 'Portfolio',
-        icon: IconPoint,
-        href: '/frontend-pages/portfolio',
-      },
-      {
-        id: uniqueId(),
-        title: 'Pricing',
-        icon: IconPoint,
-        href: '/frontend-pages/pricing',
-      },
-    ],
-  },
-  {
-    navlabel: true,
-    subheader: 'Apps',
-  },
-  {
-    id: uniqueId(),
-    title: 'Contacts',
+    title: 'sidebar.products',
     icon: IconPackage,
-    chip: '2',
-    chipColor: 'secondary',
-    href: '/apps/contacts',
-  },
-
-  {
-    id: uniqueId(),
-    title: 'Blog',
-    icon: IconChartDonut3,
-    href: '/frontend-pages/blog/',
-    children: [
-      {
-        id: uniqueId(),
-        title: 'Posts',
-        icon: IconPoint,
-        href: '/frontend-pages/blog/',
-      },
-      {
-        id: uniqueId(),
-        title: 'Detail',
-        icon: IconPoint,
-        href: '/frontend-pages/blog/detail/streaming-video-way-before-it-was-cool-go-dark-tomorrow',
-      },
-    ],
+    href: '/inventory/products'
   },
   {
     id: uniqueId(),
-    title: 'Ecommerce',
-    icon: IconBasket,
-    href: '/apps/ecommerce/',
-    children: [
-      {
-        id: uniqueId(),
-        title: 'Shop',
-        icon: IconPoint,
-        href: '/apps/ecommerce/shop',
-      },
-      {
-        id: uniqueId(),
-        title: 'Detail',
-        icon: IconPoint,
-        href: '/apps/ecommerce/detail/1',
-      },
-      {
-        id: uniqueId(),
-        title: 'List',
-        icon: IconPoint,
-        href: '/apps/ecommerce/eco-product-list',
-      },
-      {
-        id: uniqueId(),
-        title: 'Checkout',
-        icon: IconPoint,
-        href: '/apps/ecommerce/eco-checkout',
-      },
-      {
-        id: uniqueId(),
-        title: 'Add Product',
-        icon: IconPoint,
-        href: '/apps/ecommerce/add-product',
-      },
-      {
-        id: uniqueId(),
-        title: 'Edit Product',
-        icon: IconPoint,
-        href: '/apps/ecommerce/edit-product',
-      },
-    ],
+    title: 'sidebar.createProduct',
+    icon: IconLayoutGridAdd,
+    href: '/inventory/products/create'
   },
   {
     id: uniqueId(),
-    title: 'Chats',
-    icon: IconMessage2,
-    href: '/apps/chats',
+    title: 'sidebar.expiredProducts',
+    icon: IconClock,
+    href: '/inventory/products/expired'
   },
   {
     id: uniqueId(),
-    title: 'Users',
-    icon: IconUserCircle,
-    href: '/user-profile',
-    children: [
-      {
-        id: uniqueId(),
-        title: 'Profile',
-        icon: IconPoint,
-        href: '/user-profile',
-      },
-      {
-        id: uniqueId(),
-        title: 'Followers',
-        icon: IconPoint,
-        href: '/apps/followers',
-      },
-      {
-        id: uniqueId(),
-        title: 'Friends',
-        icon: IconPoint,
-        href: '/apps/friends',
-      },
-      {
-        id: uniqueId(),
-        title: 'Gallery',
-        icon: IconPoint,
-        href: '/apps/gallery',
-      },
-    ],
+    title: 'sidebar.lowStocks',
+    icon: IconTrendingDown,
+    href: '/inventory/products/low-stock'
   },
-  // {
-  //   id: uniqueId(),
-  //   title: 'Notes',
-  //   icon: IconNotes,
-  //   href: '/apps/notes',
-  // },
-  // {
-  //   id: uniqueId(),
-  //   title: 'Calendar',
-  //   icon: IconCalendar,
-  //   href: '/apps/calendar',
-  // },
-  // {
-  //   id: uniqueId(),
-  //   title: 'Email',
-  //   icon: IconMail,
-  //   href: '/apps/email',
-  // },
-  // {
-  //   id: uniqueId(),
-  //   title: 'Tickets',
-  //   icon: IconTicket,
-  //   href: '/apps/tickets',
-  // },
-  // {
-  //   id: uniqueId(),
-  //   title: 'Kanban',
-  //   icon: IconNotebook,
-  //   href: '/apps/kanban',
-  // },
-
   {
     id: uniqueId(),
-    title: 'Invoice',
-    icon: IconFileCheck,
-    href: '/apps/invoice/list',
-    children: [
-      {
-        id: uniqueId(),
-        title: 'List',
-        icon: IconPoint,
-        href: '/apps/invoice/list',
-      },
-      {
-        id: uniqueId(),
-        title: 'Details',
-        icon: IconPoint,
-        href: '/apps/invoice/detail/PineappleInc',
-      },
-      {
-        id: uniqueId(),
-        title: 'Create',
-        icon: IconPoint,
-        href: '/apps/invoice/create',
-      },
-      {
-        id: uniqueId(),
-        title: 'Edit',
-        icon: IconPoint,
-        href: '/apps/invoice/edit/PineappleInc',
-      },
-    ],
+    title: 'sidebar.category',
+    icon: IconCategory,
+    href: '/inventory/category'
   },
-
-  // {
-  //   navlabel: true,
-  //   subheader: 'Pages',
-  // },
-  // {
-  //   id: uniqueId(),
-  //   title: 'Pricing',
-  //   icon: IconCurrencyDollar,
-  //   href: '/pages/pricing',
-  // },
   {
     id: uniqueId(),
-    title: 'Account Setting',
-    icon: IconUserCircle,
-    href: '/pages/account-settings',
+    title: 'sidebar.subCategory',
+    icon: IconHierarchy2,
+    href: '/inventory/sub-category'
   },
-  // {
-  //   id: uniqueId(),
-  //   title: 'FAQ',
-  //   icon: IconHelp,
-  //   href: '/pages/faq',
-  // },
-  // {
-  //   id: uniqueId(),
-  //   title: 'Landingpage',
-  //   icon: IconAppWindow,
-  //   href: '/landingpage',
-  // },
-  // {
-  //   id: uniqueId(),
-  //   title: 'Widgets',
-  //   icon: IconLayout,
-  //   href: '/widgets/cards',
-  //   children: [
-  //     {
-  //       id: uniqueId(),
-  //       title: 'Cards',
-  //       icon: IconPoint,
-  //       href: '/widgets/cards',
-  //     },
-  //     {
-  //       id: uniqueId(),
-  //       title: 'Banners',
-  //       icon: IconPoint,
-  //       href: '/widgets/banners',
-  //     },
-  //     {
-  //       id: uniqueId(),
-  //       title: 'Charts',
-  //       icon: IconPoint,
-  //       href: '/widgets/charts',
-  //     },
-  //   ],
-  // },
-  // {
-  //   navlabel: true,
-  //   subheader: 'Forms',
-  // },
-  // {
-  //   id: uniqueId(),
-  //   title: 'Form Elements',
-  //   icon: IconApps,
-  //   href: '/forms/form-elements/autocomplete',
-  //   children: [
-  //     {
-  //       id: uniqueId(),
-  //       title: 'Autocomplete',
-  //       icon: IconPoint,
-  //       href: '/forms/form-elements/autocomplete',
-  //     },
-  //     {
-  //       id: uniqueId(),
-  //       title: 'Button',
-  //       icon: IconPoint,
-  //       href: '/forms/form-elements/button',
-  //     },
-  //     {
-  //       id: uniqueId(),
-  //       title: 'Checkbox',
-  //       icon: IconPoint,
-  //       href: '/forms/form-elements/checkbox',
-  //     },
-  //     {
-  //       id: uniqueId(),
-  //       title: 'Radio',
-  //       icon: IconPoint,
-  //       href: '/forms/form-elements/radio',
-  //     },
-  //     {
-  //       id: uniqueId(),
-  //       title: 'Date Time',
-  //       icon: IconPoint,
-  //       href: '/forms/form-elements/date-time',
-  //     },
-  //     {
-  //       id: uniqueId(),
-  //       title: 'Slider',
-  //       icon: IconPoint,
-  //       href: '/forms/form-elements/slider',
-  //     },
-  //     {
-  //       id: uniqueId(),
-  //       title: 'Switch',
-  //       icon: IconPoint,
-  //       href: '/forms/form-elements/switch',
-  //     },
-  //   ],
-  // },
-  // {
-  //   id: uniqueId(),
-  //   title: 'Form Layout',
-  //   icon: IconFileDescription,
-  //   href: '/forms/form-layouts',
-  // },
-  // {
-  //   id: uniqueId(),
-  //   title: 'Form Horizontal',
-  //   icon: IconBoxAlignBottom,
-  //   href: '/forms/form-horizontal',
-  // },
-  // {
-  //   id: uniqueId(),
-  //   title: 'Form Vertical',
-  //   icon: IconBoxAlignLeft,
-  //   href: '/forms/form-vertical',
-  // },
-  // {
-  //   id: uniqueId(),
-  //   title: 'Form Custom',
-  //   icon: IconFileDots,
-  //   href: '/forms/form-custom',
-  // },
-  // {
-  //   id: uniqueId(),
-  //   title: 'Form Wizard',
-  //   icon: IconFiles,
-  //   href: '/forms/form-wizard',
-  // },
-  // {
-  //   id: uniqueId(),
-  //   title: 'Form Validation',
-  //   icon: IconFiles,
-  //   href: '/forms/form-validation',
-  // },
-  // {
-  //   id: uniqueId(),
-  //   title: 'Tiptap Editor',
-  //   icon: IconEdit,
-  //   href: '/forms/form-tiptap',
-  // },
-  // {
-  //   navlabel: true,
-  //   subheader: 'Tables',
-  // },
-  // {
-  //   id: uniqueId(),
-  //   title: 'Basic',
-  //   icon: IconBorderAll,
-  //   href: '/tables/basic',
-  // },
-  // {
-  //   id: uniqueId(),
-  //   title: 'Collapsible',
-  //   icon: IconBorderHorizontal,
-  //   href: '/tables/collapsible',
-  // },
-  // {
-  //   id: uniqueId(),
-  //   title: 'Enhanced',
-  //   icon: IconBorderInner,
-  //   href: '/tables/enhanced',
-  // },
-  // {
-  //   id: uniqueId(),
-  //   title: 'Fixed Header',
-  //   icon: IconBorderVertical,
-  //   href: '/tables/fixed-header',
-  // },
-  // {
-  //   id: uniqueId(),
-  //   title: 'Pagination',
-  //   icon: IconBorderTop,
-  //   href: '/tables/pagination',
-  // },
-  // {
-  //   id: uniqueId(),
-  //   title: 'Search',
-  //   icon: IconBorderStyle2,
-  //   href: '/tables/search',
-  // },
-  // {
-  //   id: uniqueId(),
-  //   title: 'React Table',
-  //   icon: IconBorderStyle2,
-  //   href: '/react-tables/basic',
-  //   children: [
-  //     {
-  //       id: uniqueId(),
-  //       title: 'Basic',
-  //       icon: IconPoint,
-  //       href: '/react-tables/basic',
-  //     },
-  //     {
-  //       id: uniqueId(),
-  //       title: 'Dense',
-  //       icon: IconPoint,
-  //       href: '/react-tables/dense',
-  //     },
-  //     {
-  //       id: uniqueId(),
-  //       title: 'Filter',
-  //       icon: IconPoint,
-  //       href: '/react-tables/filter',
-  //     },
-  //     {
-  //       id: uniqueId(),
-  //       title: 'Row Selection',
-  //       icon: IconPoint,
-  //       href: '/react-tables/row-selection',
-  //     },
-  //     {
-  //       id: uniqueId(),
-  //       title: 'Pagination',
-  //       icon: IconPoint,
-  //       href: '/react-tables/pagination',
-  //     },
-  //     {
-  //       id: uniqueId(),
-  //       title: 'Sorting',
-  //       icon: IconPoint,
-  //       href: '/react-tables/sorting',
-  //     },
-  //     {
-  //       id: uniqueId(),
-  //       title: 'Column Visibility',
-  //       icon: IconPoint,
-  //       href: '/react-tables/column-visiblity',
-  //     },
-  //     {
-  //       id: uniqueId(),
-  //       title: 'Editable',
-  //       icon: IconPoint,
-  //       href: '/react-tables/editable',
-  //     },
-  //     {
-  //       id: uniqueId(),
-  //       title: 'Expanding',
-  //       icon: IconPoint,
-  //       href: '/react-tables/expanding',
-  //     },
-  //     {
-  //       id: uniqueId(),
-  //       title: 'Sticky',
-  //       icon: IconPoint,
-  //       href: '/react-tables/sticky',
-  //     },
-  //     {
-  //       id: uniqueId(),
-  //       title: 'Empty',
-  //       icon: IconPoint,
-  //       href: '/react-tables/empty',
-  //     },
-  //     {
-  //       id: uniqueId(),
-  //       title: 'Drag & Drop',
-  //       icon: IconPoint,
-  //       href: '/react-tables/drag-drop',
-  //     },
-  //   ],
-  // },
-  // {
-  //   navlabel: true,
-  //   subheader: 'Mui Charts',
-  // },
+  {
+    id: uniqueId(),
+    title: 'sidebar.brands',
+    icon: IconTrademark,
+    href: '/inventory/brands'
+  },
+  {
+    id: uniqueId(),
+    title: 'sidebar.units',
+    icon: IconRuler,
+    href: '/inventory/units'
+  },
+  {
+    id: uniqueId(),
+    title: 'sidebar.variantAttributes',
+    icon: IconAdjustments,
+    href: '/inventory/variants'
+  },
+  {
+    id: uniqueId(),
+    title: 'sidebar.warranties',
+    icon: IconCertificate,
+    href: '/inventory/warranties'
+  },
+  {
+    id: uniqueId(),
+    title: 'sidebar.printBarcode',
+    icon: IconBarcode,
+    href: '/inventory/barcode'
+  },
+  {
+    id: uniqueId(),
+    title: 'sidebar.printQrCode',
+    icon: IconQrcode,
+    href: '/inventory/qrcode'
+  },
 
-  // {
-  //   id: uniqueId(),
-  //   title: 'BarCharts',
-  //   icon: IconChartHistogram,
-  //   href: '/muicharts/barcharts',
-  // },
-  // {
-  //   id: uniqueId(),
-  //   title: 'LineCharts',
-  //   icon: IconChartLine,
-  //   href: '/muicharts/linecharts/line',
-  //   children: [
-  //     {
-  //       id: uniqueId(),
-  //       title: 'Lines',
-  //       icon: IconPoint,
-  //       href: '/muicharts/linecharts/line',
-  //     },
-  //     {
-  //       id: uniqueId(),
-  //       title: 'Area',
-  //       icon: IconPoint,
-  //       href: '/muicharts/linecharts/area',
-  //     },
-  //   ],
-  // },
-  // {
-  //   id: uniqueId(),
-  //   title: 'PieCharts',
-  //   icon: IconChartPie2,
-  //   href: '/muicharts/piecharts',
-  // },
-  // {
-  //   id: uniqueId(),
-  //   title: 'ScatterCharts',
-  //   icon: IconChartScatter,
-  //   href: '/muicharts/scattercharts',
-  // },
-  // {
-  //   id: uniqueId(),
-  //   title: 'SparklineCharts',
-  //   icon: IconChartPpf,
-  //   href: '/muicharts/sparklinecharts',
-  // },
-  // {
-  //   id: uniqueId(),
-  //   title: 'GaugeCharts',
-  //   icon: IconChartArcs3,
-  //   href: '/muicharts/gaugecharts',
-  // },
+  /* ---------------------------------------------------------------------- */
+  /*  Stock                                                                 */
+  /* ---------------------------------------------------------------------- */
+  { navlabel: true, subheader: 'sidebar.stock', id: uniqueId() },
+  {
+    id: uniqueId(),
+    title: 'sidebar.manageStock',
+    icon: IconStack3,
+    href: '/stock/manage'
+  },
+  {
+    id: uniqueId(),
+    title: 'sidebar.stockAdjustment',
+    icon: IconAdjustments,
+    href: '/stock/adjustment'
+  },
+  {
+    id: uniqueId(),
+    title: 'sidebar.stockTransfer',
+    icon: IconArrowsShuffle,
+    href: '/stock/transfer'
+  },
 
-  // {
-  //   navlabel: true,
-  //   subheader: 'Mui Trees',
-  // },
-  // {
-  //   id: uniqueId(),
-  //   title: 'SimpleTreeView',
-  //   icon: IconListTree,
-  //   href: '/mui-trees/simpletree/simpletree-items',
-  //   children: [
-  //     {
-  //       id: uniqueId(),
-  //       title: 'Items',
-  //       icon: IconPoint,
-  //       href: '/mui-trees/simpletree/simpletree-items',
-  //     },
-  //     {
-  //       id: uniqueId(),
-  //       title: 'Selection',
-  //       icon: IconPoint,
-  //       href: '/mui-trees/simpletree/simpletree-selection',
-  //     },
-  //     {
-  //       id: uniqueId(),
-  //       title: 'Expansion',
-  //       icon: IconPoint,
-  //       href: '/mui-trees/simpletree/simpletree-expansion',
-  //     },
-  //     {
-  //       id: uniqueId(),
-  //       title: 'Customization',
-  //       icon: IconPoint,
-  //       href: '/mui-trees/simpletree/simpletree-customization',
-  //     },
-  //     {
-  //       id: uniqueId(),
-  //       title: 'Focus',
-  //       icon: IconPoint,
-  //       href: '/mui-trees/simpletree/simpletree-focus',
-  //     },
-  //   ],
-  // },
-  // {
-  //   navlabel: true,
-  //   subheader: 'UI',
-  // },
-  // {
-  //   id: uniqueId(),
-  //   title: 'Ui Components',
-  //   icon: IconBox,
-  //   href: '/ui-components/alert',
-  //   children: [
-  //     {
-  //       id: uniqueId(),
-  //       title: 'Alert',
-  //       icon: IconPoint,
-  //       href: '/ui-components/alert',
-  //     },
-  //     {
-  //       id: uniqueId(),
-  //       title: 'Accordion',
-  //       icon: IconPoint,
-  //       href: '/ui-components/accordion',
-  //     },
-  //     {
-  //       id: uniqueId(),
-  //       title: 'Avatar',
-  //       icon: IconPoint,
-  //       href: '/ui-components/avatar',
-  //     },
-  //     {
-  //       id: uniqueId(),
-  //       title: 'Chip',
-  //       icon: IconPoint,
-  //       href: '/ui-components/chip',
-  //     },
-  //     {
-  //       id: uniqueId(),
-  //       title: 'Dialog',
-  //       icon: IconPoint,
-  //       href: '/ui-components/dialog',
-  //     },
-  //     {
-  //       id: uniqueId(),
-  //       title: 'List',
-  //       icon: IconPoint,
-  //       href: '/ui-components/list',
-  //     },
-  //     {
-  //       id: uniqueId(),
-  //       title: 'Popover',
-  //       icon: IconPoint,
-  //       href: '/ui-components/popover',
-  //     },
-  //     {
-  //       id: uniqueId(),
-  //       title: 'Rating',
-  //       icon: IconPoint,
-  //       href: '/ui-components/rating',
-  //     },
-  //     {
-  //       id: uniqueId(),
-  //       title: 'Tabs',
-  //       icon: IconPoint,
-  //       href: '/ui-components/tabs',
-  //     },
-  //     {
-  //       id: uniqueId(),
-  //       title: 'Tooltip',
-  //       icon: IconPoint,
-  //       href: '/ui-components/tooltip',
-  //     },
-  //     {
-  //       id: uniqueId(),
-  //       title: 'Transfer List',
-  //       icon: IconPoint,
-  //       href: '/ui-components/transfer-list',
-  //     },
-  //     {
-  //       id: uniqueId(),
-  //       title: 'Typography',
-  //       icon: IconPoint,
-  //       href: '/ui-components/typography',
-  //     },
-  //   ],
-  // },
+  /* ---------------------------------------------------------------------- */
+  /*  Sales                                                                 */
+  /* ---------------------------------------------------------------------- */
+  { navlabel: true, subheader: 'sidebar.sales', id: uniqueId() },
+  {
+    id: uniqueId(),
+    title: 'sidebar.sales',
+    icon: IconShoppingCart,
+    href: '/sales'
+  },
+  {
+    id: uniqueId(),
+    title: 'sidebar.invoices',
+    icon: IconFileInvoice,
+    href: '/sales/invoices'
+  },
+  {
+    id: uniqueId(),
+    title: 'sidebar.salesReturn',
+    icon: IconRotate,
+    href: '/sales/returns'
+  },
+  {
+    id: uniqueId(),
+    title: 'sidebar.quotation',
+    icon: IconFileText,
+    href: '/sales/quotation'
+  },
+  {
+    id: uniqueId(),
+    title: 'sidebar.pos',
+    icon: IconPoint,
+    href: '/pos'
+  },
 
-  // {
-  //   navlabel: true,
-  //   subheader: 'Charts',
-  // },
-  // {
-  //   id: uniqueId(),
-  //   title: 'Line',
-  //   icon: IconChartLine,
-  //   href: '/charts/line-chart',
-  // },
-  // {
-  //   id: uniqueId(),
-  //   title: 'Gredient',
-  //   icon: IconChartArcs,
-  //   href: '/charts/gredient-chart',
-  // },
-  // {
-  //   id: uniqueId(),
-  //   title: 'Area',
-  //   icon: IconChartArea,
-  //   href: '/charts/area-chart',
-  // },
-  // {
-  //   id: uniqueId(),
-  //   title: 'Candlestick',
-  //   icon: IconChartCandle,
-  //   href: '/charts/candlestick-chart',
-  // },
-  // {
-  //   id: uniqueId(),
-  //   title: 'Column',
-  //   icon: IconChartDots,
-  //   href: '/charts/column-chart',
-  // },
-  // {
-  //   id: uniqueId(),
-  //   title: 'Doughtnut & Pie',
-  //   icon: IconChartDonut3,
-  //   href: '/charts/doughnut-pie-chart',
-  // },
-  // {
-  //   id: uniqueId(),
-  //   title: 'RadialBar & Radar',
-  //   icon: IconChartRadar,
-  //   href: '/charts/radialbar-chart',
-  // },
-  // {
-  //   navlabel: true,
-  //   subheader: 'Auth',
-  // },
+  /* ---------------------------------------------------------------------- */
+  /*  Promo                                                                 */
+  /* ---------------------------------------------------------------------- */
+  { navlabel: true, subheader: 'sidebar.promo', id: uniqueId() },
+  {
+    id: uniqueId(),
+    title: 'sidebar.coupons',
+    icon: IconTicket,
+    href: '/promo/coupons'
+  },
+  {
+    id: uniqueId(),
+    title: 'sidebar.giftCards',
+    icon: IconGift,
+    href: '/promo/gift-cards'
+  },
+  {
+    id: uniqueId(),
+    title: 'sidebar.discount',
+    icon: IconDiscount2,
+    href: '/promo/discount'
+  },
 
-  // {
-  //   id: uniqueId(),
-  //   title: 'Login',
-  //   icon: IconLogin,
-  //   href: '/auth/login',
-  //   children: [
-  //     {
-  //       id: uniqueId(),
-  //       title: 'Side Login',
-  //       icon: IconPoint,
-  //       href: '/auth/login',
-  //     },
-  //     {
-  //       id: uniqueId(),
-  //       title: 'Boxed Login',
-  //       icon: IconPoint,
-  //       href: '/auth/login2',
-  //     },
-  //   ],
-  // },
-  // {
-  //   id: uniqueId(),
-  //   title: 'Register',
-  //   icon: IconUserPlus,
-  //   href: '/auth/register',
-  //   children: [
-  //     {
-  //       id: uniqueId(),
-  //       title: 'Side Register',
-  //       icon: IconPoint,
-  //       href: '/auth/register',
-  //     },
-  //     {
-  //       id: uniqueId(),
-  //       title: 'Boxed Register',
-  //       icon: IconPoint,
-  //       href: '/auth/register2',
-  //     },
-  //   ],
-  // },
-  // {
-  //   id: uniqueId(),
-  //   title: 'Forgot Password',
-  //   icon: IconRotate,
-  //   href: '/auth/forgot-password',
-  //   children: [
-  //     {
-  //       id: uniqueId(),
-  //       title: 'Side Forgot Password',
-  //       icon: IconPoint,
-  //       href: '/auth/forgot-password',
-  //     },
-  //     {
-  //       id: uniqueId(),
-  //       title: 'Boxed Forgot Password',
-  //       icon: IconPoint,
-  //       href: '/auth/forgot-password2',
-  //     },
-  //   ],
-  // },
+  /* ---------------------------------------------------------------------- */
+  /*  Purchases                                                             */
+  /* ---------------------------------------------------------------------- */
+  { navlabel: true, subheader: 'sidebar.purchases', id: uniqueId() },
+  {
+    id: uniqueId(),
+    title: 'sidebar.purchases',
+    icon: IconTruck,
+    href: '/purchases'
+  },
+  {
+    id: uniqueId(),
+    title: 'sidebar.purchaseOrder',
+    icon: IconBoxSeam,
+    href: '/purchases/order'
+  },
+  {
+    id: uniqueId(),
+    title: 'sidebar.purchaseReturn',
+    icon: IconArrowBackUp,
+    href: '/purchases/return'
+  },
 
-  // {
-  //   id: uniqueId(),
-  //   title: 'Two Steps',
-  //   icon: IconZoomCode,
-  //   href: '/auth/two-steps',
-  //   children: [
-  //     {
-  //       id: uniqueId(),
-  //       title: 'Side Two Steps',
-  //       icon: IconPoint,
-  //       href: '/auth/two-steps',
-  //     },
-  //     {
-  //       id: uniqueId(),
-  //       title: 'Boxed Two Steps',
-  //       icon: IconPoint,
-  //       href: '/auth/two-steps2',
-  //     },
-  //   ],
-  // },
-  // {
-  //   id: uniqueId(),
-  //   title: 'Error',
-  //   icon: IconAlertCircle,
-  //   href: '/400',
-  // },
-  // {
-  //   id: uniqueId(),
-  //   title: 'Maintenance',
-  //   icon: IconSettings,
-  //   href: '/auth/maintenance',
-  // },
+  /* ---------------------------------------------------------------------- */
+  /*  Finance & Accounts                                                    */
+  /* ---------------------------------------------------------------------- */
+  { navlabel: true, subheader: 'sidebar.finance', id: uniqueId() },
+  {
+    id: uniqueId(),
+    title: 'sidebar.expenses',
+    icon: IconCash,
+    href: '/finance/expenses'
+  },
+  {
+    id: uniqueId(),
+    title: 'sidebar.income',
+    icon: IconReport,
+    href: '/finance/income'
+  },
+  {
+    id: uniqueId(),
+    title: 'sidebar.bankAccounts',
+    icon: IconBan,
+    href: '/finance/banks'
+  },
+  {
+    id: uniqueId(),
+    title: 'sidebar.moneyTransfer',
+    icon: IconTransfer,
+    href: '/finance/transfer'
+  },
+  {
+    id: uniqueId(),
+    title: 'sidebar.balanceSheet',
+    icon: IconLane,
+    href: '/finance/balance-sheet'
+  },
+  {
+    id: uniqueId(),
+    title: 'sidebar.trialBalance',
+    icon: IconNews,
+    href: '/finance/trial-balance'
+  },
+  {
+    id: uniqueId(),
+    title: 'sidebar.cashFlow',
+    icon: IconWallet,
+    href: '/finance/cash-flow'
+  },
+  {
+    id: uniqueId(),
+    title: 'sidebar.accountStatement',
+    icon: IconListDetails,
+    href: '/finance/account-statement'
+  },
 
-  // {
-  //   navlabel: true,
-  //   subheader: 'Other',
-  // },
-  // {
-  //   id: uniqueId(),
-  //   title: 'Menu Level',
-  //   icon: IconBoxMultiple,
-  //   href: '/menulevel/',
-  //   children: [
-  //     {
-  //       id: uniqueId(),
-  //       title: 'Level 1',
-  //       icon: IconPoint,
-  //       href: '/l1',
-  //     },
-  //     {
-  //       id: uniqueId(),
-  //       title: 'Level 1.1',
-  //       icon: IconPoint,
-  //       href: '/l1.1',
-  //       children: [
-  //         {
-  //           id: uniqueId(),
-  //           title: 'Level 2',
-  //           icon: IconPoint,
-  //           href: '/l2',
-  //         },
-  //         {
-  //           id: uniqueId(),
-  //           title: 'Level 2.1',
-  //           icon: IconPoint,
-  //           href: '/l2.1',
-  //           children: [
-  //             {
-  //               id: uniqueId(),
-  //               title: 'Level 3',
-  //               icon: IconPoint,
-  //               href: '/l3',
-  //             },
-  //             {
-  //               id: uniqueId(),
-  //               title: 'Level 3.1',
-  //               icon: IconPoint,
-  //               href: '/l3.1',
-  //             },
-  //           ],
-  //         },
-  //       ],
-  //     },
-  //   ],
-  // },
-  // {
-  //   id: uniqueId(),
-  //   title: 'Disabled',
-  //   icon: IconBan,
-  //   href: '/',
-  //   disabled: true,
-  // },
-  // {
-  //   id: uniqueId(),
-  //   title: 'SubCaption',
-  //   subtitle: 'This is the sutitle',
-  //   icon: IconStar,
-  //   href: '/',
-  // },
+  /* ---------------------------------------------------------------------- */
+  /*  Peoples                                                               */
+  /* ---------------------------------------------------------------------- */
+  { navlabel: true, subheader: 'sidebar.peoples', id: uniqueId() },
+  {
+    id: uniqueId(),
+    title: 'sidebar.customers',
+    icon: IconUsers,
+    href: '/peoples/customers'
+  },
+  {
+    id: uniqueId(),
+    title: 'sidebar.billers',
+    icon: IconUsers,
+    href: '/peoples/billers'
+  },
+  {
+    id: uniqueId(),
+    title: 'sidebar.suppliers',
+    icon: IconUsers,
+    href: '/peoples/suppliers'
+  },
+  {
+    id: uniqueId(),
+    title: 'sidebar.stores',
+    icon: IconBuildingStore,
+    href: '/peoples/stores'
+  },
+  {
+    id: uniqueId(),
+    title: 'sidebar.warehouses',
+    icon: IconBuildingWarehouse,
+    href: '/peoples/warehouses'
+  },
 
-  // {
-  //   id: uniqueId(),
-  //   title: 'Chip',
-  //   icon: IconAward,
-  //   href: '/',
-  //   chip: '9',
-  //   chipColor: 'primary',
-  // },
-  // {
-  //   id: uniqueId(),
-  //   title: 'Outlined',
-  //   icon: IconMoodSmile,
-  //   href: '/',
-  //   chip: 'outline',
-  //   variant: 'outlined',
-  //   chipColor: 'primary',
-  // },
-  // {
-  //   id: uniqueId(),
-  //   title: 'External Link',
-  //   external: true,
-  //   icon: IconStar,
-  //   href: 'https://google.com',
-  // },
+  /* ---------------------------------------------------------------------- */
+  /*  HRM                                                                   */
+  /* ---------------------------------------------------------------------- */
+  { navlabel: true, subheader: 'sidebar.hrm', id: uniqueId() },
+  {
+    id: uniqueId(),
+    title: 'sidebar.employees',
+    icon: IconUser,
+    href: '/hrm/employees'
+  },
+  {
+    id: uniqueId(),
+    title: 'sidebar.departments',
+    icon: IconBriefcase,
+    href: '/hrm/departments'
+  },
+  {
+    id: uniqueId(),
+    title: 'sidebar.designation',
+    icon: IconBriefcase,
+    href: '/hrm/designations'
+  },
+  {
+    id: uniqueId(),
+    title: 'sidebar.shifts',
+    icon: IconClockHour3,
+    href: '/hrm/shifts'
+  },
+  {
+    id: uniqueId(),
+    title: 'sidebar.attendance',
+    icon: IconCalendar,
+    href: '/hrm/attendance'
+  },
+  {
+    id: uniqueId(),
+    title: 'sidebar.leaves',
+    icon: IconCalendar,
+    href: '/hrm/leaves'
+  },
+  {
+    id: uniqueId(),
+    title: 'sidebar.holidays',
+    icon: IconCalendar,
+    href: '/hrm/holidays'
+  },
+  {
+    id: uniqueId(),
+    title: 'sidebar.payroll',
+    icon: IconCash,
+    href: '/hrm/payroll'
+  },
+
+  /* ---------------------------------------------------------------------- */
+  /*  Reports                                                               */
+  /* ---------------------------------------------------------------------- */
+  { navlabel: true, subheader: 'sidebar.reports', id: uniqueId() },
+  {
+    id: uniqueId(),
+    title: 'sidebar.salesReport',
+    icon: IconChartLine,
+    href: '/reports/sales'
+  },
+  {
+    id: uniqueId(),
+    title: 'sidebar.purchaseReport',
+    icon: IconChartHistogram,
+    href: '/reports/purchases'
+  },
+  {
+    id: uniqueId(),
+    title: 'sidebar.inventoryReport',
+    icon: IconChartHistogram,
+    href: '/reports/inventory'
+  },
+  {
+    id: uniqueId(),
+    title: 'sidebar.invoiceReport',
+    icon: IconReport,
+    href: '/reports/invoices'
+  },
+  {
+    id: uniqueId(),
+    title: 'sidebar.supplierReport',
+    icon: IconReport,
+    href: '/reports/suppliers'
+  },
+  {
+    id: uniqueId(),
+    title: 'sidebar.customerReport',
+    icon: IconReport,
+    href: '/reports/customers'
+  },
+  {
+    id: uniqueId(),
+    title: 'sidebar.productReport',
+    icon: IconReport,
+    href: '/reports/products'
+  },
+  {
+    id: uniqueId(),
+    title: 'sidebar.expenseReport',
+    icon: IconChartPie,
+    href: '/reports/expenses'
+  },
+  {
+    id: uniqueId(),
+    title: 'sidebar.incomeReport',
+    icon: IconChartPie,
+    href: '/reports/income'
+  },
+  {
+    id: uniqueId(),
+    title: 'sidebar.taxReport',
+    icon: IconChartPie,
+    href: '/reports/tax'
+  },
+  {
+    id: uniqueId(),
+    title: 'sidebar.profitLoss',
+    icon: IconChartCandle,
+    href: '/reports/profit-loss'
+  },
+  {
+    id: uniqueId(),
+    title: 'sidebar.annualReport',
+    icon: IconChartCandle,
+    href: '/reports/annual'
+  }
 ];
 
-export default Menuitems;
+export default SidebarConfig;

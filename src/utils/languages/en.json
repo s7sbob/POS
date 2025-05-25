@@ -18,5 +18,84 @@
     "Notes": "Notes",
     "Calendar": "Calendar",
     "Email": "Email",
-    "Tickets": "Tickets"
+    "Tickets": "Tickets",
+
+
+  "sidebar": {
+    "inventory": "Inventory",
+    "stock": "Stock",
+    "sales": "Sales",
+    "promo": "Promo",
+    "purchases": "Purchases",
+    "finance": "Finance & Accounts",
+    "peoples": "Peoples",
+    "hrm": "HRM",
+    "reports": "Reports",
+
+    "products": "Products",
+    "createProduct": "Create Product",
+    "expiredProducts": "Expired Products",
+    "lowStocks": "Low Stocks",
+    "category": "Category",
+    "subCategory": "Sub Category",
+    "brands": "Brands",
+    "units": "Units",
+    "variantAttributes": "Variant Attributes",
+    "warranties": "Warranties",
+    "printBarcode": "Print Barcode",
+    "printQrCode": "Print QR Code",
+
+    "manageStock": "Manage Stock",
+    "stockAdjustment": "Stock Adjustment",
+    "stockTransfer": "Stock Transfer",
+
+    "invoices": "Invoices",
+    "salesReturn": "Sales Return",
+    "quotation": "Quotation",
+    "pos": "POS",
+
+    "coupons": "Coupons",
+    "giftCards": "Gift Cards",
+    "discount": "Discount",
+
+    "purchaseOrder": "Purchase Order",
+    "purchaseReturn": "Purchase Return",
+
+    "expenses": "Expenses",
+    "income": "Income",
+    "bankAccounts": "Bank Accounts",
+    "moneyTransfer": "Money Transfer",
+    "balanceSheet": "Balance Sheet",
+    "trialBalance": "Trial Balance",
+    "cashFlow": "Cash Flow",
+    "accountStatement": "Account Statement",
+
+    "customers": "Customers",
+    "billers": "Billers",
+    "suppliers": "Suppliers",
+    "stores": "Stores",
+    "warehouses": "Warehouses",
+
+    "employees": "Employees",
+    "departments": "Departments",
+    "designation": "Designation",
+    "shifts": "Shifts",
+    "attendance": "Attendance",
+    "leaves": "Leaves",
+    "holidays": "Holidays",
+    "payroll": "Payroll",
+
+    "salesReport": "Sales Report",
+    "purchaseReport": "Purchase Report",
+    "inventoryReport": "Inventory Report",
+    "invoiceReport": "Invoice Report",
+    "supplierReport": "Supplier Report",
+    "customerReport": "Customer Report",
+    "productReport": "Product Report",
+    "expenseReport": "Expense Report",
+    "incomeReport": "Income Report",
+    "taxReport": "Tax Report",
+    "profitLoss": "Profit & Loss",
+    "annualReport": "Annual Report"
+  }
 }
