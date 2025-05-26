@@ -97,5 +97,29 @@
     "taxReport": "Tax Report",
     "profitLoss": "Profit & Loss",
     "annualReport": "Annual Report"
+  },
+  
+  "products": {
+    "title": "Product List",
+    "subtitle": "Manage your products",
+    "addProduct": "Add Product",
+    "import": "Import",
+    "name": "Product Name",
+    "category": "Category",
+    "brand": "Brand",
+    "price": "Price",
+    "unit": "Unit",
+    "qty": "Qty",
+    "createdBy": "Created By",
+    "status": {
+      "label": "Status",
+      "active": "Active",
+      "inactive": "Inactive"
+    }
+  },
+  "common": {
+    "search": "Search",
+    "all": "All"
   }
 }
+

@@ -3,6 +3,9 @@
 import React, { lazy } from 'react';
 import { createBrowserRouter, Navigate } from 'react-router';
 import Loadable from '../layouts/full/shared/loadable/Loadable';
+import AddProductPage from 'src/Pages/Products/components/AddProductPage';
+import EditProductPage from 'src/Pages/Products/components/EditProductPage';
+import ProductDetailsPage from 'src/Pages/Products/components/ProductDetailsPage';
 
 /* ***Layouts**** */
 const FullLayout = Loadable(lazy(() => import('../layouts/full/FullLayout')));
@@ -167,7 +170,8 @@ const PagePricing = Loadable(lazy(() => import('../views/pages/frontend-pages/Pr
 const BlogPage = Loadable(lazy(() => import('../views/pages/frontend-pages/Blog')));
 const BlogPost = Loadable(lazy(() => import('../views/pages/frontend-pages/BlogPost')));
 
-
+// my new routs 
+const ProductsPage = Loadable(lazy(() => import('../Pages/Products/ProductsPage')));
 
 const Router = [
   {
@@ -178,7 +182,15 @@ const Router = [
       { path: '/dashboards/modern', exact: true, element: <ModernDash /> },
       { path: '/dashboards/ecommerce', exact: true, element: <EcommerceDash /> },
       { path: '/apps/contacts', element: <Contacts /> },
-      // { path: '/apps/blog/posts', element: <Blog /> },
+{
+  path: 'inventory/products',
+  children: [
+    { index: true, element: <ProductsPage /> }, // existing list
+    { path: 'add', element: <AddProductPage /> },
+    { path: ':id/edit', element: <EditProductPage /> },
+    { path: ':id', element: <ProductDetailsPage /> }
+  ]
+} ,     // { path: '/apps/blog/posts', element: <Blog /> },
       // { path: '/frontend-pages/blog/detail/:id', element: <BlogDetail /> },
       { path: '/apps/chats', element: <Chats /> },
       { path: '/apps/email', element: <Email /> },

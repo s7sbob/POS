@@ -14,6 +14,8 @@ import {
   useSelector as useAppSelector,
   TypedUseSelectorHook,
 } from 'react-redux';
+import ProductsReducer from './slices/productsSlice';
+
 
 export const store = configureStore({
   reducer: {
@@ -26,6 +28,8 @@ export const store = configureStore({
     ticketReducer: TicketReducer,
     userpostsReducer: UserProfileReducer,
     blogReducer: BlogReducer,
+    productsReducer: ProductsReducer   // ← new line
+
   },
 });
 
@@ -39,6 +43,7 @@ const rootReducer = combineReducers({
   ticketReducer: TicketReducer,
   userpostsReducer: UserProfileReducer,
   blogReducer: BlogReducer,
+  productsReducer: ProductsReducer, // ← new line
 });
 
 export type AppState = ReturnType<typeof rootReducer>;

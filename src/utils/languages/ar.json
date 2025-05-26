@@ -97,5 +97,27 @@
     "taxReport": "تقرير الضرائب",
     "profitLoss": "الأرباح والخسائر",
     "annualReport": "التقرير السنوي"
+  },
+  "products": {
+    "title": "قائمة المنتجات",
+    "subtitle": "إدارة المنتجات",
+    "addProduct": "إضافة منتج",
+    "import": "استيراد",
+    "name": "اسم المنتج",
+    "category": "الفئة",
+    "brand": "العلامة التجارية",
+    "price": "السعر",
+    "unit": "الوحدة",
+    "qty": "الكمية",
+    "createdBy": "أُنشئ بواسطة",
+    "status": {
+      "label": "الحالة",
+      "active": "نشط",
+      "inactive": "غير نشط"
+    }
+  },
+  "common": {
+    "search": "بحث",
+    "all": "الكل"
   }
 }
