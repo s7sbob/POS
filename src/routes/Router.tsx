@@ -6,6 +6,7 @@ import Loadable from '../layouts/full/shared/loadable/Loadable';
 import AddProductPage from 'src/Pages/Products/components/AddProductPage';
 import EditProductPage from 'src/Pages/Products/components/EditProductPage';
 import ProductDetailsPage from 'src/Pages/Products/components/ProductDetailsPage';
+import WarehousesPage from 'src/Pages/Warehouse/WarehousesPage';
 
 /* ***Layouts**** */
 const FullLayout = Loadable(lazy(() => import('../layouts/full/FullLayout')));
@@ -190,7 +191,8 @@ const Router = [
     { path: ':id/edit', element: <EditProductPage /> },
     { path: ':id', element: <ProductDetailsPage /> }
   ]
-} ,     // { path: '/apps/blog/posts', element: <Blog /> },
+} ,  
+ { path: '/inventory/warehouses', element: <WarehousesPage /> },   // { path: '/apps/blog/posts', element: <Blog /> },
       // { path: '/frontend-pages/blog/detail/:id', element: <BlogDetail /> },
       { path: '/apps/chats', element: <Chats /> },
       { path: '/apps/email', element: <Email /> },

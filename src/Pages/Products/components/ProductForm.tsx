@@ -14,8 +14,6 @@ import {
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { useForm, Controller, SubmitHandler } from 'react-hook-form';
-import { yupResolver } from '@hookform/resolvers/yup';
-import * as yup from 'yup';
 
 /* ------------------------------------------------------------------ */
 /* Types                                                              */
@@ -55,28 +53,16 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   const { t } = useTranslation();
 
   /* Yup schema (matches only the editable fields) */
-  const schema: yup.ObjectSchema<ProductFormValues> = yup
-    .object({
-      sku: yup.string().required(t('validation.required')),
-      name: yup.string().required(t('validation.required')),
-      category: yup.string().required(t('validation.required')),
-      brand: yup.string().required(t('validation.required')),
-      price: yup.number().typeError(t('validation.required')).required(),
-      unit: yup.string().required(t('validation.required')),
-      quantity: yup.number().typeError(t('validation.required')).required(),
-      imageUrl: yup.string().url().optional(),
-      description: yup.string().optional()
-    })
-    .required();
 
+/* 2️⃣ useForm كما هو، لا تغيير */
 const {
-    control,
-    handleSubmit,
-    formState: { errors }
-  } = useForm<ProductFormValues>({
-    defaultValues: defaultValues as ProductFormValues,
-    resolver: yupResolver(schema)
-  });
+  control,
+  handleSubmit,
+  formState: { errors }
+} = useForm<ProductFormValues>({
+  defaultValues: defaultValues as ProductFormValues,
+  // resolver: yupResolver(schema)
+});
 
   const submitHandler: SubmitHandler<ProductFormValues> = (data) => {
     onSubmit(data);

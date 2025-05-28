@@ -30,6 +30,8 @@
     "finance": "Finance & Accounts",
     "peoples": "Peoples",
     "hrm": "HRM",
+    "data": "Data",
+    "transactions": "Transitions",
     "reports": "Reports",
 
     "products": "Products",
@@ -119,7 +121,33 @@
   },
   "common": {
     "search": "Search",
-    "all": "All"
+    "all": "All",
+    "cancel": "Cancel"
+  },
+    "warehouses": {
+    "title": "Warehouses",
+    "subtitle": "Manage your warehouses",
+    "add": "Add Warehouse",
+    "edit": "Edit Warehouse",
+    "save": "Save Changes",
+    "name": "Warehouse",
+    "contact": "Contact Person",
+    "email": "Email",
+    "phone": "Phone",
+    "workPhone": "Phone (Work)",
+    "address": "Address",
+    "city": "City",
+    "state": "State",
+    "country": "Country",
+    "postal": "Postal Code",
+    "status": "Status",
+    "totalProducts": "Total Products",
+    "qty": "Qty",
+    "created": "Created On"
+  },
+  "status": {
+    "active": "Active",
+    "inactive": "Inactive"
   }
 }
 

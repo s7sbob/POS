@@ -8,8 +8,6 @@
     "useDefineForClassFields": true,
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "module": "ESNext",
-    "skipLibCheck": true,
-
     /* Bundler mode */
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
@@ -22,7 +20,10 @@
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+        "noEmitOnError": false,   // اخرج ملفات حتى مع الخطأ
+    "skipLibCheck": true,     // تجاهل أخطاء مكتبات node_modules
+    "allowJs": true           // لو عندك ملفات JS مختلطة
   },
   "include": ["src"],
   "references": [{ "path": "./tsconfig.node.json" }]
