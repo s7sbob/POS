@@ -1,12 +1,13 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import React, { lazy } from 'react';
-import { createBrowserRouter, Navigate } from 'react-router';
 import Loadable from '../layouts/full/shared/loadable/Loadable';
 import AddProductPage from 'src/Pages/Products/components/AddProductPage';
 import EditProductPage from 'src/Pages/Products/components/EditProductPage';
 import ProductDetailsPage from 'src/Pages/Products/components/ProductDetailsPage';
 import WarehousesPage from 'src/Pages/Warehouse/WarehousesPage';
+import { createBrowserRouter, Navigate } from 'react-router-dom';
+import { authLoader } from './authLoader';   // المسار المناسب
 
 /* ***Layouts**** */
 const FullLayout = Loadable(lazy(() => import('../layouts/full/FullLayout')));
@@ -146,8 +147,7 @@ const WidgetBanners = Loadable(lazy(() => import('../views/widgets/banners/Widge
 const WidgetCharts = Loadable(lazy(() => import('../views/widgets/charts/WidgetCharts')));
 
 // authentication
-const Login = Loadable(lazy(() => import('../views/authentication/auth1/Login')));
-const Login2 = Loadable(lazy(() => import('../views/authentication/auth2/Login2')));
+const Login = Loadable(lazy(() => import('../views/authentication/auth2/Login2')));
 const Register = Loadable(lazy(() => import('../views/authentication/auth1/Register')));
 const Register2 = Loadable(lazy(() => import('../views/authentication/auth2/Register2')));
 const ForgotPassword = Loadable(lazy(() => import('../views/authentication/auth1/ForgotPassword')));
@@ -178,6 +178,7 @@ const Router = [
   {
     path: '/',
     element: <FullLayout />,
+    loader: authLoader,
     children: [
       { path: '/', element: <Navigate to="/dashboards/modern" /> },
       { path: '/dashboards/modern', exact: true, element: <ModernDash /> },
@@ -297,7 +298,6 @@ const Router = [
     children: [
       { path: '/auth/404', element: <Error /> },
       { path: '/auth/login', element: <Login /> },
-      { path: '/auth/login2', element: <Login2 /> },
       { path: '/auth/register', element: <Register /> },
       { path: '/auth/register2', element: <Register2 /> },
       { path: '/auth/forgot-password', element: <ForgotPassword /> },

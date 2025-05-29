@@ -1,96 +1,59 @@
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-ignore
 import React from 'react';
-import {
-  Box,
-  Typography,
-  FormGroup,
-  FormControlLabel,
-  Button,
-  Stack,
-  Divider,
-} from '@mui/material';
+import { Box, Stack, Button, Typography, FormGroup, FormControlLabel } from '@mui/material';
+import CustomCheckbox from 'src/components/forms/theme-elements/CustomCheckbox';
+import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
+import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import { Link } from 'react-router';
 
-import { loginType } from 'src/types/auth/auth';
-import CustomCheckbox from '../../../components/forms/theme-elements/CustomCheckbox';
-import CustomTextField from '../../../components/forms/theme-elements/CustomTextField';
-import CustomFormLabel from '../../../components/forms/theme-elements/CustomFormLabel';
+interface Props {
+  title?: React.ReactNode;
+  subtitle?: React.ReactNode;
+  subtext?: React.ReactNode;
+  onSubmit: (phone: string, password: string) => void;   // <── هنا
+}
 
-import AuthSocialButtons from './AuthSocialButtons';
+const AuthLogin: React.FC<Props> = ({ subtitle, subtext, onSubmit }) => {
+  const [phone, setPhone] = React.useState('');
+  const [password, setPassword] = React.useState('');
 
+  const handle = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSubmit(phone, password);
+  };
 
+  return (
+    <>
+      {subtext}
 
-const AuthLogin = ({ title, subtitle, subtext }: loginType) => (
-  <>
-    {title ? (
-      <Typography fontWeight="700" variant="h3" mb={1}>
-        {title}
-      </Typography>
-    ) : null}
+      <form onSubmit={handle}>
+        <Stack spacing={2}>
+          <Box>
+            <CustomFormLabel htmlFor="phone">Phone</CustomFormLabel>
+            <CustomTextField id="phone" fullWidth value={phone} onChange={(e: { target: { value: React.SetStateAction<string>; }; }) => setPhone(e.target.value)} />
+          </Box>
+          <Box>
+            <CustomFormLabel htmlFor="password">Password</CustomFormLabel>
+            <CustomTextField id="password" type="password" fullWidth value={password} onChange={(e: { target: { value: React.SetStateAction<string>; }; }) => setPassword(e.target.value)} />
+          </Box>
 
-    {subtext}
+          <Stack direction="row" justifyContent="space-between" alignItems="center">
+            <FormGroup>
+              <FormControlLabel control={<CustomCheckbox defaultChecked />} label="Remember me" />
+            </FormGroup>
+            <Typography component={Link} to="/auth/forgot-password" sx={{ color: 'primary.main', textDecoration: 'none' }}>
+              Forgot password?
+            </Typography>
+          </Stack>
 
-    <AuthSocialButtons title="Sign in with" />
-    <Box mt={3}>
-      <Divider>
-        <Typography
-          component="span"
-          color="textSecondary"
-          variant="h6"
-          fontWeight="400"
-          position="relative"
-          px={2}
-        >
-          or sign in with
-        </Typography>
-      </Divider>
-    </Box>
+          <Button variant="contained" type="submit" fullWidth>Sign In</Button>
+        </Stack>
+      </form>
 
-    <Stack>
-      <Box>
-        <CustomFormLabel htmlFor="username">Username</CustomFormLabel>
-        <CustomTextField id="username" variant="outlined" fullWidth />
-      </Box>
-      <Box>
-        <CustomFormLabel htmlFor="password">Password</CustomFormLabel>
-        <CustomTextField id="password" type="password" variant="outlined" fullWidth />
-      </Box>
-      <Stack justifyContent="space-between" direction="row" alignItems="center" my={2}>
-        <FormGroup>
-          <FormControlLabel
-            control={<CustomCheckbox defaultChecked />}
-            label="Remeber this Device"
-          />
-        </FormGroup>
-        <Typography
-          component={Link}
-          to="/auth/forgot-password"
-          fontWeight="500"
-          sx={{
-            textDecoration: 'none',
-            color: 'primary.main',
-          }}
-        >
-          Forgot Password ?
-        </Typography>
-      </Stack>
-    </Stack>
-    <Box>
-      <Button
-        color="primary"
-        variant="contained"
-        size="large"
-        fullWidth
-        component={Link}
-        to="/"
-        type="submit"
-      >
-        Sign In
-      </Button>
-    </Box>
-    {subtitle}
-  </>
-);
+      {subtitle}
+    </>
+  );
+};
 
 export default AuthLogin;
