@@ -1,9 +1,9 @@
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { IconButton, Stack } from '@mui/material';
-import { IconEdit, IconEye, IconTrash } from '@tabler/icons-react';
-import { Warehouse } from './types';
+import { IconEdit } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
 import { StatusPill } from './StatusPill';
+import { Warehouse } from 'src/utils/warehousesApi';
 
 interface Props {
   rows: Warehouse[];
@@ -11,43 +11,27 @@ interface Props {
   onDelete: (id: string) => void;
 }
 
-const WarehouseTable: React.FC<Props> = ({ rows, onEdit, onDelete }) => {
+const WarehouseTable: React.FC<Props> = ({ rows, onEdit }) => {
   const { t } = useTranslation();
 
-  const cols: GridColDef<Warehouse>[] = [
-    { field: 'name', headerName: t('warehouses.name'), flex: 1, minWidth: 200 },
-    { field: 'phone', headerName: t('warehouses.phone'), flex: 0.8 },
-    { field: 'totalProducts', headerName: t('warehouses.totalProducts'), flex: 0.5,
-      valueGetter: () => Math.floor(Math.random() * 25) + 5 }, // demo
-    { field: 'qty', headerName: t('warehouses.qty'), flex: 0.4,
-      valueGetter: () => Math.floor(Math.random() * 100) + 50 }, // demo
-    { field: 'createdOn', headerName: t('warehouses.created'), flex: 0.8,
-      valueFormatter: ({ value }) => new Date(value).toLocaleDateString() },
-    { field: 'status', headerName: t('warehouses.status'), width: 110,
-      renderCell: (p) => <StatusPill status={p.value} /> },
-    {
-      field: 'actions',
-      headerName: '',
-      width: 110,
-      sortable: false,
-      filterable: false,
-      renderCell: ({ row }) => (
-        <Stack direction="row" spacing={0.5}>
-          <IconButton size="small"><IconEye size={18} /></IconButton>
-          <IconButton size="small" onClick={() => onEdit(row)}>
-            <IconEdit size={18} />
-          </IconButton>
-          <IconButton
-            size="small"
-            color="error"
-            onClick={() => onDelete(row.id)}
-          >
-            <IconTrash size={18} />
-          </IconButton>
-        </Stack>
-      )
-    }
-  ];
+const cols: GridColDef<Warehouse>[] = [
+  { field: 'code',  headerName: 'Code', width: 80 },
+  { field: 'name',  headerName: t('warehouses.name'), flex: 1, minWidth: 180 },
+  { field: 'address', headerName: t('warehouses.address'), flex: 1 },
+  { field: 'createdOn', headerName: t('warehouses.created'), flex: .8,
+    valueFormatter: ({ value }) => new Date(value).toLocaleDateString() },
+  { field: 'isActive', headerName: t('warehouses.status'), width: 110,
+    renderCell: (p) => <StatusPill status={p.value ? 'active' : 'inactive'} /> },
+  {
+    field: 'actions', headerName: '', width: 110, sortable: false, filterable: false,
+    renderCell: ({ row }) => (
+      <Stack direction="row" spacing={0.5}>
+        <IconButton size="small" onClick={() => onEdit(row)}><IconEdit size={18} /></IconButton>
+        {/* لا يوجد حذف فى الـ API حالياً */}
+      </Stack>
+    )
+  }
+];
 
   return (
     <DataGrid

@@ -1,72 +1,49 @@
 import React from 'react';
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  Grid,
-  TextField,
-  Button,
-  DialogActions,
-  Switch,
-  FormControlLabel
+  Dialog, DialogTitle, DialogContent, DialogActions,
+  Grid, TextField, Switch, FormControlLabel, Button
 } from '@mui/material';
-import { useTranslation } from 'react-i18next';
 import { useForm, Controller } from 'react-hook-form';
-import { Warehouse } from './types';
+import { useTranslation } from 'react-i18next';
+import { Warehouse } from 'src/utils/warehousesApi';
 
-type FormValues = Omit<Warehouse, 'id' | 'createdOn'>;
+type FormValues = {
+  name: string;
+  code: number;
+  address: string;
+  isActive: boolean;
+};
 
 interface Props {
   open: boolean;
   mode: 'add' | 'edit';
   initialValues?: Warehouse;
   onClose: () => void;
-  onSubmit: (data: Warehouse | FormValues) => void;
+  onSubmit: (data: FormValues | Warehouse) => void;
 }
 
 const WarehouseForm: React.FC<Props> = ({
-  open,
-  mode,
-  initialValues,
-  onClose,
-  onSubmit
+  open, mode, initialValues, onClose, onSubmit
 }) => {
   const { t } = useTranslation();
 
-
-  type FormValues = {
-  name: string;
-  phone: string;
-  address: string;
-  /* بقية الحقول … */
-  status: 'active' | 'inactive';
-};
-
-
-
-const { control, handleSubmit, reset, formState: { errors } } =
-  useForm<FormValues>({
-    // resolver: yupResolver(schema),
+  const { control, handleSubmit, reset } = useForm<FormValues>({
     defaultValues: initialValues
-      ? { ...initialValues }               // يسقط id و createdOn تلقائياً
-      : { name: '', phone: '', address: '', status: 'active' }
+      ? { ...initialValues }
+      : { name: '', code: 0, address: '', isActive: true },
   });
 
-  /* reset form when switching between add / edit */
   React.useEffect(() => {
     if (initialValues) reset({ ...initialValues });
   }, [initialValues, reset]);
 
-  const submit = (data: FormValues) => {
-    if (mode === 'add') onSubmit(data);
-    else if (initialValues) onSubmit({ ...initialValues, ...data });
-  };
+  const submit = (data: FormValues) => onSubmit(
+    mode === 'add' ? data : { ...initialValues!, ...data }
+  );
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>
-        {mode === 'add' ? t('warehouses.add') : t('warehouses.edit')}
-      </DialogTitle>
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+      <DialogTitle>{mode === 'add' ? t('warehouses.add') : t('warehouses.edit')}</DialogTitle>
 
       <DialogContent dividers>
         <Grid container spacing={2}>
@@ -74,57 +51,36 @@ const { control, handleSubmit, reset, formState: { errors } } =
             <Controller
               name="name"
               control={control}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  label={t('warehouses.name')}
-                  fullWidth
-                  error={!!errors.name}
-                />
-              )}
+              rules={{ required: true }}
+              render={({ field }) => <TextField {...field} label={t('warehouses.name')} fullWidth />}
             />
           </Grid>
+
           <Grid item xs={12} sm={6}>
             <Controller
-              name="phone"
+              name="code"
               control={control}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  label={t('warehouses.phone')}
-                  fullWidth
-                  error={!!errors.phone}
-                />
-              )}
+              rules={{ required: true, min: 0 }}
+              render={({ field }) => <TextField {...field} type="number" label="Code" fullWidth />}
             />
           </Grid>
+
           <Grid item xs={12}>
             <Controller
               name="address"
               control={control}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  label={t('warehouses.address')}
-                  fullWidth
-                  error={!!errors.address}
-                />
-              )}
+              rules={{ required: true }}
+              render={({ field }) => <TextField {...field} label={t('warehouses.address')} fullWidth />}
             />
           </Grid>
-          {/* status switch */}
+
           <Grid item xs={12}>
             <Controller
-              name="status"
+              name="isActive"
               control={control}
               render={({ field }) => (
                 <FormControlLabel
-                  control={
-                    <Switch
-                      checked={field.value === 'active'}
-                      onChange={(e) => field.onChange(e.target.checked ? 'active' : 'inactive')}
-                    />
-                  }
+                  control={<Switch checked={field.value} onChange={(e) => field.onChange(e.target.checked)} />}
                   label={t('warehouses.status')}
                 />
               )}
@@ -134,10 +90,8 @@ const { control, handleSubmit, reset, formState: { errors } } =
       </DialogContent>
 
       <DialogActions>
-        <Button onClick={onClose} variant="outlined">
-          {t('common.cancel')}
-        </Button>
-        <Button onClick={handleSubmit(submit)} variant="contained">
+        <Button onClick={onClose}>{t('common.cancel')}</Button>
+        <Button variant="contained" onClick={handleSubmit(submit)}>
           {mode === 'add' ? t('warehouses.add') : t('warehouses.save')}
         </Button>
       </DialogActions>
