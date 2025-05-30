@@ -195,7 +195,7 @@ children: [
     id: uniqueId(),
     title: 'sidebar.transactions',
     icon: IconStack3,
-    href: '/inventory/transactions'
+    href: '/inventory/Transactions'
   },
   {
     id: uniqueId(),

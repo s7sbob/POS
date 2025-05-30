@@ -39,8 +39,8 @@ const Welcome = () => {
           variant="filled"
           sx={{ width: '100%', color: 'white' }}
         >
-          <AlertTitle>Welcome To Modernize</AlertTitle>
-          Easy to customize the Template!!!
+          <AlertTitle>Welcome To Horex ERP</AlertTitle>
+          Easy to Manage your Inventory!!!
         </Alert>
       </Snackbar>
     </React.Fragment>
