@@ -3,26 +3,23 @@ import {
   Container, useMediaQuery,
   Snackbar, Alert
 } from '@mui/material';
+import PageHeader from './components/PageHeader';
+import ActionsBar from './components/ActionsBar';
+import UnitTable from './components/UnitTable';
+import UnitRow from './components/UnitRow';
+import UnitForm from './components/UnitForm';
+import * as apiSrv from 'src/utils/unitsApi';
+import { Unit } from 'src/utils/unitsApi';
 
-import PageHeader     from './components/PageHeader';
-import ActionsBar     from './components/ActionsBar';
-import WarehouseTable from './components/WarehouseTable';
-import WarehouseRow   from './components/WarehouseRow';
-import WarehouseForm  from './components/WarehouseForm';
-
-import * as apiSrv from 'src/utils/warehousesApi';
-import { Warehouse } from 'src/utils/warehousesApi';
-
-const WarehousesPage: React.FC = () => {
-  const [items, setItems] = React.useState<Warehouse[]>([]);
+const UnitsPage: React.FC = () => {
+  const [items, setItems] = React.useState<Unit[]>([]);
   const [query, setQuery] = React.useState('');
-  const [error, setErr]   = React.useState('');
+  const [error, setErr] = React.useState('');
   const [loading, setLoad] = React.useState(true);
-
   const [dialog, setDialog] = React.useState<{
     open: boolean;
     mode: 'add' | 'edit';
-    current?: Warehouse;
+    current?: Unit;
   }>({ open: false, mode: 'add' });
 
   const isDownSm = useMediaQuery((th: any) => th.breakpoints.down('sm'));
@@ -38,30 +35,30 @@ const WarehousesPage: React.FC = () => {
 
   /* ───── filter ───── */
   const filtered = React.useMemo(
-    () => query ? items.filter(w => w.name.toLowerCase().includes(query.toLowerCase())) : items,
+    () => query ? items.filter(u => u.name.toLowerCase().includes(query.toLowerCase())) : items,
     [items, query]
   );
 
   /* ───── CRUD ───── */
-  const handleAdd = async (body: { name: string; address: string }) => {
+  const handleAdd = async (body: { name: string; }) => {
     try {
       const nw = await apiSrv.add(body);
       setItems(p => [nw, ...p]);
       setDialog({ open: false, mode: 'add' });
     } catch (e: any) {
-      const msg = e?.errors?.StoreName?.[0] || e?.message || 'Add failed';
+      const msg = e?.errors?.UnitName?.[0] || e?.message || 'Add failed';
       setErr(msg);
     }
   };
 
-  const handleUpdate = async (w: Warehouse) => {
+  const handleUpdate = async (u: Unit) => {
     try {
-      const up = await apiSrv.update(w);
+      const up = await apiSrv.update(u);
       setItems(p => p.map(x => x.id === up.id ? up : x));
       setDialog({ open: false, mode: 'add' });
     } catch (e: any) {
       const msg =
-        e?.errors?.StoreName?.[0] ||
+        e?.errors?.UnitName?.[0] ||
         e?.message ||
         'Update failed';
       setErr(msg);
@@ -70,9 +67,8 @@ const WarehousesPage: React.FC = () => {
 
   /* ───── UI ───── */
   return (
-    <Container>
+    <Container maxWidth="lg">
       <PageHeader />
-
       <ActionsBar
         query={query}
         onQueryChange={setQuery}
@@ -80,42 +76,41 @@ const WarehousesPage: React.FC = () => {
       />
 
       {isDownSm
-        ? filtered.map(w => (
-            <WarehouseRow
-              key={w.id}
-              warehouse={{
-                ...w,
-                status: w.isActive ? "active" : "inactive"
-              }}
-              onEdit={() => setDialog({ open: true, mode: 'edit', current: w })}
+        ? filtered.map(u => (
+            <UnitRow
+              key={u.id}
+              unit={u}
+              onEdit={() => setDialog({ open: true, mode: 'edit', current: u })}
             />
           ))
         : (
-          <WarehouseTable
-            rows={filtered}
-            onEdit={w => setDialog({ open: true, mode: 'edit', current: w })}
-          />
-        )}
+            <UnitTable
+              rows={filtered}
+              onEdit={(u) => setDialog({ open: true, mode: 'edit', current: u })}
+            />
+          )}
 
       {/* ------------ Form Dialog ------------ */}
-      <WarehouseForm
+      <UnitForm
         open={dialog.open}
         mode={dialog.mode}
         initialValues={dialog.current}
         onClose={() => setDialog({ open: false, mode: 'add' })}
         onSubmit={dialog.mode === 'add'
-          ? ((data) => handleAdd(data as { name: string; address: string }))
-          : ((data) => handleUpdate(data as Warehouse))
+          ? ((data) => handleAdd(data as { name: string; }))
+          : ((data) => handleUpdate(data as Unit))
         }
       />
 
-      <Snackbar open={!!error} autoHideDuration={4000} onClose={() => setErr('')}>
-        <Alert severity="error">{error}</Alert>
+      <Snackbar open={!!error} autoHideDuration={6000} onClose={() => setErr('')}>
+        <Alert severity="error" onClose={() => setErr('')}>
+          {error}
+        </Alert>
       </Snackbar>
 
-      {loading && <p>Loading…</p>}
+      {loading && <div>Loading…</div>}
     </Container>
   );
 };
 
-export default WarehousesPage;
+export default UnitsPage;

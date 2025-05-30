@@ -8,18 +8,31 @@ import { Warehouse } from 'src/utils/warehousesApi';
 interface Props {
   rows: Warehouse[];
   onEdit: (w: Warehouse) => void;
-  onDelete: (id: string) => void;
 }
 
 const WarehouseTable: React.FC<Props> = ({ rows, onEdit }) => {
   const { t } = useTranslation();
 
 const cols: GridColDef<Warehouse>[] = [
-  { field: 'code',  headerName: 'Code', width: 80 },
-  { field: 'name',  headerName: t('warehouses.name'), flex: 1, minWidth: 180 },
+  { field: 'name',    headerName: t('warehouses.name'), flex: 1, minWidth: 180 },
   { field: 'address', headerName: t('warehouses.address'), flex: 1 },
-  { field: 'createdOn', headerName: t('warehouses.created'), flex: .8,
-    valueFormatter: ({ value }) => new Date(value).toLocaleDateString() },
+  { 
+    field: 'createdOn', 
+    headerName: t('warehouses.created'), 
+    flex: .8,
+    renderCell: ({ value }) => {
+      if (!value) return '-';
+      try {
+        return new Date(value).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit'
+        });
+      } catch (error) {
+        return '-';
+      }
+    }
+  },
   { field: 'isActive', headerName: t('warehouses.status'), width: 110,
     renderCell: (p) => <StatusPill status={p.value ? 'active' : 'inactive'} /> },
   {
@@ -27,11 +40,11 @@ const cols: GridColDef<Warehouse>[] = [
     renderCell: ({ row }) => (
       <Stack direction="row" spacing={0.5}>
         <IconButton size="small" onClick={() => onEdit(row)}><IconEdit size={18} /></IconButton>
-        {/* لا يوجد حذف فى الـ API حالياً */}
       </Stack>
     )
   }
 ];
+
 
   return (
     <DataGrid

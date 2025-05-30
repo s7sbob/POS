@@ -148,6 +148,21 @@
   "status": {
     "active": "Active",
     "inactive": "Inactive"
+  },
+   "units": {
+    "title": "Units",
+    "subtitle": "Manage measurement units in the system",
+    "name": "Unit Name",
+    "code": "Unit Code",
+    "status": "Status",
+    "created": "Created Date",
+    "search": "Search units...",
+    "add": "Add Unit",
+    "edit": "Edit Unit",
+    "save": "Save",
+    "active": "Active",
+    "inactive": "Inactive",
+    "nameRequired": "Unit name is required"
   }
 }
 

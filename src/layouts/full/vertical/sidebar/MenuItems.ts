@@ -9,7 +9,7 @@
 
 import { uniqueId } from 'lodash';
 import {
-  IconDashboard,
+  // IconDashboard,
   IconPackage,
   IconLayoutGridAdd,
   // IconClock,
@@ -78,20 +78,20 @@ const SidebarConfig: MenuItem[] = [
   /* ---------------------------------------------------------------------- */
   /*  Core Dashboards                                                        */
   /* ---------------------------------------------------------------------- */
-  {
-    id: uniqueId(),
-    title: 'Admin dashboard',
-    icon: IconDashboard,
-    href: '/dashboards/modern',
-    chip: 'New',
-    chipColor: 'secondary'
-  },
-  {
-    id: uniqueId(),
-    title: 'Admin dashboard 2',
-    icon: IconDashboard,
-    href: '/dashboards/ecommerce'
-  },
+  // {
+  //   id: uniqueId(),
+  //   title: 'Admin dashboard',
+  //   icon: IconDashboard,
+  //   href: '/dashboards/modern',
+  //   chip: 'New',
+  //   chipColor: 'secondary'
+  // },
+  // {
+  //   id: uniqueId(),
+  //   title: 'Admin dashboard 2',
+  //   icon: IconDashboard,
+  //   href: '/dashboards/ecommerce'
+  // },
 
   /* ---------------------------------------------------------------------- */
   /*  Inventory                                                             */
@@ -110,6 +110,12 @@ children: [
     title: 'sidebar.warehouses',
     icon: IconBuildingWarehouse,
     href: '/inventory/warehouses'
+  },
+  {
+    id: uniqueId(),
+    title: 'sidebar.units',
+    icon: IconAdjustments,
+    href: '/inventory/units'
   },
   {
     id: uniqueId(),

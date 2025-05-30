@@ -8,6 +8,7 @@ import ProductDetailsPage from 'src/Pages/Products/components/ProductDetailsPage
 import WarehousesPage from 'src/Pages/Warehouse/WarehousesPage';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { authLoader } from './authLoader';   // المسار المناسب
+import UnitsPage from 'src/Pages/Units/UnitsPage';
 
 /* ***Layouts**** */
 const FullLayout = Loadable(lazy(() => import('../layouts/full/FullLayout')));
@@ -194,6 +195,7 @@ const Router = [
   ]
 } ,  
  { path: '/inventory/warehouses', element: <WarehousesPage /> },   // { path: '/apps/blog/posts', element: <Blog /> },
+ { path: '/inventory/units', element: <UnitsPage /> },
       // { path: '/frontend-pages/blog/detail/:id', element: <BlogDetail /> },
       { path: '/apps/chats', element: <Chats /> },
       { path: '/apps/email', element: <Email /> },

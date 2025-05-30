@@ -6,7 +6,7 @@ import {
   IconButton,
   Divider
 } from '@mui/material';
-import { IconEdit, IconTrash } from '@tabler/icons-react';
+import { IconEdit } from '@tabler/icons-react';
 import { Warehouse } from './types';
 import { StatusPill } from './StatusPill';
 import { useTranslation } from 'react-i18next';
@@ -14,10 +14,9 @@ import { useTranslation } from 'react-i18next';
 interface Props {
   warehouse: Warehouse;
   onEdit: () => void;
-  onDelete: () => void;
 }
 
-const WarehouseRow: React.FC<Props> = ({ warehouse, onEdit, onDelete }) => {
+const WarehouseRow: React.FC<Props> = ({ warehouse, onEdit }) => {
   useTranslation();
 
   return (
@@ -25,13 +24,11 @@ const WarehouseRow: React.FC<Props> = ({ warehouse, onEdit, onDelete }) => {
       <CardContent>
         <Stack direction="row" justifyContent="space-between" alignItems="center">
           <Typography variant="subtitle1">{warehouse.name}</Typography>
+          <Typography variant="caption">{warehouse.address}</Typography>
           <Stack direction="row" spacing={0.5} alignItems="center">
             <StatusPill status={warehouse.status} />
             <IconButton size="small" onClick={onEdit}>
               <IconEdit size={18} />
-            </IconButton>
-            <IconButton size="small" color="error" onClick={onDelete}>
-              <IconTrash size={18} />
             </IconButton>
           </Stack>
         </Stack>
