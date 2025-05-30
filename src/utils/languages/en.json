@@ -163,6 +163,27 @@
     "active": "Active",
     "inactive": "Inactive",
     "nameRequired": "Unit name is required"
+  },
+   "groups": {
+    "title": "Groups",
+    "subtitle": "Manage groups and categories in the system",
+    "name": "Group Name",
+    "code": "Group Code",
+    "status": "Status",
+    "created": "Created Date",
+    "search": "Search groups...",
+    "add": "Add Group",
+    "addChild": "Add Child Group",
+    "edit": "Edit Group",
+    "save": "Save",
+    "active": "Active",
+    "inactive": "Inactive",
+    "nameRequired": "Group name is required",
+    "parentGroup": "Parent Group",
+    "backgroundColor": "Background Color",
+    "fontColor": "Font Color",
+    "preview": "Preview",
+    "sampleText": "Sample Text"
   }
 }
 

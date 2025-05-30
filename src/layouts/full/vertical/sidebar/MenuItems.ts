@@ -123,6 +123,12 @@ children: [
     icon: IconPackage,
     href: '/inventory/products'
   },
+  {
+    id: uniqueId(),
+    title: 'sidebar.groups',
+    icon: IconLayoutGridAdd,
+    href: '/inventory/groups'
+  },
   // {
   //   id: uniqueId(),
   //   title: 'sidebar.createProduct',
