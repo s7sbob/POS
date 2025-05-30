@@ -6,9 +6,7 @@ import {
   Stack,
   IconButton,
   Collapse,
-  Box,
-  Chip
-} from '@mui/material';
+  Box} from '@mui/material';
 import {
   IconChevronRight,
   IconChevronDown,
@@ -17,6 +15,7 @@ import {
 } from '@tabler/icons-react';
 import { Group } from 'src/utils/groupsApi';
 import { useTranslation } from 'react-i18next';
+import { StatusPill } from './StatusPill';
 
 interface Props {
   groups: Group[];
@@ -85,11 +84,8 @@ const GroupTree: React.FC<Props> = ({
               </Typography>
               
               {/* حالة المجموعة */}
-              <Chip
-                label={group.isActive ? t('groups.active') : t('groups.inactive')}
-                color={group.isActive ? 'success' : 'default'}
-                size="small"
-              />
+<StatusPill isActive={group.isActive} />
+
               
               {/* أزرار الإجراءات */}
               <Stack direction="row" spacing={1}>

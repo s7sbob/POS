@@ -8,6 +8,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { Group } from 'src/utils/groupsApi';
 import GroupTreeSelect from './GroupTreeSelect';
+import { StatusPill } from './StatusPill';
 
 /* ---------- types ---------- */
 type FormValues = { 
@@ -15,7 +16,7 @@ type FormValues = {
   parentId?: string;
   backgroundColor: string;
   fontColor: string;
-  isActive: boolean;
+  isActive: boolean; // تأكد من وجود هذا الحقل
 };
 
 interface Props {
@@ -28,20 +29,6 @@ interface Props {
   onSubmit: (data: FormValues | Group) => void;
 }
 
-/* ---------- helpers ---------- */
-const nextOnEnter = (e: React.KeyboardEvent) => {
-  if (e.key !== 'Enter') return;
-  const form = (e.currentTarget as HTMLInputElement).form!;
-  const idx = Array.prototype.indexOf.call(form, e.currentTarget);
-  if (idx > -1 && idx + 1 < form.elements.length) {
-    (form.elements[idx + 1] as HTMLElement).focus();
-  } else {
-    (form as HTMLFormElement).requestSubmit();
-  }
-  e.preventDefault();
-};
-
-/* ---------- component ---------- */
 const GroupForm: React.FC<Props> = ({
   open, mode, initialValues, parentGroup, allGroups, onClose, onSubmit
 }) => {
@@ -51,7 +38,7 @@ const GroupForm: React.FC<Props> = ({
     parentId: parentGroup?.id || '',
     backgroundColor: '123',
     fontColor: '123',
-    isActive: true 
+    isActive: true // القيمة الافتراضية للمجموعات الجديدة
   };
 
   const { control, handleSubmit, reset, watch } = useForm<FormValues>({
@@ -60,14 +47,14 @@ const GroupForm: React.FC<Props> = ({
       parentId: initialValues?.parentId ?? '',
       backgroundColor: initialValues?.backgroundColor ?? '123',
       fontColor: initialValues?.fontColor ?? '123',
-      isActive: initialValues?.isActive ?? true,
+      isActive: initialValues?.isActive ?? true, // تأكد من تمرير القيمة الصحيحة
     },
   });
 
   const backgroundColor = watch('backgroundColor');
   const fontColor = watch('fontColor');
+  const isActive = watch('isActive'); // مراقبة حالة النشاط
 
-  /* -- reset القيم عند تغيير النمط -- */
   React.useEffect(() => {
     if (mode === 'add') {
       reset({
@@ -80,7 +67,7 @@ const GroupForm: React.FC<Props> = ({
         parentId: initialValues.parentId || '',
         backgroundColor: initialValues.backgroundColor,
         fontColor: initialValues.fontColor,
-        isActive: initialValues.isActive,
+        isActive: initialValues.isActive, // تمرير الحالة الصحيحة
       });
     }
   }, [mode, initialValues, parentGroup, reset]);
@@ -121,7 +108,6 @@ const GroupForm: React.FC<Props> = ({
                     fullWidth
                     error={!!fieldState.error}
                     helperText={fieldState.error?.message}
-                    onKeyDown={nextOnEnter}
                   />
                 )}
               />
@@ -146,6 +132,30 @@ const GroupForm: React.FC<Props> = ({
               </Grid>
             )}
 
+            {/* ---------- Status ---------- */}
+            <Grid item xs={12}>
+              <Controller
+                name="isActive"
+                control={control}
+                render={({ field }) => (
+                  <Box>
+                    <FormControlLabel
+                      control={
+                        <Switch 
+                          checked={field.value} 
+                          onChange={(e) => field.onChange(e.target.checked)} 
+                        />
+                      }
+                      label={t('groups.status')}
+                    />
+                    <Box sx={{ mt: 1 }}>
+                      <StatusPill isActive={field.value} />
+                    </Box>
+                  </Box>
+                )}
+              />
+            </Grid>
+
             {/* ---------- Colors ---------- */}
             <Grid item xs={6}>
               <Controller
@@ -159,7 +169,6 @@ const GroupForm: React.FC<Props> = ({
                     fullWidth
                     value={field.value === '123' ? '#ffffff' : `#${field.value}`}
                     onChange={(e) => field.onChange(e.target.value.replace('#', ''))}
-                    onKeyDown={nextOnEnter}
                   />
                 )}
               />
@@ -177,7 +186,6 @@ const GroupForm: React.FC<Props> = ({
                     fullWidth
                     value={field.value === '123' ? '#000000' : `#${field.value}`}
                     onChange={(e) => field.onChange(e.target.value.replace('#', ''))}
-                    onKeyDown={nextOnEnter}
                   />
                 )}
               />
@@ -192,7 +200,8 @@ const GroupForm: React.FC<Props> = ({
                   borderColor: 'divider',
                   borderRadius: 1,
                   backgroundColor: backgroundColor !== '123' ? `#${backgroundColor}` : 'background.paper',
-                  color: fontColor !== '123' ? `#${fontColor}` : 'text.primary'
+                  color: fontColor !== '123' ? `#${fontColor}` : 'text.primary',
+                  opacity: isActive ? 1 : 0.5 // تأثير بصري للحالة غير النشطة
                 }}
               >
                 <Typography variant="body2" gutterBottom>
@@ -201,26 +210,10 @@ const GroupForm: React.FC<Props> = ({
                 <Typography variant="h6">
                   {watch('name') || t('groups.sampleText')}
                 </Typography>
+                <Box sx={{ mt: 1 }}>
+                  <StatusPill isActive={isActive} />
+                </Box>
               </Box>
-            </Grid>
-
-            {/* ---------- Status ---------- */}
-            <Grid item xs={12}>
-              <Controller
-                name="isActive"
-                control={control}
-                render={({ field }) => (
-                  <FormControlLabel
-                    control={
-                      <Switch 
-                        checked={field.value} 
-                        onChange={(e) => field.onChange(e.target.checked)} 
-                      />
-                    }
-                    label={t('groups.status')}
-                  />
-                )}
-              />
             </Grid>
           </Grid>
         </DialogContent>

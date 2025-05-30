@@ -125,7 +125,7 @@ children: [
   },
   {
     id: uniqueId(),
-    title: 'sidebar.groups',
+    title: 'groups.title',
     icon: IconLayoutGridAdd,
     href: '/inventory/groups'
   },

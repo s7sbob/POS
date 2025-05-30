@@ -76,7 +76,8 @@ export const add = async (body: {
   name: string; 
   parentId?: string; 
   backgroundColor?: string; 
-  fontColor?: string; 
+  fontColor?: string;
+  isActive?: boolean; // إضافة الحقل
 }) => {
   const { data } = await api.post(
     '/addGroup',
@@ -86,7 +87,8 @@ export const add = async (body: {
         GroupName: body.name,
         parentid: body.parentId || '',
         backcolor: body.backgroundColor || '123',
-        FontColor: body.fontColor || '123'
+        FontColor: body.fontColor || '123',
+        isActive: body.isActive ?? true // تمرير الحالة للـ API
       } 
     }
   );
@@ -103,9 +105,11 @@ export const update = async (group: Group) => {
         GroupName: group.name,
         parentid: group.parentId || '',
         backcolor: group.backgroundColor,
-        FontColor: group.fontColor
+        FontColor: group.fontColor,
+        isActive: group.isActive // تمرير الحالة للـ API
       },
     }
   );
   return toGroup(data.data);
 };
+
