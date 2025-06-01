@@ -49,8 +49,8 @@ const WarehousesPage: React.FC = () => {
       setItems(p => [nw, ...p]);
       setDialog({ open: false, mode: 'add' });
     } catch (e: any) {
-      const msg = e?.errors?.StoreName?.[0] || e?.message || 'Add failed';
-      setErr(msg);
+      const msg = e?.errors?.WarehouseName?.[0] || e?.message || 'Add failed';
+      setErr(msg)
     }
   };
 
@@ -61,7 +61,7 @@ const WarehousesPage: React.FC = () => {
       setDialog({ open: false, mode: 'add' });
     } catch (e: any) {
       const msg =
-        e?.errors?.StoreName?.[0] ||
+        e?.errors?.WarehouseName?.[0] ||
         e?.message ||
         'Update failed';
       setErr(msg);

@@ -7,10 +7,10 @@ const PageHeader = () => {
   return (
     <Box mb={3}>
       <Typography variant="h4" component="h1" gutterBottom>
-        {t('products.title')}
+        {t('suppliers.title')}
       </Typography>
       <Typography variant="body1" color="text.secondary">
-        {t('products.subtitle')}
+        {t('suppliers.subtitle')}
       </Typography>
     </Box>
   );

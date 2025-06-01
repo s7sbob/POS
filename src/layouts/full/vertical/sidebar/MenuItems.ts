@@ -117,17 +117,115 @@ children: [
     icon: IconAdjustments,
     href: '/inventory/units'
   },
+    {
+    id: uniqueId(),
+    title: 'groups.title',
+    icon: IconLayoutGridAdd,
+    href: '/inventory/groups'
+  },
   {
     id: uniqueId(),
     title: 'sidebar.products',
     icon: IconPackage,
     href: '/inventory/products'
   },
+  // {
+  //   id: uniqueId(),
+  //   title: 'sidebar.createProduct',
+  //   icon: IconLayoutGridAdd,
+  //   href: '/inventory/products/create'
+  // },
+  // {
+  //   id: uniqueId(),
+  //   title: 'sidebar.expiredProducts',
+  //   icon: IconClock,
+  //   href: '/inventory/products/expired'
+  // },
+  // {
+  //   id: uniqueId(),
+  //   title: 'sidebar.lowStocks',
+  //   icon: IconTrendingDown,
+  //   href: '/inventory/products/low-stock'
+  // },
+  // {
+  //   id: uniqueId(),
+  //   title: 'sidebar.category',
+  //   icon: IconCategory,
+  //   href: '/inventory/category'
+  // },
+  // {
+  //   id: uniqueId(),
+  //   title: 'sidebar.subCategory',
+  //   icon: IconHierarchy2,
+  //   href: '/inventory/sub-category'
+  // },
+  // {
+  //   id: uniqueId(),
+  //   title: 'sidebar.brands',
+  //   icon: IconTrademark,
+  //   href: '/inventory/brands'
+  // },
+  // {
+  //   id: uniqueId(),
+  //   title: 'sidebar.units',
+  //   icon: IconRuler,
+  //   href: '/inventory/units'
+  // },
+  // {
+  //   id: uniqueId(),
+  //   title: 'sidebar.variantAttributes',
+  //   icon: IconAdjustments,
+  //   href: '/inventory/variants'
+  // },
+  // {
+  //   id: uniqueId(),
+  //   title: 'sidebar.warranties',
+  //   icon: IconCertificate,
+  //   href: '/inventory/warranties'
+  // },
+  // {
+  //   id: uniqueId(),
+  //   title: 'sidebar.printBarcode',
+  //   icon: IconBarcode,
+  //   href: '/inventory/barcode'
+  // },
+  // {
+  //   id: uniqueId(),
+  //   title: 'sidebar.printQrCode',
+  //   icon: IconQrcode,
+  //   href: '/inventory/qrcode'
+  // }
+]
+  },
   {
     id: uniqueId(),
-    title: 'groups.title',
+    title: 'sidebar.transactions',
+    icon: IconStack3,
+    href: '/inventory/Transactions'
+  },
+  {
+    id: uniqueId(),
+    title: 'sidebar.reports',
+    icon: IconAdjustments,
+    href: '/inventory/reports'
+  }
+] },
+
+
+  {  title: 'sidebar.purchases', id: uniqueId() ,    icon: IconBuildingWarehouse,
+           href: '/inventory/purchases'
+, children: [
+
+{    id: uniqueId(),
+    title: 'sidebar.data',
     icon: IconLayoutGridAdd,
-    href: '/inventory/groups'
+    href: '/inventory/data',
+children: [
+  {
+    id: uniqueId(),
+    title: 'sidebar.suppliers',
+    icon: IconBuildingWarehouse,
+    href: '/inventory/suppliers'
   },
   // {
   //   id: uniqueId(),

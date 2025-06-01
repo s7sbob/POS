@@ -11,35 +11,35 @@ export type Warehouse = {
 };
 
 const toWarehouse = (raw: any): Warehouse => ({
-  id:        raw.storeID,
-  code:      raw.storeCode,
-  name:      raw.storeName,
+  id:        raw.warehouseID,
+  code:      raw.warehouseCode,
+  name:      raw.warehouseName,
   address:   raw.address,
   isActive:  raw.isActive,
   createdOn: raw.createDate,
 });
 
 /* ---------------- API ---------------- */
-export const getAll   = async () => (await api.get('/getstores')).data.data.map(toWarehouse);
+export const getAll   = async () => (await api.get('/getwarehouses')).data.data.map(toWarehouse);
 
 export const add = async (body: { name: string; address: string; }) => {
   const { data } = await api.post(
-    '/addstore',
+    '/addwarehouse',
     null,
-    { params: { storename: body.name, storecode: 0, address: body.address } }
+    { params: { warehousename: body.name, warehousecode: 0, address: body.address } }
   );
   return toWarehouse(data.data);
 };
 
 export const update = async (w: Warehouse) => {
   const { data } = await api.post(
-    '/updatestore',
+    '/updatewarehouse',
     null,
     {
       params: {
-        storeid:   w.id,
-        storeCode: w.code,
-        storename: w.name,
+        warehouseid:   w.id,
+        warehouseCode: w.code,
+        warehousename: w.name,
         address:   w.address,
         isActive:  w.isActive,
       },

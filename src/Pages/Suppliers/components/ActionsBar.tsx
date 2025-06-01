@@ -25,7 +25,7 @@ const ActionsBar: React.FC<Props> = ({ query, onQueryChange, onAdd }) => {
       mb={3}
     >
       <TextField
-        placeholder={t('products.search')}
+        placeholder={t('suppliers.search')}
         value={query}
         onChange={(e) => onQueryChange(e.target.value)}
         InputProps={{
@@ -43,7 +43,7 @@ const ActionsBar: React.FC<Props> = ({ query, onQueryChange, onAdd }) => {
         startIcon={<IconPlus size={20} />}
         onClick={onAdd}
       >
-        {t('products.add')}
+        {t('suppliers.add')}
       </Button>
     </Stack>
   );
