@@ -43,7 +43,7 @@ const SupplierForm: React.FC<Props> = ({
     isActive: true
   };
 
-  const { control, handleSubmit, reset } = useForm<FormValues>({
+  const { control, handleSubmit, reset, setError, clearErrors } = useForm<FormValues>({
     defaultValues: defaults
   });
 
@@ -64,6 +64,7 @@ const SupplierForm: React.FC<Props> = ({
   // إعادة تعيين النموذج عند تغيير البيانات
   React.useEffect(() => {
     if (open) {
+      clearErrors(); // مسح الأخطاء السابقة
       if (mode === 'add') {
         reset(defaults);
       } else if (initialValues) {
@@ -76,7 +77,7 @@ const SupplierForm: React.FC<Props> = ({
         });
       }
     }
-  }, [open, mode, initialValues, reset]);
+  }, [open, mode, initialValues, reset, clearErrors]);
 
   const submit = async (data: FormValues, saveAction: 'save' | 'saveAndNew') => {
     if (isSubmitting) return;
@@ -98,8 +99,42 @@ const SupplierForm: React.FC<Props> = ({
         console.log('Sending add data:', data);
         await onSubmit(data, saveAction);
       }
-    } catch (error) {
+      
+      // إذا كان saveAndNew، إعادة تعيين النموذج
+      if (saveAction === 'saveAndNew') {
+        reset(defaults);
+        // Focus على الحقل الأول مرة أخرى
+        setTimeout(() => {
+          if (nameFieldRef.current) {
+            nameFieldRef.current.focus();
+          }
+        }, 100);
+      }
+    } catch (error: any) {
       console.error('Submit error:', error);
+      
+      // معالجة أخطاء الـ validation من الـ API
+      if (error?.errors) {
+        Object.keys(error.errors).forEach(field => {
+          const fieldName = field.toLowerCase();
+          if (fieldName.includes('name') || fieldName.includes('suppliername')) {
+            setError('name', { 
+              type: 'server', 
+              message: error.errors[field][0] || t('suppliers.nameRequired') 
+            });
+          } else if (fieldName.includes('phone')) {
+            setError('phone', { 
+              type: 'server', 
+              message: error.errors[field][0] || t('suppliers.phoneRequired') 
+            });
+          } else if (fieldName.includes('address')) {
+            setError('address', { 
+              type: 'server', 
+              message: error.errors[field][0] || t('suppliers.addressRequired') 
+            });
+          }
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -121,17 +156,23 @@ const SupplierForm: React.FC<Props> = ({
       <form>
         <DialogContent sx={{ maxHeight: isMobile ? 'none' : '70vh', overflowY: 'auto' }}>
           <Grid container spacing={3}>
-            {/* ---------- Name ---------- */}
+            {/* ---------- Name (Required) ---------- */}
             <Grid item xs={12} md={6}>
               <Controller
                 name="name"
                 control={control}
-                rules={{ required: t('suppliers.nameRequired') }}
+                rules={{ 
+                  required: t('suppliers.nameRequired'),
+                  minLength: {
+                    value: 2,
+                    message: t('suppliers.nameMinLength')
+                  }
+                }}
                 render={({ field, fieldState }) => (
                   <TextField
                     {...field}
                     inputRef={nameFieldRef}
-                    label={t('suppliers.name')}
+                    label={`${t('suppliers.name')} *`}
                     fullWidth
                     error={!!fieldState.error}
                     helperText={fieldState.error?.message}
@@ -141,12 +182,17 @@ const SupplierForm: React.FC<Props> = ({
               />
             </Grid>
 
-            {/* ---------- Phone ---------- */}
+            {/* ---------- Phone (Optional) ---------- */}
             <Grid item xs={12} md={6}>
               <Controller
                 name="phone"
                 control={control}
-                rules={{ required: t('suppliers.phoneRequired') }}
+                rules={{
+                  pattern: {
+                    value: /^[0-9+\-\s()]*$/,
+                    message: t('suppliers.phoneInvalid')
+                  }
+                }}
                 render={({ field, fieldState }) => (
                   <TextField
                     {...field}
@@ -154,17 +200,17 @@ const SupplierForm: React.FC<Props> = ({
                     fullWidth
                     error={!!fieldState.error}
                     helperText={fieldState.error?.message}
+                    placeholder="01xxxxxxxxx"
                   />
                 )}
               />
             </Grid>
 
-            {/* ---------- Address ---------- */}
+            {/* ---------- Address (Optional) ---------- */}
             <Grid item xs={12}>
               <Controller
                 name="address"
                 control={control}
-                rules={{ required: t('suppliers.addressRequired') }}
                 render={({ field, fieldState }) => (
                   <TextField
                     {...field}
@@ -179,7 +225,7 @@ const SupplierForm: React.FC<Props> = ({
               />
             </Grid>
 
-            {/* ---------- Notes ---------- */}
+            {/* ---------- Notes (Optional) ---------- */}
             <Grid item xs={12}>
               <Controller
                 name="notes"

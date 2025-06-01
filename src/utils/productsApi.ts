@@ -21,7 +21,7 @@ export type Product = {
     createCompany: string;
     createBranch: string;
   } | null;
-  productType: number; // 1 = POS, 2 = Material
+  productType: number;
   description: string | null;
   reorderLevel: number;
   cost: number;
@@ -54,6 +54,14 @@ export type ProductPrice = {
   lastModifyUser?: string;
   createCompany?: string;
   createBranch?: string;
+};
+
+export type ProductsResponse = {
+  totalCount: number;
+  pageCount: number;
+  pageNumber: number;
+  pageSize: number;
+  data: Product[];
 };
 
 const toProduct = (raw: any): Product => ({
@@ -114,9 +122,35 @@ const toProductPrice = (raw: any): ProductPrice => ({
 
 /* ---------------- API ---------------- */
 
-export const getAll = async () => {
-  const response = await api.get('/getProducts');
-  return response.data.data.map(toProduct);
+export const getAll = async (pageNumber: number = 1, pageSize: number = 20): Promise<ProductsResponse> => {
+  const response = await api.get(`/getProducts?pageNumber=${pageNumber}&pageSize=${pageSize}`);
+  return {
+    totalCount: response.data.data.totalCount,
+    pageCount: response.data.data.pageCount,
+    pageNumber: response.data.data.pageNumber,
+    pageSize: response.data.data.pageSize,
+    data: response.data.data.data.map(toProduct)
+  };
+};
+
+export const searchByName = async (name: string, pageNumber: number = 1, pageSize: number = 50): Promise<ProductsResponse> => {
+  const response = await api.get(`/getProductsByName?name=${encodeURIComponent(name)}&pageNumber=${pageNumber}&pageSize=${pageSize}`);
+  return {
+    totalCount: response.data.data.totalCount,
+    pageCount: response.data.data.pageCount,
+    pageNumber: response.data.data.pageNumber,
+    pageSize: response.data.data.pageSize,
+    data: response.data.data.data.map(toProduct)
+  };
+};
+
+export const getByBarcode = async (barcode: string): Promise<Product | null> => {
+  try {
+    const response = await api.get(`/getProductByBarcode?barcode=${encodeURIComponent(barcode)}`);
+    return toProduct(response.data.data);
+  } catch (error) {
+    return null;
+  }
 };
 
 export const getById = async (id: string) => {

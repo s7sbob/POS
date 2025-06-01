@@ -101,9 +101,16 @@
     "annualReport": "Annual Report"
   },
   
-"products": {
+ "products": {
     "title": "Products",
     "subtitle": "Manage products and prices in the system",
+    "searchPlaceholder": "Search by name or barcode...",
+    "searchByBarcode": "Search by Barcode",
+    "searchByName": "Search by Name",
+    "searchResults": "{{count}} results",
+    "searching": "Searching...",
+    "noSearchResults": "No search results found",
+    "noProducts": "No products available",
     "name": "Product Name",
     "code": "Product Code",
     "group": "Group",
@@ -115,7 +122,6 @@
     "expirationDays": "Expiration Days",
     "status": "Status",
     "created": "Created Date",
-    "search": "Search products...",
     "add": "Add Product",
     "edit": "Edit Product",
     "save": "Save",
@@ -126,10 +132,7 @@
     "nameRequired": "Product name is required",
     "groupRequired": "Group is required",
     "viewPrices": "View Prices",
-    "selectProductToViewPrices": "Select a product to view prices",
     "pricesFor": "Prices for",
-    "managePricesDescription": "Manage different product prices",
-    "addPrice": "Add Price",
     "prices": "prices",
     "pricesCount": "Prices Count",
     "unit": "Unit",
@@ -142,7 +145,8 @@
     "no": "No",
     "noPrices": "No prices available",
     "selectUnit": "Select Unit",
-    "barcodeOptional": "Barcode (optional)"
+    "barcodeOptional": "Barcode (optional)",
+    "addPrice": "Add Price"
   },
    "suppliers": {
     "title": "Suppliers",
@@ -163,12 +167,15 @@
     "active": "Active",
     "inactive": "Inactive",
     "nameRequired": "Supplier name is required",
+    "nameMinLength": "Supplier name must be at least 2 characters",
     "phoneRequired": "Phone number is required",
+    "phoneInvalid": "Invalid phone number format",
     "addressRequired": "Address is required"
   },
   "common": {
     "search": "Search",
     "all": "All",
+    "loading": "Loading...",
     "cancel": "Cancel"
   },
     "warehouses": {

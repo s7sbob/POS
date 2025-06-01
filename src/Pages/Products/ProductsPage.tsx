@@ -1,8 +1,11 @@
 import React from 'react';
 import {
   Container, useMediaQuery,
-  Snackbar, Alert, Box, Typography
+  Snackbar, Alert, Box, Typography, Pagination,
+  Stack, TextField, InputAdornment, IconButton, Chip
 } from '@mui/material';
+import { IconSearch, IconBarcode, IconX } from '@tabler/icons-react';
+import { useTranslation } from 'react-i18next';
 import PageHeader from './components/PageHeader';
 import ActionsBar from './components/ActionsBar';
 import ProductTable from './components/ProductTable';
@@ -12,19 +15,28 @@ import ProductPricesDrawer from './components/ProductPricesDrawer';
 import * as apiSrv from 'src/utils/productsApi';
 import * as groupsApi from 'src/utils/groupsApi';
 import * as unitsApi from 'src/utils/unitsApi';
-import { Product } from 'src/utils/productsApi';
+import { Product, ProductsResponse } from 'src/utils/productsApi';
 import { Group } from 'src/utils/groupsApi';
 import { Unit } from 'src/utils/unitsApi';
-import { t } from 'i18next';
 
 const ProductsPage: React.FC = () => {
-  const [products, setProducts] = React.useState<Product[]>([]);
+  const { t } = useTranslation();
+  const [productsData, setProductsData] = React.useState<ProductsResponse>({
+    totalCount: 0,
+    pageCount: 0,
+    pageNumber: 1,
+    pageSize: 20,
+    data: []
+  });
   const [groups, setGroups] = React.useState<Group[]>([]);
   const [units, setUnits] = React.useState<Unit[]>([]);
   const [selectedProduct, setSelectedProduct] = React.useState<Product | null>(null);
-  const [query, setQuery] = React.useState('');
+  const [searchQuery, setSearchQuery] = React.useState('');
+  const [searchMode, setSearchMode] = React.useState<'name' | 'barcode' | null>(null);
+  const [currentPage, setCurrentPage] = React.useState(1);
   const [error, setErr] = React.useState('');
   const [loading, setLoad] = React.useState(true);
+  const [searching, setSearching] = React.useState(false);
   const [dialog, setDialog] = React.useState<{
     open: boolean;
     mode: 'add' | 'edit';
@@ -34,45 +46,123 @@ const ProductsPage: React.FC = () => {
 
   const isDownSm = useMediaQuery((th: any) => th.breakpoints.down('sm'));
 
-  /* ───── fetch all ───── */
-  const fetchProducts = async () => {
+  /* ───── fetch products with pagination ───── */
+  const fetchProducts = async (page: number = 1, pageSize: number = 20) => {
     try {
-      const productsData = await apiSrv.getAll();
-      setProducts(productsData);
+      setLoad(true);
+      const data = await apiSrv.getAll(page, pageSize);
+      setProductsData(data);
+      setCurrentPage(page);
     } catch (e: any) {
       setErr(e?.message || 'Failed to load products');
+    } finally {
+      setLoad(false);
     }
   };
 
+  /* ───── search products ───── */
+  const searchProducts = async (query: string, mode: 'name' | 'barcode') => {
+    if (!query.trim()) {
+      clearSearch();
+      return;
+    }
+
+    try {
+      setSearching(true);
+      
+      if (mode === 'barcode') {
+        const product = await apiSrv.getByBarcode(query);
+        if (product) {
+          setProductsData({
+            totalCount: 1,
+            pageCount: 1,
+            pageNumber: 1,
+            pageSize: 1,
+            data: [product]
+          });
+        } else {
+          setProductsData({
+            totalCount: 0,
+            pageCount: 0,
+            pageNumber: 1,
+            pageSize: 20,
+            data: []
+          });
+        }
+      } else {
+        const data = await apiSrv.searchByName(query, 1, 50);
+        setProductsData(data);
+      }
+      
+      setSearchMode(mode);
+      setCurrentPage(1);
+    } catch (e: any) {
+      setErr(e?.message || 'Search failed');
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  /* ───── clear search ───── */
+  const clearSearch = async () => {
+    setSearchQuery('');
+    setSearchMode(null);
+    await fetchProducts(1);
+  };
+
+  /* ───── initial load ───── */
   React.useEffect(() => {
     (async () => {
       try { 
-        const [productsData, groupsData, unitsData] = await Promise.all([
-          apiSrv.getAll(),
+        const [groupsData, unitsData] = await Promise.all([
           groupsApi.getAll(),
           unitsApi.getAll()
         ]);
-        setProducts(productsData);
         setGroups(groupsData);
         setUnits(unitsData);
+        await fetchProducts(1);
       }
       catch (e: any) { 
         setErr(e?.message || 'Load failed'); 
       }
-      finally { 
-        setLoad(false); 
-      }
     })();
   }, []);
 
-  /* ───── filter ───── */
-  const filtered = React.useMemo(
-    () => query ? products.filter(p => 
-      p.name.toLowerCase().includes(query.toLowerCase()) ||
-      p.group?.name.toLowerCase().includes(query.toLowerCase())
-    ) : products,
-    [products, query]
-  );
+  /* ───── handle page change ───── */
+  const handlePageChange = async (_event: React.ChangeEvent<unknown>, page: number) => {
+    if (searchMode === 'name' && searchQuery) {
+      try {
+        setSearching(true);
+        const data = await apiSrv.searchByName(searchQuery, page, 50);
+        setProductsData(data);
+        setCurrentPage(page);
+      } catch (e: any) {
+        setErr(e?.message || 'Search failed');
+      } finally {
+        setSearching(false);
+      }
+    } else if (!searchMode) {
+      await fetchProducts(page);
+    }
+  };
+
+  /* ───── search handlers ───── */
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    if (query.trim()) {
+      // تحديد نوع البحث بناءً على المحتوى
+      const isBarcode = /^\d+$/.test(query.trim());
+      searchProducts(query, isBarcode ? 'barcode' : 'name');
+    } else {
+      clearSearch();
+    }
+  };
+
+  const handleBarcodeSearch = () => {
+    if (searchQuery.trim()) {
+      searchProducts(searchQuery, 'barcode');
+    }
+  };
 
   /* ───── flatten groups for dropdown ───── */
 
@@ -81,9 +171,13 @@ const ProductsPage: React.FC = () => {
   const handleAdd = async (data: any) => {
     try {
       console.log('Adding product:', data);
-      const newProduct = await apiSrv.add(data);
-      await fetchProducts();
-      return newProduct;
+      await apiSrv.add(data);
+      // إعادة تحميل الصفحة الحالية
+      if (searchMode) {
+        await clearSearch();
+      } else {
+        await fetchProducts(currentPage);
+      }
     } catch (e: any) {
       const msg = e?.errors?.productName?.[0] || e?.message || 'Add failed';
       setErr(msg);
@@ -95,14 +189,16 @@ const ProductsPage: React.FC = () => {
     try {
       console.log('Updating product:', data);
       const updatedProduct = await apiSrv.update(data);
-      console.log('Updated product result:', updatedProduct);
       
-      await fetchProducts();
+      // تحديث المنتج في القائمة الحالية
+      setProductsData(prev => ({
+        ...prev,
+        data: prev.data.map(p => p.id === updatedProduct.id ? updatedProduct : p)
+      }));
       
       // تحديث المنتج في الـ drawer إذا كان مفتوح
       if (selectedProduct && selectedProduct.id === data.ProductId) {
-        const refreshedProduct = await apiSrv.getById(data.ProductId);
-        setSelectedProduct(refreshedProduct);
+        setSelectedProduct(updatedProduct);
       }
       
       return updatedProduct;
@@ -125,22 +221,18 @@ const ProductsPage: React.FC = () => {
       if (saveAction === 'save') {
         setDialog({ open: false, mode: 'add', current: undefined });
       } else {
-        // saveAndNew - إعادة تعيين النموذج للإضافة
         setDialog({ open: true, mode: 'add', current: undefined });
       }
     } catch (error) {
-      // في حالة الخطأ، لا نغلق المودال
       throw error;
     }
   };
 
-  // دالة منفصلة لعرض الأسعار فقط - تفتح الـ drawer
   const handleViewPrices = (product: Product) => {
     setSelectedProduct(product);
     setPricesDrawerOpen(true);
   };
 
-  // دالة منفصلة للتعديل فقط - تفتح المودال
   const handleEdit = (product: Product) => {
     setDialog({ open: true, mode: 'edit', current: product });
   };
@@ -149,38 +241,124 @@ const ProductsPage: React.FC = () => {
   return (
     <Container maxWidth="xl">
       <PageHeader />
-      <ActionsBar
-        query={query}
-        onQueryChange={setQuery}
-        onAdd={() => setDialog({ open: true, mode: 'add', current: undefined })}
-      />
+      
+      {/* شريط البحث المحسن */}
+      <Box mb={3}>
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="center" justifyContent="space-between">
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: { xs: '100%', sm: 'auto' } }}>
+            <TextField
+              placeholder={t('products.searchPlaceholder')}
+              value={searchQuery}
+              onChange={(e) => handleSearch(e.target.value)}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <IconSearch size={20} />
+                  </InputAdornment>
+                ),
+                endAdornment: searchQuery && (
+                  <InputAdornment position="end">
+                    <IconButton size="small" onClick={clearSearch}>
+                      <IconX size={16} />
+                    </IconButton>
+                  </InputAdornment>
+                )
+              }}
+              sx={{ width: { xs: '100%', sm: 300 } }}
+              disabled={searching}
+            />
+            
+            <IconButton 
+              onClick={handleBarcodeSearch}
+              color="primary"
+              title={t('products.searchByBarcode')}
+              disabled={!searchQuery.trim() || searching}
+            >
+              <IconBarcode size={20} />
+            </IconButton>
+          </Box>
+
+          <ActionsBar
+            onAdd={() => setDialog({ open: true, mode: 'add', current: undefined })}
+          />
+        </Stack>
+
+        {/* مؤشرات البحث */}
+        {searchMode && (
+          <Box mt={2}>
+            <Stack direction="row" spacing={1} alignItems="center">
+              <Chip
+                label={searchMode === 'barcode' 
+                  ? `${t('products.searchByBarcode')}: ${searchQuery}`
+                  : `${t('products.searchByName')}: ${searchQuery}`
+                }
+                onDelete={clearSearch}
+                color="primary"
+                variant="outlined"
+              />
+              <Typography variant="body2" color="text.secondary">
+                {t('products.searchResults', { count: productsData.totalCount })}
+              </Typography>
+            </Stack>
+          </Box>
+        )}
+      </Box>
 
       {/* جدول المنتجات */}
       <Box mb={4}>
         <Typography variant="h5" gutterBottom>
-          {t('products.title')}
+          {t('products.title')} ({productsData.totalCount})
         </Typography>
-        {isDownSm
-          ? filtered.map(p => (
-              <ProductRow
-                key={p.id}
-                product={p}
-                onEdit={() => handleEdit(p)}
-                onViewPrices={() => handleViewPrices(p)}
-                isSelected={selectedProduct?.id === p.id}
-              />
-            ))
-          : (
-              <ProductTable
-                rows={filtered}
-                onEdit={handleEdit}
-                onViewPrices={handleViewPrices}
-                selectedProductId={selectedProduct?.id}
-              />
+        
+        {loading || searching ? (
+          <Box textAlign="center" py={4}>
+            <Typography>{searching ? t('products.searching') : t('common.loading')}</Typography>
+          </Box>
+        ) : productsData.data.length === 0 ? (
+          <Box textAlign="center" py={4}>
+            <Typography color="text.secondary">
+              {searchMode ? t('products.noSearchResults') : t('products.noProducts')}
+            </Typography>
+          </Box>
+        ) : (
+          <>
+            {isDownSm
+              ? productsData.data.map(p => (
+                  <ProductRow
+                    key={p.id}
+                    product={p}
+                    onEdit={() => handleEdit(p)}
+                    onViewPrices={() => handleViewPrices(p)}
+                    isSelected={selectedProduct?.id === p.id}
+                  />
+                ))
+              : (
+                  <ProductTable
+                    rows={productsData.data}
+                    onEdit={handleEdit}
+                    onViewPrices={handleViewPrices}
+                    selectedProductId={selectedProduct?.id}
+                  />
+                )}
+
+            {/* Pagination */}
+            {productsData.pageCount > 1 && (
+              <Box display="flex" justifyContent="center" mt={3}>
+                <Pagination
+                  count={productsData.pageCount}
+                  page={currentPage}
+                  onChange={handlePageChange}
+                  color="primary"
+                  size={isDownSm ? "small" : "medium"}
+                  disabled={searching}
+                />
+              </Box>
             )}
+          </>
+        )}
       </Box>
 
-      {/* ------------ Form Dialog ------------ */}
+      {/* Form Dialog */}
       <ProductForm
         open={dialog.open}
         mode={dialog.mode}
@@ -191,7 +369,7 @@ const ProductsPage: React.FC = () => {
         onSubmit={handleSubmit}
       />
 
-      {/* ------------ Prices Drawer ------------ */}
+      {/* Prices Drawer */}
       <ProductPricesDrawer
         open={pricesDrawerOpen}
         product={selectedProduct}
@@ -204,8 +382,6 @@ const ProductsPage: React.FC = () => {
           {error}
         </Alert>
       </Snackbar>
-
-      {loading && <div>Loading…</div>}
     </Container>
   );
 };

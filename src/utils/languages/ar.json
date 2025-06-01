@@ -102,6 +102,13 @@
  "products": {
     "title": "المنتجات",
     "subtitle": "إدارة المنتجات والأسعار في النظام",
+    "searchPlaceholder": "البحث بالاسم أو الباركود...",
+    "searchByBarcode": "البحث بالباركود",
+    "searchByName": "البحث بالاسم",
+    "searchResults": "{{count}} نتيجة",
+    "searching": "جاري البحث...",
+    "noSearchResults": "لا توجد نتائج للبحث",
+    "noProducts": "لا توجد منتجات",
     "name": "اسم المنتج",
     "code": "كود المنتج",
     "group": "المجموعة",
@@ -113,7 +120,6 @@
     "expirationDays": "أيام انتهاء الصلاحية",
     "status": "الحالة",
     "created": "تاريخ الإنشاء",
-    "search": "البحث في المنتجات...",
     "add": "إضافة منتج",
     "edit": "تعديل المنتج",
     "save": "حفظ",
@@ -124,10 +130,7 @@
     "nameRequired": "اسم المنتج مطلوب",
     "groupRequired": "المجموعة مطلوبة",
     "viewPrices": "عرض الأسعار",
-    "selectProductToViewPrices": "اختر منتج لعرض الأسعار",
     "pricesFor": "أسعار",
-    "managePricesDescription": "إدارة أسعار المنتج المختلفة",
-    "addPrice": "إضافة سعر",
     "prices": "أسعار",
     "pricesCount": "عدد الأسعار",
     "unit": "الوحدة",
@@ -140,7 +143,8 @@
     "no": "لا",
     "noPrices": "لا توجد أسعار",
     "selectUnit": "اختر الوحدة",
-    "barcodeOptional": "الباركود (اختياري)"
+    "barcodeOptional": "الباركود (اختياري)",
+    "addPrice": "إضافة سعر"
   },
    "suppliers": {
     "title": "الموردين",
@@ -161,7 +165,9 @@
     "active": "نشط",
     "inactive": "غير نشط",
     "nameRequired": "اسم المورد مطلوب",
+    "nameMinLength": "اسم المورد يجب أن يكون على الأقل حرفين",
     "phoneRequired": "رقم الهاتف مطلوب",
+    "phoneInvalid": "رقم الهاتف غير صحيح",
     "addressRequired": "العنوان مطلوب"
   },
   "common": {
@@ -169,7 +175,8 @@
     "all": "الكل",
     "add": "إضافة",
     "edit": "تعديل",
-    "cancel": "إلغاء"
+    "cancel": "إلغاء",
+    "loading": "جاري التحميل..."
   },
   "warehouses": {
     "title": "المخازن",

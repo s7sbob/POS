@@ -44,6 +44,8 @@ import {
   // IconUsers,
   // IconBuildingStore,
   IconBuildingWarehouse,
+  IconTruck,
+  IconUsers,
   // IconUser,
   // IconBriefcase,
   // IconClockHour3,
@@ -212,7 +214,7 @@ children: [
 ] },
 
 
-  {  title: 'sidebar.purchases', id: uniqueId() ,    icon: IconBuildingWarehouse,
+  {  title: 'sidebar.purchases', id: uniqueId() ,    icon: IconTruck,
            href: '/inventory/purchases'
 , children: [
 
@@ -224,7 +226,7 @@ children: [
   {
     id: uniqueId(),
     title: 'sidebar.suppliers',
-    icon: IconBuildingWarehouse,
+    icon: IconUsers,
     href: '/inventory/suppliers'
   },
   // {

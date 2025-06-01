@@ -64,9 +64,10 @@ const SuppliersPage: React.FC = () => {
       await apiSrv.add(data);
       await fetchSuppliers();
     } catch (e: any) {
+      console.error('Add error:', e);
       const msg = e?.errors?.SupplierName?.[0] || e?.message || 'Add failed';
       setErr(msg);
-      throw e;
+      throw e; // رمي الخطأ للنموذج للتعامل مع validation
     }
   };
 
@@ -79,7 +80,7 @@ const SuppliersPage: React.FC = () => {
       console.error('Update error:', e);
       const msg = e?.errors?.SupplierName?.[0] || e?.message || 'Update failed';
       setErr(msg);
-      throw e;
+      throw e; // رمي الخطأ للنموذج للتعامل مع validation
     }
   };
 
@@ -91,14 +92,14 @@ const SuppliersPage: React.FC = () => {
         await handleUpdate(data);
       }
       
+      // إغلاق المودال فقط في حالة "save"
       if (saveAction === 'save') {
         setDialog({ open: false, mode: 'add', current: undefined });
-      } else {
-        // saveAndNew - إعادة تعيين النموذج للإضافة
-        setDialog({ open: true, mode: 'add', current: undefined });
       }
+      // في حالة "saveAndNew" المودال يبقى مفتوح والنموذج يتم إعادة تعيينه في SupplierForm
+      
     } catch (error) {
-      // في حالة الخطأ، لا نغلق المودال
+      // في حالة الخطأ، لا نغلق المودال ونترك النموذج يتعامل مع الأخطاء
       throw error;
     }
   };
