@@ -1,4 +1,4 @@
-import api from '../utils/axios';
+import api from '../axios';
 
 export type Unit = {
   id: string;

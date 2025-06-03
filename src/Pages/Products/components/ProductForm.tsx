@@ -10,9 +10,9 @@ import {
 import { IconPlus, IconTrash, IconDeviceFloppy, IconPlus as IconPlusNew } from '@tabler/icons-react';
 import { useForm, Controller, useFieldArray } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import { Product } from 'src/utils/productsApi';
-import { Group } from 'src/utils/groupsApi';
-import { Unit } from 'src/utils/unitsApi';
+import { Product } from 'src/utils/api/productsApi';
+import { Group } from 'src/utils/api/groupsApi';
+import { Unit } from 'src/utils/api/unitsApi';
 import GroupTreeSelect from './GroupTreeSelect';
 
 /* ---------- types ---------- */

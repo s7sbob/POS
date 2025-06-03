@@ -7,8 +7,8 @@ import ActionsBar from './components/ActionsBar';
 import SupplierTable from './components/SupplierTable';
 import SupplierRow from './components/SupplierRow';
 import SupplierForm from './components/SupplierForm';
-import * as apiSrv from 'src/utils/suppliersApi';
-import { Supplier } from 'src/utils/suppliersApi';
+import * as apiSrv from 'src/utils/api/suppliersApi';
+import { Supplier } from 'src/utils/api/suppliersApi';
 
 const SuppliersPage: React.FC = () => {
   const [suppliers, setSuppliers] = React.useState<Supplier[]>([]);

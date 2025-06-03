@@ -7,7 +7,7 @@ import {
   Box,
   Typography
 } from '@mui/material';
-import { Group } from 'src/utils/groupsApi';
+import { Group } from 'src/utils/api/groupsApi';
 
 interface Props {
   groups: Group[];

@@ -2,7 +2,7 @@ import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { IconButton, Stack, Chip } from '@mui/material';
 import { IconEdit } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
-import { Supplier } from 'src/utils/suppliersApi';
+import { Supplier } from 'src/utils/api/suppliersApi';
 
 interface Props {
   rows: Supplier[];

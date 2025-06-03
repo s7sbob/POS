@@ -12,12 +12,12 @@ import ProductTable from './components/ProductTable';
 import ProductRow from './components/ProductsRow';
 import ProductForm from './components/ProductForm';
 import ProductPricesDrawer from './components/ProductPricesDrawer';
-import * as apiSrv from 'src/utils/productsApi';
-import * as groupsApi from 'src/utils/groupsApi';
-import * as unitsApi from 'src/utils/unitsApi';
-import { Product, ProductsResponse } from 'src/utils/productsApi';
-import { Group } from 'src/utils/groupsApi';
-import { Unit } from 'src/utils/unitsApi';
+import * as apiSrv from 'src/utils/api/productsApi';
+import * as groupsApi from 'src/utils/api/groupsApi';
+import * as unitsApi from 'src/utils/api/unitsApi';
+import { Product, ProductsResponse } from 'src/utils/api/productsApi';
+import { Group } from 'src/utils/api/groupsApi';
+import { Unit } from 'src/utils/api/unitsApi';
 
 const ProductsPage: React.FC = () => {
   const { t } = useTranslation();

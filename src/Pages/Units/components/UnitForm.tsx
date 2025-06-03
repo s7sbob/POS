@@ -5,7 +5,7 @@ import {
 } from '@mui/material';
 import { useForm, Controller } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import { Unit } from 'src/utils/unitsApi';
+import { Unit } from 'src/utils/api/unitsApi';
 
 /* ---------- types ---------- */
 type FormValues = { name: string; isActive: boolean };

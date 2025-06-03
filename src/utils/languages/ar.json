@@ -45,23 +45,18 @@
     "warranties": "الضمانات",
     "printBarcode": "طباعة الباركود",
     "printQrCode": "طباعة رمز QR",
-
     "manageStock": "إدارة المخزون",
     "stockAdjustment": "تعديل المخزون",
     "stockTransfer": "تحويل المخزون",
-
     "invoices": "الفواتير",
     "salesReturn": "مرتجعات المبيعات",
     "quotation": "عرض سعر",
     "pos": "نقطة البيع",
-
     "coupons": "كوبونات",
     "giftCards": "بطاقات الهدايا",
     "discount": "خصم",
-
-    "purchaseOrder": "أمر شراء",
+    "purchaseOrders": "أوامر الشراء",
     "purchaseReturn": "مرتجعات المشتريات",
-
     "expenses": "المصروفات",
     "income": "الإيرادات",
     "bankAccounts": "الحسابات البنكية",
@@ -70,13 +65,11 @@
     "trialBalance": "ميزان المراجعة",
     "cashFlow": "التدفق النقدي",
     "accountStatement": "كشف الحساب",
-
     "customers": "العملاء",
     "billers": "المفوترون",
     "suppliers": "الموردون",
     "stores": "المتاجر",
     "warehouses": "المخازن",
-
     "employees": "الموظفون",
     "departments": "الأقسام",
     "designation": "المسميات الوظيفية",
@@ -85,7 +78,6 @@
     "leaves": "الإجازات",
     "holidays": "العطلات",
     "payroll": "الرواتب",
-
     "salesReport": "تقرير المبيعات",
     "purchaseReport": "تقرير المشتريات",
     "inventoryReport": "تقرير المخزون",
@@ -144,7 +136,35 @@
     "noPrices": "لا توجد أسعار",
     "selectUnit": "اختر الوحدة",
     "barcodeOptional": "الباركود (اختياري)",
-    "addPrice": "إضافة سعر"
+    "addPrice": "إضافة سعر",
+      "searchPricesTitle": "البحث في أسعار المنتجات",
+    "searchPricesPlaceholder": "البحث بالاسم أو الباركود...",
+    "startTypingPrices": "ابدأ بكتابة اسم المنتج أو الباركود للبحث",
+    "salePrice": "سعر البيع",
+     "product": "منتج",
+    "quickSearchPlaceholder": "بحث سريع...",
+    "productAdded": "تم إضافة المنتج",
+    "noProductFoundWithBarcode": "لم يتم العثور على منتج بهذا الباركود",
+    "searchError": "خطأ في البحث",
+    "selectPriceTitle": "اختيار سعر المنتج",
+    "selected": "محدد",
+    "loadingMore": "جاري تحميل المزيد",
+    "allResultsLoaded": "تم تحميل جميع النتائج",
+    "navigateWithArrows": "التنقل بالأسهم",
+    "selectWithEnter": "للاختيار"
+  },
+  "barcode": {
+    "scan": "مسح الباركود",
+    "scanTitle": "مسح الباركود",
+    "pointCamera": "وجه الكاميرا نحو الباركود",
+    "clickToStart": "انقر لبدء المسح",
+    "startCamera": "تشغيل الكاميرا",
+    "simulateScan": "محاكاة المسح"
+  },
+  "validation": {
+    "enterValidNumber": "يرجى إدخال رقم صحيح في حقل",
+    "minValue": "القيمة لا يمكن أن تكون أقل من 0",
+    "maxPercent": "القيمة لا يمكن أن تزيد عن 100%"
   },
    "suppliers": {
     "title": "الموردين",
@@ -170,13 +190,50 @@
     "phoneInvalid": "رقم الهاتف غير صحيح",
     "addressRequired": "العنوان مطلوب"
   },
+"purchaseOrders": {
+    "title": "أوامر الشراء",
+    "list": "قائمة أوامر الشراء",
+    "add": "إضافة أمر شراء",
+    "edit": "تعديل أمر شراء",
+    "docNumber": "رقم المستند",
+    "docNumberRequired": "رقم المستند مطلوب",
+    "date": "التاريخ",
+    "dateRequired": "التاريخ مطلوب",
+    "supplier": "المورد",
+    "supplierRequired": "المورد مطلوب",
+    "selectSupplier": "اختر المورد",
+    "warehouse": "المخزن",
+    "warehouseRequired": "المخزن مطلوب",
+    "selectWarehouse": "اختر المخزن",
+    "totalDiscount": "إجمالي الخصم",
+    "totalTax": "إجمالي الضريبة",
+    "items": "الأصناف",
+    "addItemWithSearch": "إضافة صنف بالبحث",
+    "quantity": "الكمية",
+    "price": "السعر",
+    "discount": "الخصم",
+    "tax": "الضريبة",
+    "total": "الإجمالي",
+    "subTotal": "المجموع الفرعي",
+    "discountValue": "قيمة الخصم",
+    "taxValue": "قيمة الضريبة",
+    "noItems": "لا توجد أصناف",
+    "saveAndNew": "حفظ وجديد",
+    "product": "المنتج",
+    "unit": "الوحدة"
+  },
   "common": {
     "search": "بحث",
     "all": "الكل",
     "add": "إضافة",
     "edit": "تعديل",
     "cancel": "إلغاء",
-    "loading": "جاري التحميل..."
+    "loading": "جاري التحميل...",
+    "save": "حفظ",
+    "back": "رجوع",
+    "saveError": "خطأ في الحفظ",
+    "inLine": "في السطر",
+    "searching": "جاري البحث"
   },
   "warehouses": {
     "title": "المخازن",

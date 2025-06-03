@@ -7,8 +7,8 @@ import PageHeader from './components/PageHeader';
 import ActionsBar from './components/ActionsBar';
 import GroupTree from './components/GroupTree';
 import GroupForm from './components/GroupForm';
-import * as apiSrv from 'src/utils/groupsApi';
-import { Group } from 'src/utils/groupsApi';
+import * as apiSrv from 'src/utils/api/groupsApi';
+import { Group } from 'src/utils/api/groupsApi';
 
 const GroupsPage: React.FC = () => {
   const [items, setItems] = React.useState<Group[]>([]);

@@ -13,7 +13,7 @@ import {
   IconEdit,
   IconPlus
 } from '@tabler/icons-react';
-import { Group } from 'src/utils/groupsApi';
+import { Group } from 'src/utils/api/groupsApi';
 import { useTranslation } from 'react-i18next';
 import { StatusPill } from './StatusPill';
 

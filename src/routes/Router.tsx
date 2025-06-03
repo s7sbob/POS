@@ -10,6 +10,9 @@ import { authLoader } from './authLoader';   // المسار المناسب
 import UnitsPage from 'src/Pages/Units/UnitsPage';
 import GroupsPage from 'src/Pages/Groups/GroupsPage';
 import SuppliersPage from 'src/Pages/Suppliers/SuppliersPage';
+import PurchaseOrdersPage from 'src/Pages/purchaseOrders/PurchaseOrdersPage';
+import AddPurchaseOrderPage from 'src/Pages/purchaseOrders/AddPurchaseOrderPage';
+import EditPurchaseOrderPage from 'src/Pages/purchaseOrders/EditPurchaseOrderPage';
 
 /* ***Layouts**** */
 const FullLayout = Loadable(lazy(() => import('../layouts/full/FullLayout')));
@@ -190,7 +193,10 @@ const Router = [
       { path: '/inventory/warehouses', element: <WarehousesPage /> },   // { path: '/apps/blog/posts', element: <Blog /> },
       { path: '/inventory/units', element: <UnitsPage /> },
       { path: '/inventory/groups', element: <GroupsPage /> }, // { path: '/apps/blog/posts', element: <Blog /> },
-      { path: '/inventory/suppliers', element: <SuppliersPage /> },
+      { path: '/purchases/suppliers', element: <SuppliersPage /> },
+      { path: '/purchases/purchase-orders', element: <PurchaseOrdersPage /> },
+      { path: '/purchases/purchase-orders/add', element: <AddPurchaseOrderPage /> },
+      { path: '/purchases/purchase-orders/edit/:id', element: <EditPurchaseOrderPage /> },
       // { path: '/frontend-pages/blog/detail/:id', element: <BlogDetail /> },
       { path: '/apps/chats', element: <Chats /> },
       { path: '/apps/email', element: <Email /> },

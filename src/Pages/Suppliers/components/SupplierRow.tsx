@@ -8,7 +8,7 @@ import {
   Box
 } from '@mui/material';
 import { IconEdit } from '@tabler/icons-react';
-import { Supplier } from 'src/utils/suppliersApi';
+import { Supplier } from 'src/utils/api/suppliersApi';
 import { useTranslation } from 'react-i18next';
 
 interface Props {

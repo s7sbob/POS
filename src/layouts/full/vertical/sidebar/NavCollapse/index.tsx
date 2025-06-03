@@ -56,23 +56,43 @@ const NavCollapse = ({
   const theme = useTheme();
   const { pathname } = useLocation();
   const { t } = useTranslation();
-  const [open, setOpen] = useState(true);
+  
+  // إنشاء state منفصل لكل عنصر باستخدام menu.id كمفتاح فريد
+  const [open, setOpen] = useState(() => {
+    // فحص إذا كان أي من العناصر الفرعية نشط حالياً
+    return menu?.children?.some((item: any) => {
+      if (item.children) {
+        // إذا كان العنصر له أطفال، فحص أطفاله أيضاً
+        return item.children.some((child: any) => pathname.includes(child.href));
+      }
+      return pathname.includes(item.href);
+    }) || false;
+  });
+
   const menuIcon =
     level > 1 ? <Icon stroke={1.5} size="1rem" /> : <Icon stroke={1.5} size="1.3rem" />;
 
-  const handleClick = () => {
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     setOpen(!open);
   };
 
-  // menu collapse for sub-levels
+  // تحديث حالة الفتح فقط للعنصر الحالي إذا كان يحتوي على الصفحة النشطة
   React.useEffect(() => {
-    setOpen(false);
-    menu?.children?.forEach((item: any) => {
-      if (item?.href === pathname) {
-        setOpen(true);
+    const shouldBeOpen = menu?.children?.some((item: any) => {
+      if (item.children) {
+        // فحص العناصر الفرعية متعددة المستويات
+        return item.children.some((child: any) => pathname === child.href);
       }
+      return pathname === item.href;
     });
-  }, [pathname, menu.children]);
+
+    // فتح العنصر فقط إذا كان يحتوي على الصفحة النشطة حالياً
+    if (shouldBeOpen && !open) {
+      setOpen(true);
+    }
+  }, [pathname, menu.children, open]);
 
   const ListItemStyled = styled(ListItemButton)(() => ({
     marginBottom: '2px',

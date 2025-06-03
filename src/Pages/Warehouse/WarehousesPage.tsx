@@ -10,8 +10,8 @@ import WarehouseTable from './components/WarehouseTable';
 import WarehouseRow   from './components/WarehouseRow';
 import WarehouseForm  from './components/WarehouseForm';
 
-import * as apiSrv from 'src/utils/warehousesApi';
-import { Warehouse } from 'src/utils/warehousesApi';
+import * as apiSrv from 'src/utils/api/warehousesApi';
+import { Warehouse } from 'src/utils/api/warehousesApi';
 
 const WarehousesPage: React.FC = () => {
   const [items, setItems] = React.useState<Warehouse[]>([]);

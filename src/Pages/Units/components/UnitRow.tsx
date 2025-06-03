@@ -5,7 +5,7 @@ import {
   Stack,
   IconButton} from '@mui/material';
 import { IconEdit } from '@tabler/icons-react';
-import { Unit } from 'src/utils/unitsApi'; // استخدم التعريف من unitsApi
+import { Unit } from 'src/utils/api/unitsApi'; // استخدم التعريف من unitsApi
 import { StatusPill } from './StatusPill';
 import { useTranslation } from 'react-i18next';
 

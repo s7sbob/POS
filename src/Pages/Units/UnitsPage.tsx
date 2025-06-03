@@ -8,8 +8,8 @@ import ActionsBar from './components/ActionsBar';
 import UnitTable from './components/UnitTable';
 import UnitRow from './components/UnitRow';
 import UnitForm from './components/UnitForm';
-import * as apiSrv from 'src/utils/unitsApi';
-import { Unit } from 'src/utils/unitsApi';
+import * as apiSrv from 'src/utils/api/unitsApi';
+import { Unit } from 'src/utils/api/unitsApi';
 
 const UnitsPage: React.FC = () => {
   const [items, setItems] = React.useState<Unit[]>([]);

@@ -3,7 +3,7 @@ import { IconButton, Stack } from '@mui/material';
 import { IconEdit } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
 import { StatusPill } from './StatusPill';
-import { Warehouse } from 'src/utils/warehousesApi';
+import { Warehouse } from 'src/utils/api/warehousesApi';
 
 interface Props {
   rows: Warehouse[];

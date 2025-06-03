@@ -1,4 +1,4 @@
-import api from '../utils/axios';
+import api from '../axios';
 
 export type Supplier = {
   id: string;
