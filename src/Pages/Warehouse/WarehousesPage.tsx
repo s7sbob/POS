@@ -70,7 +70,7 @@ const WarehousesPage: React.FC = () => {
 
   /* ───── UI ───── */
   return (
-    <Container>
+    <Container maxWidth="xl">
       <PageHeader />
 
       <ActionsBar

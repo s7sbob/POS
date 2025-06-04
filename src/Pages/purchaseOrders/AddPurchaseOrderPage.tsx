@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Snackbar, Alert } from '@mui/material';
+import { Snackbar, Alert, Box, Typography, CircularProgress } from '@mui/material';
 import PurchaseOrderForm from './components/PurchaseOrderForm';
 import * as apiSrv from 'src/utils/api/purchaseOrdersApi';
 import * as suppliersApi from 'src/utils/api/suppliersApi';
@@ -9,7 +8,6 @@ import { Supplier } from 'src/utils/api/suppliersApi';
 import { Warehouse } from 'src/utils/api/warehousesApi';
 
 const AddPurchaseOrderPage: React.FC = () => {
-  const navigate = useNavigate();
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [error, setError] = useState('');
@@ -34,15 +32,12 @@ const AddPurchaseOrderPage: React.FC = () => {
     fetchData();
   }, []);
 
-  const handleSubmit = async (data: any, saveAction: 'save' | 'saveAndNew') => {
+  const handleSubmit = async (data: any) => {
     try {
-      console.log('Adding purchase order:', data);
+      console.log('Adding purchase order (data):', data);
       await apiSrv.add(data);
-      
-      if (saveAction === 'save') {
-        navigate('/purchases/purchase-orders');
-      }
-      // إذا كان saveAndNew، الفورم سيقوم بإعادة تعيين البيانات تلقائياً
+      // After either “Save (Pending)” or “Submit,” 
+      // we always assume the form resets on status=1 or navigates away on status=3.
     } catch (e: any) {
       const msg = e?.message || 'Add failed';
       setError(msg);
@@ -51,7 +46,12 @@ const AddPurchaseOrderPage: React.FC = () => {
   };
 
   if (loading) {
-    return <div>جاري التحميل...</div>;
+    return (
+      <Box textAlign="center" py={4}>
+        <CircularProgress />
+        <Typography sx={{ mt: 2 }}>جاري التحميل...</Typography>
+      </Box>
+    );
   }
 
   return (

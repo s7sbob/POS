@@ -42,6 +42,7 @@ export type PurchaseOrder = {
   taxValue: number;
   subTotal: number;
   total: number;
+  status: number;
   details: PurchaseOrderDetail[];
   isActive?: boolean;
   createdOn?: string;
@@ -57,6 +58,7 @@ export type PurchaseOrderDetail = {
   id?: string;
   purchaseOrderId?: string;
   productID: string;
+  productPriceID?: string; // ← إضافة معرف السعر
   unitId: string;
   unitFactor: number;
   quantity: number;
@@ -77,50 +79,55 @@ export type PurchaseOrderDetail = {
 };
 
 const toPurchaseOrder = (raw: any): PurchaseOrder => {
-  console.log('Converting raw purchase order:', raw); // ✅ للتأكد من البيانات الخام
+  console.log('Converting raw purchase order:', raw);
   
-  const converted = {
-    id: raw.purchaseOrderID, // ✅ تأكد من التحويل الصحيح
+  const converted: PurchaseOrder = {
+    id: raw.purchaseOrderID,
     code: raw.purchaseOrderCode,
     referenceDocNumber: raw.referanceDocNumber,
     date1: raw.date1,
     date2: raw.date2,
     warehouseId: raw.warehouseId,
-    warehouse: raw.warehouse ? {
-      id: raw.warehouse.warehouseID,
-      code: raw.warehouse.warehouseCode,
-      name: raw.warehouse.warehouseName,
-      address: raw.warehouse.address,
-      isActive: raw.warehouse.isActive,
-      createdOn: raw.warehouse.createDate,
-      lastModifiedOn: raw.warehouse.lastModifyDate,
-      createUser: raw.warehouse.createUser,
-      lastModifyUser: raw.warehouse.lastModifyUser,
-      createCompany: raw.warehouse.createCompany,
-      createBranch: raw.warehouse.createBranch,
-    } : undefined,
+    warehouse: raw.warehouse
+      ? {
+          id: raw.warehouse.warehouseID,
+          code: raw.warehouse.warehouseCode,
+          name: raw.warehouse.warehouseName,
+          address: raw.warehouse.address,
+          isActive: raw.warehouse.isActive,
+          createdOn: raw.warehouse.createDate,
+          lastModifiedOn: raw.warehouse.lastModifyDate,
+          createUser: raw.warehouse.createUser,
+          lastModifyUser: raw.warehouse.lastModifyUser,
+          createCompany: raw.warehouse.createCompany,
+          createBranch: raw.warehouse.createBranch,
+        }
+      : undefined,
     supplierId: raw.supplierId,
-    supplier: raw.supplier ? {
-      id: raw.supplier.supplierId,
-      code: raw.supplier.supplierCode,
-      name: raw.supplier.supplierName,
-      phone: raw.supplier.phone,
-      address: raw.supplier.address,
-      notes: raw.supplier.notes,
-      isActive: raw.supplier.isActive,
-      createdOn: raw.supplier.createDate,
-      lastModifiedOn: raw.supplier.lastModifyDate,
-      createUser: raw.supplier.createUser,
-      lastModifyUser: raw.supplier.lastModifyUser,
-      createCompany: raw.supplier.createCompany,
-      createBranch: raw.supplier.createBranch,
-    } : undefined,
+    supplier: raw.supplier
+      ? {
+          id: raw.supplier.supplierId,
+          code: raw.supplier.supplierCode,
+          name: raw.supplier.supplierName,
+          phone: raw.supplier.phone,
+          address: raw.supplier.address,
+          notes: raw.supplier.notes,
+          isActive: raw.supplier.isActive,
+          createdOn: raw.supplier.createDate,
+          lastModifiedOn: raw.supplier.lastModifyDate,
+          createUser: raw.supplier.createUser,
+          lastModifyUser: raw.supplier.lastModifyUser,
+          createCompany: raw.supplier.createCompany,
+          createBranch: raw.supplier.createBranch,
+        }
+      : undefined,
     discountPercent: raw.discountPercent,
     discountValue: raw.discountValue,
     taxPercent: raw.taxPercent,
     taxValue: raw.taxValue,
     subTotal: raw.subTotal,
     total: raw.total,
+    status: raw.status,
     details: raw.details?.map(toPurchaseOrderDetail) || [],
     isActive: raw.isActive,
     createdOn: raw.createDate,
@@ -130,19 +137,18 @@ const toPurchaseOrder = (raw: any): PurchaseOrder => {
     createCompany: raw.createCompany,
     createBranch: raw.createBranch,
   };
-  
-  // ✅ تأكد من وجود id
+
   if (!converted.id) {
     console.error('Converted purchase order missing ID:', converted);
   }
-  
   return converted;
 };
 
 const toPurchaseOrderDetail = (raw: any): PurchaseOrderDetail => ({
   id: raw.purchaseOrderDetailID,
   purchaseOrderId: raw.purchaseOrderID,
-  productID: raw.productID, // ✅ تأكد من التحويل الصحيح
+  productID: raw.productID,
+  productPriceID: raw.productPriceId, // ← هنا الإصلاح - كان مفقود
   unitId: raw.unitId,
   unitFactor: raw.unitFactor,
   quantity: raw.quantity,
@@ -160,27 +166,24 @@ const toPurchaseOrderDetail = (raw: any): PurchaseOrderDetail => ({
   lastModifyUser: raw.lastModifyUser,
   createCompany: raw.createCompany,
   createBranch: raw.createBranch,
-  unitName: undefined
+  unitName: raw.unit?.unitName || raw.productPrice?.unit?.unitName || 'وحدة غير محددة'
 });
 
 /* ---------------- API ---------------- */
 
-// جلب جميع أوامر الشراء
 export const getAll = async (): Promise<PurchaseOrder[]> => {
   try {
     const response = await api.get('/GetAllPurchaseOrders');
-    console.log('Raw purchase orders from API:', response.data.data); // ✅ للتأكد من البيانات الخام
-    
+    console.log('Raw purchase orders from API:', response.data.data);
     const converted = response.data.data.map(toPurchaseOrder);
-    console.log('Converted purchase orders:', converted); // ✅ للتأكد من التحويل
-    
+    console.log('Converted purchase orders:', converted);
     return converted;
   } catch (error) {
     console.error('Error fetching purchase orders:', error);
     throw error;
   }
 };
-// جلب أمر شراء واحد
+
 export const getById = async (id: string): Promise<PurchaseOrder> => {
   try {
     const response = await api.get(`/GetPurchaseOrder?id=${id}`);
@@ -191,7 +194,6 @@ export const getById = async (id: string): Promise<PurchaseOrder> => {
   }
 };
 
-// إضافة أمر شراء جديد
 export const add = async (body: PurchaseOrder) => {
   const apiBody = {
     referanceDocNumber: body.referenceDocNumber,
@@ -205,29 +207,46 @@ export const add = async (body: PurchaseOrder) => {
     taxValue: body.taxValue,
     subTotal: body.subTotal,
     total: body.total,
-    details: body.details.map(detail => ({
-      productID: detail.productID, // ✅ تأكد من وجوده
-      unitId: detail.unitId,
-      unitFactor: detail.unitFactor,
-      quantity: detail.quantity,
-      price: detail.price,
-      discountPercent: detail.discountPercent,
-      discountValue: detail.discountValue,
-      taxPercent: detail.taxPercent,
-      taxValue: detail.taxValue,
-      subTotal: detail.subTotal,
-      total: detail.total
-    }))
+    status: body.status,
+    details: body.details.map((detail, index) => {
+      // التحقق من البيانات المطلوبة
+      if (!detail.productID) {
+        console.error(`Detail ${index} missing productID:`, detail);
+        throw new Error(`Detail ${index} is missing productID`);
+      }
+      if (!detail.productPriceID) {
+        console.error(`Detail ${index} missing productPriceID:`, detail);
+        throw new Error(`Detail ${index} is missing ProductPriceID`);
+      }
+
+      return {
+        productID: detail.productID,
+        ProductPriceID: detail.productPriceID, // ← هنا الإصلاح المهم
+        unitId: detail.unitId,
+        unitFactor: detail.unitFactor,
+        quantity: detail.quantity,
+        price: detail.price,
+        discountPercent: detail.discountPercent,
+        discountValue: detail.discountValue,
+        taxPercent: detail.taxPercent,
+        taxValue: detail.taxValue,
+        subTotal: detail.subTotal,
+        total: detail.total
+      };
+    })
   };
 
-  // ✅ إضافة logging للتأكد من البيانات قبل الإرسال
-  console.log('API Body before sending:', JSON.stringify(apiBody, null, 2));
+  console.log('API Body before sending (ADD):', JSON.stringify(apiBody, null, 2));
   
-  // ✅ تأكد من وجود productID في كل detail
-  apiBody.details.forEach((detail, index) => {
-    if (!detail.productID) {
-      console.error(`Detail ${index} missing productID:`, detail);
-      throw new Error(`Detail ${index} is missing productID`);
+  // التحقق النهائي قبل الإرسال
+  apiBody.details.forEach((d, idx) => {
+    if (!d.productID) {
+      console.error(`Detail ${idx} missing productID:`, d);
+      throw new Error(`Detail ${idx} is missing productID`);
+    }
+    if (!d.ProductPriceID) {
+      console.error(`Detail ${idx} missing ProductPriceID:`, d);
+      throw new Error(`Detail ${idx} is missing ProductPriceID`);
     }
   });
 
@@ -235,7 +254,6 @@ export const add = async (body: PurchaseOrder) => {
   return toPurchaseOrder(data.data);
 };
 
-// تحديث أمر شراء
 export const update = async (body: PurchaseOrder & { id: string }) => {
   const apiBody = {
     purchaseOrderID: body.id,
@@ -250,21 +268,61 @@ export const update = async (body: PurchaseOrder & { id: string }) => {
     taxValue: body.taxValue,
     subTotal: body.subTotal,
     total: body.total,
-    details: body.details.map(detail => ({
-      purchaseOrderDetailID: detail.id || "",
-      productID: detail.productID,
-      unitId: detail.unitId,
-      unitFactor: detail.unitFactor,
-      quantity: detail.quantity,
-      price: detail.price,
-      discountPercent: detail.discountPercent,
-      discountValue: detail.discountValue,
-      taxPercent: detail.taxPercent,
-      taxValue: detail.taxValue,
-      subTotal: detail.subTotal,
-      total: detail.total
-    }))
+    status: body.status,
+    details: body.details.map((detail, index) => {
+      // التحقق من البيانات المطلوبة
+      if (!detail.productID) {
+        console.error(`Detail ${index} missing productID:`, detail);
+        throw new Error(`Detail ${index} is missing productID`);
+      }
+      if (!detail.productPriceID) {
+        console.error(`Detail ${index} missing productPriceID:`, detail);
+        throw new Error(`Detail ${index} is missing ProductPriceID`);
+      }
+
+      const detailData: any = {
+        productID: detail.productID,
+        ProductPriceID: detail.productPriceID,
+        unitId: detail.unitId,
+        unitFactor: detail.unitFactor,
+        quantity: detail.quantity,
+        price: detail.price,
+        discountPercent: detail.discountPercent,
+        discountValue: detail.discountValue,
+        taxPercent: detail.taxPercent,
+        taxValue: detail.taxValue,
+        subTotal: detail.subTotal,
+        total: detail.total
+      };
+
+      // ← هنا الإصلاح المهم: إضافة purchaseOrderDetailID للسطور الموجودة
+      if (detail.id && detail.id.trim() !== '') {
+        detailData.purchaseOrderDetailID = detail.id;
+        detailData.purchaseOrderID = body.id; // إضافة purchaseOrderID أيضاً
+        console.log(`Adding IDs for existing detail ${index}:`, {
+          purchaseOrderDetailID: detail.id,
+          purchaseOrderID: body.id
+        });
+      } else {
+        // سطر جديد - لا نضيف purchaseOrderDetailID
+        console.log(`New detail ${index} - no IDs added`);
+      }
+
+      return detailData;
+    })
   };
+
+  console.log('API Body before sending (UPDATE):', JSON.stringify(apiBody, null, 2));
+  
+  // التحقق النهائي
+  apiBody.details.forEach((d, idx) => {
+    console.log(`Detail ${idx} final check:`, {
+      hasProductID: !!d.productID,
+      hasProductPriceID: !!d.ProductPriceID,
+      hasPurchaseOrderDetailID: !!d.purchaseOrderDetailID,
+      hasPurchaseOrderID: !!d.purchaseOrderID
+    });
+  });
 
   const { data } = await api.post('/UpdatePurchaseOrder', apiBody);
   return toPurchaseOrder(data.data);

@@ -29,20 +29,13 @@ interface Props {
   onSelect: (productPrice: ProductPrice) => void;
 }
 
-// Custom hook for debounced value
+// Debounce hook to avoid querying on every keystroke
 const useDebounce = (value: string, delay: number) => {
   const [debouncedValue, setDebouncedValue] = useState(value);
-
   useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedValue(value);
-    }, delay);
-
-    return () => {
-      clearTimeout(handler);
-    };
+    const handler = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(handler);
   }, [value, delay]);
-
   return debouncedValue;
 };
 
@@ -50,39 +43,32 @@ const ProductPriceSearchDialog: React.FC<Props> = ({ open, onClose, onSelect }) 
   const { t } = useTranslation();
   const searchInputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
-  
-  // البحث
+
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedSearchQuery = useDebounce(searchQuery, 400);
-  
-  // البيانات
+
   const [allPrices, setAllPrices] = useState<ProductPrice[]>([]);
   const [displayItems, setDisplayItems] = useState<ProductPrice[]>([]);
-  
-  // حالة التحميل
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [isSearchMode, setIsSearchMode] = useState(false);
-  
-  // Navigation
+
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [scannerOpen, setScannerOpen] = useState(false);
 
-  // Focus على البحث عند فتح المودال
+  // Focus on the search field when dialog opens
   useEffect(() => {
     if (open) {
       const timer = setTimeout(() => {
-        if (searchInputRef.current) {
-          searchInputRef.current.focus();
-        }
+        searchInputRef.current?.focus();
       }, 200);
       return () => clearTimeout(timer);
     }
   }, [open]);
 
-  // إعادة تعيين البيانات عند الإغلاق
+  // Reset state when dialog closes
   useEffect(() => {
     if (!open) {
       setSearchQuery('');
@@ -95,14 +81,14 @@ const ProductPriceSearchDialog: React.FC<Props> = ({ open, onClose, onSelect }) 
     }
   }, [open]);
 
-  // تحميل المنتجات الأولية
+  // Initial load of products
   useEffect(() => {
     if (open && !isSearchMode && allPrices.length === 0) {
       loadInitialProducts();
     }
-  }, [open, isSearchMode]);
+  }, [open, isSearchMode, allPrices.length]);
 
-  // البحث مع debounce
+  // Debounced search logic
   useEffect(() => {
     if (debouncedSearchQuery.trim()) {
       handleDebouncedSearch(debouncedSearchQuery);
@@ -122,8 +108,8 @@ const ProductPriceSearchDialog: React.FC<Props> = ({ open, onClose, onSelect }) 
       setHasMore(result.pageNumber < result.pageCount);
       setCurrentPage(1);
       setSelectedIndex(0);
-    } catch (error) {
-      console.error('Error loading initial products:', error);
+    } catch (err) {
+      console.error('Error loading initial products:', err);
     } finally {
       setLoading(false);
     }
@@ -131,85 +117,79 @@ const ProductPriceSearchDialog: React.FC<Props> = ({ open, onClose, onSelect }) 
 
   const loadMoreProducts = useCallback(async () => {
     if (loadingMore || !hasMore || isSearchMode) return;
-    
     try {
       setLoadingMore(true);
       const result = await productsApi.searchProductPrices('', currentPage + 1, 20);
-      
       setAllPrices(prev => [...prev, ...result.data]);
       setDisplayItems(prev => [...prev, ...result.data]);
       setHasMore(result.pageNumber < result.pageCount);
       setCurrentPage(result.pageNumber);
-    } catch (error) {
-      console.error('Error loading more products:', error);
+    } catch (err) {
+      console.error('Error loading more products:', err);
     } finally {
       setLoadingMore(false);
     }
   }, [currentPage, hasMore, isSearchMode, loadingMore]);
 
-  const handleDebouncedSearch = async (query: string) => {
+  const handleDebouncedSearch = async (q: string) => {
     try {
       setLoading(true);
       setIsSearchMode(true);
-      const result = await productsApi.searchProductPrices(query, 1, 50);
+      const result = await productsApi.searchProductPrices(q, 1, 50);
       setDisplayItems(result.data);
       setSelectedIndex(0);
-    } catch (error) {
-      console.error('Search error:', error);
+    } catch (err) {
+      console.error('Search error:', err);
       setDisplayItems([]);
     } finally {
       setLoading(false);
     }
   };
 
-  // Infinite scroll handler
-  const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
-    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
-    if (scrollHeight - scrollTop - clientHeight < 100) {
-      loadMoreProducts();
-    }
-  }, [loadMoreProducts]);
-
-  const handleScanResult = (barcode: string) => {
-    setSearchQuery(barcode);
-    setScannerOpen(false);
-  };
-
-  const handleProductPriceSelect = (item: ProductPrice) => {
-    if (!item.productId) {
-      console.error('ProductPrice missing productId:', item);
-      return;
-    }
+  // دالة محسنة للـ scroll - الحل الأساسي للمشكلة
+  const scrollToItem = useCallback((index: number) => {
+    if (!listRef.current) return;
     
-    onSelect(item);
-    onClose();
-  };
+    const listElement = listRef.current;
+    const itemElement = listElement.children[0]?.children[index] as HTMLElement; // الوصول للعنصر الصحيح داخل الـ List
+    
+    if (itemElement) {
+      // استخدام scrollIntoView مع خيارات محددة
+      itemElement.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest', // هذا هو المهم - يمنع القفز للأعلى أو الأسفل
+        inline: 'nearest'
+      });
+    }
+  }, []);
 
-  // Navigation بالأسهم والـ Enter - محسن
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  // Arrow key handling on the search input, without ever losing focus
+  const handleSearchKeyDown = (e: React.KeyboardEvent) => {
     if (displayItems.length === 0) return;
 
     switch (e.key) {
       case 'ArrowDown':
         e.preventDefault();
         setSelectedIndex(prev => {
-          const newIndex = Math.min(prev + 1, displayItems.length - 1);
-          scrollToItem(newIndex);
-          return newIndex;
+          const nxt = Math.min(prev + 1, displayItems.length - 1);
+          // تأخير بسيط للتأكد من تحديث الـ state أولاً
+          setTimeout(() => scrollToItem(nxt), 0);
+          return nxt;
         });
         break;
       case 'ArrowUp':
         e.preventDefault();
         setSelectedIndex(prev => {
-          const newIndex = Math.max(prev - 1, 0);
-          scrollToItem(newIndex);
-          return newIndex;
+          const nxt = Math.max(prev - 1, 0);
+          // تأخير بسيط للتأكد من تحديث الـ state أولاً
+          setTimeout(() => scrollToItem(nxt), 0);
+          return nxt;
         });
         break;
       case 'Enter':
         e.preventDefault();
         if (displayItems[selectedIndex]) {
-          handleProductPriceSelect(displayItems[selectedIndex]);
+          handleSelect(displayItems[selectedIndex]);
         }
         break;
       case 'Escape':
@@ -219,46 +199,45 @@ const ProductPriceSearchDialog: React.FC<Props> = ({ open, onClose, onSelect }) 
     }
   };
 
-  // ✅ إصلاح scroll للعنصر المحدد - مضبوط ومحدود
-  const scrollToItem = (index: number) => {
-    const listElement = listRef.current;
-    if (listElement) {
-      const itemElement = listElement.children[index] as HTMLElement;
-      if (itemElement) {
-        const listRect = listElement.getBoundingClientRect();
-        const itemRect = itemElement.getBoundingClientRect();
-        
-        const itemHeight = itemRect.height;
-        const listHeight = listRect.height;
-        const itemTop = itemElement.offsetTop;
-        
-        // ✅ scroll محدود ومضبوط - لا يذهب لآخر الصفحة
-        if (itemRect.bottom > listRect.bottom) {
-          // العنصر أسفل المنطقة المرئية - scroll لأسفل بمقدار محدود
-          const newScrollTop = itemTop - listHeight + itemHeight + 10;
-          listElement.scrollTo({ top: Math.max(0, newScrollTop), behavior: 'smooth' });
-        } else if (itemRect.top < listRect.top) {
-          // العنصر أعلى المنطقة المرئية - scroll لأعلى بمقدار محدود
-          const newScrollTop = itemTop - 10;
-          listElement.scrollTo({ top: Math.max(0, newScrollTop), behavior: 'smooth' });
-        }
-      }
-    }
-  };
-
-  // معالجة تغيير النص بدون فقدان Focus
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setSearchQuery(value);
+    setSearchQuery(e.target.value);
     setSelectedIndex(0);
   };
 
-  // تحديث الـ selected index عند تغيير النتائج
+  // Ensure selectedIndex is reset if items change
   useEffect(() => {
     if (displayItems.length > 0 && selectedIndex >= displayItems.length) {
       setSelectedIndex(0);
     }
   }, [displayItems.length, selectedIndex]);
+
+  // useEffect لمراقبة تغيير selectedIndex
+  useEffect(() => {
+    if (selectedIndex >= 0 && displayItems.length > 0) {
+      scrollToItem(selectedIndex);
+    }
+  }, [selectedIndex, scrollToItem, displayItems.length]);
+
+  const handleSelect = (item: ProductPrice) => {
+    if (!item.productId) {
+      console.error('ProductPrice missing productId:', item);
+      return;
+    }
+    onSelect(item);
+    onClose();
+  };
+
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+    if (scrollHeight - scrollTop - clientHeight < 100) {
+      loadMoreProducts();
+    }
+  };
+
+  const handleScanResult = (barcode: string) => {
+    setSearchQuery(barcode);
+    setScannerOpen(false);
+  };
 
   return (
     <>
@@ -273,7 +252,7 @@ const ProductPriceSearchDialog: React.FC<Props> = ({ open, onClose, onSelect }) 
         </DialogTitle>
 
         <DialogContent sx={{ height: '70vh', display: 'flex', flexDirection: 'column' }}>
-          {/* شريط البحث */}
+          {/* Search field */}
           <Box mb={1}>
             <TextField
               inputRef={searchInputRef}
@@ -281,7 +260,7 @@ const ProductPriceSearchDialog: React.FC<Props> = ({ open, onClose, onSelect }) 
               placeholder={t('products.searchPricesPlaceholder')}
               value={searchQuery}
               onChange={handleInputChange}
-              onKeyDown={handleKeyDown}
+              onKeyDown={handleSearchKeyDown}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -305,7 +284,7 @@ const ProductPriceSearchDialog: React.FC<Props> = ({ open, onClose, onSelect }) 
             />
           </Box>
 
-          {/* معلومات النتائج */}
+          {/* Results info */}
           <Box mb={1}>
             <Typography variant="body2" color="text.secondary">
               {t('products.searchResults')}: {displayItems.length}
@@ -322,15 +301,17 @@ const ProductPriceSearchDialog: React.FC<Props> = ({ open, onClose, onSelect }) 
             </Typography>
           </Box>
 
-          {/* قائمة النتائج - محسنة ومضغوطة */}
-          <Box 
+          {/* Results list */}
+          <Box
             ref={listRef}
-            sx={{ 
-              flex: 1, 
+            sx={{
+              flex: 1,
               overflow: 'auto',
               border: 1,
               borderColor: 'divider',
-              borderRadius: 1
+              borderRadius: 1,
+              // إضافة scroll behavior محسن
+              scrollBehavior: 'smooth'
             }}
             onScroll={handleScroll}
           >
@@ -342,7 +323,9 @@ const ProductPriceSearchDialog: React.FC<Props> = ({ open, onClose, onSelect }) 
             ) : displayItems.length === 0 ? (
               <Box textAlign="center" py={4}>
                 <Typography color="text.secondary">
-                  {searchQuery ? t('products.noSearchResults') : t('products.startTypingPrices')}
+                  {searchQuery
+                    ? t('products.noSearchResults')
+                    : t('products.startTypingPrices')}
                 </Typography>
               </Box>
             ) : (
@@ -350,44 +333,73 @@ const ProductPriceSearchDialog: React.FC<Props> = ({ open, onClose, onSelect }) 
                 <List dense sx={{ p: 0 }}>
                   {displayItems.map((price, index) => (
                     <ListItem key={`${price.id}-${index}`} disablePadding>
-                      <ListItemButton 
-                        onClick={() => handleProductPriceSelect(price)}
+                      <ListItemButton
+                        onClick={() => handleSelect(price)}
                         selected={index === selectedIndex}
-                        sx={{ 
+                        onMouseEnter={() => setSelectedIndex(index)} // تحديث الاختيار عند hover
+                        sx={{
                           border: index === selectedIndex ? 2 : 1,
-                          borderColor: index === selectedIndex ? 'primary.main' : 'divider',
-                          borderRadius: 1, 
+                          borderColor:
+                            index === selectedIndex ? 'primary.main' : 'divider',
+                          borderRadius: 1,
                           mb: 0.5,
                           mx: 1,
-                          backgroundColor: index === selectedIndex ? 'action.selected' : 'transparent',
+                          backgroundColor:
+                            index === selectedIndex
+                              ? 'action.selected'
+                              : 'transparent',
                           '&:hover': {
                             backgroundColor: 'action.hover',
                             borderColor: 'primary.main'
                           },
-                          py: 0.5
+                          py: 0.5,
+                          // إضافة ارتفاع ثابت للعناصر لتحسين الـ scroll
+                          minHeight: 80
                         }}
                       >
                         <ListItemText
                           primary={
                             <Box>
-                              <Typography variant="subtitle2" color="primary" sx={{ mb: 0.5, fontSize: '0.9rem' }}>
-                                {price.productName} - {price.unitName}
+                              <Typography
+                                variant="subtitle2"
+                                color="primary"
+                                sx={{ mb: 0.5, fontSize: '0.9rem' }}
+                              >
+                                {price.productName} – {price.unitName}
                               </Typography>
                               <Box display="flex" gap={2} flexWrap="wrap" alignItems="center">
-                                <Typography variant="caption" sx={{ fontSize: '0.75rem' }}>
+                                <Typography
+                                  variant="caption"
+                                  sx={{ fontSize: '0.75rem' }}
+                                >
                                   {t('products.barcode')}: {price.barcode || '-'}
                                 </Typography>
-                                <Typography variant="caption" sx={{ fontSize: '0.75rem' }}>
+                                <Typography
+                                  variant="caption"
+                                  sx={{ fontSize: '0.75rem' }}
+                                >
                                   {t('products.unitFactor')}: {price.unitFactor}
                                 </Typography>
-                                <Typography variant="caption" sx={{ fontSize: '0.75rem' }}>
-                                  {t('products.cost')}: {price.cost?.toFixed(2) || '0.00'}
+                                <Typography
+                                  variant="caption"
+                                  sx={{ fontSize: '0.75rem' }}
+                                >
+                                  {t('products.cost')}:{' '}
+                                  {price.cost?.toFixed(2) || '0.00'}
                                 </Typography>
-                                <Typography variant="caption" color="success.main" sx={{ fontSize: '0.75rem', fontWeight: 'bold' }}>
+                                <Typography
+                                  variant="caption"
+                                  color="success.main"
+                                  sx={{ fontSize: '0.75rem', fontWeight: 'bold' }}
+                                >
                                   {t('products.salePrice')}: {price.price.toFixed(2)}
                                 </Typography>
                                 <Chip
-                                  label={price.isActive ? t('products.active') : t('products.inactive')}
+                                  label={
+                                    price.isActive
+                                      ? t('products.active')
+                                      : t('products.inactive')
+                                  }
                                   color={price.isActive ? 'success' : 'default'}
                                   size="small"
                                   sx={{ fontSize: '0.65rem', height: '18px' }}
@@ -400,7 +412,7 @@ const ProductPriceSearchDialog: React.FC<Props> = ({ open, onClose, onSelect }) 
                     </ListItem>
                   ))}
                 </List>
-                
+
                 {/* Loading more indicator */}
                 {loadingMore && (
                   <Box textAlign="center" py={1}>
@@ -410,8 +422,8 @@ const ProductPriceSearchDialog: React.FC<Props> = ({ open, onClose, onSelect }) 
                     </Typography>
                   </Box>
                 )}
-                
-                {/* End message */}
+
+                {/* All results loaded */}
                 {!hasMore && !isSearchMode && displayItems.length > 0 && (
                   <Box textAlign="center" py={1}>
                     <Typography variant="caption" color="text.secondary">
@@ -423,20 +435,21 @@ const ProductPriceSearchDialog: React.FC<Props> = ({ open, onClose, onSelect }) 
             )}
           </Box>
 
-          {/* تعليمات التنقل */}
+          {/* Navigation hints */}
           {displayItems.length > 0 && (
             <Box mt={1} sx={{ backgroundColor: 'background.default', p: 0.5, borderRadius: 1 }}>
               <Typography variant="caption" color="text.secondary">
-                <IconArrowUp size={14} style={{ verticalAlign: 'middle' }} /> / <IconArrowDown size={14} style={{ verticalAlign: 'middle' }} /> {t('products.navigateWithArrows')} | Enter {t('products.selectWithEnter')} | Esc للإغلاق
+                <IconArrowUp size={14} style={{ verticalAlign: 'middle' }} /> /{' '}
+                <IconArrowDown size={14} style={{ verticalAlign: 'middle' }} />{' '}
+                {t('products.navigateWithArrows')} | {t('products.selectWithEnter')} |{' '}
+                Esc {t('common.close')}
               </Typography>
             </Box>
           )}
         </DialogContent>
 
         <DialogActions>
-          <Button onClick={onClose}>
-            {t('common.cancel')}
-          </Button>
+          <Button onClick={onClose}>{t('common.cancel')}</Button>
         </DialogActions>
       </Dialog>
 

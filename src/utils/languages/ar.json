@@ -220,7 +220,14 @@
     "noItems": "لا توجد أصناف",
     "saveAndNew": "حفظ وجديد",
     "product": "المنتج",
-    "unit": "الوحدة"
+    "unit": "الوحدة",
+    "code": "الرمز",
+    "itemsCount": "عدد العناصر",
+    "status": "الحالة",
+    "pending": "قيد الانتظار",
+    "submitted": "مُرسل",
+    "active": "نشط",
+    "inactive": "غير نشط"
   },
   "common": {
     "search": "بحث",
@@ -233,7 +240,9 @@
     "back": "رجوع",
     "saveError": "خطأ في الحفظ",
     "inLine": "في السطر",
-    "searching": "جاري البحث"
+    "searching": "جاري البحث",
+    "view": "عرض"
+    
   },
   "warehouses": {
     "title": "المخازن",

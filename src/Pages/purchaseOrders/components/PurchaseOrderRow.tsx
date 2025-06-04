@@ -7,7 +7,7 @@ import {
   Box,
   Chip
 } from '@mui/material';
-import { IconEdit } from '@tabler/icons-react';
+import { IconEdit, IconEye } from '@tabler/icons-react';
 import { PurchaseOrder } from 'src/utils/api/purchaseOrdersApi';
 import { useTranslation } from 'react-i18next';
 
@@ -18,6 +18,17 @@ interface Props {
 
 const PurchaseOrderRow: React.FC<Props> = ({ purchaseOrder, onEdit }) => {
   const { t } = useTranslation();
+
+  const renderStatus = (status: number | undefined) => {
+    switch (status) {
+      case 1:
+        return t('purchaseOrders.pending');
+      case 3:
+        return t('purchaseOrders.submitted');
+      default:
+        return '-';
+    }
+  };
 
   return (
     <Card sx={{ mb: 2 }}>
@@ -48,15 +59,18 @@ const PurchaseOrderRow: React.FC<Props> = ({ purchaseOrder, onEdit }) => {
               </Typography>
             </Box>
             <Chip
-              label={purchaseOrder.isActive ? t('purchaseOrders.active') : t('purchaseOrders.inactive')}
-              color={purchaseOrder.isActive ? 'success' : 'default'}
+              label={renderStatus(purchaseOrder.status)}
+              color={purchaseOrder.status === 1 ? 'warning' : purchaseOrder.status === 3 ? 'primary' : 'default'}
               size="small"
               sx={{ alignSelf: 'flex-start' }}
             />
           </Stack>
-          
+
+          {/*
+            إذا كان status === 3 → iconEye (view)، وإلا iconEdit.
+          */}
           <IconButton onClick={onEdit}>
-            <IconEdit size={18} />
+            {purchaseOrder.status === 3 ? <IconEye size={18} /> : <IconEdit size={18} />}
           </IconButton>
         </Stack>
       </CardContent>

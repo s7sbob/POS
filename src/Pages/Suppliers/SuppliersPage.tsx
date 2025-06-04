@@ -106,7 +106,7 @@ const SuppliersPage: React.FC = () => {
 
   /* ───── UI ───── */
   return (
-    <Container maxWidth="lg">
+    <Container maxWidth="xl">
       <PageHeader />
       <ActionsBar
         query={query}

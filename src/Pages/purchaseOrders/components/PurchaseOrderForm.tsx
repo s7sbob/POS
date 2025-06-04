@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useLayoutEffect, useCallback } from 'react';
 import {
   Container,
   Grid,
@@ -30,10 +30,10 @@ import {
   Alert,
   Snackbar
 } from '@mui/material';
-import { 
-  IconDeviceFloppy, 
-  IconPlus, 
-  IconTrash, 
+import {
+  IconDeviceFloppy,
+  IconPlus,
+  IconTrash,
   IconArrowLeft,
   IconHome,
   IconSearch,
@@ -51,20 +51,17 @@ import SearchableSelect from './SearchableSelect';
 import { ProductPrice } from 'src/utils/api/purchaseProductsApi';
 import * as productsApi from 'src/utils/api/purchaseProductsApi';
 
-// Custom hook for debounced value
+// Debounce hook
 const useDebounce = (value: string, delay: number) => {
   const [debouncedValue, setDebouncedValue] = useState(value);
-
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedValue(value);
     }, delay);
-
     return () => {
       clearTimeout(handler);
     };
   }, [value, delay]);
-
   return debouncedValue;
 };
 
@@ -80,10 +77,11 @@ type FormValues = {
   taxValue: number;
   subTotal: number;
   total: number;
+  status: number;
   details: Array<{
-    id?: string;
+    purchaseOrderDetailID?: string;
     productId: string;
-    productPriceId?: string;
+    productPriceId: string;
     productName?: string;
     unitId: string;
     unitName?: string;
@@ -104,7 +102,7 @@ interface Props {
   initialValues?: PurchaseOrder;
   suppliers: Supplier[];
   warehouses: Warehouse[];
-  onSubmit: (data: any, saveAction: 'save' | 'saveAndNew') => Promise<void>;
+  onSubmit: (data: any) => Promise<void>;
 }
 
 const PurchaseOrderForm: React.FC<Props> = ({
@@ -114,28 +112,28 @@ const PurchaseOrderForm: React.FC<Props> = ({
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const [productSearchOpen, setProductSearchOpen] = React.useState(false);
-  const [lastAddedIndex, setLastAddedIndex] = React.useState<number | null>(null);
-  
-  // Quick search states
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [productSearchOpen, setProductSearchOpen] = useState(false);
+  const [lastAddedIndex, setLastAddedIndex] = useState<number | null>(null);
+
+  // Quick-search states
   const [quickSearchQuery, setQuickSearchQuery] = useState('');
   const [quickSearchResults, setQuickSearchResults] = useState<ProductPrice[]>([]);
   const [quickSearchOpen, setQuickSearchOpen] = useState(false);
   const [, setQuickSearchLoading] = useState(false);
   const [quickSearchSelectedIndex, setQuickSearchSelectedIndex] = useState(0);
   const [scannerOpen, setScannerOpen] = useState(false);
-  
+
   // Alert states
   const [alertMessage, setAlertMessage] = useState('');
   const [alertSeverity, setAlertSeverity] = useState<'error' | 'warning' | 'info' | 'success'>('error');
 
-  // مراجع للـ inputs
+  // Ref for quick search input
   const quickSearchInputRef = useRef<HTMLInputElement>(null);
   const quickSearchRef = useRef<HTMLDivElement>(null);
-
   const debouncedQuickSearch = useDebounce(quickSearchQuery, 300);
 
+  // Default values
   const defaults: FormValues = {
     referenceDocNumber: `PO-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`,
     date1: new Date().toISOString().split('T')[0],
@@ -148,6 +146,7 @@ const PurchaseOrderForm: React.FC<Props> = ({
     taxValue: 0,
     subTotal: 0,
     total: 0,
+    status: 1,
     details: []
   };
 
@@ -155,7 +154,7 @@ const PurchaseOrderForm: React.FC<Props> = ({
     defaultValues: defaults
   });
 
-  const { fields, append, remove } = useFieldArray({
+  const { fields, remove } = useFieldArray({
     control,
     name: 'details'
   });
@@ -163,29 +162,67 @@ const PurchaseOrderForm: React.FC<Props> = ({
   const watchedDetails = watch('details');
   const watchedDiscountPercent = watch('discountPercent');
   const watchedTaxPercent = watch('taxPercent');
+  const watchedTotal = watch('total');
+  const watchedStatus = watch('status');
 
-  // Quick search effect
-  useEffect(() => {
-    if (debouncedQuickSearch.trim()) {
-      handleQuickSearch(debouncedQuickSearch);
-    } else {
-      setQuickSearchResults([]);
-      setQuickSearchOpen(false);
-    }
-  }, [debouncedQuickSearch]);
-
-  // ✅ إصلاح 6: Focus على البحث السريع عند تحميل الصفحة
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (quickSearchInputRef.current) {
-        quickSearchInputRef.current.focus();
+  // دالة للعودة للـ Quick Search
+const focusQuickSearch = useCallback(() => {
+  setTimeout(() => {
+    if (quickSearchInputRef.current) {
+      const inputElement = quickSearchInputRef.current.querySelector('input') as HTMLInputElement;
+      if (inputElement) {
+        inputElement.focus();
+        inputElement.select(); // هيحدد كل النص
       }
-    }, 200);
-    return () => clearTimeout(timer);
-  }, []);
+    }
+  }, 200);
+}, []);
 
-  // Focus على الكمية بعد إضافة منتج
-  React.useEffect(() => {
+
+   const handleFieldKeyDown = useCallback((e: React.KeyboardEvent, nextFieldName?: string) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      
+      if (nextFieldName) {
+        // البحث عن الحقل التالي
+        setTimeout(() => {
+          const nextInput = document.querySelector(`input[name="${nextFieldName}"]`) as HTMLInputElement;
+          if (nextInput) {
+            nextInput.focus();
+            nextInput.select();
+          }
+        }, 50);
+      } else {
+        // العودة للـ Quick Search
+        focusQuickSearch();
+      }
+    }
+  }, [focusQuickSearch]);
+
+
+  // دالة للتنقل بين الحقول
+
+  // Upon initial render in "add" mode, focus quick-search
+  useLayoutEffect(() => {
+    if (mode === 'add' && quickSearchInputRef.current) {
+      quickSearchInputRef.current.focus();
+    }
+  }, [mode]);
+
+  // Fallback if ref isn't attached yet
+  useEffect(() => {
+    if (mode === 'add' && quickSearchInputRef.current === null) {
+      const timer = setTimeout(() => {
+        if (quickSearchInputRef.current) {
+          quickSearchInputRef.current.focus();
+        }
+      }, 200);
+      return () => clearTimeout(timer);
+    }
+  }, [mode]);
+
+  // After adding a product, focus its quantity input
+  useEffect(() => {
     if (lastAddedIndex !== null) {
       const timer = setTimeout(() => {
         const quantityInput = document.querySelector(
@@ -201,29 +238,29 @@ const PurchaseOrderForm: React.FC<Props> = ({
     }
   }, [lastAddedIndex]);
 
-  // حساب المجاميع تلقائياً
-  React.useEffect(() => {
+  // Recalculate totals whenever details, discountPercent, or taxPercent change
+  useEffect(() => {
     const calculateTotals = () => {
       let subTotal = 0;
 
       watchedDetails.forEach((detail, index) => {
-        const lineSubTotal = detail.quantity * detail.price;
-        const lineDiscountValue = (lineSubTotal * detail.discountPercent) / 100;
-        const lineAfterDiscount = lineSubTotal - lineDiscountValue;
-        const lineTaxValue = (lineAfterDiscount * detail.taxPercent) / 100;
-        const lineTotal = lineAfterDiscount + lineTaxValue;
+        const lineSubTotal = detail.quantity * detail.price * detail.unitFactor;
+        const lineDiscountValue = lineSubTotal * (detail.discountPercent / 100);
+        const afterDiscount = lineSubTotal - lineDiscountValue;
+        const lineTaxValue = afterDiscount * (detail.taxPercent / 100);
+        const lineTotal = afterDiscount + lineTaxValue;
 
         setValue(`details.${index}.subTotal`, lineSubTotal);
         setValue(`details.${index}.discountValue`, lineDiscountValue);
         setValue(`details.${index}.taxValue`, lineTaxValue);
         setValue(`details.${index}.total`, lineTotal);
 
-        subTotal += lineTotal;
+        subTotal += lineSubTotal;
       });
 
-      const totalDiscountValue = (subTotal * watchedDiscountPercent) / 100;
+      const totalDiscountValue = subTotal * (watchedDiscountPercent / 100);
       const afterDiscount = subTotal - totalDiscountValue;
-      const totalTaxValue = (afterDiscount * watchedTaxPercent) / 100;
+      const totalTaxValue = afterDiscount * (watchedTaxPercent / 100);
       const total = afterDiscount + totalTaxValue;
 
       setValue('subTotal', subTotal);
@@ -235,25 +272,46 @@ const PurchaseOrderForm: React.FC<Props> = ({
     calculateTotals();
   }, [watchedDetails, watchedDiscountPercent, watchedTaxPercent, setValue]);
 
-  React.useEffect(() => {
-    if (mode === 'add') {
-      reset(defaults);
-    } else if (initialValues) {
-      const convertedDetails = initialValues.details.map(d => ({
-        id: d.purchaseOrderId || d.id,
-        productId: d.productID,
-        unitId: d.unitId,
-        unitName: d.unitName,
-        unitFactor: d.unitFactor,
-        quantity: d.quantity,
-        price: d.price,
-        discountPercent: d.discountPercent,
-        discountValue: d.discountValue,
-        taxPercent: d.taxPercent,
-        taxValue: d.taxValue,
-        subTotal: d.subTotal,
-        total: d.total
-      }));
+
+  useEffect(() => {
+  if (mode === 'add') {
+    setTimeout(() => {
+      focusQuickSearch();
+    }, 500);
+  }
+}, [mode, focusQuickSearch]);
+
+
+  // Populate form in "edit" mode, or reset in "add" mode
+  useEffect(() => {
+    if (mode === 'edit' && initialValues) {
+      console.log('Initial values from API:', initialValues);
+      console.log('Details from API:', initialValues.details);
+      
+      const convertedDetails = initialValues.details.map((d, index) => {
+        console.log(`Converting detail ${index}:`, d);
+        const converted = {
+          purchaseOrderDetailID: d.id || '',
+          productId: d.productID,
+          productPriceId: d.productPriceID || '',
+          productName: d.unitName || 'منتج غير محدد',
+          unitId: d.unitId,
+          unitName: d.unitName,
+          unitFactor: d.unitFactor,
+          quantity: d.quantity,
+          price: d.price,
+          discountPercent: d.discountPercent,
+          discountValue: d.discountValue,
+          taxPercent: d.taxPercent,
+          taxValue: d.taxValue,
+          subTotal: d.subTotal,
+          total: d.total
+        };
+        console.log(`Converted detail ${index}:`, converted);
+        return converted;
+      });
+
+      console.log('All converted details:', convertedDetails);
 
       reset({
         referenceDocNumber: initialValues.referenceDocNumber,
@@ -267,12 +325,24 @@ const PurchaseOrderForm: React.FC<Props> = ({
         taxValue: initialValues.taxValue,
         subTotal: initialValues.subTotal,
         total: initialValues.total,
+        status: initialValues.status,
         details: convertedDetails
       });
+    } else if (mode === 'add') {
+      reset(defaults);
     }
   }, [mode, initialValues, reset, t]);
 
-  // Quick search handler
+  // Handle debounced quick-search
+  useEffect(() => {
+    if (debouncedQuickSearch.trim()) {
+      handleQuickSearch(debouncedQuickSearch);
+    } else {
+      setQuickSearchResults([]);
+      setQuickSearchOpen(false);
+    }
+  }, [debouncedQuickSearch]);
+
   const handleQuickSearch = async (query: string) => {
     try {
       setQuickSearchLoading(true);
@@ -289,7 +359,7 @@ const PurchaseOrderForm: React.FC<Props> = ({
     }
   };
 
-  // Handle barcode scan
+  // Handle barcode scan result
   const handleBarcodeScanned = async (barcode: string) => {
     try {
       const result = await productsApi.searchProductPrices(barcode, 1, 1);
@@ -309,10 +379,11 @@ const PurchaseOrderForm: React.FC<Props> = ({
     setScannerOpen(false);
   };
 
-  // ✅ إصلاح 4: Add product to form مع العودة للبحث السريع
+  // Add a product from quick-search or barcode into the form's details
   const addProductToForm = (productPrice: ProductPrice) => {
-    const newIndex = fields.length;
-    append({
+    console.log('Adding product to form:', productPrice);
+    
+    const newItem = {
       productId: productPrice.productId,
       productPriceId: productPrice.id,
       productName: productPrice.productName,
@@ -327,13 +398,16 @@ const PurchaseOrderForm: React.FC<Props> = ({
       taxValue: 0,
       subTotal: 0,
       total: 0
-    });
-    
-    setLastAddedIndex(newIndex);
+    };
+
+    console.log('New item being added:', newItem);
+
+    const currentDetails = watch('details') || [];
+    setValue('details', [newItem, ...currentDetails]);
+    setLastAddedIndex(0);
     setQuickSearchQuery('');
     setQuickSearchOpen(false);
-    
-    // ✅ إصلاح 4: العودة للبحث السريع بعد الإضافة
+
     setTimeout(() => {
       if (quickSearchInputRef.current) {
         quickSearchInputRef.current.focus();
@@ -341,40 +415,26 @@ const PurchaseOrderForm: React.FC<Props> = ({
     }, 100);
   };
 
-  // ✅ إصلاح 4: معالجة التنقل بالكيبورد - محسن: كمية → سعر → بحث سريع
-  const handleKeyDown = (e: React.KeyboardEvent, nextInputName?: string) => {
-    if (e.key === 'Enter' || e.key === 'Tab') {
-      e.preventDefault();
-      
-      if (nextInputName) {
-        const nextInput = document.querySelector(`input[name="${nextInputName}"]`) as HTMLInputElement;
-        if (nextInput) {
-          nextInput.focus();
-          nextInput.select();
-        }
-      } else if (e.key === 'Enter') {
-        // ✅ إصلاح 4: التنقل للبحث السريع بعد السعر
-        if (quickSearchInputRef.current) {
-          quickSearchInputRef.current.focus();
-        }
-      }
-    }
-  };
-
-  // Quick search keyboard navigation - محسن
+  // Navigate quick-search results with arrows + Enter/Escape
   const handleQuickSearchKeyDown = (e: React.KeyboardEvent) => {
     if (quickSearchResults.length === 0) return;
 
     switch (e.key) {
       case 'ArrowDown':
         e.preventDefault();
-        setQuickSearchSelectedIndex(prev => 
-          Math.min(prev + 1, quickSearchResults.length - 1)
-        );
+        setQuickSearchSelectedIndex(prev => {
+          const newIndex = Math.min(prev + 1, quickSearchResults.length - 1);
+          scrollToQuickSearchItem(newIndex);
+          return newIndex;
+        });
         break;
       case 'ArrowUp':
         e.preventDefault();
-        setQuickSearchSelectedIndex(prev => Math.max(prev - 1, 0));
+        setQuickSearchSelectedIndex(prev => {
+          const newIndex = Math.max(prev - 1, 0);
+          scrollToQuickSearchItem(newIndex);
+          return newIndex;
+        });
         break;
       case 'Enter':
         e.preventDefault();
@@ -389,17 +449,38 @@ const PurchaseOrderForm: React.FC<Props> = ({
     }
   };
 
-  // فتح البحث مباشرة
+  // Ensure the selected quick-search item is visible
+  const scrollToQuickSearchItem = (index: number) => {
+    const listElement = quickSearchRef.current;
+    if (listElement) {
+      const itemElement = listElement.children[index] as HTMLElement;
+      if (itemElement) {
+        const listRect = listElement.getBoundingClientRect();
+        const itemRect = itemElement.getBoundingClientRect();
+        const itemHeight = itemRect.height;
+        const listHeight = listRect.height;
+        const itemTop = itemElement.offsetTop;
+
+        if (itemRect.bottom > listRect.bottom) {
+          const newScrollTop = itemTop - listHeight + itemHeight + 10;
+          listElement.scrollTo({ top: Math.max(0, newScrollTop), behavior: 'smooth' });
+        } else if (itemRect.top < listRect.top) {
+          const newScrollTop = itemTop - 10;
+          listElement.scrollTo({ top: Math.max(0, newScrollTop), behavior: 'smooth' });
+        }
+      }
+    }
+  };
+
   const addDetailWithSearch = () => {
     setProductSearchOpen(true);
   };
 
-  // معالجة اختيار السعر
   const handleProductPriceSelect = (productPrice: ProductPrice) => {
     addProductToForm(productPrice);
   };
 
-  // Number validation
+  // Validate numeric fields
   const validateNumber = (value: any, fieldName: string) => {
     const numValue = parseFloat(value);
     if (isNaN(numValue) || numValue < 0) {
@@ -410,11 +491,30 @@ const PurchaseOrderForm: React.FC<Props> = ({
     return true;
   };
 
-  // في دالة submit
-  const submit = async (data: FormValues, saveAction: 'save' | 'saveAndNew') => {
+  // On submit, build payload (with status from form) and call onSubmit
+  const submit = async (data: FormValues) => {
     if (isSubmitting) return;
-    
-    // Validate numbers
+
+    // التحقق من المورد والمخزن
+    if (!data.supplierId) {
+      setAlertMessage(t('validation.supplierRequired') || 'يجب اختيار المورد');
+      setAlertSeverity('error');
+      return;
+    }
+
+    if (!data.warehouseId) {
+      setAlertMessage(t('validation.warehouseRequired') || 'يجب اختيار المخزن');
+      setAlertSeverity('error');
+      return;
+    }
+
+    if (data.details.length === 0) {
+      setAlertMessage(t('validation.itemsRequired') || 'يجب إضافة منتج واحد على الأقل');
+      setAlertSeverity('error');
+      return;
+    }
+
+    // التحقق من صحة البيانات
     for (let i = 0; i < data.details.length; i++) {
       const detail = data.details[i];
       if (!validateNumber(detail.quantity, `${t('purchaseOrders.quantity')} ${t('common.inLine')} ${i + 1}`)) return;
@@ -422,10 +522,9 @@ const PurchaseOrderForm: React.FC<Props> = ({
       if (!validateNumber(detail.discountPercent, `${t('purchaseOrders.discount')} ${t('common.inLine')} ${i + 1}`)) return;
       if (!validateNumber(detail.taxPercent, `${t('purchaseOrders.tax')} ${t('common.inLine')} ${i + 1}`)) return;
     }
-    
     if (!validateNumber(data.discountPercent, t('purchaseOrders.totalDiscount'))) return;
     if (!validateNumber(data.taxPercent, t('purchaseOrders.totalTax'))) return;
-    
+
     setIsSubmitting(true);
     try {
       const submitData = {
@@ -433,13 +532,19 @@ const PurchaseOrderForm: React.FC<Props> = ({
         date1: `${data.date1}T00:00:00`,
         date2: `${data.date2}T00:00:00`,
         details: data.details.map((d, index) => {
+          // التحقق من البيانات المطلوبة
           if (!d.productId) {
-            throw new Error(`Detail ${index} missing productId`);
+            console.error(`Detail ${index} missing productId:`, d);
+            throw new Error(`Detail في السطر ${index + 1} مفقود معرف المنتج`);
+          }
+          if (!d.productPriceId) {
+            console.error(`Detail ${index} missing productPriceId:`, d);
+            throw new Error(`Detail في السطر ${index + 1} مفقود معرف السعر`);
           }
           
-          return {
-            ...(mode === 'edit' && d.id ? { purchaseOrderDetailID: d.id } : {}),
+          const detailData: any = {
             productID: d.productId,
+            productPriceID: d.productPriceId,
             unitId: d.unitId,
             unitFactor: d.unitFactor,
             quantity: parseFloat(d.quantity.toString()),
@@ -451,798 +556,824 @@ const PurchaseOrderForm: React.FC<Props> = ({
             subTotal: parseFloat(d.subTotal.toString()),
             total: parseFloat(d.total.toString())
           };
+
+          // إضافة ID للسطور الموجودة في التحديث
+          if (mode === 'edit' && d.purchaseOrderDetailID && d.purchaseOrderDetailID.trim() !== '') {
+            detailData.id = d.purchaseOrderDetailID;
+            console.log(`Detail ${index} has existing ID:`, d.purchaseOrderDetailID);
+          } else {
+            console.log(`Detail ${index} is new - no ID`);
+          }
+
+          console.log(`Detail ${index} final data:`, detailData);
+          return detailData;
         })
       };
 
-      if (mode === 'edit' && initialValues) {
-        await onSubmit({ 
-          ...submitData, 
-          id: initialValues.id 
-        }, saveAction);
-      } else {
-        await onSubmit(submitData, saveAction);
-      }
+      console.log('Submit data before sending:', JSON.stringify(submitData, null, 2));
 
-      if (saveAction === 'saveAndNew') {
+      await onSubmit(submitData);
+
+      if (data.status === 1 && mode === 'add') {
         reset(defaults);
         setTimeout(() => {
           if (quickSearchInputRef.current) {
             quickSearchInputRef.current.focus();
           }
-        }, 100);
+        }, 200);
       } else {
         navigate('/purchases/purchase-orders');
       }
     } catch (error) {
       console.error('Submit error:', error);
-      setAlertMessage(t('common.saveError'));
       setAlertSeverity('error');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // مكون منفصل لعرض التفاصيل في الموبايل
+  // Mobile-only detail card
   const MobileDetailCard: React.FC<{ index: number; onRemove: () => void }> = ({ index, onRemove }) => (
-    <Card variant="outlined" sx={{ mb: 0.5 }}>
-      <CardContent sx={{ p: 1, '&:last-child': { pb: 1 } }}>
-        <Stack spacing={0.5}>
-          <Box display="flex" justifyContent="space-between" alignItems="center">
-            <Typography variant="caption" color="primary">
-              #{index + 1}
-            </Typography>
-            <IconButton size="small" color="error" onClick={onRemove}>
-              <IconTrash size={14} />
+    <Card key={index} sx={{ mb: 2, border: '1px solid', borderColor: 'divider' }}>
+      <CardContent sx={{ p: 2 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+          <Typography variant="subtitle2">#{index + 1}</Typography>
+          {watchedStatus !== 3 && (
+            <IconButton onClick={onRemove} size="small" color="error">
+              <IconTrash size={16} />
             </IconButton>
-          </Box>
+          )}
+        </Box>
+        <Typography variant="body2" sx={{ mb: 1, fontWeight: 'bold' }}>
+          {watch(`details.${index}.productName`)} — {watch(`details.${index}.unitName`)}
+        </Typography>
 
-          <Typography variant="body2" fontWeight="bold" sx={{ fontSize: '0.8rem' }}>
-            {watch(`details.${index}.productName`)} - {watch(`details.${index}.unitName`)}
-          </Typography>
-
-          <Grid container spacing={0.5}>
-            <Grid item xs={6}>
-              <Controller
-                name={`details.${index}.quantity`}
-                control={control}
-                render={({ field }) => (
-                  <TextField
-                    {...field}
-                    label={t('purchaseOrders.quantity')}
-                    type="number"
-                    fullWidth
-                    size="small"
-                    inputProps={{ min: 0, step: 0.01 }}
-                    InputProps={{
-                      sx: {
-                        '& input[type=number]': {
-                          '-moz-appearance': 'textfield',
-                        },
-                        '& input[type=number]::-webkit-outer-spin-button': {
-                          '-webkit-appearance': 'none',
-                          margin: 0,
-                        },
-                        '& input[type=number]::-webkit-inner-spin-button': {
-                          '-webkit-appearance': 'none',
-                          margin: 0,
-                        },
-                      },
-                    }}
-                    onFocus={(e) => e.target.select()}
-                    onKeyDown={(e) => handleKeyDown(e, `details.${index}.price`)}
-                  />
-                )}
-              />
-            </Grid>
-            <Grid item xs={6}>
-              <Controller
-                name={`details.${index}.price`}
-                control={control}
-                render={({ field }) => (
-                  <TextField
-                    {...field}
-                    label={t('purchaseOrders.price')}
-                    type="number"
-                    fullWidth
-                    size="small"
-                    inputProps={{ min: 0, step: 0.01 }}
-                    InputProps={{
-                      sx: {
-                        '& input[type=number]': {
-                          '-moz-appearance': 'textfield',
-                        },
-                        '& input[type=number]::-webkit-outer-spin-button': {
-                          '-webkit-appearance': 'none',
-                          margin: 0,
-                        },
-                        '& input[type=number]::-webkit-inner-spin-button': {
-                          '-webkit-appearance': 'none',
-                          margin: 0,
-                        },
-                      },
-                    }}
-                    onFocus={(e) => e.target.select()}
-                    onKeyDown={(e) => handleKeyDown(e)}
-                  />
-                )}
-              />
-            </Grid>
+        <Grid container spacing={1}>
+          <Grid item xs={6}>
+            <Controller
+  name={`details.${index}.quantity`}
+  control={control}
+  render={({ field }) => (
+    <TextField
+      {...field}
+      label={t('purchaseOrders.quantity')}
+      type="number"
+      size="small"
+      name={`details.${index}.quantity`}
+      onKeyDown={(e) => handleFieldKeyDown(e, `details.${index}.price`)}
+      onFocus={(e) => e.target.select()}
+      fullWidth
+      disabled={watchedStatus === 3} // تأكد من وجود هذا السطر
+      inputProps={{
+        style: { textAlign: 'right' },
+        step: "0.01",
+        inputMode: 'decimal'
+      }}
+      sx={{
+        '& input[type=number]': {
+          '-moz-appearance': 'textfield',
+        },
+        '& input[type=number]::-webkit-outer-spin-button': {
+          '-webkit-appearance': 'none',
+          margin: 0,
+        },
+        '& input[type=number]::-webkit-inner-spin-button': {
+          '-webkit-appearance': 'none',
+          margin: 0,
+        },
+      }}
+    />
+  )}
+/>
           </Grid>
 
-          <Grid container spacing={0.5}>
-            <Grid item xs={6}>
-              <Controller
-                name={`details.${index}.discountPercent`}
-                control={control}
-                render={({ field }) => (
-                  <TextField
-                    {...field}
-                    label={t('purchaseOrders.discount')}
-                    type="number"
-                    fullWidth
-                    size="small"
-                    inputProps={{ min: 0, max: 100, step: 0.01 }}
-                    InputProps={{ 
-                      endAdornment: '%',
-                      sx: {
-                        '& input[type=number]': {
-                          '-moz-appearance': 'textfield',
-                        },
-                        '& input[type=number]::-webkit-outer-spin-button': {
-                          '-webkit-appearance': 'none',
-                          margin: 0,
-                        },
-                        '& input[type=number]::-webkit-inner-spin-button': {
-                          '-webkit-appearance': 'none',
-                          margin: 0,
-                        },
-                      },
-                    }}
-                    onFocus={(e) => e.target.select()}
-                    onKeyDown={(e) => handleKeyDown(e, `details.${index}.taxPercent`)}
-                  />
-                )}
-              />
-            </Grid>
-            <Grid item xs={6}>
-              <Controller
-                name={`details.${index}.taxPercent`}
-                control={control}
-                render={({ field }) => (
-                  <TextField
-                    {...field}
-                    label={t('purchaseOrders.tax')}
-                    type="number"
-                    fullWidth
-                    size="small"
-                    inputProps={{ min: 0, max: 100, step: 0.01 }}
-                    InputProps={{ 
-                      endAdornment: '%',
-                      sx: {
-                        '& input[type=number]': {
-                          '-moz-appearance': 'textfield',
-                        },
-                        '& input[type=number]::-webkit-outer-spin-button': {
-                          '-webkit-appearance': 'none',
-                          margin: 0,
-                        },
-                        '& input[type=number]::-webkit-inner-spin-button': {
-                          '-webkit-appearance': 'none',
-                          margin: 0,
-                        },
-                      },
-                    }}
-                    onFocus={(e) => e.target.select()}
-                    onKeyDown={(e) => handleKeyDown(e)}
-                  />
-                )}
-              />
-            </Grid>
+          <Grid item xs={6}>
+            <Controller
+              name={`details.${index}.price`}
+              control={control}
+              render={({ field }) => (
+                <TextField
+  {...field}
+  type="number"
+  size="small"
+  name={`details.${index}.price`}  // أضف هذا
+  onKeyDown={(e) => handleFieldKeyDown(e, `details.${index}.discountPercent`)}  // أضف هذا
+  onFocus={(e) => e.target.select()}  // أضف هذا
+                  fullWidth
+                  disabled={watchedStatus === 3}
+                  inputProps={{
+                    style: { textAlign: 'right' },
+                    step: "0.01",
+                    inputMode: 'decimal'
+                  }}
+                  sx={{
+                    '& input[type=number]': {
+                      '-moz-appearance': 'textfield',
+                    },
+                    '& input[type=number]::-webkit-outer-spin-button': {
+                      '-webkit-appearance': 'none',
+                      margin: 0,
+                    },
+                    '& input[type=number]::-webkit-inner-spin-button': {
+                      '-webkit-appearance': 'none',
+                      margin: 0,
+                    },
+                  }}
+                />
+              )}
+            />
           </Grid>
 
-          <Typography variant="caption" color="text.secondary" align="center">
-            {t('purchaseOrders.total')}: {watch(`details.${index}.total`)?.toFixed(2) || '0.00'}
-          </Typography>
-        </Stack>
+          <Grid item xs={6}>
+            <Controller
+              name={`details.${index}.discountPercent`}
+              control={control}
+              render={({ field }) => (
+                <TextField
+  {...field}
+  type="number"
+  size="small"
+  name={`details.${index}.discountPercent`}  // أضف هذا
+  onKeyDown={(e) => handleFieldKeyDown(e, `details.${index}.taxPercent`)}  // أضف هذا
+  onFocus={(e) => e.target.select()}  // أضف هذا
+                  fullWidth
+                  disabled={watchedStatus === 3}
+                  inputProps={{
+                    style: { textAlign: 'right' },
+                    step: "0.01",
+                    inputMode: 'decimal'
+                  }}
+                  sx={{
+                    '& input[type=number]': {
+                      '-moz-appearance': 'textfield',
+                    },
+                    '& input[type=number]::-webkit-outer-spin-button': {
+                      '-webkit-appearance': 'none',
+                      margin: 0,
+                    },
+                    '& input[type=number]::-webkit-inner-spin-button': {
+                      '-webkit-appearance': 'none',
+                      margin: 0,
+                    },
+                  }}
+                />
+              )}
+            />
+          </Grid>
+
+          <Grid item xs={6}>
+            <Controller
+              name={`details.${index}.taxPercent`}
+              control={control}
+              render={({ field }) => (
+                <TextField
+  {...field}
+  type="number"
+  size="small"
+  name={`details.${index}.taxPercent`}  // أضف هذا
+  onKeyDown={(e) => handleFieldKeyDown(e)}  // بدون next field - هيرجع للـ Quick Search
+  onFocus={(e) => e.target.select()}  // أضف هذا
+                  fullWidth
+                  disabled={watchedStatus === 3}
+                  inputProps={{
+                    style: { textAlign: 'right' },
+                    step: "0.01",
+                    inputMode: 'decimal'
+                  }}
+                  sx={{
+                    '& input[type=number]': {
+                      '-moz-appearance': 'textfield',
+                    },
+                    '& input[type=number]::-webkit-outer-spin-button': {
+                      '-webkit-appearance': 'none',
+                      margin: 0,
+                    },
+                    '& input[type=number]::-webkit-inner-spin-button': {
+                      '-webkit-appearance': 'none',
+                      margin: 0,
+                    },
+                  }}
+                />
+              )}
+            />
+          </Grid>
+        </Grid>
+
+        <Typography variant="body2" sx={{ mt: 1, textAlign: 'right', fontWeight: 'bold' }}>
+          {t('purchaseOrders.total')}: {watch(`details.${index}.total`)?.toFixed(2) || '0.00'}
+        </Typography>
       </CardContent>
     </Card>
   );
 
   return (
-    <Container maxWidth="xl" sx={{ py: 0.5 }}>
-      {/* Header ثابت مع الأزرار */}
-      <Box 
-        sx={{ 
-          position: 'sticky', 
-          top: 0, 
-          backgroundColor: 'background.paper',
-          zIndex: 100,
-          borderBottom: 1,
-          borderColor: 'divider',
-          pb: 1,
-          mb: 1
-        }}
-      >
-        {/* Breadcrumbs */}
-        <Breadcrumbs sx={{ mb: 0.5, fontSize: '0.75rem' }}>
-          <Link 
-            underline="hover" 
-            color="inherit" 
-            href="/purchases/purchase-orders"
+    <Container maxWidth="xl" sx={{ py: 2 }}>
+      {/* Breadcrumbs + Header + Total */}
+      <Box sx={{ mb: 3 }}>
+        <Breadcrumbs sx={{ mb: 2 }}>
+          <Link
+            color="inherit"
+            href="#"
             onClick={(e) => {
               e.preventDefault();
               navigate('/purchases/purchase-orders');
             }}
             sx={{ display: 'flex', alignItems: 'center' }}
           >
-            <IconHome size={12} style={{ marginRight: 2 }} />
+            <IconHome size={16} style={{ marginRight: 4 }} />
             {t('purchaseOrders.list')}
           </Link>
-          <Typography color="text.primary" fontSize="0.75rem">
+          <Typography color="text.primary">
             {mode === 'add' ? t('purchaseOrders.add') : t('purchaseOrders.edit')}
           </Typography>
         </Breadcrumbs>
 
-        {/* Header مع الأزرار */}
-        <Box display="flex" justifyContent="space-between" alignItems="center">
-          <Typography variant="h6" sx={{ fontSize: '1.1rem' }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Typography variant="h4" component="h1">
             {mode === 'add' ? t('purchaseOrders.add') : t('purchaseOrders.edit')}
           </Typography>
-          
-          {/* أزرار الحفظ والإلغاء */}
-          <Stack direction="row" spacing={1}>
-            <Button
-              variant="outlined"
-              size="small"
-              startIcon={<IconArrowLeft size={14} />}
-              onClick={() => navigate('/purchases/purchase-orders')}
-              disabled={isSubmitting}
-            >
-              {t('common.back')}
-            </Button>
-            
-            <Button 
-              variant="outlined"
-              size="small"
-              startIcon={<IconDeviceFloppy size={14} />}
-              onClick={handleSubmit((data) => submit(data, 'save'))}
-              disabled={isSubmitting}
-            >
-              {t('common.save')}
-            </Button>
-            
-            <Button 
-              variant="contained"
-              size="small"
-              startIcon={<IconPlus size={14} />}
-              onClick={handleSubmit((data) => submit(data, 'saveAndNew'))}
-              disabled={isSubmitting}
-            >
-              {t('purchaseOrders.saveAndNew')}
-            </Button>
-          </Stack>
+
+          <Typography
+            variant="h4"
+            component="div"
+            sx={{
+              fontWeight: 'bold',
+              color: 'primary.main',
+              fontSize: '2rem'
+            }}
+          >
+            {t('purchaseOrders.total')}: {watchedTotal?.toFixed(2) || '0.00'}
+          </Typography>
         </Box>
+
+        <Stack direction="row" spacing={2}>
+          <Button
+            variant="outlined"
+            startIcon={<IconArrowLeft />}
+            onClick={() => navigate('/purchases/purchase-orders')}
+            disabled={isSubmitting}
+          >
+            {t('common.back')}
+          </Button>
+
+          {/* "Save (Pending)" */}
+          {watchedStatus !== 3 && (
+            <Button
+              variant="contained"
+              startIcon={<IconPlus />}
+              onClick={handleSubmit((data) => {
+                data.status = 1;
+                submit(data);
+              })}
+              disabled={isSubmitting}
+            >
+              {t('purchaseOrders.savePending')}
+            </Button>
+          )}
+
+          {/* "Submit" */}
+          {watchedStatus !== 3 && (
+            <Button
+              variant="contained"
+              color="secondary"
+              startIcon={<IconDeviceFloppy />}
+              onClick={handleSubmit((data) => {
+                data.status = 3;
+                submit(data);
+              })}
+              disabled={isSubmitting}
+            >
+              {t('purchaseOrders.submit')}
+            </Button>
+          )}
+        </Stack>
       </Box>
 
-      <form>
-        <Grid container spacing={1}>
-          {/* ✅ إصلاح 1: السطر الأول - 4 خانات بنفس الحجم تماماً */}
-          <Grid item xs={12} md={3}>
-            <Controller
-              name="referenceDocNumber"
-              control={control}
-              rules={{ required: t('purchaseOrders.docNumberRequired') }}
-              render={({ field, fieldState }) => (
-                <TextField
-                  {...field}
-                  label={t('purchaseOrders.docNumber')}
-                  fullWidth
-                  size="small"
-                  error={!!fieldState.error}
-                  helperText={fieldState.error?.message}
-                  onFocus={(e) => e.target.select()}
-                />
-              )}
-            />
+      {/* Row 1: Doc#, Date, Supplier, Warehouse */}
+      <Grid container spacing={2} sx={{ mb: 2 }}>
+        <Grid item xs={12} md={3}>
+          <Controller
+            name="referenceDocNumber"
+            control={control}
+            render={({ field }) => (
+              <TextField
+                {...field}
+                label={t('purchaseOrders.docNumber')}
+                fullWidth
+                size="small"
+                disabled={watchedStatus === 3}
+                onFocus={(e) => e.target.select()}
+              />
+            )}
+          />
+        </Grid>
+
+        <Grid item xs={12} md={3}>
+          <Controller
+            name="date1"
+            control={control}
+            render={({ field }) => (
+              <TextField
+                {...field}
+                label={t('purchaseOrders.date')}
+                type="date"
+                fullWidth
+                size="small"
+                disabled={watchedStatus === 3}
+                InputLabelProps={{ shrink: true }}
+                onFocus={(e) => e.target.select()}
+              />
+            )}
+          />
+        </Grid>
+
+        <Grid item xs={12} md={3}>
+          <Controller
+            name="supplierId"
+            control={control}
+            rules={{ required: t('validation.supplierRequired') || 'يجب اختيار المورد' }}
+            render={({ field, fieldState }) => (
+<SearchableSelect
+  label={t('purchaseOrders.supplier')}
+  value={field.value}
+  onChange={field.onChange}
+  options={suppliers.map(s => ({ id: s.id, name: s.name }))}
+  placeholder={t('purchaseOrders.selectSupplier')}
+  error={!!fieldState.error}
+  size="small"
+  autoFocusSearch={true}
+  disabled={watchedStatus === 3}
+  onSelectionComplete={focusQuickSearch}  // أضف هذا السطر
+/>
+            )}
+          />
+        </Grid>
+
+        <Grid item xs={12} md={3}>
+          <Controller
+            name="warehouseId"
+            control={control}
+            rules={{ required: t('validation.warehouseRequired') || 'يجب اختيار المخزن' }}
+            render={({ field, fieldState }) => (
+<SearchableSelect
+  label={t('purchaseOrders.warehouse')}
+  value={field.value}
+  onChange={field.onChange}
+  options={warehouses.map(w => ({ id: w.id, name: w.name }))}
+  placeholder={t('purchaseOrders.selectWarehouse')}
+  error={!!fieldState.error}
+  size="small"
+  autoFocusSearch={true}
+  disabled={watchedStatus === 3}
+  onSelectionComplete={focusQuickSearch}  // أضف هذا السطر
+/>
+            )}
+          />
+        </Grid>
+      </Grid>
+
+      {/* Row 2: Total Discount & Total Tax */}
+      <Grid container spacing={2} sx={{ mb: 2 }}>
+        <Grid item xs={12} md={6}>
+          <Controller
+            name="discountPercent"
+            control={control}
+            render={({ field }) => (
+              <TextField
+                {...field}
+                label={`${t('purchaseOrders.totalDiscount')} %`}
+                type="number"
+                fullWidth
+                size="small"
+                disabled={watchedStatus === 3}
+                inputProps={{
+                  style: { textAlign: 'right' },
+                  step: "0.01",
+                  inputMode: 'decimal'
+                }}
+                sx={{
+                  '& input[type=number]': {
+                    '-moz-appearance': 'textfield',
+                  },
+                  '& input[type=number]::-webkit-outer-spin-button': {
+                    '-webkit-appearance': 'none',
+                    margin: 0,
+                  },
+                  '& input[type=number]::-webkit-inner-spin-button': {
+                    '-webkit-appearance': 'none',
+                    margin: 0,
+                  },
+                }}
+                onFocus={(e) => e.target.select()}
+                onBlur={focusQuickSearch}
+              />
+            )}
+          />
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <Controller
+            name="taxPercent"
+            control={control}
+            render={({ field }) => (
+              <TextField
+                {...field}
+                label={`${t('purchaseOrders.totalTax')} %`}
+                type="number"
+                fullWidth
+                size="small"
+                disabled={watchedStatus === 3}
+                inputProps={{
+                  style: { textAlign: 'right' },
+                  step: "0.01",
+                  inputMode: 'decimal'
+                }}
+                sx={{
+                  '& input[type=number]': {
+                    '-moz-appearance': 'textfield',
+                  },
+                  '& input[type=number]::-webkit-outer-spin-button': {
+                    '-webkit-appearance': 'none',
+                    margin: 0,
+                  },
+                  '& input[type=number]::-webkit-inner-spin-button': {
+                    '-webkit-appearance': 'none',
+                    margin: 0,
+                  },
+                }}
+                onFocus={(e) => e.target.select()}
+                onBlur={focusQuickSearch}
+              />
+            )}
+          />
+        </Grid>
+      </Grid>
+
+      {/* Hidden "status" field */}
+      <Controller
+        name="status"
+        control={control}
+        render={({ field }) => (
+          <input type="hidden" {...field} />
+        )}
+      />
+
+      {/* Quick summary row */}
+      <Paper sx={{ p: 1, mb: 2, backgroundColor: 'grey.50' }}>
+        <Grid container spacing={2}>
+          <Grid item xs={3}>
+            <Typography variant="caption" color="text.secondary">
+              {t('purchaseOrders.subTotal')}: {watch('subTotal')?.toFixed(2) || '0.00'}
+            </Typography>
           </Grid>
-
-          <Grid item xs={12} md={3}>
-            <Controller
-              name="date1"
-              control={control}
-              rules={{ required: t('purchaseOrders.dateRequired') }}
-              render={({ field, fieldState }) => (
-                <TextField
-                  {...field}
-                  label={t('purchaseOrders.date')}
-                  type="date"
-                  fullWidth
-                  size="small"
-                  error={!!fieldState.error}
-                  helperText={fieldState.error?.message}
-                  InputLabelProps={{ shrink: true }}
-                  onFocus={(e) => e.target.select()}
-                />
-              )}
-            />
+          <Grid item xs={3}>
+            <Typography variant="caption" color="text.secondary">
+              {t('purchaseOrders.discountValue')}: {watch('discountValue')?.toFixed(2) || '0.00'}
+            </Typography>
           </Grid>
-
-          {/* ✅ إصلاح 1: المورد بنفس الحجم md={3} */}
-          <Grid item xs={12} md={3}>
-            <Controller
-              name="supplierId"
-              control={control}
-              rules={{ required: t('purchaseOrders.supplierRequired') }}
-              render={({ field, fieldState }) => (
-                <SearchableSelect
-                  label={t('purchaseOrders.supplier')}
-                  value={field.value}
-                  onChange={field.onChange}
-                  options={suppliers.map(s => ({ id: s.id, name: s.name }))}
-                  placeholder={t('purchaseOrders.selectSupplier')}
-                  error={!!fieldState.error}
-                  autoFocusSearch={true}
-                  size="small"
-                />
-              )}
-            />
+          <Grid item xs={3}>
+            <Typography variant="caption" color="text.secondary">
+              {t('purchaseOrders.taxValue')}: {watch('taxValue')?.toFixed(2) || '0.00'}
+            </Typography>
           </Grid>
-
-          {/* ✅ إصلاح 1: المخزن بنفس الحجم md={3} */}
-          <Grid item xs={12} md={3}>
-            <Controller
-              name="warehouseId"
-              control={control}
-              rules={{ required: t('purchaseOrders.warehouseRequired') }}
-              render={({ field, fieldState }) => (
-                <SearchableSelect
-                  label={t('purchaseOrders.warehouse')}
-                  value={field.value}
-                  onChange={field.onChange}
-                  options={warehouses.map(w => ({ id: w.id, name: w.name }))}
-                  placeholder={t('purchaseOrders.selectWarehouse')}
-                  error={!!fieldState.error}
-                  size="small"
-                  autoFocusSearch={true}
-                />
-              )}
-            />
-          </Grid>
-
-          {/* السطر الثاني - Total Discount & Total Tax */}
-          <Grid item xs={12} md={6}>
-            <Controller
-              name="discountPercent"
-              control={control}
-              rules={{ 
-                min: { value: 0, message: t('validation.minValue') },
-                max: { value: 100, message: t('validation.maxPercent') }
-              }}
-              render={({ field, fieldState }) => (
-                <TextField
-                  {...field}
-                  label={t('purchaseOrders.totalDiscount')}
-                  type="number"
-                  fullWidth
-                  size="small"
-                  inputProps={{ min: 0, max: 100, step: 0.01 }}
-                  InputProps={{ 
-                    endAdornment: '%',
-                    sx: {
-                      '& input[type=number]': {
-                        '-moz-appearance': 'textfield',
-                      },
-                      '& input[type=number]::-webkit-outer-spin-button': {
-                        '-webkit-appearance': 'none',
-                        margin: 0,
-                      },
-                      '& input[type=number]::-webkit-inner-spin-button': {
-                        '-webkit-appearance': 'none',
-                        margin: 0,
-                      },
-                    },
-                  }}
-                  error={!!fieldState.error}
-                  helperText={fieldState.error?.message}
-                  onFocus={(e) => e.target.select()}
-                />
-              )}
-            />
-          </Grid>
-
-          <Grid item xs={12} md={6}>
-            <Controller
-              name="taxPercent"
-              control={control}
-              rules={{ 
-                min: { value: 0, message: t('validation.minValue') },
-                max: { value: 100, message: t('validation.maxPercent') }
-              }}
-              render={({ field, fieldState }) => (
-                <TextField
-                  {...field}
-                  label={t('purchaseOrders.totalTax')}
-                  type="number"
-                  fullWidth
-                  size="small"
-                  inputProps={{ min: 0, max: 100, step: 0.01 }}
-                  InputProps={{ 
-                    endAdornment: '%',
-                    sx: {
-                      '& input[type=number]': {
-                        '-moz-appearance': 'textfield',
-                      },
-                      '& input[type=number]::-webkit-outer-spin-button': {
-                        '-webkit-appearance': 'none',
-                        margin: 0,
-                      },
-                      '& input[type=number]::-webkit-inner-spin-button': {
-                        '-webkit-appearance': 'none',
-                        margin: 0,
-                      },
-                    },
-                  }}
-                  error={!!fieldState.error}
-                  helperText={fieldState.error?.message}
-                  onFocus={(e) => e.target.select()}
-                />
-              )}
-            />
-          </Grid>
-
-          {/* ملخص سريع - مضغوط */}
-          <Grid item xs={12}>
-            <Box 
-              sx={{ 
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                p: 0.5,
-                backgroundColor: 'background.default',
-                borderRadius: 1,
-                mb: 0.5
-              }}
-            >
-              <Typography variant="caption" color="text.secondary">
-                {t('purchaseOrders.subTotal')}: {watch('subTotal')?.toFixed(2) || '0.00'}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                {t('purchaseOrders.discountValue')}: {watch('discountValue')?.toFixed(2) || '0.00'}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                {t('purchaseOrders.taxValue')}: {watch('taxValue')?.toFixed(2) || '0.00'}
-              </Typography>
-              <Typography variant="caption" color="primary" fontWeight="bold">
-                {t('purchaseOrders.total')}: {watch('total')?.toFixed(2) || '0.00'}
-              </Typography>
-            </Box>
-          </Grid>
-
-          {/* قسم الأصناف */}
-          <Grid item xs={12}>
-            {/* ✅ إصلاح 5: شريط الأدوات - ممتد مع shadow جميل */}
-            <Box 
-              sx={{ 
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1,
-                p: 1,
-                backgroundColor: 'background.default',
-                borderRadius: 1,
-                mb: 0.5,
-                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                width: '100%',
-                boxSizing: 'border-box'
-              }}
-            >
-              {/* كلمة الأصناف */}
-              <Typography variant="subtitle1" sx={{ fontSize: '0.9rem', minWidth: 'fit-content' }}>
-                {t('purchaseOrders.items')}
-              </Typography>
-              
-              {/* ✅ إصلاح 5: البحث السريع - يأخذ المساحة الكاملة */}
-              <ClickAwayListener onClickAway={() => setQuickSearchOpen(false)}>
-                <Box position="relative" sx={{ flex: 1 }} ref={quickSearchRef}>
-                  <TextField
-                    ref={quickSearchInputRef}
-                    size="small"
-                    placeholder={t('products.quickSearchPlaceholder')}
-                    value={quickSearchQuery}
-                    onChange={(e) => setQuickSearchQuery(e.target.value)}
-                    onKeyDown={handleQuickSearchKeyDown}
-                    fullWidth
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <IconSearch size={14} />
-                        </InputAdornment>
-                      )
-                    }}
-                  />
-                  
-                  {/* Quick Search Results Dropdown */}
-                  {quickSearchOpen && quickSearchResults.length > 0 && (
-                    <Paper
-                      sx={{
-                        position: 'absolute',
-                        top: '100%',
-                        left: 0,
-                        right: 0,
-                        zIndex: 1000,
-                        maxHeight: 150,
-                        overflow: 'auto',
-                        mt: 0.5
-                      }}
-                    >
-                      <List dense sx={{ p: 0 }}>
-                        {quickSearchResults.map((price, index) => (
-                          <ListItem key={`${price.id}-${index}`} disablePadding>
-                            <ListItemButton 
-                              onClick={() => addProductToForm(price)}
-                              selected={index === quickSearchSelectedIndex}
-                              sx={{ 
-                                py: 0.25,
-                                backgroundColor: index === quickSearchSelectedIndex ? 'action.selected' : 'transparent'
-                              }}
-                            >
-                              <ListItemText
-                                primary={`${price.productName} - ${price.unitName}`}
-                                secondary={`${price.price.toFixed(2)} | ${t('products.unitFactor')}: ${price.unitFactor}`}
-                                primaryTypographyProps={{ fontSize: '0.8rem' }}
-                                secondaryTypographyProps={{ fontSize: '0.7rem' }}
-                              />
-                            </ListItemButton>
-                          </ListItem>
-                        ))}
-                      </List>
-                    </Paper>
-                  )}
-                </Box>
-              </ClickAwayListener>
-
-              {/* الأزرار */}
-              <Stack direction="row" spacing={0.5}>
-                <Button
-                  size="small"
-                  variant="outlined"
-                  onClick={() => setScannerOpen(true)}
-                  startIcon={<IconBarcode size={14} />}
-                  sx={{ fontSize: '0.75rem' }}
-                >
-                  {t('barcode.scan')}
-                </Button>
-
-                <Button
-                  variant="contained"
-                  size="small"
-                  startIcon={<IconPlus size={14} />}
-                  onClick={addDetailWithSearch}
-                  sx={{ fontSize: '0.75rem' }}
-                >
-                  {t('purchaseOrders.addItemWithSearch')}
-                </Button>
-              </Stack>
-            </Box>
-
-            {/* منطقة الأصناف - مضغوطة جداً */}
-            <Box 
-              sx={{ 
-                maxHeight: '40vh', 
-                overflow: 'auto',
-                border: 1,
-                borderColor: 'divider',
-                borderRadius: 1
-              }}
-            >
-              {isMobile ? (
-                <Box sx={{ p: 0.5 }}>
-                  {fields.length === 0 ? (
-                    <Typography color="text.secondary" align="center" sx={{ py: 1, fontSize: '0.8rem' }}>
-                      {t('purchaseOrders.noItems')}
-                    </Typography>
-                  ) : (
-                    fields.map((field, index) => (
-                      <MobileDetailCard
-                        key={field.id}
-                        index={index}
-                        onRemove={() => remove(index)}
-                      />
-                    ))
-                  )}
-                </Box>
-              ) : (
-                <TableContainer component={Paper} variant="outlined" sx={{ maxHeight: '40vh' }}>
-                  <Table size="small" stickyHeader>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell sx={{ py: 0.25, fontSize: '0.8rem' }}>{t('purchaseOrders.product')}</TableCell>
-                        <TableCell sx={{ py: 0.25, fontSize: '0.8rem' }}>{t('purchaseOrders.unit')}</TableCell>
-                        <TableCell sx={{ py: 0.25, fontSize: '0.8rem' }}>{t('purchaseOrders.quantity')}</TableCell>
-                        <TableCell sx={{ py: 0.25, fontSize: '0.8rem' }}>{t('purchaseOrders.price')}</TableCell>
-                        <TableCell sx={{ py: 0.25, fontSize: '0.8rem' }}>{t('purchaseOrders.discount')}</TableCell>
-                        <TableCell sx={{ py: 0.25, fontSize: '0.8rem' }}>{t('purchaseOrders.tax')}</TableCell>
-                        <TableCell sx={{ py: 0.25, fontSize: '0.8rem' }}>{t('purchaseOrders.total')}</TableCell>
-                        <TableCell width={30}></TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {fields.length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={8} align="center" sx={{ py: 1 }}>
-                            <Typography color="text.secondary" fontSize="0.8rem">
-                              {t('purchaseOrders.noItems')}
-                            </Typography>
-                          </TableCell>
-                        </TableRow>
-                      ) : (
-                        fields.map((field, index) => (
-                          <TableRow key={field.id}>
-                            <TableCell sx={{ py: 0.25 }}>
-                              <Typography variant="body2" fontWeight="bold" sx={{ fontSize: '0.75rem' }}>
-                                {watch(`details.${index}.productName`)}
-                              </Typography>
-                            </TableCell>
-                            <TableCell sx={{ py: 0.25 }}>
-                              <Typography variant="body2" sx={{ fontSize: '0.75rem' }}>
-                                {watch(`details.${index}.unitName`)}
-                              </Typography>
-                              <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.65rem' }}>
-                                {t('products.unitFactor')}: {watch(`details.${index}.unitFactor`)}
-                              </Typography>
-                            </TableCell>
-                            <TableCell sx={{ py: 0.25 }}>
-                              <Controller
-                                name={`details.${index}.quantity`}
-                                control={control}
-                                render={({ field }) => (
-                                  <TextField
-                                    {...field}
-                                    type="number"
-                                    size="small"
-                                    inputProps={{ min: 0, step: 0.01 }}
-                                    sx={{ 
-                                      width: 60,
-                                      '& input[type=number]': {
-                                        '-moz-appearance': 'textfield',
-                                        fontSize: '0.8rem'
-                                      },
-                                      '& input[type=number]::-webkit-outer-spin-button': {
-                                        '-webkit-appearance': 'none',
-                                        margin: 0,
-                                      },
-                                      '& input[type=number]::-webkit-inner-spin-button': {
-                                        '-webkit-appearance': 'none',
-                                        margin: 0,
-                                      },
-                                    }}
-                                    onFocus={(e) => e.target.select()}
-                                    onKeyDown={(e) => handleKeyDown(e, `details.${index}.price`)}
-                                  />
-                                )}
-                              />
-                            </TableCell>
-                            <TableCell sx={{ py: 0.25 }}>
-                              <Controller
-                                name={`details.${index}.price`}
-                                control={control}
-                                render={({ field }) => (
-                                  <TextField
-                                    {...field}
-                                    type="number"
-                                    size="small"
-                                    inputProps={{ min: 0, step: 0.01 }}
-                                    sx={{ 
-                                      width: 70,
-                                      '& input[type=number]': {
-                                        '-moz-appearance': 'textfield',
-                                        fontSize: '0.8rem'
-                                      },
-                                      '& input[type=number]::-webkit-outer-spin-button': {
-                                        '-webkit-appearance': 'none',
-                                        margin: 0,
-                                      },
-                                      '& input[type=number]::-webkit-inner-spin-button': {
-                                        '-webkit-appearance': 'none',
-                                        margin: 0,
-                                      },
-                                    }}
-                                    onFocus={(e) => e.target.select()}
-                                    onKeyDown={(e) => handleKeyDown(e, `details.${index}.discountPercent`)}
-                                  />
-                                )}
-                              />
-                            </TableCell>
-                            <TableCell sx={{ py: 0.25 }}>
-                              <Controller
-                                name={`details.${index}.discountPercent`}
-                                control={control}
-                                render={({ field }) => (
-                                  <TextField
-                                    {...field}
-                                    type="number"
-                                    size="small"
-                                    inputProps={{ min: 0, max: 100, step: 0.01 }}
-                                    sx={{ 
-                                      width: 60,
-                                      '& input[type=number]': {
-                                        '-moz-appearance': 'textfield',
-                                        fontSize: '0.8rem'
-                                      },
-                                      '& input[type=number]::-webkit-outer-spin-button': {
-                                        '-webkit-appearance': 'none',
-                                        margin: 0,
-                                      },
-                                      '& input[type=number]::-webkit-inner-spin-button': {
-                                        '-webkit-appearance': 'none',
-                                        margin: 0,
-                                      },
-                                    }}
-                                    InputProps={{ endAdornment: '%' }}
-                                    onFocus={(e) => e.target.select()}
-                                    onKeyDown={(e) => handleKeyDown(e, `details.${index}.taxPercent`)}
-                                  />
-                                )}
-                              />
-                            </TableCell>
-                            <TableCell sx={{ py: 0.25 }}>
-                              <Controller
-                                name={`details.${index}.taxPercent`}
-                                control={control}
-                                render={({ field }) => (
-                                  <TextField
-                                    {...field}
-                                    type="number"
-                                    size="small"
-                                    inputProps={{ min: 0, max: 100, step: 0.01 }}
-                                    sx={{ 
-                                      width: 60,
-                                      '& input[type=number]': {
-                                        '-moz-appearance': 'textfield',
-                                        fontSize: '0.8rem'
-                                      },
-                                      '& input[type=number]::-webkit-outer-spin-button': {
-                                        '-webkit-appearance': 'none',
-                                        margin: 0,
-                                      },
-                                      '& input[type=number]::-webkit-inner-spin-button': {
-                                        '-webkit-appearance': 'none',
-                                        margin: 0,
-                                      },
-                                    }}
-                                    InputProps={{ endAdornment: '%' }}
-                                    onFocus={(e) => e.target.select()}
-                                    onKeyDown={(e) => handleKeyDown(e)}
-                                  />
-                                )}
-                              />
-                            </TableCell>
-                            <TableCell sx={{ py: 0.25 }}>
-                              <Typography variant="body2" fontWeight="bold" sx={{ fontSize: '0.75rem' }}>
-                                {watch(`details.${index}.total`)?.toFixed(2) || '0.00'}
-                              </Typography>
-                            </TableCell>
-                            <TableCell sx={{ py: 0.25 }}>
-                              <IconButton
-                                size="small"
-                                color="error"
-                                onClick={() => remove(index)}
-                              >
-                                <IconTrash size={14} />
-                              </IconButton>
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      )}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              )}
-            </Box>
+          <Grid item xs={3}>
+            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 'bold' }}>
+              {t('purchaseOrders.total')}: {watch('total')?.toFixed(2) || '0.00'}
+            </Typography>
           </Grid>
         </Grid>
-      </form>
+      </Paper>
 
-      {/* البحث الموحد للأسعار */}
+      {/* Items section */}
+      <Paper sx={{ p: 2, mb: 2 }}>
+        <Box sx={{
+          display: 'flex',
+          gap: 2,
+          mb: 2,
+          p: 2,
+          backgroundColor: 'grey.50',
+          borderRadius: 1,
+          boxShadow: 1,
+          alignItems: 'center'
+        }}>
+          <Typography variant="h6" sx={{ minWidth: 'fit-content' }}>
+            {t('purchaseOrders.items')}
+          </Typography>
+
+          <Box sx={{ position: 'relative', flex: 1 }}>
+            <ClickAwayListener onClickAway={() => setQuickSearchOpen(false)}>
+              <Box>
+                <TextField
+  ref={quickSearchInputRef}  // أضف هذا السطر
+  autoFocus  // أضف هذا السطر
+  placeholder={t('products.quickSearch')}
+  value={quickSearchQuery}
+  onChange={(e) => setQuickSearchQuery(e.target.value)}
+  onKeyDown={handleQuickSearchKeyDown}
+  fullWidth
+  size="small"
+  disabled={watchedStatus === 3}
+  InputProps={{
+    startAdornment: (
+      <InputAdornment position="start">
+        <IconSearch size={20} />
+      </InputAdornment>
+    ),
+  }}
+/>
+
+                {/* Quick Search Results Dropdown */}
+                {quickSearchOpen && quickSearchResults.length > 0 && (
+                  <Paper
+                    ref={quickSearchRef}
+                    sx={{
+                      position: 'absolute',
+                      top: '100%',
+                      left: 0,
+                      right: 0,
+                      zIndex: 1000,
+                      maxHeight: 200,
+                      overflow: 'auto'
+                    }}
+                  >
+                    <List dense>
+                      {quickSearchResults.map((price, index) => (
+                        <ListItem key={price.id} disablePadding>
+                          <ListItemButton
+                            onClick={() => addProductToForm(price)}
+                            selected={index === quickSearchSelectedIndex}
+                            disabled={watchedStatus === 3}
+                            sx={{
+                              py: 0.25,
+                              backgroundColor:
+                                index === quickSearchSelectedIndex ? 'action.selected' : 'transparent'
+                            }}
+                          >
+                            <ListItemText
+                              primary={`${price.productName} — ${price.unitName}`}
+                              secondary={`${t('products.price')}: ${price.price.toFixed(2)}`}
+                            />
+                          </ListItemButton>
+                        </ListItem>
+                      ))}
+                    </List>
+                  </Paper>
+                )}
+              </Box>
+            </ClickAwayListener>
+          </Box>
+
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={() => setScannerOpen(true)}
+            startIcon={<IconBarcode />}
+            sx={{ fontSize: '0.75rem' }}
+            disabled={watchedStatus === 3}
+          >
+            {t('barcode.scan')}
+          </Button>
+
+          <Button
+            variant="contained"
+            size="small"
+            startIcon={<IconPlus />}
+            onClick={addDetailWithSearch}
+            sx={{ fontSize: '0.75rem' }}
+            disabled={watchedStatus === 3}
+          >
+            {t('purchaseOrders.addItemWithSearch')}
+          </Button>
+        </Box>
+
+        <Box sx={{ maxHeight: '60vh', overflow: 'auto' }}>
+          {isMobile ? (
+            <Box>
+              {fields.length === 0 ? (
+                <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 4 }}>
+                  {t('purchaseOrders.noItems')}
+                </Typography>
+              ) : (
+                fields.map((field, index) => (
+                  <MobileDetailCard
+                    key={field.id}
+                    index={index}
+                    onRemove={() => remove(index)}
+                  />
+                ))
+              )}
+            </Box>
+          ) : (
+            <TableContainer>
+              <Table size="small">
+<TableHead>
+  <TableRow>
+    <TableCell>{t('purchaseOrders.product')}</TableCell>
+    <TableCell>{t('purchaseOrders.unit')}</TableCell>
+    <TableCell align="right">{t('purchaseOrders.quantity')}</TableCell>
+    <TableCell align="right">{t('purchaseOrders.price')}</TableCell>
+    <TableCell align="right">{`${t('purchaseOrders.discount')} %`}</TableCell>
+    <TableCell align="right">{`${t('purchaseOrders.tax')} %`}</TableCell>
+    <TableCell align="right">{t('purchaseOrders.total')}</TableCell>
+    <TableCell />
+  </TableRow>
+</TableHead>
+                <TableBody>
+                  {fields.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={8} align="center">
+                        <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>
+                          {t('purchaseOrders.noItems')}
+                        </Typography>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    fields.map((field, index) => (
+<TableRow key={field.id}>
+  <TableCell>{watch(`details.${index}.productName`)}</TableCell>
+  <TableCell>{watch(`details.${index}.unitName`)}</TableCell>
+  
+{/* الكمية */}
+<TableCell align="right">
+  <Controller
+    name={`details.${index}.quantity`}
+    control={control}
+    render={({ field }) => (
+      <TextField
+        {...field}
+        type="number"
+        size="small"
+        name={`details.${index}.quantity`}
+        onKeyDown={(e) => handleFieldKeyDown(e, `details.${index}.price`)}
+        onFocus={(e) => e.target.select()}
+        disabled={watchedStatus === 3} // أضف هذا السطر
+        sx={{
+          width: 100,
+          '& input[type=number]': {
+            '-moz-appearance': 'textfield',
+            textAlign: 'right',
+          },
+          '& input[type=number]::-webkit-outer-spin-button': {
+            '-webkit-appearance': 'none',
+            margin: 0,
+          },
+          '& input[type=number]::-webkit-inner-spin-button': {
+            '-webkit-appearance': 'none',
+            margin: 0,
+          },
+        }}
+        inputProps={{
+          step: "0.01",
+          inputMode: 'decimal'
+        }}
+      />
+    )}
+  />
+</TableCell>
+
+{/* السعر */}
+<TableCell align="right">
+  <Controller
+    name={`details.${index}.price`}
+    control={control}
+    render={({ field }) => (
+      <TextField
+        {...field}
+        type="number"
+        size="small"
+        name={`details.${index}.price`}
+        onKeyDown={(e) => handleFieldKeyDown(e, `details.${index}.discountPercent`)}
+        onFocus={(e) => e.target.select()}
+        disabled={watchedStatus === 3} // أضف هذا السطر
+        sx={{
+          width: 120,
+          '& input[type=number]': {
+            '-moz-appearance': 'textfield',
+            textAlign: 'right',
+          },
+          '& input[type=number]::-webkit-outer-spin-button': {
+            '-webkit-appearance': 'none',
+            margin: 0,
+          },
+          '& input[type=number]::-webkit-inner-spin-button': {
+            '-webkit-appearance': 'none',
+            margin: 0,
+          },
+        }}
+        inputProps={{
+          step: "0.01",
+          inputMode: 'decimal'
+        }}
+      />
+    )}
+  />
+</TableCell>
+
+{/* الخصم */}
+<TableCell align="right">
+  <Controller
+    name={`details.${index}.discountPercent`}
+    control={control}
+    render={({ field }) => (
+      <TextField
+        {...field}
+        type="number"
+        size="small"
+        name={`details.${index}.discountPercent`}
+        onKeyDown={(e) => handleFieldKeyDown(e, `details.${index}.taxPercent`)}
+        onFocus={(e) => e.target.select()}
+        disabled={watchedStatus === 3} // أضف هذا السطر
+        sx={{
+          width: 100,
+          '& input[type=number]': {
+            '-moz-appearance': 'textfield',
+            textAlign: 'right',
+          },
+          '& input[type=number]::-webkit-outer-spin-button': {
+            '-webkit-appearance': 'none',
+            margin: 0,
+          },
+          '& input[type=number]::-webkit-inner-spin-button': {
+            '-webkit-appearance': 'none',
+            margin: 0,
+          },
+        }}
+        inputProps={{
+          step: "0.01",
+          inputMode: 'decimal'
+        }}
+      />
+    )}
+  />
+</TableCell>
+
+{/* الضريبة */}
+<TableCell align="right">
+  <Controller
+    name={`details.${index}.taxPercent`}
+    control={control}
+    render={({ field }) => (
+      <TextField
+        {...field}
+        type="number"
+        size="small"
+        name={`details.${index}.taxPercent`}
+        onKeyDown={(e) => handleFieldKeyDown(e)}
+        onFocus={(e) => e.target.select()}
+        disabled={watchedStatus === 3} // أضف هذا السطر
+        sx={{
+          width: 100,
+          '& input[type=number]': {
+            '-moz-appearance': 'textfield',
+            textAlign: 'right',
+          },
+          '& input[type=number]::-webkit-outer-spin-button': {
+            '-webkit-appearance': 'none',
+            margin: 0,
+          },
+          '& input[type=number]::-webkit-inner-spin-button': {
+            '-webkit-appearance': 'none',
+            margin: 0,
+          },
+        }}
+        inputProps={{
+          step: "0.01",
+          inputMode: 'decimal'
+        }}
+      />
+    )}
+  />
+</TableCell>
+
+  {/* الإجمالي */}
+  <TableCell align="right">
+    <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+      {watch(`details.${index}.total`)?.toFixed(2) || '0.00'}
+    </Typography>
+  </TableCell>
+
+  <TableCell>
+    {watchedStatus !== 3 && (
+      <IconButton
+        onClick={() => remove(index)}
+        size="small"
+        color="error"
+      >
+        <IconTrash size={16} />
+      </IconButton>
+    )}
+  </TableCell>
+</TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
+        </Box>
+      </Paper>
+
+      {/* Product Price Search Dialog */}
       <ProductPriceSearchDialog
         open={productSearchOpen}
         onClose={() => setProductSearchOpen(false)}
@@ -1256,16 +1387,16 @@ const PurchaseOrderForm: React.FC<Props> = ({
         onScan={handleBarcodeScanned}
       />
 
-      {/* Alert Messages */}
-      <Snackbar 
-        open={!!alertMessage} 
-        autoHideDuration={4000} 
+      {/* Alert Snackbar */}
+      <Snackbar
+        open={!!alertMessage}
+        autoHideDuration={6000}
         onClose={() => setAlertMessage('')}
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
       >
-        <Alert 
-          severity={alertSeverity} 
+        <Alert
           onClose={() => setAlertMessage('')}
+          severity={alertSeverity}
           sx={{ width: '100%' }}
         >
           {alertMessage}

@@ -239,7 +239,11 @@
     "list": "Purchase Orders List",
     "selectSupplier": "Select Supplier",
     "selectWarehouse": "Select Warehouse",
-    "unit": "Unit"
+    "unit": "Unit",
+    "pending": "Pending",
+    "submitted": "Submitted",
+    "savePending": "Save Pending",
+    "submit": "Save Submitted"
   },
   "common": {
     "search": "Search",
@@ -250,7 +254,9 @@
     "back": "Back",
     "saveError": "Save Error",
     "inLine": "in line",
-    "searching": "Searching"
+    "searching": "Searching",
+        "edit": "Edit",
+    "view": "View"
   },
     "warehouses": {
     "title": "Warehouses",

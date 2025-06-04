@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { Snackbar, Alert, Box, Typography, CircularProgress } from '@mui/material';
 import PurchaseOrderForm from './components/PurchaseOrderForm';
 import * as apiSrv from 'src/utils/api/purchaseOrdersApi';
@@ -10,7 +10,6 @@ import { Supplier } from 'src/utils/api/suppliersApi';
 import { Warehouse } from 'src/utils/api/warehousesApi';
 
 const EditPurchaseOrderPage: React.FC = () => {
-  const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const [purchaseOrder, setPurchaseOrder] = useState<PurchaseOrder | null>(null);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
@@ -24,13 +23,11 @@ const EditPurchaseOrderPage: React.FC = () => {
         if (!id) {
           throw new Error('Purchase Order ID is required');
         }
-
         const [purchaseOrderData, suppliersData, warehousesData] = await Promise.all([
           apiSrv.getById(id),
           suppliersApi.getAll(),
           warehousesApi.getAll()
         ]);
-
         setPurchaseOrder(purchaseOrderData);
         setSuppliers(suppliersData);
         setWarehouses(warehousesData);
@@ -44,22 +41,14 @@ const EditPurchaseOrderPage: React.FC = () => {
     fetchData();
   }, [id]);
 
-  const handleSubmit = async (data: any, saveAction: 'save' | 'saveAndNew') => {
+  const handleSubmit = async (data: any) => {
     try {
       console.log('Updating purchase order:', data);
-      
-      if (!data.id) {
-        throw new Error('Purchase Order ID is missing');
+      if (!purchaseOrder) {
+        throw new Error('No purchase order loaded');
       }
-      
-      await apiSrv.update(data);
-      
-      if (saveAction === 'save') {
-        navigate('/purchases/purchase-orders');
-      } else {
-        // للـ saveAndNew في التعديل، نذهب لصفحة إضافة جديدة
-        navigate('/purchases/purchase-orders/add');
-      }
+      // Ensure we pass along the ID
+      await apiSrv.update({ ...data, id: purchaseOrder.id! });
     } catch (e: any) {
       console.error('Update error:', e);
       const msg = e?.message || 'Update failed';
