@@ -1,19 +1,32 @@
-import { Box, Typography } from '@mui/material';
-import { useTranslation } from 'react-i18next';
+// File: src/pages/products/components/PageHeader.tsx
+import React from 'react';
+import PageHeader from '../../components/PageHeader';
 
-const PageHeader = () => {
-  const { t } = useTranslation();
+interface Props {
+  exportData?: any[];
+  loading?: boolean;
+}
+
+const ProductsPageHeader: React.FC<Props> = ({ exportData = [], loading = false }) => {
+  const exportColumns = [
+    { field: 'name', headerName: 'اسم المنتج', type: 'string' as const },
+    { field: 'code', headerName: 'الكود', type: 'number' as const },
+    { field: 'group.name', headerName: 'المجموعة', type: 'string' as const, format: (value: any) => value?.name || 'غير محدد' },
+    { field: 'cost', headerName: 'التكلفة', type: 'number' as const },
+    { field: 'productType', headerName: 'النوع', type: 'string' as const, format: (value: number) => value === 1 ? 'POS' : 'Material' },
+    { field: 'isActive', headerName: 'الحالة', type: 'boolean' as const },
+  ];
 
   return (
-    <Box mb={3}>
-      <Typography variant="h4" component="h1" gutterBottom>
-        {t('products.title')}
-      </Typography>
-      <Typography variant="body1" color="text.secondary">
-        {t('products.subtitle')}
-      </Typography>
-    </Box>
+    <PageHeader
+      titleKey="products.title"
+      subtitleKey="products.subtitle"
+      exportData={exportData}
+      exportColumns={exportColumns}
+      exportFileName="products"
+      exportLoading={loading}
+    />
   );
 };
 
-export default PageHeader;
+export default ProductsPageHeader;

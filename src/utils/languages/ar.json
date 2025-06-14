@@ -23,6 +23,7 @@
 
   "sidebar": {
     "inventory": "المخزون",
+    "inventoryadjustments": "تسوية الجرد",
     "stock": "المخزون",
     "sales": "المبيعات",
     "promo": "العروض",
@@ -32,7 +33,7 @@
     "hrm": "الموارد البشرية",
     "reports": "التقارير",
     "data": "البيانات",
-    "transactions": "الانتقالات",
+    "transactions": "الحركات",
     "products": "المنتجات",
     "createProduct": "إنشاء منتج",
     "expiredProducts": "منتجات منتهية الصلاحية",
@@ -89,7 +90,9 @@
     "incomeReport": "تقرير الإيرادات",
     "taxReport": "تقرير الضرائب",
     "profitLoss": "الأرباح والخسائر",
-    "annualReport": "التقرير السنوي"
+    "annualReport": "التقرير السنوي",
+    "settings": "الإعدادات",
+    "productBalance": "أرصدة المنتجات"
   },
  "products": {
     "title": "المنتجات",
@@ -153,6 +156,63 @@
     "navigateWithArrows": "التنقل بالأسهم",
     "selectWithEnter": "للاختيار"
   },
+
+
+    "reports": {
+    "productBalance": {
+      "title": "تقرير أرصدة المنتجات",
+      "description": "عرض تفصيلي لأرصدة المنتجات في جميع المخازن"
+    },
+    "filters": {
+      "title": "المرشحات",
+      "searchProducts": "البحث في المنتجات...",
+      "warehouse": "المخزن",
+      "allWarehouses": "جميع المخازن",
+      "stockStatus": "حالة المخزون",
+      "all": "الكل"
+    },
+    "stockFilter": {
+      "all": "جميع المنتجات",
+      "inStock": "متوفر في المخزون",
+      "outOfStock": "غير متوفر",
+      "lowStock": "مخزون منخفض"
+    },
+    "stockStatus": {
+      "inStock": "متوفر",
+      "outOfStock": "غير متوفر",
+      "lowStock": "مخزون منخفض"
+    },
+    "stats": {
+      "totalProducts": "إجمالي المنتجات",
+      "totalWarehouses": "إجمالي المخازن",
+      "inStock": "متوفر في المخزون",
+      "outOfStock": "غير متوفر",
+      "totalCostValue": "قيمة التكلفة",
+      "totalLastPurePriceValue": "قيمة آخر سعر شراء"
+    },
+    "table": {
+      "product": "المنتج",
+      "warehouse": "المخزن",
+      "totalQuantity": "إجمالي الكمية",
+      "remainder": "المتبقي",
+      "status": "الحالة",
+      "unitBreakdown": "تفصيل الوحدات",
+      "unit": "الوحدة",
+      "factor": "المعامل",
+      "quantity": "الكمية",
+      "totalCostValue": "إجمالي قيمة التكلفة",
+      "totalLastPurePriceValue": "إجمالي قيمة آخر سعر شراء",
+      "cost": "التكلفة",
+      "totalCost": "إجمالي التكلفة",
+      "lastPurePrice": "آخر سعر شراء",
+      "totalLastPurePrice": "إجمالي آخر سعر شراء"
+    },
+    "noData": "لا توجد بيانات لعرضها",
+    "errors": {
+      "loadFailed": "فشل في تحميل البيانات"
+    }
+  },
+
   "barcode": {
     "scan": "مسح الباركود",
     "scanTitle": "مسح الباركود",
@@ -165,6 +225,18 @@
     "enterValidNumber": "يرجى إدخال رقم صحيح في حقل",
     "minValue": "القيمة لا يمكن أن تكون أقل من 0",
     "maxPercent": "القيمة لا يمكن أن تزيد عن 100%"
+  },
+
+   "export": {
+    "title": "تصدير البيانات",
+    "pdf": "تصدير PDF",
+    "excel": "تصدير Excel",
+    "recordsCount": "{{count}} سجل",
+    "exportedOn": "تم التصدير في",
+    "subject": "تقرير البيانات",
+    "author": "نظام إدارة المخزون",
+    "errorPdf": "حدث خطأ أثناء تصدير PDF",
+    "errorExcel": "حدث خطأ أثناء تصدير Excel"
   },
    "suppliers": {
     "title": "الموردين",
@@ -229,9 +301,109 @@
     "active": "نشط",
     "inactive": "غير نشط"
   },
+    "purchases": {
+    "title": "فواتير الشراء",
+    "description": "إدارة فواتير الشراء والمدفوعات",
+    "addButton": "إضافة فاتورة شراء",
+    "searchPlaceholder": "البحث في فواتير الشراء...",
+    "listTitle": "فواتير الشراء",
+    "noData": "لا توجد فواتير شراء",
+     "view": {
+      "title": "عرض فاتورة الشراء"
+    },
+    "edit": "تعديل فاتورة الشراء",
+    "status": {
+      "pending": "معلقة",
+      "submitted": "مقدمة"
+    },
+    
+    "table": {
+      "invoiceNumber": "رقم الفاتورة",
+      "code": "الكود",
+      "purchaseOrder": "أمر الشراء",
+      "supplier": "المورد",
+      "warehouse": "المخزن",
+      "invoiceDate": "تاريخ الفاتورة",
+      "total": "الإجمالي",
+      "itemsCount": "عدد الأصناف",
+      "status": "الحالة",
+      "items": "صنف",
+      "directInvoice": "فاتورة مباشرة"
+    },
+    "form": {
+      "addTitle": "إضافة فاتورة شراء",
+      "editTitle": "تعديل فاتورة شراء",
+      "invoiceNumber": "رقم الفاتورة",
+      "invoiceDate": "تاريخ الفاتورة",
+      "supplier": "المورد",
+      "warehouse": "المخزن",
+      "selectSupplier": "اختر المورد",
+      "selectWarehouse": "اختر المخزن",
+      "status": "الحالة",
+      "totalDiscount": "إجمالي الخصم",
+      "totalTax": "إجمالي الضريبة",
+      "subTotal": "المجموع الفرعي",
+      "discountValue": "قيمة الخصم",
+      "taxValue": "قيمة الضريبة",
+      "total": "الإجمالي",
+      "items": "الأصناف",
+      "quickSearch": "البحث السريع في المنتجات...",
+      "scanBarcode": "مسح الباركود",
+      "addBySearch": "إضافة بالبحث",
+      "noItems": "لا توجد أصناف",
+      "product": "المنتج",
+      "unit": "الوحدة",
+      "quantity": "الكمية",
+      "price": "السعر",
+      "discount": "الخصم",
+      "tax": "الضريبة",
+      "importFromPO": "استيراد من أمر شراء",
+      "savePending": "حفظ معلق",
+      "submitInvoice": "تقديم الفاتورة",
+      "linkedToPO": "مرتبط بأمر الشراء",
+      "poCode": "كود الأمر",
+      "poDate": "تاريخ الأمر",
+      "poTotal": "إجمالي الأمر",
+      "itemsCount": "عدد الأصناف",
+      "selectPurchaseOrder": "اختيار أمر شراء",
+      "searchPurchaseOrders": "البحث في أوامر الشراء...",
+      "noSubmittedPO": "لا توجد أوامر شراء مقدمة",
+      "code": "الكود",
+      "date": "التاريخ",
+      "unknownProduct": "منتج غير محدد",
+      "purchaseOrderImported": "تم تحميل أمر الشراء: {{number}}",
+      "productAdded": "تم إضافة المنتج: {{name}}",
+      "barcodeNotFound": "لم يتم العثور على منتج بهذا الباركود",
+      "searchError": "خطأ في البحث عن المنتج",
+      "inLine": "في السطر",
+      "missingProductId": "مفقود معرف المنتج",
+      "missingPriceId": "مفقود معرف السعر",
+      "invalidNumber": "يرجى إدخال رقم صحيح في {{field}}",
+      "validation": {
+        "supplierRequired": "يجب اختيار المورد",
+        "warehouseRequired": "يجب اختيار المخزن",
+        "itemsRequired": "يجب إضافة منتج واحد على الأقل"
+      }
+    },
+    "errors": {
+      "loadFailed": "فشل في تحميل فواتير الشراء",
+      "dataLoadFailed": "فشل في تحميل البيانات",
+      "addFailed": "فشل في إضافة فاتورة الشراء",
+      "updateFailed": "فشل في تحديث فاتورة الشراء",
+      "idRequired": "معرف فاتورة الشراء مطلوب",
+      "noPurchaseLoaded": "لا توجد فاتورة شراء محملة",
+      "purchaseNotFound": "فاتورة الشراء غير موجودة",
+      "missingId": "خطأ: معرف فاتورة الشراء غير موجود"
+    },
+    "messages": {
+      "addSuccess": "تم إنشاء فاتورة الشراء بنجاح",
+      "updateSuccess": "تم تحديث فاتورة الشراء بنجاح"
+    }
+  },
   "common": {
     "search": "بحث",
     "all": "الكل",
+    "home": "الرئيسية",
     "add": "إضافة",
     "edit": "تعديل",
     "cancel": "إلغاء",
@@ -241,7 +413,16 @@
     "saveError": "خطأ في الحفظ",
     "inLine": "في السطر",
     "searching": "جاري البحث",
-    "view": "عرض"
+    "view": "عرض",
+    "submit": "تقديم",
+    "delete": "حذف",
+    "noSearchResults": "لا توجد نتائج للبحث",
+    "notSpecified": "غير محدد",
+    "required": "مطلوب",
+    "refresh": "تحديث",
+        "yes": "نعم",
+    "no": "لا",
+    "exportedOn": "تم التصدير في"
     
   },
   "warehouses": {
@@ -305,5 +486,74 @@
     "fontColor": "لون الخط",
     "preview": "معاينة",
     "sampleText": "نص تجريبي"
+  },
+
+
+
+
+   "adjustment": {
+    "title": "تسوية الجرد",
+    "types": {
+      "openingBalance": "أرصدة أول المدة",
+      "manualAdjustment": "تسوية جرد"
+    },
+      "search": {
+      "title": "البحث في الأصناف",
+      "placeholder": "ابحث بالاسم أو الباركود...",
+      "scanBarcode": "مسح الباركود",
+      "currentQuantity": "الكمية الحالية",
+      "barcode": "الباركود",
+      "noResults": "لا توجد نتائج للبحث",
+      "filteredFrom": "مفلتر من {total}"
+    },
+     "barcode": {
+      "title": "مسح الباركود",
+      "instruction": "امسح الباركود أو أدخله يدوياً",
+      "label": "الباركود",
+      "placeholder": "أدخل الباركود هنا...",
+      "scan": "بحث"
+    },
+    "form": {
+      "warehouse": "المخزن",
+      "selectWarehouse": "اختر المخزن",
+      "adjustmentType": "نوع التسوية",
+      "referenceNumber": "الرقم المرجعي",
+      "reason": "السبب",
+      "items": "الأصناف",
+      "product": "المنتج",
+            "barcode": "الباركود",
+      "unit": "الوحدة",
+      "unitFactor": "معامل التحويل",
+      "oldQuantity": "الكمية القديمة",
+      "newQuantity": "الكمية الجديدة",
+      "difference": "الفرق",
+      "notes": "ملاحظات",
+      "noItems": "لا توجد أصناف",
+      "save": "حفظ",
+      "submit": "تأكيد التسوية",
+      "validation": {
+        "warehouseRequired": "يجب اختيار المخزن"
+      }
+    },
+    "dialog": {
+      "newAdjustmentTitle": "تسوية جرد جديدة",
+      "newAdjustmentMessage": "تم بدء عملية جرد جديدة",
+      "selectAdjustmentType": "يرجى اختيار نوع التسوية:"
+    },
+    "messages": {
+      "newAdjustmentStarted": "تم بدء عملية جرد جديدة بنجاح",
+      "saveSuccess": "تم حفظ التسوية بنجاح",
+      "submitSuccess": "تم تأكيد التسوية بنجاح",
+            "selectWarehouseToStart": "برجاء اختيار المخزن لبدء تسوية جرد جديدة"
+
+    },
+    "errors": {
+      "loadWarehousesFailed": "فشل في تحميل المخازن",
+      "loadAdjustmentFailed": "فشل في تحميل بيانات التسوية",
+      "saveFailed": "فشل في حفظ التسوية",
+      "submitFailed": "فشل في تأكيد التسوية"
+    }
   }
+
+
 }

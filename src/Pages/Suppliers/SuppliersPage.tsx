@@ -7,8 +7,8 @@ import ActionsBar from './components/ActionsBar';
 import SupplierTable from './components/SupplierTable';
 import SupplierRow from './components/SupplierRow';
 import SupplierForm from './components/SupplierForm';
-import * as apiSrv from 'src/utils/api/suppliersApi';
-import { Supplier } from 'src/utils/api/suppliersApi';
+import * as apiSrv from 'src/utils/api/pagesApi/suppliersApi';
+import { Supplier } from 'src/utils/api/pagesApi/suppliersApi';
 
 const SuppliersPage: React.FC = () => {
   const [suppliers, setSuppliers] = React.useState<Supplier[]>([]);
@@ -107,7 +107,7 @@ const SuppliersPage: React.FC = () => {
   /* ───── UI ───── */
   return (
     <Container maxWidth="xl">
-      <PageHeader />
+      <PageHeader exportData={filtered} loading={loading}/>
       <ActionsBar
         query={query}
         onQueryChange={setQuery}

@@ -12,12 +12,12 @@ import ProductTable from './components/ProductTable';
 import ProductRow from './components/ProductsRow';
 import ProductForm from './components/ProductForm';
 import ProductPricesDrawer from './components/ProductPricesDrawer';
-import * as apiSrv from 'src/utils/api/productsApi';
-import * as groupsApi from 'src/utils/api/groupsApi';
-import * as unitsApi from 'src/utils/api/unitsApi';
-import { Product, ProductsResponse } from 'src/utils/api/productsApi';
-import { Group } from 'src/utils/api/groupsApi';
-import { Unit } from 'src/utils/api/unitsApi';
+import * as apiSrv from 'src/utils/api/pagesApi/productsApi';
+import * as groupsApi from 'src/utils/api/pagesApi/groupsApi';
+import * as unitsApi from 'src/utils/api/pagesApi/unitsApi';
+import { Product, ProductsResponse } from 'src/utils/api/pagesApi/productsApi';
+import { Group } from 'src/utils/api/pagesApi/groupsApi';
+import { Unit } from 'src/utils/api/pagesApi/unitsApi';
 
 const ProductsPage: React.FC = () => {
   const { t } = useTranslation();
@@ -240,7 +240,7 @@ const ProductsPage: React.FC = () => {
   /* ───── UI ───── */
   return (
     <Container maxWidth="xl">
-      <PageHeader />
+      <PageHeader exportData={productsData.data} loading={loading}/>
       
       {/* شريط البحث المحسن */}
       <Box mb={3}>

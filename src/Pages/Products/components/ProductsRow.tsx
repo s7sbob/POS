@@ -8,7 +8,7 @@ import {
   Box
 } from '@mui/material';
 import { IconEdit, IconEye } from '@tabler/icons-react';
-import { Product } from 'src/utils/api/productsApi';
+import { Product } from 'src/utils/api/pagesApi/productsApi';
 import { useTranslation } from 'react-i18next';
 
 interface Props {

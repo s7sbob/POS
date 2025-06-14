@@ -17,8 +17,8 @@ import {
 } from '@mui/material';
 import { IconX } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
-import { Product } from 'src/utils/api/productsApi';
-import { Unit } from 'src/utils/api/unitsApi';
+import { Product } from 'src/utils/api/pagesApi/productsApi';
+import { Unit } from 'src/utils/api/pagesApi/unitsApi';
 
 interface Props {
   open: boolean;

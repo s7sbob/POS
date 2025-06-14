@@ -1,16 +1,30 @@
-import { Box, Typography } from '@mui/material';
-import { useTranslation } from 'react-i18next';
+// File: src/pages/warehouses/components/PageHeader.tsx
+import React from 'react';
+import PageHeader from '../../components/PageHeader';
 
-const PageHeader = () => {
-  const { t } = useTranslation();
+interface Props {
+  exportData?: any[];
+  loading?: boolean;
+}
+
+const WarehousesPageHeader: React.FC<Props> = ({ exportData = [], loading = false }) => {
+  const exportColumns = [
+    { field: 'name', headerName: 'اسم المخزن', type: 'string' as const },
+    { field: 'address', headerName: 'العنوان', type: 'string' as const },
+    { field: 'createdOn', headerName: 'تاريخ الإنشاء', type: 'date' as const },
+    { field: 'isActive', headerName: 'الحالة', type: 'boolean' as const },
+  ];
+
   return (
-    <Box sx={{ mb: 3 }}>
-      <Typography variant="h5">{t('warehouses.title')}</Typography>
-      <Typography variant="body2" color="text.secondary">
-        {t('warehouses.subtitle')}
-      </Typography>
-    </Box>
+    <PageHeader
+      titleKey="warehouses.title"
+      subtitleKey="warehouses.subtitle"
+      exportData={exportData}
+      exportColumns={exportColumns}
+      exportFileName="warehouses"
+      exportLoading={loading}
+    />
   );
 };
 
-export default PageHeader;
+export default WarehousesPageHeader;

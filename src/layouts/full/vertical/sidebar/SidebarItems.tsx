@@ -1,3 +1,4 @@
+// File: src/layouts/full/vertical/sidebar/SidebarItems.tsx
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import React from 'react';
@@ -21,15 +22,20 @@ const SidebarItems = () => {
   const dispatch = useDispatch();
 
   return (
-    <Box sx={{ px: 3 }}>
-      <List sx={{ pt: 0 }} className="sidebarNav">
+    <Box sx={{ px: 2 }}> {/* تقليل من px: 3 إلى px: 2 */}
+      <List 
+        sx={{ 
+          pt: 0,
+          '& .MuiListItem-root': {
+            py: 0, // إزالة المسافات العمودية الافتراضية
+          }
+        }} 
+        className="sidebarNav"
+        dense // إضافة dense لتقليل المسافات
+      >
         {Menuitems.map((item) => {
-          // {/********SubHeader**********/}
           if (item.subheader) {
             return <NavGroup item={item} hideMenu={hideMenu} key={item.subheader} />;
-
-            // {/********If Sub Menu**********/}
-            /* eslint no-else-return: "off" */
           } else if (item.children) {
             return (
               <NavCollapse
@@ -42,12 +48,16 @@ const SidebarItems = () => {
                 onClick={() => dispatch(toggleMobileSidebar())}
               />
             );
-
-            // {/********If Sub No Menu**********/}
           } else {
             return (
-              <NavItem item={item} key={item.id} pathDirect={pathDirect} hideMenu={hideMenu}
-              onClick={() => dispatch(toggleMobileSidebar())} />
+              <NavItem 
+                item={item} 
+                key={item.id} 
+                pathDirect={pathDirect} 
+                hideMenu={hideMenu}
+                level={1}
+                onClick={() => dispatch(toggleMobileSidebar())} 
+              />
             );
           }
         })}
@@ -55,4 +65,5 @@ const SidebarItems = () => {
     </Box>
   );
 };
+
 export default SidebarItems;

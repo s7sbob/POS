@@ -1,0 +1,477 @@
+// File: purchaseOrdersApi.ts
+import api from '../axios';
+
+export type PurchaseOrder = {
+  id?: string;
+  code?: number;
+  referenceDocNumber: string;
+  date1: string;
+  date2: string;
+  warehouseId: string;
+  warehouse?: {
+    id: string;
+    code: number;
+    name: string;
+    address: string;
+    isActive: boolean;
+    createdOn: string;
+    lastModifiedOn: string;
+    createUser: string;
+    lastModifyUser: string;
+    createCompany: string;
+    createBranch: string;
+  };
+  supplierId: string;
+  supplier?: {
+    id: string;
+    code: number;
+    name: string;
+    phone: string;
+    address: string;
+    notes: string;
+    isActive: boolean;
+    createdOn: string;
+    lastModifiedOn: string;
+    createUser: string;
+    lastModifyUser: string;
+    createCompany: string;
+    createBranch: string;
+  };
+  discountPercent: number;
+  discountValue: number;
+  taxPercent: number;
+  taxValue: number;
+  subTotal: number;
+  total: number;
+  status: number;
+  details: PurchaseOrderDetail[];
+  isActive?: boolean;
+  createdOn?: string;
+  lastModifiedOn?: string;
+  createUser?: string;
+  lastModifyUser?: string;
+  createCompany?: string;
+  createBranch?: string;
+};
+
+export type PurchaseOrderDetail = {
+  unitName: any;
+  id?: string;
+  purchaseOrderId?: string;
+  productID: string;
+  productPriceID?: string; // ← إضافة معرف السعر
+  unitId: string;
+  unitFactor: number;
+  quantity: number;
+  price: number;
+  discountPercent: number;
+  discountValue: number;
+  taxPercent: number;
+  taxValue: number;
+  subTotal: number;
+  total: number;
+  isActive?: boolean;
+  createdOn?: string;
+  lastModifiedOn?: string;
+  createUser?: string;
+  lastModifyUser?: string;
+  createCompany?: string;
+  createBranch?: string;
+};
+
+const toPurchaseOrder = (raw: any): PurchaseOrder => {
+  console.log('Converting raw purchase order:', raw);
+  
+  const converted: PurchaseOrder = {
+    id: raw.purchaseOrderID,
+    code: raw.purchaseOrderCode,
+    referenceDocNumber: raw.referanceDocNumber,
+    date1: raw.date1,
+    date2: raw.date2,
+    warehouseId: raw.warehouseId,
+    warehouse: raw.warehouse
+      ? {
+          id: raw.warehouse.warehouseID,
+          code: raw.warehouse.warehouseCode,
+          name: raw.warehouse.warehouseName,
+          address: raw.warehouse.address,
+          isActive: raw.warehouse.isActive,
+          createdOn: raw.warehouse.createDate,
+          lastModifiedOn: raw.warehouse.lastModifyDate,
+          createUser: raw.warehouse.createUser,
+          lastModifyUser: raw.warehouse.lastModifyUser,
+          createCompany: raw.warehouse.createCompany,
+          createBranch: raw.warehouse.createBranch,
+        }
+      : undefined,
+    supplierId: raw.supplierId,
+    supplier: raw.supplier
+      ? {
+          id: raw.supplier.supplierId,
+          code: raw.supplier.supplierCode,
+          name: raw.supplier.supplierName,
+          phone: raw.supplier.phone,
+          address: raw.supplier.address,
+          notes: raw.supplier.notes,
+          isActive: raw.supplier.isActive,
+          createdOn: raw.supplier.createDate,
+          lastModifiedOn: raw.supplier.lastModifyDate,
+          createUser: raw.supplier.createUser,
+          lastModifyUser: raw.supplier.lastModifyUser,
+          createCompany: raw.supplier.createCompany,
+          createBranch: raw.supplier.createBranch,
+        }
+      : undefined,
+    discountPercent: raw.discountPercent,
+    discountValue: raw.discountValue,
+    taxPercent: raw.taxPercent,
+    taxValue: raw.taxValue,
+    subTotal: raw.subTotal,
+    total: raw.total,
+    status: raw.status,
+    details: raw.details?.map(toPurchaseOrderDetail) || [],
+    isActive: raw.isActive,
+    createdOn: raw.createDate,
+    lastModifiedOn: raw.lastModifyDate,
+    createUser: raw.createUser,
+    lastModifyUser: raw.lastModifyUser,
+    createCompany: raw.createCompany,
+    createBranch: raw.createBranch,
+  };
+
+  if (!converted.id) {
+    console.error('Converted purchase order missing ID:', converted);
+  }
+  return converted;
+};
+
+const toPurchaseOrderDetail = (raw: any): PurchaseOrderDetail => ({
+  id: raw.purchaseOrderDetailID,
+  purchaseOrderId: raw.purchaseOrderID,
+  productID: raw.productID,
+  productPriceID: raw.productPriceId, // ← هنا الإصلاح - كان مفقود
+  unitId: raw.unitId,
+  unitFactor: raw.unitFactor,
+  quantity: raw.quantity,
+  price: raw.price,
+  discountPercent: raw.discountPercent,
+  discountValue: raw.discountValue,
+  taxPercent: raw.taxPercent,
+  taxValue: raw.taxValue,
+  subTotal: raw.subTotal,
+  total: raw.total,
+  isActive: raw.isActive,
+  createdOn: raw.createDate,
+  lastModifiedOn: raw.lastModifyDate,
+  createUser: raw.createUser,
+  lastModifyUser: raw.lastModifyUser,
+  createCompany: raw.createCompany,
+  createBranch: raw.createBranch,
+  unitName: raw.unit?.unitName || raw.productPrice?.unit?.unitName || 'وحدة غير محددة'
+});
+
+/* ---------------- API ---------------- */
+
+export const getAll = async (): Promise<PurchaseOrder[]> => {
+  try {
+    const response = await api.get('/GetAllPurchaseOrders');
+    console.log('Raw purchase orders from API:', response.data.data);
+    const converted = response.data.data.map(toPurchaseOrder);
+    console.log('Converted purchase orders:', converted);
+    return converted;
+  } catch (error) {
+    console.error('Error fetching purchase orders:', error);
+    throw error;
+  }
+};
+
+export const getById = async (id: string): Promise<PurchaseOrder> => {
+  try {
+    const response = await api.get(`/GetPurchaseOrder?id=${id}`);
+    return toPurchaseOrder(response.data.data);
+  } catch (error) {
+    console.error('Error fetching purchase order:', error);
+    throw error;
+  }
+};
+
+export const add = async (body: PurchaseOrder) => {
+  const apiBody = {
+    referanceDocNumber: body.referenceDocNumber,
+    date1: body.date1,
+    date2: body.date2,
+    warehouseId: body.warehouseId,
+    supplierId: body.supplierId,
+    discountPercent: body.discountPercent,
+    discountValue: body.discountValue,
+    taxPercent: body.taxPercent,
+    taxValue: body.taxValue,
+    subTotal: body.subTotal,
+    total: body.total,
+    status: body.status,
+    details: body.details.map((detail, index) => {
+      // التحقق من البيانات المطلوبة
+      if (!detail.productID) {
+        console.error(`Detail ${index} missing productID:`, detail);
+        throw new Error(`Detail ${index} is missing productID`);
+      }
+      if (!detail.productPriceID) {
+        console.error(`Detail ${index} missing productPriceID:`, detail);
+        throw new Error(`Detail ${index} is missing ProductPriceID`);
+      }
+
+      return {
+        productID: detail.productID,
+        ProductPriceID: detail.productPriceID, // ← هنا الإصلاح المهم
+        unitId: detail.unitId,
+        unitFactor: detail.unitFactor,
+        quantity: detail.quantity,
+        price: detail.price,
+        discountPercent: detail.discountPercent,
+        discountValue: detail.discountValue,
+        taxPercent: detail.taxPercent,
+        taxValue: detail.taxValue,
+        subTotal: detail.subTotal,
+        total: detail.total
+      };
+    })
+  };
+
+  console.log('API Body before sending (ADD):', JSON.stringify(apiBody, null, 2));
+  
+  // التحقق النهائي قبل الإرسال
+  apiBody.details.forEach((d, idx) => {
+    if (!d.productID) {
+      console.error(`Detail ${idx} missing productID:`, d);
+      throw new Error(`Detail ${idx} is missing productID`);
+    }
+    if (!d.ProductPriceID) {
+      console.error(`Detail ${idx} missing ProductPriceID:`, d);
+      throw new Error(`Detail ${idx} is missing ProductPriceID`);
+    }
+  });
+
+  const { data } = await api.post('/AddPurchaseOrder', apiBody);
+  return toPurchaseOrder(data.data);
+};
+
+export const update = async (body: PurchaseOrder & { id: string }) => {
+  const apiBody = {
+    purchaseOrderID: body.id,
+    referanceDocNumber: body.referenceDocNumber,
+    date1: body.date1,
+    date2: body.date2,
+    warehouseId: body.warehouseId,
+    supplierId: body.supplierId,
+    discountPercent: body.discountPercent,
+    discountValue: body.discountValue,
+    taxPercent: body.taxPercent,
+    taxValue: body.taxValue,
+    subTotal: body.subTotal,
+    total: body.total,
+    status: body.status,
+    details: body.details.map((detail, index) => {
+      // التحقق من البيانات المطلوبة
+      if (!detail.productID) {
+        console.error(`Detail ${index} missing productID:`, detail);
+        throw new Error(`Detail ${index} is missing productID`);
+      }
+      if (!detail.productPriceID) {
+        console.error(`Detail ${index} missing productPriceID:`, detail);
+        throw new Error(`Detail ${index} is missing ProductPriceID`);
+      }
+
+      const detailData: any = {
+        productID: detail.productID,
+        ProductPriceID: detail.productPriceID,
+        unitId: detail.unitId,
+        unitFactor: detail.unitFactor,
+        quantity: detail.quantity,
+        price: detail.price,
+        discountPercent: detail.discountPercent,
+        discountValue: detail.discountValue,
+        taxPercent: detail.taxPercent,
+        taxValue: detail.taxValue,
+        subTotal: detail.subTotal,
+        total: detail.total
+      };
+
+      // ← هنا الإصلاح المهم: إضافة purchaseOrderDetailID للسطور الموجودة
+      if (detail.id && detail.id.trim() !== '') {
+        detailData.purchaseOrderDetailID = detail.id;
+        detailData.purchaseOrderID = body.id; // إضافة purchaseOrderID أيضاً
+        console.log(`Adding IDs for existing detail ${index}:`, {
+          purchaseOrderDetailID: detail.id,
+          purchaseOrderID: body.id
+        });
+      } else {
+        // سطر جديد - لا نضيف purchaseOrderDetailID
+        console.log(`New detail ${index} - no IDs added`);
+      }
+
+      return detailData;
+    })
+  };
+
+  console.log('API Body before sending (UPDATE):', JSON.stringify(apiBody, null, 2));
+  
+  // التحقق النهائي
+  apiBody.details.forEach((d, idx) => {
+    console.log(`Detail ${idx} final check:`, {
+      hasProductID: !!d.productID,
+      hasProductPriceID: !!d.ProductPriceID,
+      hasPurchaseOrderDetailID: !!d.purchaseOrderDetailID,
+      hasPurchaseOrderID: !!d.purchaseOrderID
+    });
+  });
+
+  const { data } = await api.post('/UpdatePurchaseOrder', apiBody);
+  return toPurchaseOrder(data.data);
+};
+
+
+// File: purchaseProductsApi.ts
+import api from '../axios';
+
+export type Product = {
+  id: string;
+  code: number;
+  name: string;
+  groupId: string | null;
+  group: {
+    id: string;
+    code: number;
+    name: string;
+    parentId: string | null;
+    parentGroup: string | null;
+    backgroundColor: string;
+    fontColor: string;
+    isActive: boolean;
+    createdOn: string;
+    lastModifiedOn: string;
+    createUser: string;
+    lastModifyUser: string;
+    createCompany: string;
+    createBranch: string;
+  } | null;
+  productType: number;
+  description: string | null;
+  reorderLevel: number;
+  cost: number;
+  lastPurePrice: number;
+  expirationDays: number;
+  imageUrl: string | null;
+  productPrices: ProductPrice[];
+  isActive: boolean;
+  createdOn: string;
+  lastModifiedOn: string;
+  createUser: string;
+  lastModifyUser: string;
+  createCompany: string;
+  createBranch: string;
+};
+
+export type ProductPrice = {
+  id: string;
+  productId: string;
+  productName: string;
+  unitId: string | null;
+  unitName?: string;
+  unitFactor: number;
+  barcode: string;
+  price: number;
+  cost: number;
+  posPriceName: string | null;
+  isGenerated: boolean;
+  isActive: boolean;
+  createdOn?: string;
+  lastModifiedOn?: string;
+  createUser?: string;
+  lastModifyUser?: string;
+  createCompany?: string;
+  createBranch?: string;
+};
+
+export type ProductPricesResponse = {
+  totalCount: number;
+  pageCount: number;
+  pageNumber: number;
+  pageSize: number;
+  data: ProductPrice[];
+};
+
+// تحويل البيانات من API format إلى التطبيق format
+const toProductPrice = (raw: any): ProductPrice => ({
+  id: raw.productPriceId,
+  productId: raw.product?.productID || '',
+  productName: raw.product?.productName || '',
+  unitId: raw.unit?.unitID || null,
+  unitName: raw.unit?.unitName || 'وحدة غير محددة',
+  unitFactor: raw.unitFactor,
+  barcode: raw.barcode,
+  price: raw.price,
+  cost: raw.product?.cost || 0,
+  posPriceName: raw.posPriceName,
+  isGenerated: raw.isGenerated,
+  isActive: raw.product?.isActive ?? true,
+  createdOn: raw.createDate,
+  lastModifiedOn: raw.lastModifyDate,
+  createUser: raw.createUser,
+  lastModifyUser: raw.lastModifyUser,
+  createCompany: raw.createCompany,
+  createBranch: raw.createBranch,
+});
+
+/* ---------------- API ---------------- */
+
+// البحث في أسعار المنتجات - الـ API الوحيد المستخدم
+export const searchProductPrices = async (
+  filterText: string = '', 
+  pageNumber: number = 1, 
+  pageSize: number = 50
+): Promise<ProductPricesResponse> => {
+  try {
+    let url = `/getProductPricebyNameOrBarcode?pageNumber=${pageNumber}&pageSize=${pageSize}`;
+    
+    // إضافة FilterText فقط إذا كان موجود
+    if (filterText.trim()) {
+      url += `&FilterText=${encodeURIComponent(filterText)}`;
+    }
+    
+    const response = await api.get(url);
+    
+    if (response.data?.data) {
+      return {
+        totalCount: response.data.data.totalCount || 0,
+        pageCount: response.data.data.pageCount || 1,
+        pageNumber: response.data.data.pageNumber || 1,
+        pageSize: response.data.data.pageSize || pageSize,
+        data: response.data.data.data.map(toProductPrice)
+      };
+    } else {
+      return {
+        totalCount: 0,
+        pageCount: 0,
+        pageNumber: pageNumber,
+        pageSize: pageSize,
+        data: []
+      };
+    }
+  } catch (error) {
+    console.error('Error searching product prices:', error);
+    return {
+      totalCount: 0,
+      pageCount: 0,
+      pageNumber: pageNumber,
+      pageSize: pageSize,
+      data: []
+    };
+  }
+};
+
+// للتوافق مع الكود القديم - استخدام نفس API
+export const getProducts = async (pageNumber: number = 1, pageSize: number = 20): Promise<ProductPricesResponse> => {
+  return searchProductPrices('', pageNumber, pageSize);
+};
+
+

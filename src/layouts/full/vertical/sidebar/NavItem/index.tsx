@@ -1,9 +1,8 @@
+// File: src/layouts/full/vertical/sidebar/NavItem/NavItem.tsx
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import React from 'react';
 import { NavLink } from 'react-router';
-
-// mui imports
 import {
   ListItemIcon,
   List,
@@ -17,6 +16,7 @@ import {
 import { useSelector } from 'src/store/Store';
 import { useTranslation } from 'react-i18next';
 import { AppState } from 'src/store/Store';
+import { IconPoint } from '@tabler/icons-react';
 
 type NavGroup = {
   [x: string]: any;
@@ -48,20 +48,39 @@ const NavItem = ({ item, level, pathDirect, hideMenu, onClick }: ItemType) => {
   const Icon = item?.icon;
   const theme = useTheme();
   const { t } = useTranslation();
-  const itemIcon =
-    level > 1 ? <Icon stroke={1.5} size="1rem" /> : <Icon stroke={1.5} size="1.3rem" />;
+  
+  // تحديد الأيقونة حسب المستوى
+  const getItemIcon = () => {
+    if (level === 1) {
+      // المستوى الأول - الأيقونة العادية
+      return level > 1 ? <Icon stroke={1.5} size="1rem" /> : <Icon stroke={1.5} size="1.1rem" />;
+    } else {
+      // المستويات الفرعية - نقطة صغيرة
+      return <IconPoint size="0.8rem" />;
+    }
+  };
 
   const ListItemStyled = styled(ListItemButton)(() => ({
     whiteSpace: 'nowrap',
-    marginBottom: '2px',
-    padding: '8px 10px',
+    marginBottom: '1px',
+    padding: '4px 8px',
     borderRadius: `${customizer.borderRadius}px`,
     backgroundColor: level > 1 ? 'transparent !important' : 'inherit',
     color:
       level > 1 && pathDirect === item?.href
         ? `${theme.palette.primary.main}!important`
         : theme.palette.text.secondary,
-    paddingLeft: hideMenu ? '10px' : level > 2 ? `${level * 15}px` : '10px',
+    // تحديد المسافة حسب المستوى
+    paddingLeft: hideMenu 
+      ? '8px' 
+      : level === 1 
+        ? '8px'  // المستوى الأول
+        : level === 2 
+          ? '24px' // المستوى الثاني
+          : level === 3
+            ? '40px' // المستوى الثالث
+            : `${level * 16}px`, // المستويات الأعلى
+    minHeight: level === 1 ? '32px' : '28px', // ارتفاع أصغر للمستويات الفرعية
     '&:hover': {
       backgroundColor: theme.palette.primary.light,
       color: theme.palette.primary.main,
@@ -74,6 +93,11 @@ const NavItem = ({ item, level, pathDirect, hideMenu, onClick }: ItemType) => {
         color: 'white',
       },
     },
+    // إضافة border للمستويات الفرعية
+    ...(level > 1 && {
+      borderLeft: `2px solid ${theme.palette.divider}`,
+      marginLeft: '8px',
+    }),
   }));
 
   const listItemProps: {
@@ -98,21 +122,31 @@ const NavItem = ({ item, level, pathDirect, hideMenu, onClick }: ItemType) => {
       >
         <ListItemIcon
           sx={{
-            minWidth: '36px',
-            p: '3px 0',
+            minWidth: level === 1 ? '28px' : '20px', // تصغير للمستويات الفرعية
+            p: '2px 0',
             color:
               level > 1 && pathDirect === item?.href
                 ? `${theme.palette.primary.main}!important`
                 : 'inherit',
           }}
         >
-          {itemIcon}
+          {getItemIcon()}
         </ListItemIcon>
-        <ListItemText>
+        <ListItemText
+          sx={{
+            '& .MuiListItemText-primary': {
+              fontSize: level === 1 ? '0.875rem' : '0.8rem', // تصغير الخط للمستويات الفرعية
+              lineHeight: 1.2,
+              fontWeight: level === 1 ? 500 : 400, // تقليل وزن الخط للمستويات الفرعية
+            }
+          }}
+        >
           {hideMenu ? '' : <>{t(`${item?.title}`)}</>}
           <br />
           {item?.subtitle ? (
-            <Typography variant="caption">{hideMenu ? '' : item?.subtitle}</Typography>
+            <Typography variant="caption" sx={{ lineHeight: 1.1 }}>
+              {hideMenu ? '' : item?.subtitle}
+            </Typography>
           ) : (
             ''
           )}
@@ -124,6 +158,7 @@ const NavItem = ({ item, level, pathDirect, hideMenu, onClick }: ItemType) => {
             variant={item?.variant ? item?.variant : 'filled'}
             size="small"
             label={item?.chip}
+            sx={{ height: '18px', fontSize: '0.7rem' }} // تصغير أكثر للمستويات الفرعية
           />
         )}
       </ListItemStyled>

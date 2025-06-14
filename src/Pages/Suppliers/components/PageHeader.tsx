@@ -1,19 +1,31 @@
-import { Box, Typography } from '@mui/material';
-import { useTranslation } from 'react-i18next';
+// File: src/pages/suppliers/components/PageHeader.tsx
+import React from 'react';
+import PageHeader from '../../components/PageHeader';
 
-const PageHeader = () => {
-  const { t } = useTranslation();
+interface Props {
+  exportData?: any[];
+  loading?: boolean;
+}
+
+const SuppliersPageHeader: React.FC<Props> = ({ exportData = [], loading = false }) => {
+  const exportColumns = [
+    { field: 'name', headerName: 'اسم المورد', type: 'string' as const },
+    { field: 'phone', headerName: 'الهاتف', type: 'string' as const },
+    { field: 'address', headerName: 'العنوان', type: 'string' as const },
+    { field: 'createdOn', headerName: 'تاريخ الإنشاء', type: 'date' as const },
+    { field: 'isActive', headerName: 'الحالة', type: 'boolean' as const },
+  ];
 
   return (
-    <Box mb={3}>
-      <Typography variant="h4" component="h1" gutterBottom>
-        {t('suppliers.title')}
-      </Typography>
-      <Typography variant="body1" color="text.secondary">
-        {t('suppliers.subtitle')}
-      </Typography>
-    </Box>
+    <PageHeader
+      titleKey="suppliers.title"
+      subtitleKey="suppliers.subtitle"
+      exportData={exportData}
+      exportColumns={exportColumns}
+      exportFileName="suppliers"
+      exportLoading={loading}
+    />
   );
 };
 
-export default PageHeader;
+export default SuppliersPageHeader;

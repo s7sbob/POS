@@ -21,8 +21,177 @@
     "Tickets": "Tickets",
 
 
+  "reports": {
+    "productBalance": {
+      "title": "Product Balance Report",
+      "description": "Detailed view of product balances across all warehouses"
+    },
+    "filters": {
+      "title": "Filters",
+      "searchProducts": "Search products...",
+      "warehouse": "Warehouse",
+      "allWarehouses": "All Warehouses",
+      "stockStatus": "Stock Status",
+      "all": "All"
+    },
+    "stockFilter": {
+      "all": "All Products",
+      "inStock": "In Stock",
+      "outOfStock": "Out of Stock",
+      "lowStock": "Low Stock"
+    },
+    "stockStatus": {
+      "inStock": "In Stock",
+      "outOfStock": "Out of Stock",
+      "lowStock": "Low Stock"
+    },
+    "stats": {
+      "totalProducts": "Total Products",
+      "totalWarehouses": "Total Warehouses",
+      "inStock": "In Stock",
+      "outOfStock": "Out of Stock",
+      "totalCostValue": "Cost Value",
+      "totalLastPurePriceValue": "Last Pure Price Value"
+    },
+    "table": {
+      "product": "Product",
+      "warehouse": "Warehouse",
+      "totalQuantity": "Total Quantity",
+      "remainder": "Remainder",
+      "status": "Status",
+      "unitBreakdown": "Unit Breakdown",
+      "unit": "Unit",
+      "factor": "Factor",
+      "quantity": "Quantity",
+      "totalCostValue": "Total Cost Value",
+      "totalLastPurePriceValue": "Total Last Pure Price Value",
+      "cost": "Cost",
+      "totalCost": "Total Cost",
+      "lastPurePrice": "Last Pure Price",
+      "totalLastPurePrice": "Total Last Pure Price"
+    },
+    "noData": "No data to display",
+    "errors": {
+      "loadFailed": "Failed to load data"
+    }
+  },
+
+
+      "export": {
+    "title": "Export Data",
+    "pdf": "Export PDF",
+    "excel": "Export Excel",
+    "recordsCount": "{{count}} records",
+    "exportedOn": "Exported on",
+    "subject": "Data Report",
+    "author": "Inventory Management System",
+    "errorPdf": "Error occurred while exporting PDF",
+    "errorExcel": "Error occurred while exporting Excel"
+  },
+
+ "purchases": {
+    "title": "Purchase Invoices",
+    "description": "Manage purchase invoices and payments",
+    "addButton": "Add Purchase Invoice",
+    "searchPlaceholder": "Search purchase invoices...",
+    "listTitle": "Purchase Invoices",
+    "noData": "No purchase invoices found",
+     "view": {
+      "title": "View Purchase Invoice"
+    },
+    "edit": "Edit Purchase Invoice",
+    "status": {
+      "pending": "Pending",
+      "submitted": "Submitted"
+    },
+    "table": {
+      "invoiceNumber": "Invoice Number",
+      "code": "Code",
+      "purchaseOrder": "Purchase Order",
+      "supplier": "Supplier",
+      "warehouse": "Warehouse",
+      "invoiceDate": "Invoice Date",
+      "total": "Total",
+      "itemsCount": "Items Count",
+      "status": "Status",
+      "items": "items",
+      "directInvoice": "Direct Invoice"
+    },
+    
+    "form": {
+      "addTitle": "Add Purchase Invoice",
+      "editTitle": "Edit Purchase Invoice",
+      "invoiceNumber": "Invoice Number",
+      "invoiceDate": "Invoice Date",
+      "supplier": "Supplier",
+      "warehouse": "Warehouse",
+      "selectSupplier": "Select Supplier",
+      "selectWarehouse": "Select Warehouse",
+      "status": "Status",
+      "totalDiscount": "Total Discount",
+      "totalTax": "Total Tax",
+      "subTotal": "Sub Total",
+      "discountValue": "Discount Value",
+      "taxValue": "Tax Value",
+      "total": "Total",
+      "items": "Items",
+      "quickSearch": "Quick search in products...",
+      "scanBarcode": "Scan Barcode",
+      "addBySearch": "Add by Search",
+      "noItems": "No items",
+      "product": "Product",
+      "unit": "Unit",
+      "quantity": "Quantity",
+      "price": "Price",
+      "discount": "Discount",
+      "tax": "Tax",
+      "importFromPO": "Import from Purchase Order",
+      "savePending": "Save as Pending",
+      "submitInvoice": "Submit Invoice",
+      "linkedToPO": "Linked to Purchase Order",
+      "poCode": "PO Code",
+      "poDate": "PO Date",
+      "poTotal": "PO Total",
+      "itemsCount": "Items Count",
+      "selectPurchaseOrder": "Select Purchase Order",
+      "searchPurchaseOrders": "Search purchase orders...",
+      "noSubmittedPO": "No submitted purchase orders",
+      "code": "Code",
+      "date": "Date",
+      "unknownProduct": "Unknown Product",
+      "purchaseOrderImported": "Purchase order imported: {{number}}",
+      "productAdded": "Product added: {{name}}",
+      "barcodeNotFound": "No product found with this barcode",
+      "searchError": "Error searching for product",
+      "inLine": "in line",
+      "missingProductId": "missing product ID",
+      "missingPriceId": "missing price ID",
+      "invalidNumber": "Please enter a valid number in {{field}}",
+      "validation": {
+        "supplierRequired": "Supplier is required",
+        "warehouseRequired": "Warehouse is required",
+        "itemsRequired": "At least one product must be added"
+      }
+    },
+    "errors": {
+      "loadFailed": "Failed to load purchase invoices",
+      "dataLoadFailed": "Failed to load data",
+      "addFailed": "Failed to add purchase invoice",
+      "updateFailed": "Failed to update purchase invoice",
+      "idRequired": "Purchase invoice ID is required",
+      "noPurchaseLoaded": "No purchase invoice loaded",
+      "purchaseNotFound": "Purchase invoice not found",
+      "missingId": "Error: Purchase invoice ID is missing"
+    },
+    "messages": {
+      "addSuccess": "Purchase invoice created successfully",
+      "updateSuccess": "Purchase invoice updated successfully"
+    }
+  },
+
   "sidebar": {
     "inventory": "Inventory",
+    "inventoryadjustments": "Inventory Adjustment",
     "stock": "Stock",
     "sales": "Sales",
     "promo": "Promo",
@@ -31,7 +200,7 @@
     "peoples": "Peoples",
     "hrm": "HRM",
     "data": "Data",
-    "transactions": "Transitions",
+    "transactions": "Transactios",
     "reports": "Reports",
     "purchaseOrder": "Purchase Order",
     "products": "Products",
@@ -94,7 +263,10 @@
     "incomeReport": "Income Report",
     "taxReport": "Tax Report",
     "profitLoss": "Profit & Loss",
-    "annualReport": "Annual Report"
+    "annualReport": "Annual Report",
+    "settings": "Settings",
+    "productBalance": "Product Balance",
+    "productStock": "Product Stock"
   },
   
  "products": {
@@ -248,6 +420,7 @@
   "common": {
     "search": "Search",
     "all": "All",
+    "home": "Home",
     "loading": "Loading...",
     "cancel": "Cancel",
     "save": "Save",
@@ -256,7 +429,17 @@
     "inLine": "in line",
     "searching": "Searching",
         "edit": "Edit",
-    "view": "View"
+    "view": "View",
+    "submit": "Submit",
+    "delete": "Delete",
+    "add": "Add",
+    "noSearchResults": "No search results",
+    "notSpecified": "Not Specified",
+    "noData": "No data available",
+    "refresh": "Refresh",
+        "yes": "Yes",
+    "no": "No",
+    "exportedOn": "Exported on"
   },
     "warehouses": {
     "title": "Warehouses",
@@ -318,6 +501,76 @@
     "fontColor": "Font Color",
     "preview": "Preview",
     "sampleText": "Sample Text"
+  },
+
+
+
+
+
+
+
+   "adjustment": {
+    "title": "Inventory Adjustment",
+    "types": {
+      "openingBalance": "Opening Balance",
+      "manualAdjustment": "Manual Adjustment"
+    },
+    "form": {
+      "warehouse": "Warehouse",
+      "selectWarehouse": "Select Warehouse",
+      "adjustmentType": "Adjustment Type",
+      "referenceNumber": "Reference Number",
+      "reason": "Reason",
+      "items": "Items",
+      "product": "Product",
+      "unit": "Unit",
+      "unitFactor": "Unit Factor",
+      "oldQuantity": "Old Quantity",
+      "newQuantity": "New Quantity",
+      "difference": "Difference",
+      "notes": "Notes",
+      "noItems": "No items found",
+      "save": "Save",
+      "submit": "Submit Adjustment",
+      "barcode": "Barcode",
+      "validation": {
+        "warehouseRequired": "Warehouse is required"
+      }
+    },
+    "dialog": {
+      "newAdjustmentTitle": "New Inventory Adjustment",
+      "newAdjustmentMessage": "A new inventory adjustment has been started",
+      "selectAdjustmentType": "Please select adjustment type:"
+    },
+    "messages": {
+      "newAdjustmentStarted": "New inventory adjustment started successfully",
+      "saveSuccess": "Adjustment saved successfully",
+      "submitSuccess": "Adjustment submitted successfully",
+      "selectWarehouseToStart": "Please select a warehouse to start a new inventory adjustment"
+    },
+      "search": {
+      "title": "Search Items",
+      "placeholder": "Search by name or barcode...",
+      "scanBarcode": "Scan Barcode",
+      "currentQuantity": "Current Quantity",
+      "barcode": "Barcode",
+      "noResults": "No search results found",
+      "filteredFrom": "filtered from {total}"
+    },
+    "barcode": {
+      "title": "Barcode Scanner",
+      "instruction": "Scan the barcode or enter it manually",
+      "label": "Barcode",
+      "placeholder": "Enter barcode here...",
+      "scan": "Search"
+    },
+    "errors": {
+      "loadWarehousesFailed": "Failed to load warehouses",
+      "loadAdjustmentFailed": "Failed to load adjustment data",
+      "saveFailed": "Failed to save adjustment",
+      "submitFailed": "Failed to submit adjustment"
+    }
   }
+
 }
 

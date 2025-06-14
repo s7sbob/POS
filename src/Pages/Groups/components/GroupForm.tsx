@@ -6,7 +6,7 @@ import {
 } from '@mui/material';
 import { useForm, Controller } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import { Group } from 'src/utils/api/groupsApi';
+import { Group } from 'src/utils/api/pagesApi/groupsApi';
 import GroupTreeSelect from './GroupTreeSelect';
 import { StatusPill } from './StatusPill';
 

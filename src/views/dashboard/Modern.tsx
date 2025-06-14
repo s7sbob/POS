@@ -19,7 +19,7 @@ import Welcome from 'src/layouts/full/shared/welcome/Welcome';
 
 const Modern = () => {
   return (
-    (<PageContainer title="Modern Dashboard" description="this is Modern Dashboard page">
+    (<PageContainer title="Foodify" description="this is Modern Dashboard page">
       <Box>
         <Grid container spacing={3}>
           {/* column */}

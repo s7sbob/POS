@@ -1,3 +1,4 @@
+// File: src/pages/products/components/ProductForm.tsx
 import React from 'react';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
@@ -10,9 +11,9 @@ import {
 import { IconPlus, IconTrash, IconDeviceFloppy, IconPlus as IconPlusNew } from '@tabler/icons-react';
 import { useForm, Controller, useFieldArray } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import { Product } from 'src/utils/api/productsApi';
-import { Group } from 'src/utils/api/groupsApi';
-import { Unit } from 'src/utils/api/unitsApi';
+import { Product } from 'src/utils/api/pagesApi/productsApi';
+import { Group } from 'src/utils/api/pagesApi/groupsApi';
+import { Unit } from 'src/utils/api/pagesApi/unitsApi';
 import GroupTreeSelect from './GroupTreeSelect';
 
 /* ---------- types ---------- */
@@ -66,7 +67,7 @@ const ProductForm: React.FC<Props> = ({
     productPrices: []
   };
 
-  const { control, handleSubmit, reset } = useForm<FormValues>({
+  const { control, handleSubmit, reset, formState: { isSubmitSuccessful } } = useForm<FormValues>({
     defaultValues: defaults
   });
 
@@ -74,6 +75,23 @@ const ProductForm: React.FC<Props> = ({
     control,
     name: 'productPrices'
   });
+
+  // إعادة تعيين النموذج بعد النجاح في الحفظ
+  React.useEffect(() => {
+    if (isSubmitSuccessful && mode === 'add') {
+      // تأخير قصير للتأكد من اكتمال العملية
+      const timer = setTimeout(() => {
+        reset(defaults);
+        // التركيز على حقل الاسم مرة أخرى
+        if (nameFieldRef.current) {
+          nameFieldRef.current.focus();
+          nameFieldRef.current.select();
+        }
+      }, 100);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [isSubmitSuccessful, mode, reset]);
 
   // Focus على اسم المنتج عند فتح المودال
   React.useEffect(() => {
@@ -171,6 +189,19 @@ const ProductForm: React.FC<Props> = ({
         console.log('Sending add data:', data);
         await onSubmit(data, saveAction);
       }
+
+      // في حالة Save and New في وضع الإضافة، إعادة تعيين النموذج فوراً
+      if (mode === 'add' && saveAction === 'saveAndNew') {
+        setTimeout(() => {
+          reset(defaults);
+          // التركيز على حقل الاسم
+          if (nameFieldRef.current) {
+            nameFieldRef.current.focus();
+            nameFieldRef.current.select();
+          }
+        }, 100);
+      }
+      
     } catch (error) {
       console.error('Submit error:', error);
     } finally {
@@ -394,7 +425,7 @@ const ProductForm: React.FC<Props> = ({
       maxWidth="lg" 
       fullWidth
       disableEscapeKeyDown={false}
-      fullScreen={isMobile} // ملء الشاشة في الموبايل
+      fullScreen={isMobile}
     >
       <DialogTitle>
         {mode === 'add' ? t('products.add') : t('products.edit')}
@@ -541,13 +572,19 @@ const ProductForm: React.FC<Props> = ({
                     label={t('products.lastPurePrice')}
                     type="number"
                     fullWidth
+                    InputProps={{
+                      readOnly: true,
+                    }}
+                                      variant="filled"
+
                     inputProps={{ min: 0, step: 0.01 }}
                   />
                 )}
               />
             </Grid>
+            
 
-            <Grid item xs={12} md={6}>
+            {/* <Grid item xs={12} md={6}>
               <Controller
                 name="expirationDays"
                 control={control}
@@ -561,7 +598,7 @@ const ProductForm: React.FC<Props> = ({
                   />
                 )}
               />
-            </Grid>
+            </Grid> */}
 
             {/* ---------- Product Prices ---------- */}
             <Grid item xs={12}>

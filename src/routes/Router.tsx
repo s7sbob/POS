@@ -10,9 +10,15 @@ import { authLoader } from './authLoader';   // المسار المناسب
 import UnitsPage from 'src/Pages/Units/UnitsPage';
 import GroupsPage from 'src/Pages/Groups/GroupsPage';
 import SuppliersPage from 'src/Pages/Suppliers/SuppliersPage';
-import PurchaseOrdersPage from 'src/Pages/purchaseOrders/PurchaseOrdersPage';
-import AddPurchaseOrderPage from 'src/Pages/purchaseOrders/AddPurchaseOrderPage';
-import EditPurchaseOrderPage from 'src/Pages/purchaseOrders/EditPurchaseOrderPage';
+import PurchaseOrdersPage from 'src/Pages/purchase-orders/PurchaseOrdersPage';
+import AddPurchaseOrderPage from 'src/Pages/purchase-orders/AddPurchaseOrderPage';
+import EditPurchaseOrderPage from 'src/Pages/purchase-orders/EditPurchaseOrderPage';
+import PurchasesPage from 'src/Pages/purchases/PurchasesPage';
+import AddPurchasePage from 'src/Pages/purchases/AddPurchasePage';
+import EditPurchasePage from 'src/Pages/purchases/EditPurchasePage';
+import ViewPurchasePage from 'src/Pages/purchases/components/ViewPurchasePage';
+import ProductBalanceReportPage from 'src/Pages/reports/ProductBalanceReportPage';
+import InventoryAdjustmentPage from 'src/Pages/inventory/adjustment/InventoryAdjustmentPage';
 
 /* ***Layouts**** */
 const FullLayout = Loadable(lazy(() => import('../layouts/full/FullLayout')));
@@ -197,6 +203,12 @@ const Router = [
       { path: '/purchases/purchase-orders', element: <PurchaseOrdersPage /> },
       { path: '/purchases/purchase-orders/add', element: <AddPurchaseOrderPage /> },
       { path: '/purchases/purchase-orders/edit/:id', element: <EditPurchaseOrderPage /> },
+      { path: '/purchases/purchases', element: <PurchasesPage /> },
+      { path: '/purchases/purchases/add', element: <AddPurchasePage /> },
+      { path: '/purchases/purchases/edit/:id', element: <EditPurchasePage /> },
+      { path: '/purchases/purchases/view/:id', element: <ViewPurchasePage /> },
+      { path: '/reports/product-balance', element: <ProductBalanceReportPage /> },
+      { path: '/inventory/inventory-adjustments', element: <InventoryAdjustmentPage /> },
       // { path: '/frontend-pages/blog/detail/:id', element: <BlogDetail /> },
       { path: '/apps/chats', element: <Chats /> },
       { path: '/apps/email', element: <Email /> },

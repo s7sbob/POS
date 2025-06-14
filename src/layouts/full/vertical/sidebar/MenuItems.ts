@@ -148,12 +148,30 @@ children: [
     title: 'sidebar.transactions',
     icon: IconStack3,
     href: '/inventory/Transactions'
+, children: [
+      {
+        id: uniqueId(),
+        title: 'sidebar.inventoryadjustments',
+        icon: IconAdjustments,
+        href: '/inventory/inventory-adjustments'
+      },
+
+    ]
+    
   },
   {
     id: uniqueId(),
     title: 'sidebar.reports',
     icon: IconAdjustments,
     href: '/inventory/reports'
+, children: [
+      {
+        id: uniqueId(),
+        title: 'sidebar.productBalance',
+        icon: IconPackage,
+        href: '/reports/product-balance'
+      },
+    ]
   }
 ] },
 
@@ -173,12 +191,7 @@ children: [
     icon: IconUsers,
     href: '/purchases/suppliers'
   },
-  {
-    id: uniqueId(),
-    title: 'sidebar.purchaseOrders',
-    icon: IconLayoutGridAdd,
-    href: '/purchases/purchase-orders'
-  },
+
 
 ]
   },
@@ -186,7 +199,20 @@ children: [
     id: uniqueId(),
     title: 'sidebar.transactions',
     icon: IconStack3,
-    href: '/inventory/Transactions'
+    href: '/inventory/Transactions',
+    children: [
+      {
+        id: uniqueId(),
+        title: 'sidebar.purchaseOrders',
+        icon: IconLayoutGridAdd,
+        href: '/purchases/purchase-orders'
+      },
+      {
+        id: uniqueId(),
+        title: 'sidebar.purchases',
+        icon: IconLayoutGridAdd,
+        href: '/purchases/purchases'
+      }]
   },
   {
     id: uniqueId(),

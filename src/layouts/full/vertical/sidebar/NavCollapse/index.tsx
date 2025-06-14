@@ -1,12 +1,10 @@
+// File: src/layouts/full/vertical/sidebar/NavCollapse/NavCollapse.tsx
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import React from 'react';
-
 import { useState } from 'react';
 import { useSelector } from 'src/store/Store';
 import { useLocation } from 'react-router';
-
-// mui imports
 import {
   ListItemIcon,
   ListItemButton,
@@ -14,13 +12,10 @@ import {
   styled,
   ListItemText,
   useTheme,
+  Box,
 } from '@mui/material';
-
-// custom imports
 import NavItem from '../NavItem';
-
-// plugins
-import { IconChevronDown, IconChevronUp } from '@tabler/icons-react';
+import { IconChevronDown, IconChevronUp, IconPoint } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
 import { AppState } from 'src/store/Store';
 
@@ -42,7 +37,6 @@ interface NavCollapseProps {
   onClick: (event: React.MouseEvent<HTMLElement>) => void;
 }
 
-// FC Component For Dropdown Menu
 const NavCollapse = ({
   menu,
   level,
@@ -57,20 +51,25 @@ const NavCollapse = ({
   const { pathname } = useLocation();
   const { t } = useTranslation();
   
-  // إنشاء state منفصل لكل عنصر باستخدام menu.id كمفتاح فريد
   const [open, setOpen] = useState(() => {
-    // فحص إذا كان أي من العناصر الفرعية نشط حالياً
     return menu?.children?.some((item: any) => {
       if (item.children) {
-        // إذا كان العنصر له أطفال، فحص أطفاله أيضاً
         return item.children.some((child: any) => pathname.includes(child.href));
       }
       return pathname.includes(item.href);
     }) || false;
   });
 
-  const menuIcon =
-    level > 1 ? <Icon stroke={1.5} size="1rem" /> : <Icon stroke={1.5} size="1.3rem" />;
+  // تحديد الأيقونة حسب المستوى
+  const getMenuIcon = () => {
+    if (level === 1) {
+      // المستوى الأول - الأيقونة العادية
+      return level > 1 ? <Icon stroke={1.5} size="1rem" /> : <Icon stroke={1.5} size="1.1rem" />;
+    } else {
+      // المستوى الثاني والثالث - نقطة
+      return <IconPoint size="1rem" />;
+    }
+  };
 
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -78,28 +77,33 @@ const NavCollapse = ({
     setOpen(!open);
   };
 
-  // تحديث حالة الفتح فقط للعنصر الحالي إذا كان يحتوي على الصفحة النشطة
   React.useEffect(() => {
     const shouldBeOpen = menu?.children?.some((item: any) => {
       if (item.children) {
-        // فحص العناصر الفرعية متعددة المستويات
         return item.children.some((child: any) => pathname === child.href);
       }
       return pathname === item.href;
     });
 
-    // فتح العنصر فقط إذا كان يحتوي على الصفحة النشطة حالياً
     if (shouldBeOpen && !open) {
       setOpen(true);
     }
   }, [pathname, menu.children, open]);
 
   const ListItemStyled = styled(ListItemButton)(() => ({
-    marginBottom: '2px',
-    padding: '8px 10px',
-    paddingLeft: hideMenu ? '10px' : level > 2 ? `${level * 15}px` : '10px',
+    marginBottom: '1px',
+    padding: '4px 8px',
+    // تحديد المسافة حسب المستوى
+    paddingLeft: hideMenu 
+      ? '8px' 
+      : level === 1 
+        ? '8px'  // المستوى الأول
+        : level === 2 
+          ? '24px' // المستوى الثاني - إزاحة أكبر
+          : `${level * 16}px`, // المستويات الأعلى
     backgroundColor: open && level < 2 ? theme.palette.primary.main : '',
     whiteSpace: 'nowrap',
+    minHeight: '32px',
     '&:hover': {
       backgroundColor: pathname.includes(menu.href) || open
         ? theme.palette.primary.main
@@ -113,9 +117,13 @@ const NavCollapse = ({
           ? theme.palette.primary.main
           : theme.palette.text.secondary,
     borderRadius: `${customizer.borderRadius}px`,
+    // إضافة border للمستويات الفرعية
+    ...(level > 1 && {
+      borderLeft: `2px solid ${theme.palette.divider}`,
+      marginLeft: '8px',
+    }),
   }));
 
-  // If Menu has Children
   const submenus = menu.children?.map((item: any) => {
     if (item.children) {
       return (
@@ -152,18 +160,58 @@ const NavCollapse = ({
       >
         <ListItemIcon
           sx={{
-            minWidth: '36px',
-            p: '3px 0',
+            minWidth: level === 1 ? '28px' : '20px', // تصغير للمستويات الفرعية
+            p: '2px 0',
             color: 'inherit',
           }}
         >
-          {menuIcon}
+          {getMenuIcon()}
         </ListItemIcon>
-        <ListItemText color="inherit">{hideMenu ? '' : <>{t(`${menu.title}`)}</>}</ListItemText>
-        {!open ? <IconChevronDown size="1rem" /> : <IconChevronUp size="1rem" />}
+        <ListItemText 
+          color="inherit"
+          sx={{
+            '& .MuiListItemText-primary': {
+              fontSize: level === 1 ? '0.875rem' : '0.8rem', // تصغير الخط للمستويات الفرعية
+              lineHeight: 1.2,
+              fontWeight: level === 1 ? 500 : 400, // تقليل وزن الخط للمستويات الفرعية
+            }
+          }}
+        >
+          {hideMenu ? '' : <>{t(`${menu.title}`)}</>}
+        </ListItemText>
+        
+        {/* إظهار السهم فقط للمستوى الأول */}
+        {level === 1 && (
+          <Box sx={{ ml: 1 }}>
+            {!open ? 
+              <IconChevronDown size="0.9rem" /> : 
+              <IconChevronUp size="0.9rem" />
+            }
+          </Box>
+        )}
+        
+        {/* للمستويات الفرعية - سهم أصغر */}
+        {level > 1 && (
+          <Box sx={{ ml: 1 }}>
+            {!open ? 
+              <IconChevronDown size="0.7rem" /> : 
+              <IconChevronUp size="0.7rem" />
+            }
+          </Box>
+        )}
       </ListItemStyled>
+      
       <Collapse in={open} timeout="auto" unmountOnExit>
-        {submenus}
+        <Box sx={{ 
+          // إضافة background مختلف للمستويات الفرعية
+          ...(level > 1 && {
+            backgroundColor: theme.palette.action.hover,
+            borderRadius: `0 ${customizer.borderRadius}px ${customizer.borderRadius}px 0`,
+            margin: '0 4px',
+          })
+        }}>
+          {submenus}
+        </Box>
       </Collapse>
     </>
   );

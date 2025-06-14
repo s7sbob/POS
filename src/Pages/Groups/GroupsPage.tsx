@@ -7,8 +7,8 @@ import PageHeader from './components/PageHeader';
 import ActionsBar from './components/ActionsBar';
 import GroupTree from './components/GroupTree';
 import GroupForm from './components/GroupForm';
-import * as apiSrv from 'src/utils/api/groupsApi';
-import { Group } from 'src/utils/api/groupsApi';
+import * as apiSrv from 'src/utils/api/pagesApi/groupsApi';
+import { Group } from 'src/utils/api/pagesApi/groupsApi';
 
 const GroupsPage: React.FC = () => {
   const [items, setItems] = React.useState<Group[]>([]);
@@ -94,7 +94,7 @@ const GroupsPage: React.FC = () => {
   /* ───── UI ───── */
   return (
     <Container maxWidth="xl">
-      <PageHeader />
+      <PageHeader exportData={filtered} loading={loading}/>
       <ActionsBar
         query={query}
         onQueryChange={setQuery}

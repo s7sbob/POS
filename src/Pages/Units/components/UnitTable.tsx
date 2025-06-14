@@ -3,7 +3,7 @@ import { IconButton, Stack } from '@mui/material';
 import { IconEdit } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
 import { StatusPill } from './StatusPill';
-import { Unit } from 'src/utils/api/unitsApi';
+import { Unit } from 'src/utils/api/pagesApi/unitsApi';
 
 interface Props {
   rows: Unit[];

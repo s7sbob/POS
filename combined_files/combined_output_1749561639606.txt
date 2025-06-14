@@ -1,0 +1,309 @@
+// File: AddPurchaseOrderPage.tsx
+import React, { useState, useEffect } from 'react';
+import { Snackbar, Alert, Box, Typography, CircularProgress } from '@mui/material';
+import PurchaseOrderForm from './components/PurchaseOrderForm';
+import * as apiSrv from 'src/utils/api/purchaseOrdersApi';
+import * as suppliersApi from 'src/utils/api/suppliersApi';
+import * as warehousesApi from 'src/utils/api/warehousesApi';
+import { Supplier } from 'src/utils/api/suppliersApi';
+import { Warehouse } from 'src/utils/api/warehousesApi';
+
+const AddPurchaseOrderPage: React.FC = () => {
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [suppliersData, warehousesData] = await Promise.all([
+          suppliersApi.getAll(),
+          warehousesApi.getAll()
+        ]);
+        setSuppliers(suppliersData);
+        setWarehouses(warehousesData);
+      } catch (e: any) {
+        setError(e?.message || 'Failed to load data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const handleSubmit = async (data: any) => {
+    try {
+      console.log('Adding purchase order (data):', data);
+      await apiSrv.add(data);
+      // After either “Save (Pending)” or “Submit,” 
+      // we always assume the form resets on status=1 or navigates away on status=3.
+    } catch (e: any) {
+      const msg = e?.message || 'Add failed';
+      setError(msg);
+      throw e;
+    }
+  };
+
+  if (loading) {
+    return (
+      <Box textAlign="center" py={4}>
+        <CircularProgress />
+        <Typography sx={{ mt: 2 }}>جاري التحميل...</Typography>
+      </Box>
+    );
+  }
+
+  return (
+    <>
+      <PurchaseOrderForm
+        mode="add"
+        suppliers={suppliers}
+        warehouses={warehouses}
+        onSubmit={handleSubmit}
+      />
+
+      <Snackbar open={!!error} autoHideDuration={6000} onClose={() => setError('')}>
+        <Alert severity="error" onClose={() => setError('')}>
+          {error}
+        </Alert>
+      </Snackbar>
+    </>
+  );
+};
+
+export default AddPurchaseOrderPage;
+
+
+// File: EditPurchaseOrderPage.tsx
+import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
+import { Snackbar, Alert, Box, Typography, CircularProgress } from '@mui/material';
+import PurchaseOrderForm from './components/PurchaseOrderForm';
+import * as apiSrv from 'src/utils/api/purchaseOrdersApi';
+import * as suppliersApi from 'src/utils/api/suppliersApi';
+import * as warehousesApi from 'src/utils/api/warehousesApi';
+import { PurchaseOrder } from 'src/utils/api/purchaseOrdersApi';
+import { Supplier } from 'src/utils/api/suppliersApi';
+import { Warehouse } from 'src/utils/api/warehousesApi';
+
+const EditPurchaseOrderPage: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
+  const [purchaseOrder, setPurchaseOrder] = useState<PurchaseOrder | null>(null);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        if (!id) {
+          throw new Error('Purchase Order ID is required');
+        }
+        const [purchaseOrderData, suppliersData, warehousesData] = await Promise.all([
+          apiSrv.getById(id),
+          suppliersApi.getAll(),
+          warehousesApi.getAll()
+        ]);
+        setPurchaseOrder(purchaseOrderData);
+        setSuppliers(suppliersData);
+        setWarehouses(warehousesData);
+      } catch (e: any) {
+        setError(e?.message || 'Failed to load data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [id]);
+
+  const handleSubmit = async (data: any) => {
+    try {
+      console.log('Updating purchase order:', data);
+      if (!purchaseOrder) {
+        throw new Error('No purchase order loaded');
+      }
+      // Ensure we pass along the ID
+      await apiSrv.update({ ...data, id: purchaseOrder.id! });
+    } catch (e: any) {
+      console.error('Update error:', e);
+      const msg = e?.message || 'Update failed';
+      setError(msg);
+      throw e;
+    }
+  };
+
+  if (loading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
+        <CircularProgress />
+        <Typography sx={{ ml: 2 }}>جاري التحميل...</Typography>
+      </Box>
+    );
+  }
+
+  if (error && !purchaseOrder) {
+    return (
+      <Box textAlign="center" py={4}>
+        <Typography color="error">{error}</Typography>
+      </Box>
+    );
+  }
+
+  if (!purchaseOrder) {
+    return (
+      <Box textAlign="center" py={4}>
+        <Typography color="error">أمر الشراء غير موجود</Typography>
+      </Box>
+    );
+  }
+
+  return (
+    <>
+      <PurchaseOrderForm
+        mode="edit"
+        initialValues={purchaseOrder}
+        suppliers={suppliers}
+        warehouses={warehouses}
+        onSubmit={handleSubmit}
+      />
+
+      <Snackbar open={!!error} autoHideDuration={6000} onClose={() => setError('')}>
+        <Alert severity="error" onClose={() => setError('')}>
+          {error}
+        </Alert>
+      </Snackbar>
+    </>
+  );
+};
+
+export default EditPurchaseOrderPage;
+
+
+// File: PurchaseOrdersPage.tsx
+import React from 'react';
+import {
+  Container, useMediaQuery,
+  Snackbar, Alert, Box, Typography
+} from '@mui/material';
+import { useNavigate } from 'react-router-dom';
+import PageHeader from './components/PageHeader';
+import ActionsBar from './components/ActionsBar';
+import PurchaseOrderTable from './components/PurchaseOrderTable';
+import PurchaseOrderRow from './components/PurchaseOrderRow';
+import * as apiSrv from 'src/utils/api/purchaseOrdersApi';
+import { PurchaseOrder } from 'src/utils/api/purchaseOrdersApi';
+import { t } from 'i18next';
+
+const PurchaseOrdersPage: React.FC = () => {
+  const navigate = useNavigate();
+  const [purchaseOrders, setPurchaseOrders] = React.useState<PurchaseOrder[]>([]);
+  const [query, setQuery] = React.useState('');
+  const [error, setErr] = React.useState('');
+  const [loading, setLoad] = React.useState(true);
+
+  const isDownSm = useMediaQuery((th: any) => th.breakpoints.down('sm'));
+
+  /* ───── fetch all ───── */
+  const fetchPurchaseOrders = async () => {
+    try {
+      const purchaseOrdersData = await apiSrv.getAll();
+      setPurchaseOrders(purchaseOrdersData);
+    } catch (e: any) {
+      setErr(e?.message || 'Failed to load purchase orders');
+    }
+  };
+
+  React.useEffect(() => {
+    (async () => {
+      try { 
+        await fetchPurchaseOrders();
+      }
+      catch (e: any) { 
+        setErr(e?.message || 'Load failed'); 
+      }
+      finally { 
+        setLoad(false); 
+      }
+    })();
+  }, []);
+
+  /* ───── filter ───── */
+  const filtered = React.useMemo(
+    () => query ? purchaseOrders.filter(po => 
+      po.referenceDocNumber.toLowerCase().includes(query.toLowerCase()) ||
+      po.supplier?.name.toLowerCase().includes(query.toLowerCase()) ||
+      po.warehouse?.name.toLowerCase().includes(query.toLowerCase())
+    ) : purchaseOrders,
+    [purchaseOrders, query]
+  );
+
+  /* ───── Navigation handlers ───── */
+  const handleAdd = () => {
+    navigate('/purchases/purchase-orders/add');
+  };
+
+  const handleEdit = (purchaseOrder: PurchaseOrder) => {
+    navigate(`/purchases/purchase-orders/edit/${purchaseOrder.id}`);
+  };
+
+  /* ───── UI ───── */
+  return (
+    <Container maxWidth="xl">
+      <PageHeader />
+      <ActionsBar
+        query={query}
+        onQueryChange={setQuery}
+        onAdd={handleAdd}
+      />
+
+      <Box mb={4}>
+        <Typography variant="h5" gutterBottom>
+          {t('purchaseOrders.title')} {` (${filtered.length})`}
+        </Typography>
+        
+        {loading ? (
+          <Box textAlign="center" py={4}>
+            <Typography>جاري التحميل...</Typography>
+          </Box>
+        ) : filtered.length === 0 ? (
+          <Box textAlign="center" py={4}>
+            <Typography color="text.secondary">
+              {query ? 'لا توجد نتائج للبحث' : 'لا توجد أوامر شراء'}
+            </Typography>
+          </Box>
+        ) : (
+          <>
+            {isDownSm
+              ? filtered.map(po => (
+                  <PurchaseOrderRow
+                    key={po.id}
+                    purchaseOrder={po}
+                    onEdit={() => handleEdit(po)}
+                  />
+                ))
+              : (
+                  <PurchaseOrderTable
+                    rows={filtered}
+                    onEdit={handleEdit}
+                  />
+                )}
+          </>
+        )}
+      </Box>
+
+      <Snackbar open={!!error} autoHideDuration={6000} onClose={() => setErr('')}>
+        <Alert severity="error" onClose={() => setErr('')}>
+          {error}
+        </Alert>
+      </Snackbar>
+    </Container>
+  );
+};
+
+export default PurchaseOrdersPage;
+
+

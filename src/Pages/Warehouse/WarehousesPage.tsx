@@ -10,8 +10,8 @@ import WarehouseTable from './components/WarehouseTable';
 import WarehouseRow   from './components/WarehouseRow';
 import WarehouseForm  from './components/WarehouseForm';
 
-import * as apiSrv from 'src/utils/api/warehousesApi';
-import { Warehouse } from 'src/utils/api/warehousesApi';
+import * as apiSrv from 'src/utils/api/pagesApi/warehousesApi';
+import { Warehouse } from 'src/utils/api/pagesApi/warehousesApi';
 
 const WarehousesPage: React.FC = () => {
   const [items, setItems] = React.useState<Warehouse[]>([]);
@@ -71,7 +71,7 @@ const WarehousesPage: React.FC = () => {
   /* ───── UI ───── */
   return (
     <Container maxWidth="xl">
-      <PageHeader />
+      <PageHeader exportData={filtered} loading={loading}/>
 
       <ActionsBar
         query={query}

@@ -7,7 +7,7 @@ import {
 import { IconDeviceFloppy, IconPlus as IconPlusNew } from '@tabler/icons-react';
 import { useForm, Controller } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import { Supplier } from 'src/utils/api/suppliersApi';
+import { Supplier } from 'src/utils/api/pagesApi/suppliersApi';
 
 /* ---------- types ---------- */
 type FormValues = { 
