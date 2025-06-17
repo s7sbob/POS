@@ -1,7 +1,9 @@
+// File: src/pages/purchases/purchase-orders/EditPurchaseOrderPage.tsx
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { Snackbar, Alert, Box, Typography, CircularProgress } from '@mui/material';
+import { useMediaQuery, useTheme, Snackbar, Alert, Box, Typography, CircularProgress } from '@mui/material';
 import PurchaseOrderForm from './components/PurchaseOrderForm';
+import MobilePurchaseOrderForm from './components/mobile/MobilePurchaseOrderForm';
 import * as apiSrv from 'src/utils/api/pagesApi/purchaseOrdersApi';
 import * as suppliersApi from 'src/utils/api/pagesApi/suppliersApi';
 import * as warehousesApi from 'src/utils/api/pagesApi/warehousesApi';
@@ -11,6 +13,9 @@ import { Warehouse } from 'src/utils/api/pagesApi/warehousesApi';
 
 const EditPurchaseOrderPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  
   const [purchaseOrder, setPurchaseOrder] = useState<PurchaseOrder | null>(null);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
@@ -43,14 +48,11 @@ const EditPurchaseOrderPage: React.FC = () => {
 
   const handleSubmit = async (data: any) => {
     try {
-      console.log('Updating purchase order:', data);
       if (!purchaseOrder) {
         throw new Error('No purchase order loaded');
       }
-      // Ensure we pass along the ID
       await apiSrv.update({ ...data, id: purchaseOrder.id! });
     } catch (e: any) {
-      console.error('Update error:', e);
       const msg = e?.message || 'Update failed';
       setError(msg);
       throw e;
@@ -84,13 +86,23 @@ const EditPurchaseOrderPage: React.FC = () => {
 
   return (
     <>
-      <PurchaseOrderForm
-        mode="edit"
-        initialValues={purchaseOrder}
-        suppliers={suppliers}
-        warehouses={warehouses}
-        onSubmit={handleSubmit}
-      />
+      {isMobile ? (
+        <MobilePurchaseOrderForm
+          mode="edit"
+          initialValues={purchaseOrder}
+          suppliers={suppliers}
+          warehouses={warehouses}
+          onSubmit={handleSubmit}
+        />
+      ) : (
+        <PurchaseOrderForm
+          mode="edit"
+          initialValues={purchaseOrder}
+          suppliers={suppliers}
+          warehouses={warehouses}
+          onSubmit={handleSubmit}
+        />
+      )}
 
       <Snackbar open={!!error} autoHideDuration={6000} onClose={() => setError('')}>
         <Alert severity="error" onClose={() => setError('')}>

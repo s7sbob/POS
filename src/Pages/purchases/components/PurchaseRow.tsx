@@ -66,9 +66,6 @@ const PurchaseRow: React.FC<Props> = ({ purchase, onEdit, onView }) => {
             <Typography variant="h6" component="div">
               {purchase.referenceDocNumber}
             </Typography>
-            <Typography variant="body2" color="text.secondary">
-              {t('purchases.table.code')}: {purchase.code}
-            </Typography>
             <Box>
               <Typography variant="body2" color="text.secondary">
                 {t('purchases.table.purchaseOrder')}: {renderPurchaseOrderInfo()}

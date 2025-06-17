@@ -1,10 +1,11 @@
+// File: src/pages/products/ProductsPage.tsx
 import React from 'react';
 import {
   Container, useMediaQuery,
   Snackbar, Alert, Box, Typography, Pagination,
-  Stack, TextField, InputAdornment, IconButton, Chip
+  Stack, TextField, InputAdornment, IconButton, Chip, Button, Fab, Badge
 } from '@mui/material';
-import { IconSearch, IconBarcode, IconX } from '@tabler/icons-react';
+import { IconSearch, IconBarcode, IconX, IconFilter, IconPlus } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
 import PageHeader from './components/PageHeader';
 import ActionsBar from './components/ActionsBar';
@@ -12,6 +13,7 @@ import ProductTable from './components/ProductTable';
 import ProductRow from './components/ProductsRow';
 import ProductForm from './components/ProductForm';
 import ProductPricesDrawer from './components/ProductPricesDrawer';
+import MobileProductsFilter, { ProductsFilterState } from './components/mobile/MobileProductsFilter';
 import * as apiSrv from 'src/utils/api/pagesApi/productsApi';
 import * as groupsApi from 'src/utils/api/pagesApi/groupsApi';
 import * as unitsApi from 'src/utils/api/pagesApi/unitsApi';
@@ -37,6 +39,7 @@ const ProductsPage: React.FC = () => {
   const [error, setErr] = React.useState('');
   const [loading, setLoad] = React.useState(true);
   const [searching, setSearching] = React.useState(false);
+  const [filterOpen, setFilterOpen] = React.useState(false);
   const [dialog, setDialog] = React.useState<{
     open: boolean;
     mode: 'add' | 'edit';
@@ -45,6 +48,17 @@ const ProductsPage: React.FC = () => {
   const [pricesDrawerOpen, setPricesDrawerOpen] = React.useState(false);
 
   const isDownSm = useMediaQuery((th: any) => th.breakpoints.down('sm'));
+  const isMobile = useMediaQuery((th: any) => th.breakpoints.down('md'));
+
+  // حالة الفلاتر للموبايل
+  const [mobileFilters, setMobileFilters] = React.useState<ProductsFilterState>({
+    searchQuery: '',
+    groupId: '',
+    productType: '',
+    status: '',
+    sortBy: 'name',
+    sortOrder: 'asc'
+  });
 
   /* ───── fetch products with pagination ───── */
   const fetchProducts = async (page: number = 1, pageSize: number = 20) => {
@@ -164,8 +178,72 @@ const ProductsPage: React.FC = () => {
     }
   };
 
-  /* ───── flatten groups for dropdown ───── */
+  /* ───── mobile filter data ───── */
+  const mobileFilteredData = React.useMemo(() => {
+    let result = [...productsData.data];
 
+    // تطبيق فلاتر الموبايل على البيانات المحملة
+    if (mobileFilters.searchQuery.trim()) {
+      const searchLower = mobileFilters.searchQuery.toLowerCase();
+      result = result.filter(product => 
+        product.name.toLowerCase().includes(searchLower) ||
+        product.code.toString().includes(searchLower) ||
+        product.group?.name.toLowerCase().includes(searchLower)
+      );
+    }
+
+    if (mobileFilters.groupId) {
+      result = result.filter(product => product.groupId === mobileFilters.groupId);
+    }
+
+    if (mobileFilters.productType) {
+      result = result.filter(product => product.productType.toString() === mobileFilters.productType);
+    }
+
+    if (mobileFilters.status) {
+      const isActive = mobileFilters.status === 'true';
+      result = result.filter(product => product.isActive === isActive);
+    }
+
+    // الترتيب
+    result.sort((a, b) => {
+      let aValue: any = a[mobileFilters.sortBy as keyof typeof a];
+      let bValue: any = b[mobileFilters.sortBy as keyof typeof b];
+
+      // معالجة خاصة للتواريخ
+      if (mobileFilters.sortBy === 'createdOn') {
+        aValue = new Date(aValue || 0).getTime();
+        bValue = new Date(bValue || 0).getTime();
+      }
+
+      // معالجة خاصة للنصوص
+      if (typeof aValue === 'string') {
+        aValue = aValue.toLowerCase();
+        bValue = bValue.toLowerCase();
+      }
+
+      if (mobileFilters.sortOrder === 'asc') {
+        return aValue > bValue ? 1 : -1;
+      } else {
+        return aValue < bValue ? 1 : -1;
+      }
+    });
+
+    return result;
+  }, [productsData.data, mobileFilters]);
+
+  // اختيار البيانات المعروضة حسب نوع الجهاز
+  const displayedData = isMobile ? mobileFilteredData : productsData.data;
+
+  // حساب عدد الفلاتر النشطة للموبايل
+  const getActiveFiltersCount = () => {
+    let count = 0;
+    if (mobileFilters.searchQuery) count++;
+    if (mobileFilters.groupId) count++;
+    if (mobileFilters.productType) count++;
+    if (mobileFilters.status) count++;
+    return count;
+  };
 
   /* ───── CRUD ───── */
   const handleAdd = async (data: any) => {
@@ -240,90 +318,111 @@ const ProductsPage: React.FC = () => {
   /* ───── UI ───── */
   return (
     <Container maxWidth="xl">
-      <PageHeader exportData={productsData.data} loading={loading}/>
+      <PageHeader exportData={displayedData} loading={loading}/>
       
-      {/* شريط البحث المحسن */}
-      <Box mb={3}>
-        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="center" justifyContent="space-between">
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: { xs: '100%', sm: 'auto' } }}>
-            <TextField
-              placeholder={t('products.searchPlaceholder')}
-              value={searchQuery}
-              onChange={(e) => handleSearch(e.target.value)}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <IconSearch size={20} />
-                  </InputAdornment>
-                ),
-                endAdornment: searchQuery && (
-                  <InputAdornment position="end">
-                    <IconButton size="small" onClick={clearSearch}>
-                      <IconX size={16} />
-                    </IconButton>
-                  </InputAdornment>
-                )
-              }}
-              sx={{ width: { xs: '100%', sm: 300 } }}
-              disabled={searching}
-            />
-            
-            <IconButton 
-              onClick={handleBarcodeSearch}
-              color="primary"
-              title={t('products.searchByBarcode')}
-              disabled={!searchQuery.trim() || searching}
-            >
-              <IconBarcode size={20} />
-            </IconButton>
-          </Box>
-
-          <ActionsBar
-            onAdd={() => setDialog({ open: true, mode: 'add', current: undefined })}
-          />
-        </Stack>
-
-        {/* مؤشرات البحث */}
-        {searchMode && (
-          <Box mt={2}>
-            <Stack direction="row" spacing={1} alignItems="center">
-              <Chip
-                label={searchMode === 'barcode' 
-                  ? `${t('products.searchByBarcode')}: ${searchQuery}`
-                  : `${t('products.searchByName')}: ${searchQuery}`
-                }
-                onDelete={clearSearch}
-                color="primary"
-                variant="outlined"
+      {/* شريط البحث المحسن - يظهر فقط في الديسكتوب */}
+      {!isMobile && (
+        <Box mb={3}>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="center" justifyContent="space-between">
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: { xs: '100%', sm: 'auto' } }}>
+              <TextField
+                placeholder={t('products.searchPlaceholder')}
+                value={searchQuery}
+                onChange={(e) => handleSearch(e.target.value)}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <IconSearch size={20} />
+                    </InputAdornment>
+                  ),
+                  endAdornment: searchQuery && (
+                    <InputAdornment position="end">
+                      <IconButton size="small" onClick={clearSearch}>
+                        <IconX size={16} />
+                      </IconButton>
+                    </InputAdornment>
+                  )
+                }}
+                sx={{ width: { xs: '100%', sm: 300 } }}
+                disabled={searching}
               />
-              <Typography variant="body2" color="text.secondary">
-                {t('products.searchResults', { count: productsData.totalCount })}
-              </Typography>
-            </Stack>
-          </Box>
-        )}
-      </Box>
+              
+              <IconButton 
+                onClick={handleBarcodeSearch}
+                color="primary"
+                title={t('products.searchByBarcode')}
+                disabled={!searchQuery.trim() || searching}
+              >
+                <IconBarcode size={20} />
+              </IconButton>
+            </Box>
+
+            <ActionsBar
+              onAdd={() => setDialog({ open: true, mode: 'add', current: undefined })}
+            />
+          </Stack>
+
+          {/* مؤشرات البحث */}
+          {searchMode && (
+            <Box mt={2}>
+              <Stack direction="row" spacing={1} alignItems="center">
+                <Chip
+                  label={searchMode === 'barcode' 
+                    ? `${t('products.searchByBarcode')}: ${searchQuery}`
+                    : `${t('products.searchByName')}: ${searchQuery}`
+                  }
+                  onDelete={clearSearch}
+                  color="primary"
+                  variant="outlined"
+                />
+                <Typography variant="body2" color="text.secondary">
+                  {t('products.searchResults', { count: productsData.totalCount })}
+                </Typography>
+              </Stack>
+            </Box>
+          )}
+        </Box>
+      )}
+
+      {/* زر الإضافة للموبايل */}
+      {isMobile && (
+        <Box sx={{ mb: 2, textAlign: 'center' }}>
+          <Button
+            variant="contained"
+            startIcon={<IconPlus />}
+            onClick={() => setDialog({ open: true, mode: 'add', current: undefined })}
+            fullWidth
+            size="large"
+            sx={{
+              minHeight: 48,
+              fontSize: '1rem'
+            }}
+          >
+            {t('products.add')}
+          </Button>
+        </Box>
+      )}
 
       {/* جدول المنتجات */}
       <Box mb={4}>
         <Typography variant="h5" gutterBottom>
-          {t('products.title')} ({productsData.totalCount})
+          {t('products.title')} ({isMobile ? displayedData.length : productsData.totalCount})
         </Typography>
         
         {loading || searching ? (
           <Box textAlign="center" py={4}>
             <Typography>{searching ? t('products.searching') : t('common.loading')}</Typography>
           </Box>
-        ) : productsData.data.length === 0 ? (
+        ) : displayedData.length === 0 ? (
           <Box textAlign="center" py={4}>
             <Typography color="text.secondary">
-              {searchMode ? t('products.noSearchResults') : t('products.noProducts')}
+              {searchMode || getActiveFiltersCount() > 0 ? t('products.noSearchResults') : t('products.noProducts')}
             </Typography>
           </Box>
         ) : (
           <>
             {isDownSm
-              ? productsData.data.map(p => (
+              ? displayedData.map(p => (
                   <ProductRow
                     key={p.id}
                     product={p}
@@ -334,15 +433,15 @@ const ProductsPage: React.FC = () => {
                 ))
               : (
                   <ProductTable
-                    rows={productsData.data}
+                    rows={displayedData}
                     onEdit={handleEdit}
                     onViewPrices={handleViewPrices}
                     selectedProductId={selectedProduct?.id}
                   />
                 )}
 
-            {/* Pagination */}
-            {productsData.pageCount > 1 && (
+            {/* Pagination - يظهر فقط في الديسكتوب */}
+            {!isMobile && productsData.pageCount > 1 && (
               <Box display="flex" justifyContent="center" mt={3}>
                 <Pagination
                   count={productsData.pageCount}
@@ -357,6 +456,37 @@ const ProductsPage: React.FC = () => {
           </>
         )}
       </Box>
+
+      {/* زر الفلترة للموبايل */}
+      {isMobile && (
+        <Fab
+          color="primary"
+          onClick={() => setFilterOpen(true)}
+          sx={{
+            position: 'fixed',
+            bottom: 16,
+            left: 16,
+            zIndex: 1000
+          }}
+        >
+          <Badge badgeContent={getActiveFiltersCount()} color="error">
+            <IconFilter />
+          </Badge>
+        </Fab>
+      )}
+
+      {/* مكون الفلترة للموبايل */}
+      {isMobile && (
+        <MobileProductsFilter
+          open={filterOpen}
+          onClose={() => setFilterOpen(false)}
+          filters={mobileFilters}
+          onFiltersChange={setMobileFilters}
+          groups={groups}
+          totalResults={productsData.totalCount}
+          filteredResults={displayedData.length}
+        />
+      )}
 
       {/* Form Dialog */}
       <ProductForm

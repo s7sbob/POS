@@ -168,11 +168,6 @@ const ViewPurchasePage: React.FC = () => {
           <Grid container spacing={2}>
             <Grid item xs={12} md={3}>
               <Typography variant="body2">
-                <strong>{t('purchases.form.poCode')}:</strong> {purchase.purchaseOrder.code}
-              </Typography>
-            </Grid>
-            <Grid item xs={12} md={3}>
-              <Typography variant="body2">
                 <strong>{t('purchases.form.poDate')}:</strong> {purchase.purchaseOrder.date1 ? new Date(purchase.purchaseOrder.date1).toLocaleDateString() : t('common.notSpecified')}
               </Typography>
             </Grid>

@@ -154,7 +154,25 @@
     "loadingMore": "جاري تحميل المزيد",
     "allResultsLoaded": "تم تحميل جميع النتائج",
     "navigateWithArrows": "التنقل بالأسهم",
-    "selectWithEnter": "للاختيار"
+    "selectWithEnter": "للاختيار",
+     "selectProduct": "اختيار منتج",
+
+    "enterSearchTerm": "أدخل كلمة البحث",
+     "filter": {
+      "title": "البحث والفلترة",
+      "search": "البحث",
+      "filters": "الفلاتر",
+      "sorting": "الترتيب",
+      "searchPlaceholder": "ابحث في المنتجات...",
+      "sortBy": "ترتيب حسب",
+      "sortOrder": "نوع الترتيب",
+      "ascending": "تصاعدي",
+      "descending": "تنازلي",
+      "apply": "تطبيق",
+      "clear": "مسح الكل",
+      "results": "النتائج",
+      "activeFilters": "فلاتر نشطة"
+    }
   },
 
 
@@ -170,6 +188,21 @@
       "allWarehouses": "جميع المخازن",
       "stockStatus": "حالة المخزون",
       "all": "الكل"
+    },
+    "filter": {
+      "title": "البحث والفلترة",
+      "search": "البحث",
+      "filters": "الفلاتر",
+      "sorting": "الترتيب",
+      "searchPlaceholder": "ابحث في المنتجات والمخازن...",
+      "sortBy": "ترتيب حسب",
+      "sortOrder": "نوع الترتيب",
+      "ascending": "تصاعدي",
+      "descending": "تنازلي",
+      "apply": "تطبيق",
+      "clear": "مسح الكل",
+      "results": "النتائج",
+      "activeFilters": "فلاتر نشطة"
     },
     "stockFilter": {
       "all": "جميع المنتجات",
@@ -224,7 +257,10 @@
   "validation": {
     "enterValidNumber": "يرجى إدخال رقم صحيح في حقل",
     "minValue": "القيمة لا يمكن أن تكون أقل من 0",
-    "maxPercent": "القيمة لا يمكن أن تزيد عن 100%"
+    "maxPercent": "القيمة لا يمكن أن تزيد عن 100%",
+        "supplierRequired": "يجب اختيار المورد",
+    "warehouseRequired": "يجب اختيار المخزن",
+    "itemsRequired": "يجب إضافة منتج واحد على الأقل"
   },
 
    "export": {
@@ -260,8 +296,23 @@
     "nameMinLength": "اسم المورد يجب أن يكون على الأقل حرفين",
     "phoneRequired": "رقم الهاتف مطلوب",
     "phoneInvalid": "رقم الهاتف غير صحيح",
-    "addressRequired": "العنوان مطلوب"
-  },
+    "addressRequired": "العنوان مطلوب",
+      "filter": {
+      "title": "البحث والفلترة",
+      "search": "البحث",
+      "filters": "الفلاتر",
+      "sorting": "الترتيب",
+      "searchPlaceholder": "ابحث في الموردين...",
+      "sortBy": "ترتيب حسب",
+      "sortOrder": "نوع الترتيب",
+      "ascending": "تصاعدي",
+      "descending": "تنازلي",
+      "apply": "تطبيق",
+      "clear": "مسح الكل",
+      "results": "النتائج",
+      "activeFilters": "فلاتر نشطة"
+    }
+    },
 "purchaseOrders": {
     "title": "أوامر الشراء",
     "list": "قائمة أوامر الشراء",
@@ -295,11 +346,44 @@
     "unit": "الوحدة",
     "code": "الرمز",
     "itemsCount": "عدد العناصر",
-    "status": "الحالة",
     "pending": "قيد الانتظار",
     "submitted": "مُرسل",
     "active": "نشط",
-    "inactive": "غير نشط"
+    "inactive": "غير نشط",
+      "filter": {
+      "title": "البحث والفلترة",
+      "search": "البحث",
+      "filters": "الفلاتر", 
+      "dateRange": "نطاق التاريخ",
+      "sorting": "الترتيب",
+      "searchPlaceholder": "ابحث في أوامر الشراء...",
+      "dateFrom": "من تاريخ",
+      "dateTo": "إلى تاريخ",
+      "sortBy": "ترتيب حسب",
+      "sortOrder": "نوع الترتيب",
+      "ascending": "تصاعدي",
+      "descending": "تنازلي",
+      "apply": "تطبيق",
+      "clear": "مسح الكل",
+      "results": "النتائج",
+      "activeFilters": "فلاتر نشطة"
+    },
+      "status": {
+      "title": "حالة أمر الشراء",
+      "pending": "معلق",
+      "draft": "مسودة", 
+      "submitted": "مؤكد",
+      "unknown": "غير معروف"
+    },
+    "table": {
+      "docNumber": "رقم المستند",
+      "supplier": "المورد",
+      "warehouse": "المخزن",
+      "date": "التاريخ",
+      "total": "الإجمالي",
+      "status": "الحالة"
+    }
+    
   },
     "purchases": {
     "title": "فواتير الشراء",
@@ -311,6 +395,43 @@
      "view": {
       "title": "عرض فاتورة الشراء"
     },
+    "filter": {
+      "title": "البحث والفلترة",
+      "search": "البحث",
+      "filters": "الفلاتر",
+      "dateRange": "نطاق التاريخ",
+      "sorting": "الترتيب",
+      "searchPlaceholder": "ابحث في فواتير الشراء...",
+      "dateFrom": "من تاريخ",
+      "dateTo": "إلى تاريخ",
+      "sortBy": "ترتيب حسب",
+      "sortOrder": "نوع الترتيب",
+      "ascending": "تصاعدي",
+      "descending": "تنازلي",
+      "apply": "تطبيق",
+      "clear": "مسح الكل",
+      "results": "النتائج",
+      "activeFilters": "فلاتر نشطة"
+    },
+    "basicInfo": "المعلومات الأساسية",
+    "discountsAndTaxes": "الخصومات والضرائب",
+    "items": "الأصناف",
+    "noItems": "لا توجد أصناف",
+    "invoiceNumber": "رقم الفاتورة",
+    "invoiceDate": "تاريخ الفاتورة",
+    "supplier": "المورد",
+    "warehouse": "المخزن",
+    "selectSupplier": "اختر المورد",
+    "selectWarehouse": "اختر المخزن",
+    "quantity": "الكمية",
+    "price": "السعر",
+    "discount": "الخصم",
+    "tax": "الضريبة",
+    "total": "الإجمالي",
+    "totalDiscount": "إجمالي الخصم",
+    "totalTax": "إجمالي الضريبة",
+    "savePending": "حفظ معلق",
+    "submit": "تأكيد",
     "edit": "تعديل فاتورة الشراء",
     "status": {
       "pending": "معلقة",
@@ -422,7 +543,59 @@
     "refresh": "تحديث",
         "yes": "نعم",
     "no": "لا",
-    "exportedOn": "تم التصدير في"
+    "exportedOn": "تم التصدير في",
+    "actions": "الإجراءات",
+       "density": "الكثافة",
+    "compact": "مضغوط",
+    "standard": "قياسي",
+    "comfortable": "مريح",
+    "export": "تصدير",
+    "exportCSV": "تصدير CSV",
+    "print": "طباعة",
+    "columns": "الأعمدة",
+    "filters": "المرشحات",
+    "hideFilters": "إخفاء المرشحات",
+    "showFilters": "إظهار المرشحات",
+    "findColumn": "البحث عن عمود",
+    "columnTitle": "عنوان العمود",
+    "reorderColumn": "إعادة ترتيب العمود",
+    "showAll": "إظهار الكل",
+    "hideAll": "إخفاء الكل",
+    "addFilter": "إضافة مرشح",
+    "operators": "العوامل",
+    "and": "و",
+    "or": "أو",
+    "value": "القيمة",
+    "filterValue": "قيمة المرشح",
+    "contains": "يحتوي على",
+    "equals": "يساوي",
+    "startsWith": "يبدأ بـ",
+    "endsWith": "ينتهي بـ",
+    "is": "هو",
+    "isNot": "ليس",
+    "isAfter": "بعد",
+    "isOnOrAfter": "في أو بعد",
+    "isBefore": "قبل",
+    "isOnOrBefore": "في أو قبل",
+    "isEmpty": "فارغ",
+    "isNotEmpty": "غير فارغ",
+    "menu": "القائمة",
+    "showColumns": "إظهار الأعمدة",
+    "filter": "مرشح",
+    "hide": "إخفاء",
+    "unsort": "إلغاء الترتيب",
+    "sortAsc": "ترتيب تصاعدي",
+    "sortDesc": "ترتيب تنازلي",
+    "activeFilters": "مرشحات نشطة",
+    "activeFilter": "مرشح نشط",
+    "sort": "ترتيب",
+    "rowsSelected": "صفوف محددة",
+    "rowSelected": "صف محدد",
+    "totalRows": "إجمالي الصفوف",
+    "of": "من",
+    "checkboxSelection": "تحديد الصناديق",
+    "noResults": "لا توجد نتائج"
+
     
   },
   "warehouses": {
@@ -445,7 +618,23 @@
     "postal": "الرمز البريدي",
     "totalProducts": "إجمالي المنتجات",
     "qty": "الكمية",
-    "created": "تاريخ الإنشاء"
+    "created": "تاريخ الإنشاء",
+     "filter": {
+      "title": "البحث والفلترة",
+      "search": "البحث",
+      "filters": "الفلاتر",
+      "sorting": "الترتيب",
+      "searchPlaceholder": "ابحث في المخازن...",
+      "sortBy": "ترتيب حسب",
+      "sortOrder": "نوع الترتيب",
+      "ascending": "تصاعدي",
+      "descending": "تنازلي",
+      "apply": "تطبيق",
+      "clear": "مسح الكل",
+      "results": "النتائج",
+      "activeFilters": "فلاتر نشطة"
+    },
+      "active": "نشط"
   },
   "status": {
     "active": "نشط",
@@ -464,7 +653,22 @@
     "save": "حفظ",
     "active": "نشط",
     "inactive": "غير نشط",
-    "nameRequired": "اسم الوحدة مطلوب"
+    "nameRequired": "اسم الوحدة مطلوب",
+     "filter": {
+      "title": "البحث والفلترة",
+      "search": "البحث",
+      "filters": "الفلاتر",
+      "sorting": "الترتيب",
+      "searchPlaceholder": "ابحث في الوحدات...",
+      "sortBy": "ترتيب حسب",
+      "sortOrder": "نوع الترتيب",
+      "ascending": "تصاعدي",
+      "descending": "تنازلي",
+      "apply": "تطبيق",
+      "clear": "مسح الكل",
+      "results": "النتائج",
+      "activeFilters": "فلاتر نشطة"
+    }
   },
   "groups": {
     "title": "المجموعات",
@@ -485,7 +689,26 @@
     "backgroundColor": "لون الخلفية",
     "fontColor": "لون الخط",
     "preview": "معاينة",
-    "sampleText": "نص تجريبي"
+    "sampleText": "نص تجريبي",
+     "filter": {
+      "title": "البحث والفلترة",
+      "search": "البحث",
+      "filters": "الفلاتر",
+      "sorting": "الترتيب",
+      "searchPlaceholder": "ابحث في المجموعات...",
+      "sortBy": "ترتيب حسب",
+      "sortOrder": "نوع الترتيب",
+      "ascending": "تصاعدي",
+      "descending": "تنازلي",
+      "apply": "تطبيق",
+      "clear": "مسح الكل",
+      "results": "النتائج",
+      "activeFilters": "فلاتر نشطة"
+    },
+    "level": "المستوى",
+    "childrenCount": "عدد المجموعات الفرعية",
+    "noGroups": "لا توجد مجموعات",
+    "rootGroups": "المجموعات الرئيسية"
   },
 
 
@@ -495,7 +718,8 @@
     "title": "تسوية الجرد",
     "types": {
       "openingBalance": "أرصدة أول المدة",
-      "manualAdjustment": "تسوية جرد"
+      "manualAdjustment": "تسوية جرد",
+      "notSelected": "لم يتم اختيار نوع التسوية"
     },
       "search": {
       "title": "البحث في الأصناف",
@@ -553,6 +777,74 @@
       "saveFailed": "فشل في حفظ التسوية",
       "submitFailed": "فشل في تأكيد التسوية"
     }
+  },
+    "adjustments": {
+    "list": {
+      "title": "قائمة تسويات الجرد",
+      "newAdjustment": "تسوية جرد جديدة",
+      "noAdjustments": "لا توجد تسويات جرد"
+    },
+    "view": {
+      "title": "عرض تسوية الجرد",
+      "adjustmentInfo": "معلومات التسوية"
+    },
+    "filter": {
+      "title": "البحث والفلترة",
+      "search": "البحث",
+      "filters": "الفلاتر",
+      "dateRange": "نطاق التاريخ",
+      "sorting": "الترتيب",
+      "searchPlaceholder": "ابحث في التسويات...",
+      "dateFrom": "من تاريخ",
+      "dateTo": "إلى تاريخ",
+      "sortBy": "ترتيب حسب",
+      "sortOrder": "نوع الترتيب",
+      "ascending": "تصاعدي",
+      "descending": "تنازلي",
+      "apply": "تطبيق",
+      "clear": "مسح الكل",
+      "results": "النتائج",
+      "activeFilters": "فلاتر نشطة"
+    },
+    "table": {
+      "adjustmentId": "معرف التسوية",
+      "type": "النوع",
+      "date": "التاريخ",
+      "referenceNumber": "الرقم المرجعي",
+      "reason": "السبب",
+      "totalItems": "عدد الأصناف",
+      "totalDifference": "إجمالي الفرق",
+      "status": "الحالة",
+            "warehouse": "المخزن"
+
+    },
+    "types": {
+      "new": "جديدة",
+      "openingBalance": "أرصدة أول المدة",
+      "manualAdjustment": "تسوية جرد",
+      "unknown": "غير معروف"
+    },
+    "status": {
+      "saved": "محفوظة",
+      "submitted": "مقدمة",
+      "unknown": "غير معروف"
+    },
+    "actions": {
+      "view": "عرض"
+    },
+    "errors": {
+      "loadFailed": "فشل في تحميل قائمة التسويات",
+      "notFound": "التسوية غير موجودة"
+    },
+    "summary": {
+      "totalItems": "إجمالي الأصناف",
+      "totalPositive": "إجمالي الزيادة",
+      "totalNegative": "إجمالي النقص"
+    },
+     "common": {
+    "all": "الكل",
+    "of": "من"
+  }
   }
 
 

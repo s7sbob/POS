@@ -7,6 +7,7 @@ import {
   Alert,
   Snackbar,
   Typography,
+  Box,
   Paper
 } from '@mui/material';
 import { useForm } from 'react-hook-form';
@@ -14,7 +15,7 @@ import { useTranslation } from 'react-i18next';
 import * as adjustmentApi from 'src/utils/api/pagesApi/inventoryAdjustmentApi';
 import * as warehousesApi from 'src/utils/api/pagesApi/warehousesApi';
 import { Warehouse } from 'src/utils/api/pagesApi/warehousesApi';
-import AdjustmentHeader from './components/PageHeader';
+import AdjustmentHeader from './components/AdjustmentHeader';
 import AdjustmentForm from './components/AdjustmentForm';
 import AdjustmentItemsTable from './components/AdjustmentItemsTable';
 import AdjustmentItemsCards from './components/AdjustmentItemsCards';
@@ -89,7 +90,6 @@ const InventoryAdjustmentPage: React.FC = () => {
     });
   }, [watchedDetails, setValue]);
 
-  // فلترة البيانات حسب البحث
   useEffect(() => {
     if (!adjustment?.details) {
       setFilteredDetails([]);
@@ -286,19 +286,45 @@ const InventoryAdjustmentPage: React.FC = () => {
     }
   };
 
-  const scrollToProduct = (productId: string) => {
+  const scrollToProductAndFocus = (productId: string) => {
     const element = document.getElementById(`product-row-${productId}`);
     if (element) {
       element.scrollIntoView({ behavior: 'smooth', block: 'center' });
       element.style.backgroundColor = '#fff3cd';
+      
+      focusOnQuantityField(productId);
+      
       setTimeout(() => {
         element.style.backgroundColor = '';
       }, 2000);
     }
   };
 
+  const focusOnQuantityField = (productId: string) => {
+    if (!adjustment?.details) return;
+    
+    const productIndex = adjustment.details.findIndex(detail => detail.productId === productId);
+    if (productIndex !== -1) {
+      setTimeout(() => {
+        const quantityInput = document.getElementById(`quantity-${productId}`) as HTMLInputElement;
+        if (quantityInput) {
+          quantityInput.focus();
+          quantityInput.select();
+        }
+      }, 300);
+    }
+  };
+
   return (
-    <Container maxWidth="xl" sx={{ py: 2 }}>
+    <Container 
+      maxWidth={false} 
+      sx={{ 
+        px: { xs: 1, sm: 2, md: 3 },
+        py: { xs: 1, sm: 2 },
+        maxWidth: '100vw',
+        overflow: 'hidden'
+      }}
+    >
       <AdjustmentHeader
         isSubmitting={isSubmitting}
         hasAdjustment={!!adjustment}
@@ -308,53 +334,78 @@ const InventoryAdjustmentPage: React.FC = () => {
         onRefresh={handleRefresh}
       />
 
-      {/* رسالة اختيار المخزن */}
       {!watchedWarehouseId && (
-        <Paper sx={{ p: 3, mb: 3, backgroundColor: 'info.light', border: '1px solid', borderColor: 'info.main' }}>
-          <Typography variant="h6" color="info.dark" sx={{ textAlign: 'center' }}>
+        <Paper sx={{ 
+          p: { xs: 2, sm: 3 }, 
+          mb: { xs: 2, sm: 3 }, 
+          backgroundColor: 'info.light', 
+          border: '1px solid', 
+          borderColor: 'info.main',
+          borderRadius: { xs: 1, sm: 2 }
+        }}>
+          <Typography 
+            variant={isMobile ? "body1" : "h6"} 
+            color="info.dark" 
+            sx={{ 
+              textAlign: 'center',
+              fontSize: { xs: '1rem', sm: '1.25rem' }
+            }}
+          >
             {t('adjustment.messages.selectWarehouseToStart')}
           </Typography>
         </Paper>
       )}
 
-      <AdjustmentForm
-        control={control}
-        warehouses={warehouses}
-        hasAdjustment={!!adjustment}
-        adjustmentType={selectedAdjustmentType}
-        isReadOnly={selectedAdjustmentType !== 0}
-      />
-
-      {/* مربع البحث */}
-      {adjustment && (
-        <ProductSearchBox
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          filteredDetails={filteredDetails}
-          onProductSelect={scrollToProduct}
+      <Box sx={{ mb: { xs: 1, sm: 2 } }}>
+        <AdjustmentForm
+          control={control}
+          warehouses={warehouses}
+          hasAdjustment={!!adjustment}
+          adjustmentType={selectedAdjustmentType}
+          isReadOnly={selectedAdjustmentType !== 0}
         />
+      </Box>
+
+      {adjustment && (
+        <Box sx={{ mb: { xs: 1, sm: 2 } }}>
+          <ProductSearchBox
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            filteredDetails={filteredDetails}
+            onProductSelect={scrollToProductAndFocus}
+            onProductFocus={focusOnQuantityField}
+          />
+        </Box>
       )}
 
       {adjustment && (
-        isMobile ? (
-          <AdjustmentItemsCards
-            control={control}
-            details={filteredDetails}
-            itemsCount={filteredDetails.length}
-            onQuantityChange={handleQuantityChange}
-            watch={watch}
-          />
-        ) : (
-          <AdjustmentItemsTable
-            control={control}
-            details={watchedDetails}
-            itemsCount={filteredDetails.length}
-            onQuantityChange={handleQuantityChange}
-            watch={watch}
-            rawDetails={filteredDetails}
-            searchQuery={searchQuery}
-          />
-        )
+        <Box sx={{ 
+          width: '100%',
+          overflow: 'hidden',
+          '& .MuiPaper-root': {
+            borderRadius: { xs: 1, sm: 2 },
+          }
+        }}>
+          {isMobile ? (
+            <AdjustmentItemsCards
+              control={control}
+              details={filteredDetails}
+              itemsCount={filteredDetails.length}
+              onQuantityChange={handleQuantityChange}
+              watch={watch}
+            />
+          ) : (
+            <AdjustmentItemsTable
+              control={control}
+              details={watchedDetails}
+              itemsCount={filteredDetails.length}
+              onQuantityChange={handleQuantityChange}
+              watch={watch}
+              rawDetails={filteredDetails}
+              searchQuery={searchQuery}
+            />
+          )}
+        </Box>
       )}
 
       <NewAdjustmentDialog
@@ -372,7 +423,10 @@ const InventoryAdjustmentPage: React.FC = () => {
         <Alert
           onClose={() => setAlertMessage('')}
           severity={alertSeverity}
-          sx={{ width: '100%' }}
+          sx={{ 
+            width: '100%',
+            maxWidth: { xs: '90vw', sm: 'auto' }
+          }}
         >
           {alertMessage}
         </Alert>

@@ -24,7 +24,6 @@ const ProductTable: React.FC<Props> = ({ rows, onEdit, onViewPrices, selectedPro
 
   const cols: GridColDef[] = [
     { field: 'name', headerName: t('products.name'), flex: 1, minWidth: 200 },
-    { field: 'code', headerName: t('products.code'), width: 120 },
     { 
       field: 'group', 
       headerName: t('products.group'), 

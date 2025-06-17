@@ -77,16 +77,10 @@ const GroupTree: React.FC<Props> = ({
               <Typography variant="body1" sx={{ flex: 1 }}>
                 {group.name}
               </Typography>
-              
-              {/* كود المجموعة */}
-              <Typography variant="body2" color="text.secondary">
-                {t('groups.code')}: {group.code}
-              </Typography>
-              
-              {/* حالة المجموعة */}
-<StatusPill isActive={group.isActive} />
 
-              
+              {/* حالة المجموعة */}
+              <StatusPill isActive={group.isActive} />
+
               {/* أزرار الإجراءات */}
               <Stack direction="row" spacing={1}>
                 <IconButton

@@ -10,7 +10,6 @@ interface Props {
 const PurchasesPageHeader: React.FC<Props> = ({ exportData = [], loading = false }) => {
   const exportColumns = [
     { field: 'referenceDocNumber', headerName: 'رقم الفاتورة', type: 'string' as const },
-    { field: 'code', headerName: 'الكود', type: 'number' as const },
     { field: 'purchaseOrder.referenceDocNumber', headerName: 'أمر الشراء', type: 'string' as const, format: (value: any) => value?.referenceDocNumber || 'فاتورة مباشرة' },
     { field: 'supplier.name', headerName: 'المورد', type: 'string' as const, format: (value: any) => value?.name || 'غير محدد' },
     { field: 'warehouse.name', headerName: 'المخزن', type: 'string' as const, format: (value: any) => value?.name || 'غير محدد' },

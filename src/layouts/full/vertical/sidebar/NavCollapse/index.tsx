@@ -15,7 +15,7 @@ import {
   Box,
 } from '@mui/material';
 import NavItem from '../NavItem';
-import { IconChevronDown, IconChevronUp, IconPoint } from '@tabler/icons-react';
+import { IconChevronDown, IconChevronUp, IconDots } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
 import { AppState } from 'src/store/Store';
 
@@ -64,10 +64,19 @@ const NavCollapse = ({
   const getMenuIcon = () => {
     if (level === 1) {
       // المستوى الأول - الأيقونة العادية
-      return level > 1 ? <Icon stroke={1.5} size="1rem" /> : <Icon stroke={1.5} size="1.1rem" />;
+      return <Icon stroke={1.5} size="1.1rem" />;
     } else {
-      // المستوى الثاني والثالث - نقطة
-      return <IconPoint size="1rem" />;
+      // تحديد ما إذا كان هذا العنصر له أطفال أم لا
+      const hasChildren = menu?.children && menu.children.length > 0;
+      const isLastLevel = !hasChildren || !menu.children.some((child: any) => child.children);
+      
+      if (isLastLevel) {
+        // المستوى الأخير - أيقونة عادية
+        return <Icon stroke={1.5} size="1rem" />;
+      } else {
+        // المستوى الأوسط - 3 نقاط
+        return <IconDots size="1rem" />;
+      }
     }
   };
 
@@ -93,14 +102,13 @@ const NavCollapse = ({
   const ListItemStyled = styled(ListItemButton)(() => ({
     marginBottom: '1px',
     padding: '4px 8px',
-    // تحديد المسافة حسب المستوى
     paddingLeft: hideMenu 
       ? '8px' 
       : level === 1 
-        ? '8px'  // المستوى الأول
+        ? '8px'
         : level === 2 
-          ? '24px' // المستوى الثاني - إزاحة أكبر
-          : `${level * 16}px`, // المستويات الأعلى
+          ? '24px'
+          : `${level * 16}px`,
     backgroundColor: open && level < 2 ? theme.palette.primary.main : '',
     whiteSpace: 'nowrap',
     minHeight: '32px',
@@ -117,7 +125,6 @@ const NavCollapse = ({
           ? theme.palette.primary.main
           : theme.palette.text.secondary,
     borderRadius: `${customizer.borderRadius}px`,
-    // إضافة border للمستويات الفرعية
     ...(level > 1 && {
       borderLeft: `2px solid ${theme.palette.divider}`,
       marginLeft: '8px',
@@ -160,7 +167,7 @@ const NavCollapse = ({
       >
         <ListItemIcon
           sx={{
-            minWidth: level === 1 ? '28px' : '20px', // تصغير للمستويات الفرعية
+            minWidth: level === 1 ? '28px' : '20px',
             p: '2px 0',
             color: 'inherit',
           }}
@@ -171,16 +178,15 @@ const NavCollapse = ({
           color="inherit"
           sx={{
             '& .MuiListItemText-primary': {
-              fontSize: level === 1 ? '0.875rem' : '0.8rem', // تصغير الخط للمستويات الفرعية
+              fontSize: level === 1 ? '0.875rem' : '0.8rem',
               lineHeight: 1.2,
-              fontWeight: level === 1 ? 500 : 400, // تقليل وزن الخط للمستويات الفرعية
+              fontWeight: level === 1 ? 500 : 400,
             }
           }}
         >
           {hideMenu ? '' : <>{t(`${menu.title}`)}</>}
         </ListItemText>
         
-        {/* إظهار السهم فقط للمستوى الأول */}
         {level === 1 && (
           <Box sx={{ ml: 1 }}>
             {!open ? 
@@ -190,7 +196,6 @@ const NavCollapse = ({
           </Box>
         )}
         
-        {/* للمستويات الفرعية - سهم أصغر */}
         {level > 1 && (
           <Box sx={{ ml: 1 }}>
             {!open ? 
@@ -203,7 +208,6 @@ const NavCollapse = ({
       
       <Collapse in={open} timeout="auto" unmountOnExit>
         <Box sx={{ 
-          // إضافة background مختلف للمستويات الفرعية
           ...(level > 1 && {
             backgroundColor: theme.palette.action.hover,
             borderRadius: `0 ${customizer.borderRadius}px ${customizer.borderRadius}px 0`,

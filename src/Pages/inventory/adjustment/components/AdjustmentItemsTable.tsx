@@ -39,7 +39,6 @@ const AdjustmentItemsTable: React.FC<Props> = ({
   const displayDetails = details.length > 0 ? details : rawDetails;
   const useFormData = details.length > 0;
 
-  // فلترة البيانات حسب البحث
   const filteredDisplayDetails = searchQuery.trim() 
     ? displayDetails.filter(detail => {
         const searchLower = searchQuery.toLowerCase();
@@ -130,6 +129,7 @@ const AdjustmentItemsTable: React.FC<Props> = ({
                               {...field}
                               type="number"
                               size="small"
+                              id={`quantity-${detail.productId}`}
                               onChange={(e) => onQuantityChange(index, parseFloat(e.target.value) || 0)}
                               sx={{
                                 width: 120,
@@ -157,6 +157,7 @@ const AdjustmentItemsTable: React.FC<Props> = ({
                         <TextField
                           type="number"
                           size="small"
+                          id={`quantity-${detail.productId}`}
                           value={detail.newQuantity || 0}
                           onChange={(e) => onQuantityChange(index, parseFloat(e.target.value) || 0)}
                           sx={{

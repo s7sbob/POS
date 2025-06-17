@@ -43,9 +43,6 @@ const ProductRow: React.FC<Props> = ({ product, onEdit, onViewPrices, isSelected
             <Typography variant="h6" component="div">
               {product.name}
             </Typography>
-            <Typography variant="body2" color="text.secondary">
-              {t('products.code')}: {product.code}
-            </Typography>
             <Box>
               <Typography variant="body2" color="text.secondary">
                 {t('products.group')}: {product.group?.name || 'No Group'}

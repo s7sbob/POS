@@ -16,7 +16,6 @@ import {
 import { useSelector } from 'src/store/Store';
 import { useTranslation } from 'react-i18next';
 import { AppState } from 'src/store/Store';
-import { IconPoint } from '@tabler/icons-react';
 
 type NavGroup = {
   [x: string]: any;
@@ -53,10 +52,15 @@ const NavItem = ({ item, level, pathDirect, hideMenu, onClick }: ItemType) => {
   const getItemIcon = () => {
     if (level === 1) {
       // المستوى الأول - الأيقونة العادية
-      return level > 1 ? <Icon stroke={1.5} size="1rem" /> : <Icon stroke={1.5} size="1.1rem" />;
+      return <Icon stroke={1.5} size="1.1rem" />;
     } else {
-      // المستويات الفرعية - نقطة صغيرة
-      return <IconPoint size="0.8rem" />;
+      // للمستويات الفرعية، نحتاج لتحديد ما إذا كان هذا المستوى الأخير
+      // إذا كان level > 2، فهو مستوى أوسط، استخدم النقاط
+      // إذا كان level === 2 أو الأخير، استخدم الأيقونة
+      
+      // بشكل عام، العناصر في NavItem هي عناصر نهائية (ليس لها أطفال)
+      // لذا سنستخدم الأيقونة العادية
+      return <Icon stroke={1.5} size="1rem" />;
     }
   };
 
@@ -70,17 +74,16 @@ const NavItem = ({ item, level, pathDirect, hideMenu, onClick }: ItemType) => {
       level > 1 && pathDirect === item?.href
         ? `${theme.palette.primary.main}!important`
         : theme.palette.text.secondary,
-    // تحديد المسافة حسب المستوى
     paddingLeft: hideMenu 
       ? '8px' 
       : level === 1 
-        ? '8px'  // المستوى الأول
+        ? '8px'
         : level === 2 
-          ? '24px' // المستوى الثاني
+          ? '24px'
           : level === 3
-            ? '40px' // المستوى الثالث
-            : `${level * 16}px`, // المستويات الأعلى
-    minHeight: level === 1 ? '32px' : '28px', // ارتفاع أصغر للمستويات الفرعية
+            ? '40px'
+            : `${level * 16}px`,
+    minHeight: level === 1 ? '32px' : '28px',
     '&:hover': {
       backgroundColor: theme.palette.primary.light,
       color: theme.palette.primary.main,
@@ -93,7 +96,6 @@ const NavItem = ({ item, level, pathDirect, hideMenu, onClick }: ItemType) => {
         color: 'white',
       },
     },
-    // إضافة border للمستويات الفرعية
     ...(level > 1 && {
       borderLeft: `2px solid ${theme.palette.divider}`,
       marginLeft: '8px',
@@ -122,7 +124,7 @@ const NavItem = ({ item, level, pathDirect, hideMenu, onClick }: ItemType) => {
       >
         <ListItemIcon
           sx={{
-            minWidth: level === 1 ? '28px' : '20px', // تصغير للمستويات الفرعية
+            minWidth: level === 1 ? '28px' : '20px',
             p: '2px 0',
             color:
               level > 1 && pathDirect === item?.href
@@ -135,9 +137,9 @@ const NavItem = ({ item, level, pathDirect, hideMenu, onClick }: ItemType) => {
         <ListItemText
           sx={{
             '& .MuiListItemText-primary': {
-              fontSize: level === 1 ? '0.875rem' : '0.8rem', // تصغير الخط للمستويات الفرعية
+              fontSize: level === 1 ? '0.875rem' : '0.8rem',
               lineHeight: 1.2,
-              fontWeight: level === 1 ? 500 : 400, // تقليل وزن الخط للمستويات الفرعية
+              fontWeight: level === 1 ? 500 : 400,
             }
           }}
         >
@@ -158,7 +160,7 @@ const NavItem = ({ item, level, pathDirect, hideMenu, onClick }: ItemType) => {
             variant={item?.variant ? item?.variant : 'filled'}
             size="small"
             label={item?.chip}
-            sx={{ height: '18px', fontSize: '0.7rem' }} // تصغير أكثر للمستويات الفرعية
+            sx={{ height: '18px', fontSize: '0.7rem' }}
           />
         )}
       </ListItemStyled>

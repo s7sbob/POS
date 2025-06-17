@@ -1,9 +1,10 @@
 // File: src/pages/purchases/EditPurchasePage.tsx
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { Snackbar, Alert, Box, Typography, CircularProgress } from '@mui/material';
+import { useMediaQuery, useTheme, Snackbar, Alert, Box, Typography, CircularProgress } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import PurchaseForm from './components/PurchaseForm';
+import MobilePurchaseForm from './components/mobile/MobilePurchaseForm';
 import * as apiSrv from 'src/utils/api/pagesApi/purchaseApi';
 import * as suppliersApi from 'src/utils/api/pagesApi/suppliersApi';
 import * as warehousesApi from 'src/utils/api/pagesApi/warehousesApi';
@@ -14,6 +15,9 @@ import { Warehouse } from 'src/utils/api/pagesApi/warehousesApi';
 const EditPurchasePage: React.FC = () => {
   const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  
   const [purchase, setPurchase] = useState<Purchase | null>(null);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
@@ -88,13 +92,23 @@ const EditPurchasePage: React.FC = () => {
 
   return (
     <>
-      <PurchaseForm
-        mode="edit"
-        initialValues={purchase}
-        suppliers={suppliers}
-        warehouses={warehouses}
-        onSubmit={handleSubmit}
-      />
+      {isMobile ? (
+        <MobilePurchaseForm
+          mode="edit"
+          initialValues={purchase}
+          suppliers={suppliers}
+          warehouses={warehouses}
+          onSubmit={handleSubmit}
+        />
+      ) : (
+        <PurchaseForm
+          mode="edit"
+          initialValues={purchase}
+          suppliers={suppliers}
+          warehouses={warehouses}
+          onSubmit={handleSubmit}
+        />
+      )}
 
       <Snackbar open={!!error} autoHideDuration={6000} onClose={() => setError('')}>
         <Alert severity="error" onClose={() => setError('')}>

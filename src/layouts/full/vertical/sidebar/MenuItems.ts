@@ -12,10 +12,10 @@ import {
   IconPackage,
   IconLayoutGridAdd,
   IconAdjustments,
-  IconStack3,
   IconBuildingWarehouse,
   IconTruck,
   IconUsers,
+  IconDots,
 
 } from '@tabler/icons-react';
 
@@ -48,7 +48,7 @@ const SidebarConfig: MenuItem[] = [
 
 {    id: uniqueId(),
     title: 'sidebar.data',
-    icon: IconLayoutGridAdd,
+    icon: IconDots,
     href: '/inventory/data',
 children: [
   {
@@ -146,7 +146,7 @@ children: [
   {
     id: uniqueId(),
     title: 'sidebar.transactions',
-    icon: IconStack3,
+    icon: IconDots,
     href: '/inventory/Transactions'
 , children: [
       {
@@ -162,7 +162,7 @@ children: [
   {
     id: uniqueId(),
     title: 'sidebar.reports',
-    icon: IconAdjustments,
+    icon: IconDots,
     href: '/inventory/reports'
 , children: [
       {
@@ -182,7 +182,7 @@ children: [
 
 {    id: uniqueId(),
     title: 'sidebar.data',
-    icon: IconLayoutGridAdd,
+    icon: IconDots,
     href: '/purchases/data',
 children: [
   {
@@ -198,7 +198,7 @@ children: [
   {
     id: uniqueId(),
     title: 'sidebar.transactions',
-    icon: IconStack3,
+    icon: IconDots,
     href: '/inventory/Transactions',
     children: [
       {
@@ -217,7 +217,7 @@ children: [
   {
     id: uniqueId(),
     title: 'sidebar.reports',
-    icon: IconAdjustments,
+    icon: IconDots,
     href: '/inventory/reports'
   }
 ] },

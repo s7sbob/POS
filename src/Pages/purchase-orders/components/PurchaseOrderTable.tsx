@@ -94,7 +94,7 @@ const PurchaseOrderTable: React.FC<Props> = ({ rows, onEdit }) => {
     {
       // ← Changed from isActive → status
       field: 'status',
-      headerName: t('purchaseOrders.status'),
+      headerName: t('purchaseOrders.status.title'),
       width: 110,
       renderCell: ({ value }) => (
         <Chip

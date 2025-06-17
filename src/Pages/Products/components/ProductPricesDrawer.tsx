@@ -67,9 +67,6 @@ const ProductPricesDrawer: React.FC<Props> = ({ open, product, units, onClose })
               </Typography>
               <Stack direction="row" spacing={2} flexWrap="wrap">
                 <Typography variant="body2" color="text.secondary">
-                  {t('products.code')}: {product.code}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
                   {t('products.group')}: {product.group?.name || 'No Group'}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">

@@ -1,6 +1,8 @@
+// File: src/pages/purchases/purchase-orders/AddPurchaseOrderPage.tsx
 import React, { useState, useEffect } from 'react';
-import { Snackbar, Alert, Box, Typography, CircularProgress } from '@mui/material';
+import { useMediaQuery, useTheme, Snackbar, Alert, Box, Typography, CircularProgress } from '@mui/material';
 import PurchaseOrderForm from './components/PurchaseOrderForm';
+import MobilePurchaseOrderForm from './components/mobile/MobilePurchaseOrderForm';
 import * as apiSrv from 'src/utils/api/pagesApi/purchaseOrdersApi';
 import * as suppliersApi from 'src/utils/api/pagesApi/suppliersApi';
 import * as warehousesApi from 'src/utils/api/pagesApi/warehousesApi';
@@ -8,6 +10,9 @@ import { Supplier } from 'src/utils/api/pagesApi/suppliersApi';
 import { Warehouse } from 'src/utils/api/pagesApi/warehousesApi';
 
 const AddPurchaseOrderPage: React.FC = () => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [error, setError] = useState('');
@@ -34,10 +39,7 @@ const AddPurchaseOrderPage: React.FC = () => {
 
   const handleSubmit = async (data: any) => {
     try {
-      console.log('Adding purchase order (data):', data);
       await apiSrv.add(data);
-      // After either “Save (Pending)” or “Submit,” 
-      // we always assume the form resets on status=1 or navigates away on status=3.
     } catch (e: any) {
       const msg = e?.message || 'Add failed';
       setError(msg);
@@ -56,12 +58,21 @@ const AddPurchaseOrderPage: React.FC = () => {
 
   return (
     <>
-      <PurchaseOrderForm
-        mode="add"
-        suppliers={suppliers}
-        warehouses={warehouses}
-        onSubmit={handleSubmit}
-      />
+      {isMobile ? (
+        <MobilePurchaseOrderForm
+          mode="add"
+          suppliers={suppliers}
+          warehouses={warehouses}
+          onSubmit={handleSubmit}
+        />
+      ) : (
+        <PurchaseOrderForm
+          mode="add"
+          suppliers={suppliers}
+          warehouses={warehouses}
+          onSubmit={handleSubmit}
+        />
+      )}
 
       <Snackbar open={!!error} autoHideDuration={6000} onClose={() => setError('')}>
         <Alert severity="error" onClose={() => setError('')}>

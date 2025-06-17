@@ -67,11 +67,6 @@ const PurchaseTable: React.FC<Props> = ({ rows, onEdit, onView }) => {
       minWidth: 150
     },
     {
-      field: 'code',
-      headerName: t('purchases.table.code'),
-      width: 100
-    },
-    {
       field: 'purchaseOrder',
       headerName: t('purchases.table.purchaseOrder'),
       flex: 1,

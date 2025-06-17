@@ -34,6 +34,21 @@
       "stockStatus": "Stock Status",
       "all": "All"
     },
+    "filter": {
+      "title": "Search & Filter",
+      "search": "Search",
+      "filters": "Filters",
+      "sorting": "Sorting",
+      "searchPlaceholder": "Search products and warehouses...",
+      "sortBy": "Sort By",
+      "sortOrder": "Sort Order",
+      "ascending": "Ascending",
+      "descending": "Descending",
+      "apply": "Apply",
+      "clear": "Clear All",
+      "results": "Results",
+      "activeFilters": "active filters"
+    },
     "stockFilter": {
       "all": "All Products",
       "inStock": "In Stock",
@@ -99,6 +114,43 @@
      "view": {
       "title": "View Purchase Invoice"
     },
+     "filter": {
+      "title": "Search & Filter",
+      "search": "Search",
+      "filters": "Filters",
+      "dateRange": "Date Range",
+      "sorting": "Sorting",
+      "searchPlaceholder": "Search purchase invoices...",
+      "dateFrom": "From Date",
+      "dateTo": "To Date",
+      "sortBy": "Sort By",
+      "sortOrder": "Sort Order",
+      "ascending": "Ascending",
+      "descending": "Descending",
+      "apply": "Apply",
+      "clear": "Clear All",
+      "results": "Results",
+      "activeFilters": "active filters"
+    },
+    "basicInfo": "Basic Information",
+    "discountsAndTaxes": "Discounts & Taxes",
+    "items": "Items",
+    "noItems": "No items",
+    "invoiceNumber": "Invoice Number",
+    "invoiceDate": "Invoice Date",
+    "supplier": "Supplier",
+    "warehouse": "Warehouse",
+    "selectSupplier": "Select Supplier",
+    "selectWarehouse": "Select Warehouse",
+    "quantity": "Quantity",
+    "price": "Price",
+    "discount": "Discount",
+    "tax": "Tax",
+    "total": "Total",
+    "totalDiscount": "Total Discount",
+    "totalTax": "Total Tax",
+    "savePending": "Save Pending",
+    "submit": "Submit",
     "edit": "Edit Purchase Invoice",
     "status": {
       "pending": "Pending",
@@ -329,7 +381,24 @@
     "loadingMore": "Loading more",
     "allResultsLoaded": "All results loaded",
     "navigateWithArrows": "Navigate with arrows",
-    "selectWithEnter": "to select"
+    "selectWithEnter": "to select",
+     "selectProduct": "Select Product",
+    "enterSearchTerm": "Enter search term",
+     "filter": {
+      "title": "Search & Filter",
+      "search": "Search",
+      "filters": "Filters",
+      "sorting": "Sorting",
+      "searchPlaceholder": "Search products...",
+      "sortBy": "Sort By",
+      "sortOrder": "Sort Order",
+      "ascending": "Ascending",
+      "descending": "Descending",
+      "apply": "Apply",
+      "clear": "Clear All",
+      "results": "Results",
+      "activeFilters": "active filters"
+    }
   },
    "barcode": {
     "scan": "Scan Barcode",
@@ -342,8 +411,11 @@
   "validation": {
     "enterValidNumber": "Please enter a valid number in",
     "minValue": "Value cannot be less than 0",
-    "maxPercent": "Value cannot be more than 100%"
-  },
+    "maxPercent": "Value cannot be more than 100%",
+        "supplierRequired": "Supplier is required",
+    "warehouseRequired": "Warehouse is required",
+    "itemsRequired": "At least one item is required"
+    },
    "suppliers": {
     "title": "Suppliers",
     "subtitle": "Manage suppliers and vendor companies",
@@ -366,7 +438,22 @@
     "nameMinLength": "Supplier name must be at least 2 characters",
     "phoneRequired": "Phone number is required",
     "phoneInvalid": "Invalid phone number format",
-    "addressRequired": "Address is required"
+    "addressRequired": "Address is required",
+      "filter": {
+      "title": "Search & Filter",
+      "search": "Search",
+      "filters": "Filters",
+      "sorting": "Sorting",
+      "searchPlaceholder": "Search suppliers...",
+      "sortBy": "Sort By",
+      "sortOrder": "Sort Order",
+      "ascending": "Ascending",
+      "descending": "Descending",
+      "apply": "Apply",
+      "clear": "Clear All",
+      "results": "Results",
+      "activeFilters": "active filters"
+    }
   },
  "purchaseOrders": {
     "title": "Purchase Orders",
@@ -404,7 +491,6 @@
     "discountValue": "Discount Value",
     "taxValue": "Tax Value",
     "itemsCount": "Items Count",
-    "status": "Status",
     "active": "Active",
     "inactive": "Inactive",
     "addItemWithSearch": "Add Item with Search",
@@ -415,7 +501,45 @@
     "pending": "Pending",
     "submitted": "Submitted",
     "savePending": "Save Pending",
-    "submit": "Save Submitted"
+    "submit": "Save Submitted",
+
+    "basicInfo": "Basic Information",
+    "discountsAndTaxes": "Discounts & Taxes",
+    "unitFactor": "Unit Factor",
+      "status": {
+        "title": "Status",
+      "pending": "pending",
+      "draft": "draft",
+      "submitted": "submitted",
+      "unknown": "unknown"
+    },
+    "table": {
+      "docNumber": "Document Number",
+      "supplier": "Supplier",
+      "warehouse": "Warehouse",
+      "date": "Date",
+      "total": "Total",
+      "status": "Status"
+    },
+        "filter": {
+      "title": "Search & Filter",
+      "search": "Search",
+      "filters": "Filters",
+      "dateRange": "Date Range",
+      "sorting": "Sorting",
+      "searchPlaceholder": "Search purchase orders...",
+      "dateFrom": "From Date",
+      "dateTo": "To Date",
+      "sortBy": "Sort By",
+      "sortOrder": "Sort Order",
+      "ascending": "Ascending",
+      "descending": "Descending",
+      "apply": "Apply",
+      "clear": "Clear All",
+      "results": "Results",
+      "activeFilters": "active filters"
+    }
+
   },
   "common": {
     "search": "Search",
@@ -439,7 +563,59 @@
     "refresh": "Refresh",
         "yes": "Yes",
     "no": "No",
-    "exportedOn": "Exported on"
+    "exportedOn": "Exported on",
+    "actions": "Actions",
+       "density": "Density",
+    "compact": "Compact",
+    "standard": "Standard",
+    "comfortable": "Comfortable",
+    "export": "Export",
+    "exportCSV": "Export CSV",
+    "print": "Print",
+    "columns": "Columns",
+    "filters": "Filters",
+    "hideFilters": "Hide Filters",
+    "showFilters": "Show Filters",
+    "findColumn": "Find Column",
+    "columnTitle": "Column Title",
+    "reorderColumn": "Reorder Column",
+    "showAll": "Show All",
+    "hideAll": "Hide All",
+    "addFilter": "Add Filter",
+    "operators": "Operators",
+    "and": "And",
+    "or": "Or",
+    "value": "Value",
+    "filterValue": "Filter Value",
+    "contains": "Contains",
+    "equals": "Equals",
+    "startsWith": "Starts With",
+    "endsWith": "Ends With",
+    "is": "Is",
+    "isNot": "Is Not",
+    "isAfter": "Is After",
+    "isOnOrAfter": "Is On Or After",
+    "isBefore": "Is Before",
+    "isOnOrBefore": "Is On Or Before",
+    "isEmpty": "Is Empty",
+    "isNotEmpty": "Is Not Empty",
+    "menu": "Menu",
+    "showColumns": "Show Columns",
+    "filter": "Filter",
+    "hide": "Hide",
+    "unsort": "Unsort",
+    "sortAsc": "Sort Ascending",
+    "sortDesc": "Sort Descending",
+    "activeFilters": "Active Filters",
+    "activeFilter": "Active Filter",
+    "sort": "Sort",
+    "rowsSelected": "Rows Selected",
+    "rowSelected": "Row Selected",
+    "totalRows": "Total Rows",
+    "of": "Of",
+    "checkboxSelection": "Checkbox Selection",
+    "noResults": "No results found"
+
   },
     "warehouses": {
     "title": "Warehouses",
@@ -460,7 +636,25 @@
     "status": "Status",
     "totalProducts": "Total Products",
     "qty": "Qty",
-    "created": "Created On"
+      "filter": {
+      "title": "Search & Filter",
+      "search": "Search",
+      "filters": "Filters",
+      "sorting": "Sorting",
+      "searchPlaceholder": "Search warehouses...",
+      "sortBy": "Sort By",
+      "sortOrder": "Sort Order",
+      "ascending": "Ascending",
+      "descending": "Descending",
+      "apply": "Apply",
+      "clear": "Clear All",
+      "results": "Results",
+      "activeFilters": "active filters"
+    },
+    "active": "Active",
+    "inactive": "Inactive",
+    "code": "Code",
+    "created": "Created Date"
   },
   "status": {
     "active": "Active",
@@ -479,7 +673,22 @@
     "save": "Save",
     "active": "Active",
     "inactive": "Inactive",
-    "nameRequired": "Unit name is required"
+    "nameRequired": "Unit name is required",
+     "filter": {
+      "title": "Search & Filter",
+      "search": "Search",
+      "filters": "Filters",
+      "sorting": "Sorting",
+      "searchPlaceholder": "Search units...",
+      "sortBy": "Sort By",
+      "sortOrder": "Sort Order",
+      "ascending": "Ascending",
+      "descending": "Descending",
+      "apply": "Apply",
+      "clear": "Clear All",
+      "results": "Results",
+      "activeFilters": "active filters"
+    }
   },
    "groups": {
     "title": "Groups",
@@ -500,7 +709,26 @@
     "backgroundColor": "Background Color",
     "fontColor": "Font Color",
     "preview": "Preview",
-    "sampleText": "Sample Text"
+    "sampleText": "Sample Text",
+     "filter": {
+      "title": "Search & Filter",
+      "search": "Search",
+      "filters": "Filters",
+      "sorting": "Sorting",
+      "searchPlaceholder": "Search groups...",
+      "sortBy": "Sort By",
+      "sortOrder": "Sort Order",
+      "ascending": "Ascending",
+      "descending": "Descending",
+      "apply": "Apply",
+      "clear": "Clear All",
+      "results": "Results",
+      "activeFilters": "active filters"
+    },
+    "level": "Level",
+    "childrenCount": "Children Count",
+    "noGroups": "No groups found",
+    "rootGroups": "Root Groups"
   },
 
 
@@ -513,7 +741,8 @@
     "title": "Inventory Adjustment",
     "types": {
       "openingBalance": "Opening Balance",
-      "manualAdjustment": "Manual Adjustment"
+      "manualAdjustment": "Manual Adjustment",
+      "notSelected": "Adjustment Type Not Selected"
     },
     "form": {
       "warehouse": "Warehouse",
@@ -569,6 +798,70 @@
       "loadAdjustmentFailed": "Failed to load adjustment data",
       "saveFailed": "Failed to save adjustment",
       "submitFailed": "Failed to submit adjustment"
+    }
+  },
+    "adjustments": {
+    "list": {
+      "title": "Inventory Adjustments",
+      "newAdjustment": "New Adjustment",
+      "noAdjustments": "No adjustments found"
+    },
+     "filter": {
+      "title": "Search & Filter",
+      "search": "Search",
+      "filters": "Filters",
+      "dateRange": "Date Range",
+      "sorting": "Sorting",
+      "searchPlaceholder": "Search adjustments...",
+      "dateFrom": "From Date",
+      "dateTo": "To Date",
+      "sortBy": "Sort By",
+      "sortOrder": "Sort Order",
+      "ascending": "Ascending",
+      "descending": "Descending",
+      "apply": "Apply",
+      "clear": "Clear All",
+      "results": "Results",
+      "activeFilters": "active filters"
+    },
+    "view": {
+      "title": "View Adjustment",
+      "adjustmentInfo": "Adjustment Information"
+    },
+    "table": {
+      "adjustmentId": "Adjustment ID",
+      "type": "Type",
+      "date": "Date",
+      "referenceNumber": "Reference Number",
+      "reason": "Reason",
+      "totalItems": "Total Items",
+      "totalDifference": "Total Difference",
+      "status": "Status",
+            "warehouse": "Warehouse"
+
+    },
+    "types": {
+      "new": "New",
+      "openingBalance": "Opening Balance",
+      "manualAdjustment": "Manual Adjustment",
+      "unknown": "Unknown"
+    },
+    "status": {
+      "saved": "Saved",
+      "submitted": "Submitted",
+      "unknown": "Unknown"
+    },
+    "actions": {
+      "view": "View"
+    },
+    "errors": {
+      "loadFailed": "Failed to load adjustments list",
+      "notFound": "Adjustment not found"
+    },
+      "summary": {
+      "totalItems": "Total Items",
+      "totalPositive": "Total Increase",
+      "totalNegative": "Total Decrease"
     }
   }
 

@@ -22,13 +22,15 @@ interface Props {
   onSearchChange: (query: string) => void;
   filteredDetails: any[];
   onProductSelect: (productId: string) => void;
+  onProductFocus: (productId: string) => void; // إضافة جديدة
 }
 
 const ProductSearchBox: React.FC<Props> = ({
   searchQuery,
   onSearchChange,
   filteredDetails,
-  onProductSelect
+  onProductSelect,
+  onProductFocus
 }) => {
   const { t } = useTranslation();
   const [showResults, setShowResults] = useState(false);
@@ -68,6 +70,8 @@ const ProductSearchBox: React.FC<Props> = ({
 
   const handleProductSelect = (product: any) => {
     onProductSelect(product.productId);
+    // التركيز على حقل الكمية للمنتج المحدد
+    onProductFocus(product.productId);
     setShowResults(false);
     onSearchChange('');
   };
@@ -76,7 +80,6 @@ const ProductSearchBox: React.FC<Props> = ({
     onSearchChange(barcode);
     setScannerOpen(false);
     
-    // البحث عن المنتج بالباركود
     const foundProduct = filteredDetails.find(detail => 
       detail.barcode && detail.barcode.toLowerCase() === barcode.toLowerCase()
     );
@@ -124,7 +127,6 @@ const ProductSearchBox: React.FC<Props> = ({
               }}
             />
 
-            {/* نتائج البحث */}
             {showResults && filteredDetails.length > 0 && (
               <Paper
                 sx={{
@@ -173,7 +175,6 @@ const ProductSearchBox: React.FC<Props> = ({
         </ClickAwayListener>
       </Paper>
 
-      {/* ماسح الباركود */}
       <BarcodeScanner
         open={scannerOpen}
         onClose={() => setScannerOpen(false)}

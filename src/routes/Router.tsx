@@ -19,6 +19,8 @@ import EditPurchasePage from 'src/Pages/purchases/EditPurchasePage';
 import ViewPurchasePage from 'src/Pages/purchases/components/ViewPurchasePage';
 import ProductBalanceReportPage from 'src/Pages/reports/ProductBalanceReportPage';
 import InventoryAdjustmentPage from 'src/Pages/inventory/adjustment/InventoryAdjustmentPage';
+import AdjustmentViewPage from 'src/Pages/inventory/adjustment/components/AdjustmentViewPage';
+import AdjustmentsListPage from 'src/Pages/inventory/adjustment/AdjustmentsListPage';
 
 /* ***Layouts**** */
 const FullLayout = Loadable(lazy(() => import('../layouts/full/FullLayout')));
@@ -208,7 +210,9 @@ const Router = [
       { path: '/purchases/purchases/edit/:id', element: <EditPurchasePage /> },
       { path: '/purchases/purchases/view/:id', element: <ViewPurchasePage /> },
       { path: '/reports/product-balance', element: <ProductBalanceReportPage /> },
-      { path: '/inventory/inventory-adjustments', element: <InventoryAdjustmentPage /> },
+      { path: '/inventory/inventory-adjustments', element: <AdjustmentsListPage /> },
+      { path: '/inventory/inventory-adjustments/:id', element: <AdjustmentViewPage /> },
+      { path: '/inventory/inventory-adjustments/new', element: <InventoryAdjustmentPage /> },
       // { path: '/frontend-pages/blog/detail/:id', element: <BlogDetail /> },
       { path: '/apps/chats', element: <Chats /> },
       { path: '/apps/email', element: <Email /> },
