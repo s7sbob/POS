@@ -222,6 +222,93 @@ children: [
   }
 ] },
 
+
+
+
+
+
+
+  {  title: 'sidebar.accounting', id: uniqueId() ,    icon: IconTruck,
+           href: '/accounting'
+, children: [
+
+{    id: uniqueId(),
+    title: 'sidebar.data',
+    icon: IconDots,
+    href: '/accounting/data',
+children: [
+  {
+    id: uniqueId(),
+    title: 'sidebar.safesAndAccounts',
+    icon: IconPackage,
+    href: '/accounting/safes-and-accounts'
+  },
+  {
+    id: uniqueId(),
+    title: 'sidebar.accounts',
+    icon: IconPackage,
+    href: '/accounting/accounts'
+  },
+  {
+    id: uniqueId(),
+    title: 'sidebar.safes',
+    icon: IconBuildingWarehouse,
+    href: '/accounting/safes'
+  }
+]
+  },
+  {
+    id: uniqueId(),
+    title: 'sidebar.transactions',
+    icon: IconDots,
+    href: '/accounting/Transactions',
+  },
+  {
+    id: uniqueId(),
+    title: 'sidebar.reports',
+    icon: IconDots,
+    href: '/accounting/reports'
+  }
+] },
+
+
+
+
+
+
+
+  {  title: 'sidebar.pos', id: uniqueId() ,    icon: IconTruck,
+           href: '/pos'
+, children: [
+
+{    id: uniqueId(),
+    title: 'sidebar.data',
+    icon: IconDots,
+    href: '/pos/data',
+children: [
+  {
+    id: uniqueId(),
+    title: 'sidebar.paymentMethods',
+    icon: IconPackage,
+    href: '/pos/payment-methods'
+  }
+]
+  },
+  {
+    id: uniqueId(),
+    title: 'sidebar.transactions',
+    icon: IconDots,
+    href: '/pos/Transactions',
+  },
+  {
+    id: uniqueId(),
+    title: 'sidebar.reports',
+    icon: IconDots,
+    href: '/pos/reports'
+  }
+] },
+
+
 ];
 
 export default SidebarConfig;

@@ -92,7 +92,13 @@
     "profitLoss": "الأرباح والخسائر",
     "annualReport": "التقرير السنوي",
     "settings": "الإعدادات",
-    "productBalance": "أرصدة المنتجات"
+    "productBalance": "أرصدة المنتجات",
+    "accounting": "المحاسبة",
+    "safes": "الخزائن",
+    "accounts": "الحسابات",
+    "posPaymentMethods": "طرق دفع نقاط البيع",
+    "paymentMethods": "طرق الدفع",
+    "safesAndAccounts": "الخزائن والحسابات"
   },
  "products": {
     "title": "المنتجات",
@@ -594,7 +600,8 @@
     "totalRows": "إجمالي الصفوف",
     "of": "من",
     "checkboxSelection": "تحديد الصناديق",
-    "noResults": "لا توجد نتائج"
+    "noResults": "لا توجد نتائج",
+    "saveAndNew": "حفظ مع جديد"
 
     
   },
@@ -845,6 +852,166 @@
     "all": "الكل",
     "of": "من"
   }
+  },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  "safes": {
+    "title": "الخزائن",
+    "add": "إضافة خزنة",
+    "edit": "تعديل خزنة",
+    "name": "اسم الخزنة",
+    "type": "النوع",
+    "accountNumber": "رقم الحساب",
+    "collectionFeePercent": "نسبة رسوم التحصيل",
+    "status": "الحالة",
+    "isActive": "نشط",
+    "active": "نشط",
+    "inactive": "غير نشط",
+    "noSafes": "لا توجد خزائن",
+    "searchPlaceholder": "ابحث في الخزائن...",
+    "types": {
+      "cash": "نقدي"
+    },
+    "filter": {
+      "title": "البحث والفلترة",
+      "search": "البحث",
+      "filters": "الفلاتر",
+      "sorting": "الترتيب",
+      "searchPlaceholder": "ابحث في الخزائن...",
+      "sortBy": "ترتيب حسب",
+      "sortOrder": "نوع الترتيب",
+      "ascending": "تصاعدي",
+      "descending": "تنازلي",
+      "apply": "تطبيق",
+      "clear": "مسح الكل",
+      "results": "النتائج",
+      "activeFilters": "فلاتر نشطة"
+    },
+    "validation": {
+      "nameRequired": "اسم الخزنة مطلوب",
+      "typeRequired": "نوع الخزنة مطلوب"
+    },
+    "errors": {
+      "loadFailed": "فشل في تحميل الخزائن",
+      "addFailed": "فشل في إضافة الخزنة",
+      "updateFailed": "فشل في تحديث الخزنة"
+    }
+  },
+  "accounts": {
+    "title": "الحسابات",
+    "add": "إضافة حساب",
+    "edit": "تعديل حساب",
+    "name": "اسم الحساب",
+    "type": "النوع",
+    "accountNumber": "رقم الحساب",
+    "collectionFeePercent": "نسبة رسوم التحصيل",
+    "status": "الحالة",
+    "isActive": "نشط",
+    "active": "نشط",
+    "inactive": "غير نشط",
+    "noAccounts": "لا توجد حسابات",
+    "searchPlaceholder": "ابحث في الحسابات...",
+    "types": {
+      "bank": "بنك",
+      "wallet": "محفظة إلكترونية",
+      "visa": "فيزا",
+      "instapay": "إنستاباي",
+      "staffaccount": "حساب موظف",
+      "other": "أخرى",
+      "cash": "نقدي"
+    },
+    "filter": {
+      "title": "البحث والفلترة",
+      "search": "البحث",
+      "filters": "الفلاتر",
+      "sorting": "الترتيب",
+      "searchPlaceholder": "ابحث في الحسابات...",
+      "sortBy": "ترتيب حسب",
+      "sortOrder": "نوع الترتيب",
+      "ascending": "تصاعدي",
+      "descending": "تنازلي",
+      "apply": "تطبيق",
+      "clear": "مسح الكل",
+      "results": "النتائج",
+      "activeFilters": "فلاتر نشطة"
+    },
+    "validation": {
+      "nameRequired": "اسم الحساب مطلوب",
+      "typeRequired": "نوع الحساب مطلوب",
+      "accountNumberRequired": "رقم الحساب مطلوب"
+    },
+    "errors": {
+      "loadFailed": "فشل في تحميل الحسابات",
+      "addFailed": "فشل في إضافة الحساب",
+      "updateFailed": "فشل في تحديث الحساب"
+    }
+  },
+    "posPaymentMethods": {
+    "title": "طرق الدفع",
+    "add": "إضافة طريقة دفع",
+    "edit": "تعديل طريقة دفع",
+    "name": "اسم طريقة الدفع",
+    "safeOrAccount": "الخزنة أو الحساب",
+    "selectedAccount": "الحساب المحدد",
+    "branchesNote": "يمكن ربط طريقة الدفع بفروع مختلفة لاحقاً",
+    "status": "الحالة",
+    "active": "نشط",
+    "inactive": "غير نشط",
+    "noPaymentMethods": "لا توجد طرق دفع",
+    "searchPlaceholder": "ابحث في طرق الدفع...",
+       "accountType": "نوع الحساب",
+    "accountNumber": "رقم الحساب",
+    "collectionFee": "رسوم التحصيل",
+    "filter": {
+      "title": "البحث والفلترة",
+      "search": "البحث",
+      "filters": "الفلاتر",
+      "sorting": "الترتيب",
+      "searchPlaceholder": "ابحث في طرق الدفع...",
+      "sortBy": "ترتيب حسب",
+      "sortOrder": "نوع الترتيب",
+      "ascending": "تصاعدي",
+      "descending": "تنازلي",
+      "apply": "تطبيق",
+      "clear": "مسح الكل",
+      "results": "النتائج",
+      "activeFilters": "فلاتر نشطة"
+    },
+    "validation": {
+      "nameRequired": "اسم طريقة الدفع مطلوب",
+      "accountRequired": "يجب اختيار خزنة أو حساب"
+    },
+    "errors": {
+      "loadFailed": "فشل في تحميل طرق الدفع",
+      "addFailed": "فشل في إضافة طريقة الدفع",
+      "updateFailed": "فشل في تحديث طريقة الدفع"
+    }
   }
 
 

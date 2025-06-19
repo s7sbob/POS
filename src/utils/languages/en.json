@@ -318,9 +318,15 @@
     "annualReport": "Annual Report",
     "settings": "Settings",
     "productBalance": "Product Balance",
-    "productStock": "Product Stock"
+    "productStock": "Product Stock",
+    "accounting": "Accounting",
+    "safes": "Safes",
+    "accounts": "Accounts",
+    "posPaymentMethods": "POS Payment Methods",
+    "paymentMethods": "Payment Methods",
+    "safesAndAccounts": "Safes & Accounts"
   },
-  
+
  "products": {
     "title": "Products",
     "subtitle": "Manage products and prices in the system",
@@ -614,7 +620,8 @@
     "totalRows": "Total Rows",
     "of": "Of",
     "checkboxSelection": "Checkbox Selection",
-    "noResults": "No results found"
+    "noResults": "No results found",
+    "saveAndNew": "Save & New"
 
   },
     "warehouses": {
@@ -863,7 +870,175 @@
       "totalPositive": "Total Increase",
       "totalNegative": "Total Decrease"
     }
-  }
+  },
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+   "safes": {
+    "title": "Safes",
+    "add": "Add Safe",
+    "edit": "Edit Safe",
+    "name": "Safe Name",
+    "type": "Type",
+    "accountNumber": "Account Number",
+    "collectionFeePercent": "Collection Fee Percent",
+    "status": "Status",
+    "isActive": "Active",
+    "active": "Active",
+    "inactive": "Inactive",
+    "noSafes": "No safes found",
+    "searchPlaceholder": "Search safes...",
+    "types": {
+      "cash": "Cash"
+    },
+    "filter": {
+      "title": "Search & Filter",
+      "search": "Search",
+      "filters": "Filters",
+      "sorting": "Sorting",
+      "searchPlaceholder": "Search safes...",
+      "sortBy": "Sort By",
+      "sortOrder": "Sort Order",
+      "ascending": "Ascending",
+      "descending": "Descending",
+      "apply": "Apply",
+      "clear": "Clear All",
+      "results": "Results",
+      "activeFilters": "active filters"
+    },
+    "validation": {
+      "nameRequired": "Safe name is required",
+      "typeRequired": "Safe type is required"
+    },
+    "errors": {
+      "loadFailed": "Failed to load safes",
+      "addFailed": "Failed to add safe",
+      "updateFailed": "Failed to update safe"
+    }
+  },
+  "accounts": {
+    "title": "Accounts",
+    "add": "Add Account",
+    "edit": "Edit Account",
+    "name": "Account Name",
+    "type": "Type",
+    "accountNumber": "Account Number",
+    "collectionFeePercent": "Collection Fee Percent",
+    "status": "Status",
+    "isActive": "Active",
+    "active": "Active",
+    "inactive": "Inactive",
+    "noAccounts": "No accounts found",
+    "searchPlaceholder": "Search accounts...",
+    "types": {
+      "bank": "Bank",
+      "wallet": "Wallet",
+      "visa": "Visa",
+      "instapay": "InstaPay",
+      "staffaccount": "Staff Account",
+      "other": "Other",
+      "cash": "Cash"
+    },
+    "filter": {
+      "title": "Search & Filter",
+      "search": "Search",
+      "filters": "Filters",
+      "sorting": "Sorting",
+      "searchPlaceholder": "Search accounts...",
+      "sortBy": "Sort By",
+      "sortOrder": "Sort Order",
+      "ascending": "Ascending",
+      "descending": "Descending",
+      "apply": "Apply",
+      "clear": "Clear All",
+      "results": "Results",
+      "activeFilters": "active filters"
+    },
+    "validation": {
+      "nameRequired": "Account name is required",
+      "typeRequired": "Account type is required",
+      "accountNumberRequired": "Account number is required"
+    },
+    "errors": {
+      "loadFailed": "Failed to load accounts",
+      "addFailed": "Failed to add account",
+      "updateFailed": "Failed to update account"
+    }
+  },
+   "posPaymentMethods": {
+    "title": "Payment Methods",
+    "add": "Add Payment Method",
+    "edit": "Edit Payment Method",
+    "name": "Payment Method Name",
+       "accountType": "Account Type",
+    "accountNumber": "Account Number",
+    "collectionFee": "Collection Fee",
+    "safeOrAccount": "Safe or Account",
+    "selectedAccount": "Selected Account",
+    "branchesNote": "Payment method can be linked to different branches later",
+    "status": "Status",
+    "active": "Active",
+    "inactive": "Inactive",
+    "noPaymentMethods": "No payment methods found",
+    "searchPlaceholder": "Search payment methods...",
+    "filter": {
+      "title": "Search & Filter",
+      "search": "Search",
+      "filters": "Filters",
+      "sorting": "Sorting",
+      "searchPlaceholder": "Search payment methods...",
+      "sortBy": "Sort By",
+      "sortOrder": "Sort Order",
+      "ascending": "Ascending",
+      "descending": "Descending",
+      "apply": "Apply",
+      "clear": "Clear All",
+      "results": "Results",
+      "activeFilters": "active filters"
+    },
+    "validation": {
+      "nameRequired": "Payment method name is required",
+      "accountRequired": "Safe or account must be selected"
+    },
+    "errors": {
+      "loadFailed": "Failed to load payment methods",
+      "addFailed": "Failed to add payment method",
+      "updateFailed": "Failed to update payment method"
+    }
+  }
 }
 
