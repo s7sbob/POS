@@ -84,7 +84,7 @@ export const add = async (data: AddPosPaymentMethodRequest): Promise<PosPaymentM
 
 export const update = async (data: UpdatePosPaymentMethodRequest): Promise<PosPaymentMethod> => {
   try {
-    const response = await api.put('/UpdatePosPaymentMethod', data);
+    const response = await api.post('/UpdatePosPaymentMethod', data);
     return response.data.data;
   } catch (error) {
     console.error('Error updating POS payment method:', error);

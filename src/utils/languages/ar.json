@@ -105,6 +105,20 @@
     "subtitle": "إدارة المنتجات والأسعار في النظام",
     "searchPlaceholder": "البحث بالاسم أو الباركود...",
     "searchByBarcode": "البحث بالباركود",
+       "components": "المكونات",
+           "loadingComponentDetails": "جاري تحميل تفاصيل المكون",
+           "selectedComponent": "المكون المحدد",
+    "addComponent": "إضافة مكون",
+        "scrollForMore": "مرر لأسفل لتحميل المزيد",
+    "noComponents": "لا توجد مكونات",
+    "quantity": "الكمية",
+        "searchProductPrices": "ابحث في أسعار المنتجات...",
+    "noProductPricesFound": "لا توجد أسعار منتجات",
+    "selectedPrice": "السعر المحدد",
+    "selectComponent": "اختر المكون",
+    "componentRequired": "المكون مطلوب",
+    "componentProduct": "المنتج المكون",
+    "notes": "ملاحظات",
     "searchByName": "البحث بالاسم",
     "searchResults": "{{count}} نتيجة",
     "searching": "جاري البحث...",
@@ -529,6 +543,8 @@
   },
   "common": {
     "search": "بحث",
+    "selected": "محدد",
+    "hideColumn": "إخفاء العمود",
     "all": "الكل",
     "home": "الرئيسية",
     "add": "إضافة",
@@ -896,7 +912,8 @@
     "noSafes": "لا توجد خزائن",
     "searchPlaceholder": "ابحث في الخزائن...",
     "types": {
-      "cash": "نقدي"
+      "cash": "نقدي",
+        "safe": "خزنة"
     },
     "filter": {
       "title": "البحث والفلترة",
@@ -937,6 +954,7 @@
     "inactive": "غير نشط",
     "noAccounts": "لا توجد حسابات",
     "searchPlaceholder": "ابحث في الحسابات...",
+    "typePlaceholder": "مثل: Bank, Wallet, Visa, InstaPay, StaffAccount",
     "types": {
       "bank": "بنك",
       "wallet": "محفظة إلكترونية",
@@ -1012,7 +1030,70 @@
       "addFailed": "فشل في إضافة طريقة الدفع",
       "updateFailed": "فشل في تحديث طريقة الدفع"
     }
+  },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    "posScreens": {
+    "title": "شاشات نقاط البيع",
+    "add": "إضافة شاشة",
+    "addChild": "إضافة شاشة فرعية",
+    "edit": "تعديل شاشة",
+    "save": "حفظ",
+    "name": "اسم الشاشة",
+    "parentScreen": "الشاشة الأب",
+    "noParent": "بدون شاشة أب",
+    "displayOrder": "ترتيب العرض",
+    "visibility": "الرؤية",
+    "icon": "الأيقونة",
+    "color": "اللون",
+    "preview": "معاينة",
+    "sampleText": "نص تجريبي",
+    "visible": "مرئي",
+    "hidden": "مخفي",
+    "active": "نشط",
+    "inactive": "غير نشط",
+    "status": "الحالة",
+    "level": "المستوى",
+    "noScreens": "لا توجد شاشات",
+    "rootScreens": "الشاشات الجذرية",
+    "searchPlaceholder": "ابحث في الشاشات...",
+    "nameRequired": "اسم الشاشة مطلوب",
+    "iconRequired": "الأيقونة مطلوبة",
+    "iconHelp": "استخدم رمز تعبيري أو نص قصير",
+    "filter": {
+      "title": "البحث والفلترة",
+      "search": "البحث",
+      "filters": "الفلاتر",
+      "sorting": "الترتيب",
+      "searchPlaceholder": "ابحث في الشاشات...",
+      "sortBy": "ترتيب حسب",
+      "sortOrder": "نوع الترتيب",
+      "ascending": "تصاعدي",
+      "descending": "تنازلي",
+      "apply": "تطبيق",
+      "clear": "مسح الكل",
+      "results": "النتائج",
+      "activeFilters": "فلاتر نشطة"
+    }
   }
+  
 
 
 }

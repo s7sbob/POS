@@ -8,10 +8,6 @@ import {
   TextField,
   Button,
   Stack,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   Switch,
   FormControlLabel,
   useMediaQuery,
@@ -44,7 +40,7 @@ const SafeForm: React.FC<Props> = ({
   const { control, handleSubmit, reset, formState: { errors } } = useForm({
     defaultValues: {
       name: '',
-      typeName: 'Cash',
+      typeName: 'Safe',
       accountNumber: '',
       collectionFeePercent: 0,
       isActive: true
@@ -55,7 +51,7 @@ const SafeForm: React.FC<Props> = ({
     if (mode === 'edit' && initialValues) {
       reset({
         name: initialValues.name,
-        typeName: initialValues.typeName,
+        typeName: 'Safe',
         accountNumber: initialValues.accountNumber || '',
         collectionFeePercent: initialValues.collectionFeePercent,
         isActive: initialValues.isActive
@@ -63,7 +59,7 @@ const SafeForm: React.FC<Props> = ({
     } else if (mode === 'add') {
       reset({
         name: '',
-        typeName: 'Cash',
+        typeName: 'Safe',
         accountNumber: '',
         collectionFeePercent: 0,
         isActive: true
@@ -85,7 +81,7 @@ const SafeForm: React.FC<Props> = ({
       if (saveAction === 'saveAndNew') {
         reset({
           name: '',
-          typeName: 'Cash',
+          typeName: 'Safe',
           accountNumber: '',
           collectionFeePercent: 0,
           isActive: true
@@ -125,24 +121,6 @@ const SafeForm: React.FC<Props> = ({
                 helperText={errors.name?.message}
                 disabled={isSubmitting}
               />
-            )}
-          />
-
-          <Controller
-            name="typeName"
-            control={control}
-            rules={{ required: t('safes.validation.typeRequired') }}
-            render={({ field }) => (
-              <FormControl fullWidth error={!!errors.typeName}>
-                <InputLabel>{t('safes.type')}</InputLabel>
-                <Select
-                  {...field}
-                  label={t('safes.type')}
-                  disabled={isSubmitting}
-                >
-                  <MenuItem value="Cash">{t('safes.types.cash')}</MenuItem>
-                </Select>
-              </FormControl>
             )}
           />
 

@@ -24,6 +24,7 @@ import AdjustmentsListPage from 'src/Pages/inventory/adjustment/AdjustmentsListP
 import PosPaymentMethodsPage from 'src/Pages/pos-payment-methods/PosPaymentMethodsPage';
 import SafesPage from 'src/Pages/safes/SafesPage';
 import AccountsPage from 'src/Pages/accounts/AccountsPage';
+import PosScreensPage from 'src/Pages/pos-screens/PosScreensPage';
 
 /* ***Layouts**** */
 const FullLayout = Loadable(lazy(() => import('../layouts/full/FullLayout')));
@@ -219,6 +220,7 @@ const Router = [
       { path: '/pos/payment-methods', element: <PosPaymentMethodsPage /> },
       { path: '/accounting/safes', element: <SafesPage /> },
       { path: '/accounting/accounts', element: <AccountsPage /> },
+      {path: '/pos/screens', element: <PosScreensPage/> },
       // { path: '/frontend-pages/blog/detail/:id', element: <BlogDetail /> },
       { path: '/apps/chats', element: <Chats /> },
       { path: '/apps/email', element: <Email /> },

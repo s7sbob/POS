@@ -6,15 +6,19 @@ import {
   FormControl, InputLabel, Select, MenuItem, Typography,
   Box, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, Paper, IconButton, Stack,
-  Card, CardContent, useMediaQuery, useTheme
-} from '@mui/material';
-import { IconPlus, IconTrash, IconDeviceFloppy, IconPlus as IconPlusNew } from '@tabler/icons-react';
+  Card, CardContent, useMediaQuery, useTheme, Accordion,
+  AccordionSummary, AccordionDetails} from '@mui/material';
+import { 
+  IconPlus, IconTrash, IconDeviceFloppy, IconPlus as IconPlusNew,
+  IconChevronDown, IconComponents
+} from '@tabler/icons-react';
 import { useForm, Controller, useFieldArray } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import { Product } from 'src/utils/api/pagesApi/productsApi';
+import { Product, searchProductPricesByNameOrBarcode } from 'src/utils/api/pagesApi/productsApi';
 import { Group } from 'src/utils/api/pagesApi/groupsApi';
 import { Unit } from 'src/utils/api/pagesApi/unitsApi';
 import GroupTreeSelect from './GroupTreeSelect';
+import ProductPriceSearchSelect from './ProductPriceSearchSelect';
 
 /* ---------- types ---------- */
 type FormValues = { 
@@ -32,6 +36,12 @@ type FormValues = {
     unitFactor: number;
     barcode: string;
     Price: number;
+    productComponents: Array<{
+      componentId?: string;
+      rawProductPriceId: string;
+      quantity: number;
+      notes: string;
+    }>;
   }>;
 };
 
@@ -52,8 +62,9 @@ const ProductForm: React.FC<Props> = ({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const nameFieldRef = React.useRef<HTMLInputElement>(null);
-  const [lastAddedPriceIndex, setLastAddedPriceIndex] = React.useState<number | null>(null);
+  const [, setLastAddedPriceIndex] = React.useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [expandedPriceIndex, setExpandedPriceIndex] = React.useState<number | null>(null);
   
   const defaults: FormValues = { 
     productName: '', 
@@ -67,7 +78,7 @@ const ProductForm: React.FC<Props> = ({
     productPrices: []
   };
 
-  const { control, handleSubmit, reset, formState: { isSubmitSuccessful } } = useForm<FormValues>({
+  const { control, handleSubmit, reset, watch, formState: { isSubmitSuccessful } } = useForm<FormValues>({
     defaultValues: defaults
   });
 
@@ -76,13 +87,13 @@ const ProductForm: React.FC<Props> = ({
     name: 'productPrices'
   });
 
+  const watchedProductId = initialValues?.id;
+
   // إعادة تعيين النموذج بعد النجاح في الحفظ
   React.useEffect(() => {
     if (isSubmitSuccessful && mode === 'add') {
-      // تأخير قصير للتأكد من اكتمال العملية
       const timer = setTimeout(() => {
         reset(defaults);
-        // التركيز على حقل الاسم مرة أخرى
         if (nameFieldRef.current) {
           nameFieldRef.current.focus();
           nameFieldRef.current.select();
@@ -107,23 +118,6 @@ const ProductForm: React.FC<Props> = ({
     }
   }, [open]);
 
-  // Focus على الباركود الجديد عند إضافة سعر
-  React.useEffect(() => {
-    if (lastAddedPriceIndex !== null) {
-      const timer = setTimeout(() => {
-        const barcodeInput = document.querySelector(
-          `input[name="productPrices.${lastAddedPriceIndex}.barcode"]`
-        ) as HTMLInputElement;
-        if (barcodeInput) {
-          barcodeInput.focus();
-        }
-        setLastAddedPriceIndex(null);
-      }, 100);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [lastAddedPriceIndex]);
-
   // إعادة تعيين النموذج عند تغيير البيانات
   React.useEffect(() => {
     if (open) {
@@ -144,7 +138,13 @@ const ProductForm: React.FC<Props> = ({
             unitId: p.unitId,
             unitFactor: p.unitFactor,
             barcode: p.barcode,
-            Price: p.price
+            Price: p.price,
+            productComponents: p.productComponents?.map(c => ({
+              componentId: c.componentId,
+              rawProductPriceId: c.rawProductPriceId,
+              quantity: c.quantity,
+              notes: c.notes || ''
+            })) || []
           })) ?? []
         });
       }
@@ -157,7 +157,8 @@ const ProductForm: React.FC<Props> = ({
       unitId: '',
       unitFactor: 1,
       barcode: '',
-      Price: 0
+      Price: 0,
+      productComponents: []
     });
     setLastAddedPriceIndex(newIndex);
   };
@@ -168,8 +169,6 @@ const ProductForm: React.FC<Props> = ({
     setIsSubmitting(true);
     try {
       console.log('Form data before submit:', data);
-      console.log('Mode:', mode);
-      console.log('Save action:', saveAction);
       
       if (mode === 'edit' && initialValues) {
         const updateData = {
@@ -181,20 +180,52 @@ const ProductForm: React.FC<Props> = ({
           reorderLevel: data.reorderLevel,
           lastPurePrice: data.lastPurePrice,
           expirationDays: data.expirationDays,
-          productPrices: data.productPrices
+          productPrices: data.productPrices.map(price => ({
+            ...(price.productPriceId && { productPriceId: price.productPriceId }),
+            unitId: price.unitId,
+            unitFactor: Number(price.unitFactor),
+            barcode: price.barcode,
+            Price: Number(price.Price),
+            productComponents: price.productComponents?.map(component => ({
+              ...(component.componentId && { componentId: component.componentId }),
+              rawProductPriceId: component.rawProductPriceId,
+              quantity: Number(component.quantity),
+              notes: component.notes || ""
+            })) || []
+          }))
         };
-        console.log('Sending update data:', updateData);
+        console.log('Sending update data:', JSON.stringify(updateData, null, 2));
         await onSubmit(updateData, saveAction);
       } else {
-        console.log('Sending add data:', data);
-        await onSubmit(data, saveAction);
+        // للإضافة
+        const addData = {
+          productName: data.productName,
+          groupId: data.groupId,
+          productType: data.productType,
+          description: data.description,
+          reorderLevel: data.reorderLevel,
+          cost: data.cost,
+          lastPurePrice: data.lastPurePrice,
+          expirationDays: data.expirationDays,
+          productPrices: data.productPrices.map(price => ({
+            unitId: price.unitId,
+            unitFactor: Number(price.unitFactor),
+            barcode: price.barcode,
+            Price: Number(price.Price),
+            productComponents: price.productComponents?.map(component => ({
+              rawProductPriceId: component.rawProductPriceId,
+              quantity: Number(component.quantity),
+              notes: component.notes || ""
+            })) || []
+          }))
+        };
+        console.log('Sending add data:', JSON.stringify(addData, null, 2));
+        await onSubmit(addData, saveAction);
       }
 
-      // في حالة Save and New في وضع الإضافة، إعادة تعيين النموذج فوراً
       if (mode === 'add' && saveAction === 'saveAndNew') {
         setTimeout(() => {
           reset(defaults);
-          // التركيز على حقل الاسم
           if (nameFieldRef.current) {
             nameFieldRef.current.focus();
             nameFieldRef.current.select();
@@ -208,6 +239,247 @@ const ProductForm: React.FC<Props> = ({
       setIsSubmitting(false);
     }
   };
+
+  // الحصول على اسم الوحدة
+
+  // مكون إدارة المكونات لكل سعر
+
+const ProductComponentsManager: React.FC<{ priceIndex: number }> = ({ priceIndex }) => {
+  const { fields: componentFields, append: appendComponent, remove: removeComponent } = useFieldArray({
+    control,
+    name: `productPrices.${priceIndex}.productComponents`
+  });
+
+  const [componentDetails, setComponentDetails] = React.useState<{[key: string]: any}>({});
+  const [loadingComponents, setLoadingComponents] = React.useState<{[key: string]: boolean}>({});
+
+  const addComponent = () => {
+    appendComponent({
+      rawProductPriceId: '',
+      quantity: 1,
+      notes: ''
+    });
+  };
+
+  // دالة محسنة لجلب تفاصيل المكون
+  const fetchComponentDetails = async (rawProductPriceId: string, _componentIndex: number) => {
+    if (!rawProductPriceId || componentDetails[rawProductPriceId] || loadingComponents[rawProductPriceId]) return;
+
+    setLoadingComponents(prev => ({ ...prev, [rawProductPriceId]: true }));
+
+    try {
+      // أولاً، جرب البحث بالـ ID مباشرة
+      const searchResponse = await searchProductPricesByNameOrBarcode(rawProductPriceId, 1, 10);
+      let foundInSearch = searchResponse.data.find(item => item.productPriceId === rawProductPriceId);
+      
+      // إذا لم نجد بالـ ID، جرب البحث بالباركود
+      if (!foundInSearch) {
+        const searchByBarcode = await searchProductPricesByNameOrBarcode('', 1, 100);
+        foundInSearch = searchByBarcode.data.find(item => item.productPriceId === rawProductPriceId);
+      }
+
+      if (foundInSearch) {
+        const details = {
+          productName: foundInSearch.product?.productName || 'منتج غير محدد',
+          unitName: foundInSearch.unit?.unitName || 'وحدة غير محددة',
+          unitFactor: foundInSearch.unitFactor || 1,
+          price: foundInSearch.price || 0,
+          barcode: foundInSearch.barcode || '',
+          productId: foundInSearch.product?.productID || ''
+        };
+
+        setComponentDetails(prev => ({
+          ...prev,
+          [rawProductPriceId]: details
+        }));
+
+        console.log(`Component details loaded for ${rawProductPriceId}:`, details);
+      } else {
+        // إذا لم نجد التفاصيل، اعرض معلومات أساسية
+        setComponentDetails(prev => ({
+          ...prev,
+          [rawProductPriceId]: {
+            productName: `منتج (${rawProductPriceId.slice(-8)})`,
+            unitName: 'وحدة غير محددة',
+            unitFactor: 1,
+            price: 0,
+            barcode: 'غير محدد',
+            productId: ''
+          }
+        }));
+      }
+    } catch (error) {
+      console.error('Error fetching component details:', error);
+      // في حالة الخطأ، اعرض معلومات أساسية
+      setComponentDetails(prev => ({
+        ...prev,
+        [rawProductPriceId]: {
+          productName: `منتج (${rawProductPriceId.slice(-8)})`,
+          unitName: 'وحدة غير محددة',
+          unitFactor: 1,
+          price: 0,
+          barcode: 'غير محدد',
+          productId: ''
+        }
+      }));
+    } finally {
+      setLoadingComponents(prev => ({ ...prev, [rawProductPriceId]: false }));
+    }
+  };
+
+  // جلب تفاصيل المكونات الموجودة عند التحميل والتحديث
+  React.useEffect(() => {
+    const loadComponentsDetails = async () => {
+      for (let index = 0; index < componentFields.length; index++) {
+        const rawProductPriceId = watch(`productPrices.${priceIndex}.productComponents.${index}.rawProductPriceId`);
+        if (rawProductPriceId && !componentDetails[rawProductPriceId]) {
+          await fetchComponentDetails(rawProductPriceId, index);
+        }
+      }
+    };
+
+    if (componentFields.length > 0) {
+      loadComponentsDetails();
+    }
+  }, [componentFields.length, priceIndex]);
+
+  // مراقبة تغييرات القيم
+  React.useEffect(() => {
+    componentFields.forEach((_field, index) => {
+      const rawProductPriceId = watch(`productPrices.${priceIndex}.productComponents.${index}.rawProductPriceId`);
+      if (rawProductPriceId && !componentDetails[rawProductPriceId]) {
+        fetchComponentDetails(rawProductPriceId, index);
+      }
+    });
+  }, [componentFields, priceIndex]);
+
+  return (
+    <Box sx={{ mt: 2, p: 2, backgroundColor: 'grey.50', borderRadius: 1 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+        <Typography variant="subtitle2" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <IconComponents size={16} />
+          {t('products.components')} ({componentFields.length})
+        </Typography>
+        <Button
+          size="small"
+          variant="outlined"
+          onClick={addComponent}
+          startIcon={<IconPlus size={16} />}
+        >
+          {t('products.addComponent')}
+        </Button>
+      </Box>
+
+      {componentFields.length === 0 ? (
+        <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 2 }}>
+          {t('products.noComponents')}
+        </Typography>
+      ) : (
+        <Stack spacing={2}>
+          {componentFields.map((field, componentIndex) => {
+            const currentRawProductPriceId = watch(`productPrices.${priceIndex}.productComponents.${componentIndex}.rawProductPriceId`);
+            const details = componentDetails[currentRawProductPriceId];
+            const isLoading = loadingComponents[currentRawProductPriceId];
+            
+            return (
+              <Card key={field.id} variant="outlined" sx={{ p: 2 }}>
+                <Grid container spacing={2} alignItems="center">
+                  <Grid item xs={12} md={5}>
+                    <Controller
+                      name={`productPrices.${priceIndex}.productComponents.${componentIndex}.rawProductPriceId`}
+                      control={control}
+                      rules={{ required: t('products.componentRequired') }}
+                      render={({ field, fieldState }) => (
+                        <ProductPriceSearchSelect
+                          value={field.value}
+                          onChange={(value) => {
+                            field.onChange(value);
+                            if (value) {
+                              fetchComponentDetails(value, componentIndex);
+                            }
+                          }}
+                          label={t('products.selectComponent')}
+                          error={!!fieldState.error}
+                          excludeProductId={watchedProductId}
+                        />
+                      )}
+                    />
+                  </Grid>
+
+                  <Grid item xs={6} md={2}>
+                    <Controller
+                      name={`productPrices.${priceIndex}.productComponents.${componentIndex}.quantity`}
+                      control={control}
+                      rules={{ required: true, min: 0.01 }}
+                      render={({ field }) => (
+                        <TextField
+                          {...field}
+                          label={t('products.quantity')}
+                          type="number"
+                          size="small"
+                          fullWidth
+                          inputProps={{ min: 0.01, step: 0.01 }}
+                        />
+                      )}
+                    />
+                  </Grid>
+
+                  <Grid item xs={6} md={3}>
+                    <Controller
+                      name={`productPrices.${priceIndex}.productComponents.${componentIndex}.notes`}
+                      control={control}
+                      render={({ field }) => (
+                        <TextField
+                          {...field}
+                          label={t('products.notes')}
+                          size="small"
+                          fullWidth
+                        />
+                      )}
+                    />
+                  </Grid>
+
+                  <Grid item xs={12} md={2}>
+                    <IconButton
+                      size="small"
+                      color="error"
+                      onClick={() => removeComponent(componentIndex)}
+                      sx={{ width: '100%' }}
+                    >
+                      <IconTrash size={16} />
+                    </IconButton>
+                  </Grid>
+                </Grid>
+
+                {/* عرض تفاصيل المكون المحدد مع حالة التحميل */}
+                {currentRawProductPriceId && (
+                  <Box sx={{ mt: 2, p: 1, backgroundColor: 'Highlight', borderRadius: 1 }}>
+                    {isLoading ? (
+                      <Typography variant="caption" color="info.contrastText">
+                        {t('products.loadingComponentDetails')}...
+                      </Typography>
+                    ) : details ? (
+                      <Typography variant="caption" color="info.contrastText">
+                        {t('products.selectedComponent')}: {details.productName} - 
+                        {details.price?.toFixed(2)} - 
+                        {details.unitName} × {details.unitFactor}
+                        {details.barcode && details.barcode !== 'غير محدد' && ` - ${details.barcode}`}
+                      </Typography>
+                    ) : (
+                      <Typography variant="caption" color="info.contrastText">
+                        ID: {currentRawProductPriceId}
+                      </Typography>
+                    )}
+                  </Box>
+                )}
+              </Card>
+            );
+          })}
+        </Stack>
+      )}
+    </Box>
+  );
+};
 
   // مكون منفصل لعرض الأسعار في الموبايل
   const MobilePriceCard: React.FC<{ index: number; onRemove: () => void }> = ({ index, onRemove }) => (
@@ -269,7 +541,7 @@ const ProductForm: React.FC<Props> = ({
             )}
           />
 
-          {/* معامل الوحدة والسعر في صف واحد */}
+          {/* معامل الوحدة والسعر */}
           <Grid container spacing={2}>
             <Grid item xs={6}>
               <Controller
@@ -304,6 +576,18 @@ const ProductForm: React.FC<Props> = ({
               />
             </Grid>
           </Grid>
+
+          {/* المكونات */}
+          <Accordion>
+            <AccordionSummary expandIcon={<IconChevronDown />}>
+              <Typography variant="subtitle2">
+                {t('products.components')} ({fields[index]?.productComponents?.length || 0})
+              </Typography>
+            </AccordionSummary>
+            <AccordionDetails>
+              <ProductComponentsManager priceIndex={index} />
+            </AccordionDetails>
+          </Accordion>
         </Stack>
       </CardContent>
     </Card>
@@ -319,13 +603,14 @@ const ProductForm: React.FC<Props> = ({
             <TableCell>{t('products.unit')}</TableCell>
             <TableCell>{t('products.unitFactor')}</TableCell>
             <TableCell>{t('products.price')}</TableCell>
+            <TableCell>{t('products.components')}</TableCell>
             <TableCell width={50}></TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
           {fields.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={5} align="center">
+              <TableCell colSpan={6} align="center">
                 <Typography color="text.secondary">
                   {t('products.noPrices')}
                 </Typography>
@@ -333,84 +618,103 @@ const ProductForm: React.FC<Props> = ({
             </TableRow>
           ) : (
             fields.map((field, index) => (
-              <TableRow key={field.id}>
-                <TableCell>
-                  <Controller
-                    name={`productPrices.${index}.barcode`}
-                    control={control}
-                    render={({ field }) => (
-                      <TextField
-                        {...field}
-                        size="small"
-                        placeholder={t('products.barcodeOptional')}
-                        fullWidth
-                      />
-                    )}
-                  />
-                </TableCell>
-                <TableCell>
-                  <Controller
-                    name={`productPrices.${index}.unitId`}
-                    control={control}
-                    rules={{ required: true }}
-                    render={({ field }) => (
-                      <FormControl fullWidth size="small">
-                        <Select
+              <React.Fragment key={field.id}>
+                <TableRow>
+                  <TableCell>
+                    <Controller
+                      name={`productPrices.${index}.barcode`}
+                      control={control}
+                      render={({ field }) => (
+                        <TextField
                           {...field}
-                          displayEmpty
-                        >
-                          <MenuItem value="">
-                            <em>{t('products.selectUnit')}</em>
-                          </MenuItem>
-                          {units.map((unit) => (
-                            <MenuItem key={unit.id} value={unit.id}>
-                              {unit.name}
+                          size="small"
+                          placeholder={t('products.barcodeOptional')}
+                          fullWidth
+                        />
+                      )}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Controller
+                      name={`productPrices.${index}.unitId`}
+                      control={control}
+                      rules={{ required: true }}
+                      render={({ field }) => (
+                        <FormControl fullWidth size="small">
+                          <Select
+                            {...field}
+                            displayEmpty
+                          >
+                            <MenuItem value="">
+                              <em>{t('products.selectUnit')}</em>
                             </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-                    )}
-                  />
-                </TableCell>
-                <TableCell>
-                  <Controller
-                    name={`productPrices.${index}.unitFactor`}
-                    control={control}
-                    render={({ field }) => (
-                      <TextField
-                        {...field}
-                        type="number"
-                        size="small"
-                        inputProps={{ min: 0.01, step: 0.01 }}
-                      />
-                    )}
-                  />
-                </TableCell>
-                <TableCell>
-                  <Controller
-                    name={`productPrices.${index}.Price`}
-                    control={control}
-                    render={({ field }) => (
-                      <TextField
-                        {...field}
-                        type="number"
-                        size="small"
-                        inputProps={{ min: 0, step: 0.01 }}
-                      />
-                    )}
-                  />
-                </TableCell>
-                <TableCell>
-                  <IconButton
-                    size="small"
-                    color="error"
-                    onClick={() => remove(index)}
-                    type="button"
-                  >
-                    <IconTrash size={18} />
-                  </IconButton>
-                </TableCell>
-              </TableRow>
+                            {units.map((unit) => (
+                              <MenuItem key={unit.id} value={unit.id}>
+                                {unit.name}
+                              </MenuItem>
+                            ))}
+                          </Select>
+                        </FormControl>
+                      )}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Controller
+                      name={`productPrices.${index}.unitFactor`}
+                      control={control}
+                      render={({ field }) => (
+                        <TextField
+                          {...field}
+                          type="number"
+                          size="small"
+                          inputProps={{ min: 0.01, step: 0.01 }}
+                        />
+                      )}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Controller
+                      name={`productPrices.${index}.Price`}
+                      control={control}
+                      render={({ field }) => (
+                        <TextField
+                          {...field}
+                          type="number"
+                          size="small"
+                          inputProps={{ min: 0, step: 0.01 }}
+                        />
+                      )}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      onClick={() => setExpandedPriceIndex(expandedPriceIndex === index ? null : index)}
+                      startIcon={<IconComponents size={16} />}
+                    >
+                      {fields[index]?.productComponents?.length || 0}
+                    </Button>
+                  </TableCell>
+                  <TableCell>
+                    <IconButton
+                      size="small"
+                      color="error"
+                      onClick={() => remove(index)}
+                      type="button"
+                    >
+                      <IconTrash size={18} />
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+                {expandedPriceIndex === index && (
+                  <TableRow>
+                    <TableCell colSpan={6}>
+                      <ProductComponentsManager priceIndex={index} />
+                    </TableCell>
+                  </TableRow>
+                )}
+              </React.Fragment>
             ))
           )}
         </TableBody>
@@ -575,30 +879,12 @@ const ProductForm: React.FC<Props> = ({
                     InputProps={{
                       readOnly: true,
                     }}
-                                      variant="filled"
-
+                    variant="filled"
                     inputProps={{ min: 0, step: 0.01 }}
                   />
                 )}
               />
             </Grid>
-            
-
-            {/* <Grid item xs={12} md={6}>
-              <Controller
-                name="expirationDays"
-                control={control}
-                render={({ field }) => (
-                  <TextField
-                    {...field}
-                    label={t('products.expirationDays')}
-                    type="number"
-                    fullWidth
-                    inputProps={{ min: 0 }}
-                  />
-                )}
-              />
-            </Grid> */}
 
             {/* ---------- Product Prices ---------- */}
             <Grid item xs={12}>

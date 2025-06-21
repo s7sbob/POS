@@ -8,10 +8,6 @@ import {
   TextField,
   Button,
   Stack,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   Switch,
   FormControlLabel,
   useMediaQuery,
@@ -45,7 +41,7 @@ const AccountForm: React.FC<Props> = ({
     defaultValues: {
       name: '',
       safeOrAccountType: 2,
-      typeName: 'Bank',
+      typeName: '',
       accountNumber: '',
       collectionFeePercent: 0,
       isActive: true
@@ -66,7 +62,7 @@ const AccountForm: React.FC<Props> = ({
       reset({
         name: '',
         safeOrAccountType: 2,
-        typeName: 'Bank',
+        typeName: '',
         accountNumber: '',
         collectionFeePercent: 0,
         isActive: true
@@ -89,7 +85,7 @@ const AccountForm: React.FC<Props> = ({
         reset({
           name: '',
           safeOrAccountType: 2,
-          typeName: 'Bank',
+          typeName: '',
           accountNumber: '',
           collectionFeePercent: 0,
           isActive: true
@@ -137,20 +133,15 @@ const AccountForm: React.FC<Props> = ({
             control={control}
             rules={{ required: t('accounts.validation.typeRequired') }}
             render={({ field }) => (
-              <FormControl fullWidth error={!!errors.typeName}>
-                <InputLabel>{t('accounts.type')}</InputLabel>
-                <Select
-                  {...field}
-                  label={t('accounts.type')}
-                  disabled={isSubmitting}
-                >
-                  <MenuItem value="Bank">{t('accounts.types.bank')}</MenuItem>
-                  <MenuItem value="Wallet">{t('accounts.types.wallet')}</MenuItem>
-                  <MenuItem value="Visa">{t('accounts.types.visa')}</MenuItem>
-                  <MenuItem value="InstaPay">{t('accounts.types.instapay')}</MenuItem>
-                  <MenuItem value="StaffAccount">{t('accounts.types.staffAccount')}</MenuItem>
-                </Select>
-              </FormControl>
+              <TextField
+                {...field}
+                label={t('accounts.type')}
+                fullWidth
+                error={!!errors.typeName}
+                helperText={errors.typeName?.message}
+                disabled={isSubmitting}
+                placeholder={t('accounts.typePlaceholder')}
+              />
             )}
           />
 

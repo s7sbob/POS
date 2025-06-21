@@ -239,12 +239,6 @@ children: [
 children: [
   {
     id: uniqueId(),
-    title: 'sidebar.safesAndAccounts',
-    icon: IconPackage,
-    href: '/accounting/safes-and-accounts'
-  },
-  {
-    id: uniqueId(),
     title: 'sidebar.accounts',
     icon: IconPackage,
     href: '/accounting/accounts'
@@ -291,7 +285,13 @@ children: [
     title: 'sidebar.paymentMethods',
     icon: IconPackage,
     href: '/pos/payment-methods'
-  }
+  },
+  {
+    id: uniqueId(),
+    title: 'sidebar.screens',
+    icon: IconLayoutGridAdd,
+    href: '/pos/screens'
+  },
 ]
   },
   {

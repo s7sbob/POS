@@ -335,6 +335,20 @@
     "searchByName": "Search by Name",
     "searchResults": "{{count}} results",
     "searching": "Searching...",
+        "components": "Components",
+    "addComponent": "Add Component",
+        "loadingComponentDetails": "Loading component details",
+        "selectedComponent": "Selected Component",
+    "quantity": "Quantity",
+        "scrollForMore": "Scroll down to load more",
+    "noComponents": "No components",
+      "searchProductPrices": "Search product prices...",
+    "noProductPricesFound": "No product prices found",
+    "selectedPrice": "Selected Price",
+    "selectComponent": "Select Component",
+    "componentRequired": "Component is required",
+    "componentProduct": "Component Product",
+    "notes": "Notes",
     "noSearchResults": "No search results found",
     "noProducts": "No products available",
     "name": "Product Name",
@@ -551,6 +565,8 @@
     "search": "Search",
     "all": "All",
     "home": "Home",
+    "selected": "selected",
+    "hideColumn": "Hide Column",
     "loading": "Loading...",
     "cancel": "Cancel",
     "save": "Save",
@@ -923,7 +939,8 @@
     "noSafes": "No safes found",
     "searchPlaceholder": "Search safes...",
     "types": {
-      "cash": "Cash"
+      "cash": "Cash",
+        "safe": "خزنة"
     },
     "filter": {
       "title": "Search & Filter",
@@ -954,6 +971,7 @@
     "title": "Accounts",
     "add": "Add Account",
     "edit": "Edit Account",
+    "typePlaceholder": "e.g: Bank, Wallet, Visa, InstaPay, StaffAccount",
     "name": "Account Name",
     "type": "Type",
     "accountNumber": "Account Number",
@@ -1039,6 +1057,74 @@
       "addFailed": "Failed to add payment method",
       "updateFailed": "Failed to update payment method"
     }
+  },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+   "posScreens": {
+    "title": "POS Screens",
+    "add": "Add Screen",
+    "addChild": "Add Child Screen",
+    "edit": "Edit Screen",
+    "save": "Save",
+    "name": "Screen Name",
+    "parentScreen": "Parent Screen",
+    "noParent": "No Parent",
+    "displayOrder": "Display Order",
+    "visibility": "Visibility",
+    "icon": "Icon",
+    "color": "Color",
+    "preview": "Preview",
+    "sampleText": "Sample Text",
+    "visible": "Visible",
+    "hidden": "Hidden",
+    "active": "Active",
+    "inactive": "Inactive",
+    "status": "Status",
+    "level": "Level",
+    "noScreens": "No screens found",
+    "rootScreens": "Root Screens",
+    "searchPlaceholder": "Search screens...",
+    "nameRequired": "Screen name is required",
+    "iconRequired": "Icon is required",
+    "iconHelp": "Use emoji or short text",
+    "filter": {
+      "title": "Search & Filter",
+      "search": "Search",
+      "filters": "Filters",
+      "sorting": "Sorting",
+      "searchPlaceholder": "Search screens...",
+      "sortBy": "Sort By",
+      "sortOrder": "Sort Order",
+      "ascending": "Ascending",
+      "descending": "Descending",
+      "apply": "Apply",
+      "clear": "Clear All",
+      "results": "Results",
+      "activeFilters": "active filters"
+    }
   }
+  
 }
 
