@@ -19,6 +19,8 @@ import AdjustmentsTable from './components/AdjustmentsTable';
 import AdjustmentsCards from './components/AdjustmentsCards';
 import MobileAdjustmentsFilter, { FilterState } from './components/mobile/MobileAdjustmentsFilter';
 
+
+
 const AdjustmentsListPage: React.FC = () => {
   const { t } = useTranslation();
   const theme = useTheme();

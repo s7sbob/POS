@@ -15,9 +15,12 @@ import MobileSuppliersFilter, { SuppliersFilterState } from './components/mobile
 import * as apiSrv from 'src/utils/api/pagesApi/suppliersApi';
 import { Supplier } from 'src/utils/api/pagesApi/suppliersApi';
 
+
+
 const SuppliersPage: React.FC = () => {
   const { t } = useTranslation();
   const [suppliers, setSuppliers] = React.useState<Supplier[]>([]);
+  const canAdd = true; // Set to true or fetch from permissions/props as needed
   const [query, setQuery] = React.useState('');
   const [error, setErr] = React.useState('');
   const [loading, setLoad] = React.useState(true);
@@ -193,7 +196,8 @@ const SuppliersPage: React.FC = () => {
       {/* زر الإضافة للموبايل */}
       {isMobile && (
         <Box sx={{ mb: 2, textAlign: 'center' }}>
-          <Button
+          {canAdd && (
+        <Button
             variant="contained"
             startIcon={<IconPlus />}
             onClick={() => setDialog({ open: true, mode: 'add', current: undefined })}
@@ -206,6 +210,7 @@ const SuppliersPage: React.FC = () => {
           >
             {t('suppliers.add')}
           </Button>
+        )}
         </Box>
       )}
 

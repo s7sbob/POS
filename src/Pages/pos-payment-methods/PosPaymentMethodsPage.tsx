@@ -17,7 +17,20 @@ import * as safesAndAccountsApi from 'src/utils/api/pagesApi/safesAndAccountsApi
 import { PosPaymentMethod } from 'src/utils/api/pagesApi/posPaymentMethodsApi';
 import { SafeOrAccount } from 'src/utils/api/pagesApi/safesAndAccountsApi';
 
-const PosPaymentMethodsPage: React.FC = () => {
+interface PermissionProps {
+  canAdd?: boolean;
+  canEdit?: boolean;
+  canDelete?: boolean;
+  canExport?: boolean;
+  canImport?: boolean;
+  canView?: boolean;
+}
+interface Props extends PermissionProps {
+  // Add other props here if needed
+}
+
+
+const PosPaymentMethodsPage: React.FC<Props> = (props) => {
   const { t } = useTranslation();
   const [paymentMethods, setPaymentMethods] = React.useState<PosPaymentMethod[]>([]);
   const [safesAndAccounts, setSafesAndAccounts] = React.useState<SafeOrAccount[]>([]);
@@ -30,6 +43,8 @@ const PosPaymentMethodsPage: React.FC = () => {
     mode: 'add' | 'edit';
     current?: PosPaymentMethod;
   }>({ open: false, mode: 'add', current: undefined });
+
+  const { canAdd = true } = props; // Default to true if not provided
 
   const isDownSm = useMediaQuery((th: any) => th.breakpoints.down('sm'));
   const isMobile = useMediaQuery((th: any) => th.breakpoints.down('md'));
@@ -199,7 +214,8 @@ const PosPaymentMethodsPage: React.FC = () => {
       {/* زر الإضافة للموبايل */}
       {isMobile && (
         <Box sx={{ mb: 2, textAlign: 'center' }}>
-          <Button
+          {canAdd && (
+        <Button
             variant="contained"
             startIcon={<IconPlus />}
             onClick={() => setDialog({ open: true, mode: 'add', current: undefined })}
@@ -212,6 +228,7 @@ const PosPaymentMethodsPage: React.FC = () => {
           >
             {t('posPaymentMethods.add')}
           </Button>
+        )}
         </Box>
       )}
 

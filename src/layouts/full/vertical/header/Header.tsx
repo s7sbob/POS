@@ -1,54 +1,89 @@
-import { IconButton, Box, AppBar, useMediaQuery, Toolbar, styled, Stack } from '@mui/material';
+// File: src/layouts/full/vertical/header/Header.tsx
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+// @ts-ignore
+import * as React from 'react';
+import {
+  IconButton,
+  Box,
+  AppBar,
+  useMediaQuery,
+  Toolbar,
+  styled,
+  Stack,
+  Theme,
+} from '@mui/material';
 
 import { useSelector, useDispatch } from 'src/store/Store';
-import {
-  toggleSidebar,
-  toggleMobileSidebar,
-  setDarkMode,
-} from 'src/store/customizer/CustomizerSlice';
+import { toggleMobileSidebar, setDarkMode } from 'src/store/customizer/CustomizerSlice';
 import { IconMenu2, IconMoon, IconSun } from '@tabler/icons-react';
-import Notifications from './Notification';
-import Profile from './Profile';
-import Cart from './Cart';
-import Search from './Search';
-import Language from './Language';
+import Notifications from 'src/layouts/full/vertical/header/Notification';
+import Cart from 'src/layouts/full/vertical/header/Cart';
+import Profile from 'src/layouts/full/vertical/header/Profile';
+import Search from 'src/layouts/full/vertical/header/Search';
+import Language from 'src/layouts/full/vertical/header/Language';
+// import Logo from 'src/layouts/full/shared/logo/Logo';
+import BranchSelector from 'src/components/BranchSelector';
+import { useAuth } from 'src/contexts/AuthContext';
 import { AppState } from 'src/store/Store';
 
 const Header = () => {
-  const lgUp = useMediaQuery((theme: any) => theme.breakpoints.up('lg'));
+  const lgDown = useMediaQuery((theme: Theme) => theme.breakpoints.down('lg'));
+  const lgUp = useMediaQuery((theme: Theme) => theme.breakpoints.up('lg'));
+  const { selectedBranch } = useAuth();
 
   // drawer
   const customizer = useSelector((state: AppState) => state.customizer);
   const dispatch = useDispatch();
 
   const AppBarStyled = styled(AppBar)(({ theme }) => ({
-    boxShadow: 'none',
     background: theme.palette.background.paper,
     justifyContent: 'center',
     backdropFilter: 'blur(4px)',
+
     [theme.breakpoints.up('lg')]: {
       minHeight: customizer.TopbarHeight,
     },
   }));
   const ToolbarStyled = styled(Toolbar)(({ theme }) => ({
+    margin: '0 auto',
     width: '100%',
-    color: theme.palette.text.secondary,
+    color: `${theme.palette.text.secondary} !important`,
   }));
 
   return (
-    <AppBarStyled position="sticky" color="default">
-      <ToolbarStyled>
+    <AppBarStyled position="sticky" color="default" elevation={8}>
+      <ToolbarStyled
+        sx={{
+          maxWidth: customizer.isLayout === 'boxed' ? 'lg' : '100%!important',
+        }}
+      >
+        {/* <Box sx={{ width: lgDown ? '45px' : 'auto', overflow: 'hidden' }}>
+          <Logo />
+        </Box> */}
         {/* ------------------------------------------- */}
         {/* Toggle Button Sidebar */}
         {/* ------------------------------------------- */}
-        <IconButton
-          color="inherit"
-          aria-label="menu"
-          onClick={lgUp ? () => dispatch(toggleSidebar()) : () => dispatch(toggleMobileSidebar())}
-        >
-          <IconMenu2 size="20" />
-        </IconButton>
-
+        {lgDown ? (
+          <IconButton
+            color="inherit"
+            aria-label="menu"
+            onClick={() => dispatch(toggleMobileSidebar())}
+          >
+            <IconMenu2 />
+          </IconButton>
+        ) : (
+          ''
+        )}
+        
+        {/* ------------------------------------------- */}
+        {/* Branch Selector */}
+        {/* ------------------------------------------- */}
+        {selectedBranch && lgUp && (
+          <Box sx={{ ml: 2 }}>
+            <BranchSelector />
+          </Box>
+        )}
+        
         {/* ------------------------------------------- */}
         {/* Search Dropdown */}
         {/* ------------------------------------------- */}
@@ -57,9 +92,13 @@ const Header = () => {
           <>
           </>
         ) : null}
-
         <Box flexGrow={1} />
         <Stack spacing={1} direction="row" alignItems="center">
+          {/* Branch Selector for Mobile */}
+          {selectedBranch && lgDown && (
+            <BranchSelector />
+          )}
+          
           <Language />
           {/* ------------------------------------------- */}
           {/* Ecommerce Dropdown */}
@@ -68,6 +107,7 @@ const Header = () => {
           {/* ------------------------------------------- */}
           {/* End Ecommerce Dropdown */}
           {/* ------------------------------------------- */}
+
           <IconButton size="large" color="inherit">
             {customizer.activeMode === 'light' ? (
               <IconMoon size="21" stroke="1.5" onClick={() => dispatch(setDarkMode('dark'))} />
@@ -76,9 +116,7 @@ const Header = () => {
             )}
           </IconButton>
           <Notifications />
-          {/* ------------------------------------------- */}
-          {/* Toggle Right Sidebar for mobile */}
-          {/* ------------------------------------------- */}
+
           <Profile />
         </Stack>
       </ToolbarStyled>

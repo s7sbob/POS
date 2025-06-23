@@ -21,7 +21,21 @@ import { Product, ProductsResponse } from 'src/utils/api/pagesApi/productsApi';
 import { Group } from 'src/utils/api/pagesApi/groupsApi';
 import { Unit } from 'src/utils/api/pagesApi/unitsApi';
 
-const ProductsPage: React.FC = () => {
+interface PermissionProps {
+  canAdd?: boolean;
+  canEdit?: boolean;
+  canDelete?: boolean;
+  canExport?: boolean;
+  canImport?: boolean;
+  canView?: boolean;
+}
+interface Props extends PermissionProps {
+  // Add other props here if needed
+}
+
+
+const ProductsPage: React.FC<Props> = (props) => {
+  const { canAdd = true } = props;
   const { t } = useTranslation();
   const [productsData, setProductsData] = React.useState<ProductsResponse>({
     totalCount: 0,
@@ -387,7 +401,8 @@ const ProductsPage: React.FC = () => {
       {/* زر الإضافة للموبايل */}
       {isMobile && (
         <Box sx={{ mb: 2, textAlign: 'center' }}>
-          <Button
+          {canAdd && (
+        <Button
             variant="contained"
             startIcon={<IconPlus />}
             onClick={() => setDialog({ open: true, mode: 'add', current: undefined })}
@@ -400,6 +415,7 @@ const ProductsPage: React.FC = () => {
           >
             {t('products.add')}
           </Button>
+        )}
         </Box>
       )}
 

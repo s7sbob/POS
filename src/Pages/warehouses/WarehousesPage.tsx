@@ -17,7 +17,20 @@ import MobileWarehousesFilter, { WarehousesFilterState } from './components/mobi
 import * as apiSrv from 'src/utils/api/pagesApi/warehousesApi';
 import { Warehouse } from 'src/utils/api/pagesApi/warehousesApi';
 
-const WarehousesPage: React.FC = () => {
+interface PermissionProps {
+  canAdd?: boolean;
+  canEdit?: boolean;
+  canDelete?: boolean;
+  canExport?: boolean;
+  canImport?: boolean;
+  canView?: boolean;
+}
+interface Props extends PermissionProps {
+  // Add other props here if needed
+}
+
+
+const WarehousesPage: React.FC<Props> = (props) => {
   const { t } = useTranslation();
   const [items, setItems] = React.useState<Warehouse[]>([]);
   const [query, setQuery] = React.useState('');
@@ -158,7 +171,8 @@ const WarehousesPage: React.FC = () => {
       {/* زر الإضافة للموبايل */}
       {isMobile && (
         <Box sx={{ mb: 2, textAlign: 'center' }}>
-          <Button
+          {props.canAdd && (
+        <Button
             variant="contained"
             startIcon={<IconPlus />}
             onClick={() => setDialog({ open: true, mode: 'add' })}
@@ -171,6 +185,7 @@ const WarehousesPage: React.FC = () => {
           >
             {t('warehouses.add')}
           </Button>
+        )}
         </Box>
       )}
 

@@ -1,189 +1,78 @@
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// File: src/routes/Router.tsx
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-ignore
 import React, { lazy } from 'react';
 import Loadable from '../layouts/full/shared/loadable/Loadable';
-// import AddProductPage from 'src/Pages/Products/components/AddProductPage';
-// import EditProductPage from 'src/Pages/Products/components/EditProductPage';
-import WarehousesPage from 'src/Pages/Warehouse/WarehousesPage';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
-import { authLoader } from './authLoader';   // المسار المناسب
-import UnitsPage from 'src/Pages/Units/UnitsPage';
-import GroupsPage from 'src/Pages/Groups/GroupsPage';
-import SuppliersPage from 'src/Pages/Suppliers/SuppliersPage';
-import PurchaseOrdersPage from 'src/Pages/purchase-orders/PurchaseOrdersPage';
-import AddPurchaseOrderPage from 'src/Pages/purchase-orders/AddPurchaseOrderPage';
-import EditPurchaseOrderPage from 'src/Pages/purchase-orders/EditPurchaseOrderPage';
-import PurchasesPage from 'src/Pages/purchases/PurchasesPage';
-import AddPurchasePage from 'src/Pages/purchases/AddPurchasePage';
-import EditPurchasePage from 'src/Pages/purchases/EditPurchasePage';
-import ViewPurchasePage from 'src/Pages/purchases/components/ViewPurchasePage';
-import ProductBalanceReportPage from 'src/Pages/reports/ProductBalanceReportPage';
-import InventoryAdjustmentPage from 'src/Pages/inventory/adjustment/InventoryAdjustmentPage';
-import AdjustmentViewPage from 'src/Pages/inventory/adjustment/components/AdjustmentViewPage';
-import AdjustmentsListPage from 'src/Pages/inventory/adjustment/AdjustmentsListPage';
-import PosPaymentMethodsPage from 'src/Pages/pos-payment-methods/PosPaymentMethodsPage';
-import SafesPage from 'src/Pages/safes/SafesPage';
-import AccountsPage from 'src/Pages/accounts/AccountsPage';
-import PosScreensPage from 'src/Pages/pos-screens/PosScreensPage';
+import { authLoader } from './authLoader';
+import { createProtectedPage } from 'src/utils/pageWrapper';
 
 /* ***Layouts**** */
 const FullLayout = Loadable(lazy(() => import('../layouts/full/FullLayout')));
 const BlankLayout = Loadable(lazy(() => import('../layouts/blank/BlankLayout')));
 
-/* ****Pages***** */
+/* ****Dashboard***** */
 const ModernDash = Loadable(lazy(() => import('../views/dashboard/Modern')));
-const EcommerceDash = Loadable(lazy(() => import('../views/dashboard/Ecommerce')));
 
-/* ****Apps***** */
-// const Blog = Loadable(lazy(() => import('../views/apps/blog/Blog')));
-// const BlogDetail = Loadable(lazy(() => import('../views/apps/blog/BlogPost')));
-const Contacts = Loadable(lazy(() => import('../views/apps/contacts/Contacts')));
-const Chats = Loadable(lazy(() => import('../views/apps/chat/Chat')));
-const Notes = Loadable(lazy(() => import('../views/apps/notes/Notes')));
-const Tickets = Loadable(lazy(() => import('../views/apps/tickets/Tickets')));
-const Ecommerce = Loadable(lazy(() => import('../views/apps/eCommerce/Ecommerce')));
-const EcommerceDetail = Loadable(lazy(() => import('../views/apps/eCommerce/EcommerceDetail')));
-const EcommerceAddProduct = Loadable(
-  lazy(() => import('../views/apps/eCommerce/EcommerceAddProduct')),
-);
-const EcommerceEditProduct = Loadable(
-  lazy(() => import('../views/apps/eCommerce/EcommerceEditProduct')),
-);
-const EcomProductList = Loadable(lazy(() => import('../views/apps/eCommerce/EcomProductList')));
-const EcomProductCheckout = Loadable(
-  lazy(() => import('../views/apps/eCommerce/EcommerceCheckout')),
-);
-const Calendar = Loadable(lazy(() => import('../views/apps/calendar/BigCalendar')));
-const UserProfile = Loadable(lazy(() => import('../views/apps/user-profile/UserProfile')));
-const Followers = Loadable(lazy(() => import('../views/apps/user-profile/Followers')));
-const Friends = Loadable(lazy(() => import('../views/apps/user-profile/Friends')));
-const Gallery = Loadable(lazy(() => import('../views/apps/user-profile/Gallery')));
-const Email = Loadable(lazy(() => import('../views/apps/email/Email')));
-const InvoiceList = Loadable(lazy(() => import('../views/apps/invoice/List')));
-const InvoiceCreate = Loadable(lazy(() => import('../views/apps/invoice/Create')));
-const InvoiceDetail = Loadable(lazy(() => import('../views/apps/invoice/Detail')));
-const InvoiceEdit = Loadable(lazy(() => import('../views/apps/invoice/Edit')));
-const Kanban = Loadable(lazy(() => import('../views/apps/kanban/Kanban')));
+/* ****Auth Pages***** */
+const Login = Loadable(lazy(() => import('../Pages/auth/LoginPage')));
+const BranchSelection = Loadable(lazy(() => import('../Pages/auth/BranchSelectionPage')));
+const Register = Loadable(lazy(() => import('../Pages/auth/RegisterPage')));
 
-// ui components
-const MuiAlert = Loadable(lazy(() => import('../views/ui-components/MuiAlert')));
-const MuiAccordion = Loadable(lazy(() => import('../views/ui-components/MuiAccordion')));
-const MuiAvatar = Loadable(lazy(() => import('../views/ui-components/MuiAvatar')));
-const MuiChip = Loadable(lazy(() => import('../views/ui-components/MuiChip')));
-const MuiDialog = Loadable(lazy(() => import('../views/ui-components/MuiDialog')));
-const MuiList = Loadable(lazy(() => import('../views/ui-components/MuiList')));
-const MuiPopover = Loadable(lazy(() => import('../views/ui-components/MuiPopover')));
-const MuiRating = Loadable(lazy(() => import('../views/ui-components/MuiRating')));
-const MuiTabs = Loadable(lazy(() => import('../views/ui-components/MuiTabs')));
-const MuiTooltip = Loadable(lazy(() => import('../views/ui-components/MuiTooltip')));
-const MuiTransferList = Loadable(lazy(() => import('../views/ui-components/MuiTransferList')));
-const MuiTypography = Loadable(lazy(() => import('../views/ui-components/MuiTypography')));
-
-// form elements
-const MuiAutoComplete = Loadable(
-  lazy(() => import('../views/forms/form-elements/MuiAutoComplete')),
-);
-const MuiButton = Loadable(lazy(() => import('../views/forms/form-elements/MuiButton')));
-const MuiCheckbox = Loadable(lazy(() => import('../views/forms/form-elements/MuiCheckbox')));
-const MuiRadio = Loadable(lazy(() => import('../views/forms/form-elements/MuiRadio')));
-const MuiSlider = Loadable(lazy(() => import('../views/forms/form-elements/MuiSlider')));
-const MuiDateTime = Loadable(lazy(() => import('../views/forms/form-elements/MuiDateTime')));
-const MuiSwitch = Loadable(lazy(() => import('../views/forms/form-elements/MuiSwitch')));
-
-// forms
-const FormLayouts = Loadable(lazy(() => import('../views/forms/FormLayouts')));
-const FormCustom = Loadable(lazy(() => import('../views/forms/FormCustom')));
-const FormHorizontal = Loadable(lazy(() => import('../views/forms/FormHorizontal')));
-const FormVertical = Loadable(lazy(() => import('../views/forms/FormVertical')));
-const FormWizard = Loadable(lazy(() => import('../views/forms/FormWizard')));
-const FormValidation = Loadable(lazy(() => import('../views/forms/FormValidation')));
-const TiptapEditor = Loadable(lazy(() => import('../views/forms/from-tiptap/TiptapEditor')));
-
-// pages
-const RollbaseCASL = Loadable(lazy(() => import('../views/pages/rollbaseCASL/RollbaseCASL')));
-const Faq = Loadable(lazy(() => import('../views/pages/faq/Faq')));
-const Pricing = Loadable(lazy(() => import('../views/pages/pricing/Pricing')));
-const AccountSetting = Loadable(
-  lazy(() => import('../views/pages/account-setting/AccountSetting')),
-);
-
-// charts
-const AreaChart = Loadable(lazy(() => import('../views/charts/AreaChart')));
-const CandlestickChart = Loadable(lazy(() => import('../views/charts/CandlestickChart')));
-const ColumnChart = Loadable(lazy(() => import('../views/charts/ColumnChart')));
-const DoughnutChart = Loadable(lazy(() => import('../views/charts/DoughnutChart')));
-const GredientChart = Loadable(lazy(() => import('../views/charts/GredientChart')));
-const RadialbarChart = Loadable(lazy(() => import('../views/charts/RadialbarChart')));
-const LineChart = Loadable(lazy(() => import('../views/charts/LineChart')));
-
-// tables
-const BasicTable = Loadable(lazy(() => import('../views/tables/BasicTable')));
-const EnhanceTable = Loadable(lazy(() => import('../views/tables/EnhanceTable')));
-const PaginationTable = Loadable(lazy(() => import('../views/tables/PaginationTable')));
-const FixedHeaderTable = Loadable(lazy(() => import('../views/tables/FixedHeaderTable')));
-const CollapsibleTable = Loadable(lazy(() => import('../views/tables/CollapsibleTable')));
-const SearchTable = Loadable(lazy(() => import('../views/tables/SearchTable')));
-
-//react tables
-const ReactBasicTable = Loadable(lazy(() => import('../views/react-tables/basic/page')));
-const ReactColumnVisibilityTable = Loadable(
-  lazy(() => import('../views/react-tables/columnvisibility/page')),
-);
-const ReactDenseTable = Loadable(lazy(() => import('../views/react-tables/dense/page')));
-const ReactDragDropTable = Loadable(lazy(() => import('../views/react-tables/drag-drop/page')));
-const ReactEditableTable = Loadable(lazy(() => import('../views/react-tables/editable/page')));
-const ReactEmptyTable = Loadable(lazy(() => import('../views/react-tables/empty/page')));
-const ReactExpandingTable = Loadable(lazy(() => import('../views/react-tables/expanding/page')));
-const ReactFilterTable = Loadable(lazy(() => import('../views/react-tables/filtering/page')));
-const ReactPaginationTable = Loadable(lazy(() => import('../views/react-tables/pagination/page')));
-const ReactRowSelectionTable = Loadable(
-  lazy(() => import('../views/react-tables/row-selection/page')),
-);
-const ReactSortingTable = Loadable(lazy(() => import('../views/react-tables/sorting/page')));
-const ReactStickyTable = Loadable(lazy(() => import('../views/react-tables/sticky/page')));
-
-//mui charts
-const BarCharts = Loadable(lazy(() => import('../views/muicharts/barcharts/page')));
-const GaugeCharts = Loadable(lazy(() => import('../views/muicharts/gaugecharts/page')));
-const AreaCharts = Loadable(lazy(() => import('../views/muicharts/linecharts/area/page')));
-const LineCharts = Loadable(lazy(() => import('../views/muicharts/linecharts/line/page')));
-const PieCharts = Loadable(lazy(() => import('../views/muicharts/piecharts/page')));
-const ScatterCharts = Loadable(lazy(() => import('../views/muicharts/scattercharts/page')));
-const SparklineCharts = Loadable(lazy(() => import('../views/muicharts/sparklinecharts/page')));
-
-
-// widget
-const WidgetCards = Loadable(lazy(() => import('../views/widgets/cards/WidgetCards')));
-const WidgetBanners = Loadable(lazy(() => import('../views/widgets/banners/WidgetBanners')));
-const WidgetCharts = Loadable(lazy(() => import('../views/widgets/charts/WidgetCharts')));
-
-// authentication
-const Login = Loadable(lazy(() => import('../views/authentication/auth2/Login2')));
-const Register = Loadable(lazy(() => import('../views/authentication/auth1/Register')));
-const Register2 = Loadable(lazy(() => import('../views/authentication/auth2/Register2')));
-const ForgotPassword = Loadable(lazy(() => import('../views/authentication/auth1/ForgotPassword')));
-const ForgotPassword2 = Loadable(
-  lazy(() => import('../views/authentication/auth2/ForgotPassword2')),
-);
-const TwoSteps = Loadable(lazy(() => import('../views/authentication/auth1/TwoSteps')));
-const TwoSteps2 = Loadable(lazy(() => import('../views/authentication/auth2/TwoSteps2')));
+/* ****Error Pages***** */
 const Error = Loadable(lazy(() => import('../views/authentication/Error')));
-const Maintenance = Loadable(lazy(() => import('../views/authentication/Maintenance')));
+const Unauthorized = Loadable(lazy(() => import('../Pages/errors/UnauthorizedPage')));
+const NoBranches = Loadable(lazy(() => import('../Pages/errors/NoBranchesPage')));
 
-// landingpage
-const Landingpage = Loadable(lazy(() => import('../views/pages/landingpage/Landingpage')));
+/* ****تحميل الصفحات الأصلية***** */
+const UsersManagementOriginal = Loadable(lazy(() => import('../Pages/users/UsersManagementPage')));
+const CompanySettingsOriginal = Loadable(lazy(() => import('../Pages/company/CompanySettingsPage')));
+const PermissionsPageOriginal = Loadable(lazy(() => import('../Pages/permissions/PermissionsPage')));
+const ProductsPageOriginal = Loadable(lazy(() => import('../Pages/products/ProductsPage')));
+const GroupsPageOriginal = Loadable(lazy(() => import('../Pages/groups/GroupsPage')));
+const UnitsPageOriginal = Loadable(lazy(() => import('../Pages/units/UnitsPage')));
+const PosScreensPageOriginal = Loadable(lazy(() => import('../Pages/pos-screens/PosScreensPage')));
+const PosPaymentMethodsPageOriginal = Loadable(lazy(() => import('../Pages/pos-payment-methods/PosPaymentMethodsPage')));
+const SuppliersPageOriginal = Loadable(lazy(() => import('../Pages/suppliers/SuppliersPage')));
+const WarehousesPageOriginal = Loadable(lazy(() => import('../Pages/warehouses/WarehousesPage')));
+const AccountsPageOriginal = Loadable(lazy(() => import('../Pages/accounts/AccountsPage')));
+const SafesPageOriginal = Loadable(lazy(() => import('../Pages/safes/SafesPage')));
+const AdjustmentsListPageOriginal = Loadable(lazy(() => import('../Pages/inventory/adjustments-list/AdjustmentsListPage')));
+const InventoryAdjustmentPageOriginal = Loadable(lazy(() => import('../Pages/inventory/adjustments-list/InventoryAdjustmentPage')));
+const AdjustmentViewPageOriginal = Loadable(lazy(() => import('../Pages/inventory/adjustments-list/components/AdjustmentViewPage')));
+const PurchaseOrdersPageOriginal = Loadable(lazy(() => import('../Pages/purchase-orders/PurchaseOrdersPage')));
+const AddPurchaseOrderPageOriginal = Loadable(lazy(() => import('../Pages/purchase-orders/AddPurchaseOrderPage')));
+const EditPurchaseOrderPageOriginal = Loadable(lazy(() => import('../Pages/purchase-orders/EditPurchaseOrderPage')));
+const PurchasesPageOriginal = Loadable(lazy(() => import('../Pages/purchases/PurchasesPage')));
+const AddPurchasePageOriginal = Loadable(lazy(() => import('../Pages/purchases/AddPurchasePage')));
+const EditPurchasePageOriginal = Loadable(lazy(() => import('../Pages/purchases/EditPurchasePage')));
+const ViewPurchasePageOriginal = Loadable(lazy(() => import('../Pages/purchases/components/ViewPurchasePage')));
+const ProductBalanceReportPageOriginal = Loadable(lazy(() => import('../Pages/reports/ProductBalanceReportPage')));
 
-// front end pages
-const Homepage = Loadable(lazy(() => import('../views/pages/frontend-pages/Homepage')));
-const About = Loadable(lazy(() => import('../views/pages/frontend-pages/About')));
-const Contact = Loadable(lazy(() => import('../views/pages/frontend-pages/Contact')));
-const Portfolio = Loadable(lazy(() => import('../views/pages/frontend-pages/Portfolio')));
-const PagePricing = Loadable(lazy(() => import('../views/pages/frontend-pages/Pricing')));
-const BlogPage = Loadable(lazy(() => import('../views/pages/frontend-pages/Blog')));
-const BlogPost = Loadable(lazy(() => import('../views/pages/frontend-pages/BlogPost')));
-
-// my new routs 
-const ProductsPage = Loadable(lazy(() => import('../Pages/Products/ProductsPage')));
+/* ****إنشاء الصفحات المحمية***** */
+const UsersManagement = createProtectedPage(UsersManagementOriginal, 'USERS');
+const CompanySettings = createProtectedPage(CompanySettingsOriginal, 'COMPANY');
+const PermissionsPage = createProtectedPage(PermissionsPageOriginal, 'PERMISSIONS');
+const ProductsPage = createProtectedPage(ProductsPageOriginal, 'PRODUCTS');
+const GroupsPage = createProtectedPage(GroupsPageOriginal, 'GROUPS');
+const UnitsPage = createProtectedPage(UnitsPageOriginal, 'UNITS');
+const PosScreensPage = createProtectedPage(PosScreensPageOriginal, 'POS_SCREENS');
+const PosPaymentMethodsPage = createProtectedPage(PosPaymentMethodsPageOriginal, 'PAYMENT_METHODS');
+const SuppliersPage = createProtectedPage(SuppliersPageOriginal, 'SUPPLIERS');
+const WarehousesPage = createProtectedPage(WarehousesPageOriginal, 'WAREHOUSES');
+const AccountsPage = createProtectedPage(AccountsPageOriginal, 'ACCOUNTS');
+const SafesPage = createProtectedPage(SafesPageOriginal, 'SAFES');
+const AdjustmentsListPage = createProtectedPage(AdjustmentsListPageOriginal, 'INVENTORY_ADJUSTMENTS');
+const InventoryAdjustmentPage = createProtectedPage(InventoryAdjustmentPageOriginal, 'INVENTORY_ADJUSTMENTS');
+const AdjustmentViewPage = createProtectedPage(AdjustmentViewPageOriginal, 'INVENTORY_ADJUSTMENTS');
+const PurchaseOrdersPage = createProtectedPage(PurchaseOrdersPageOriginal, 'PURCHASE_ORDERS');
+const AddPurchaseOrderPage = createProtectedPage(AddPurchaseOrderPageOriginal, 'PURCHASE_ORDERS');
+const EditPurchaseOrderPage = createProtectedPage(EditPurchaseOrderPageOriginal, 'PURCHASE_ORDERS');
+const PurchasesPage = createProtectedPage(PurchasesPageOriginal, 'PURCHASES');
+const AddPurchasePage = createProtectedPage(AddPurchasePageOriginal, 'PURCHASES');
+const EditPurchasePage = createProtectedPage(EditPurchasePageOriginal, 'PURCHASES');
+const ViewPurchasePage = createProtectedPage(ViewPurchasePageOriginal, 'PURCHASES');
+const ProductBalanceReportPage = createProtectedPage(ProductBalanceReportPageOriginal, 'REPORTS');
 
 const Router = [
   {
@@ -191,146 +80,86 @@ const Router = [
     element: <FullLayout />,
     loader: authLoader,
     children: [
-      { path: '/', element: <Navigate to="/dashboards/modern" /> },
-      { path: '/dashboards/modern', exact: true, element: <ModernDash /> },
-      { path: '/dashboards/ecommerce', exact: true, element: <EcommerceDash /> },
-      { path: '/apps/contacts', element: <Contacts /> },
-      { path: 'inventory/products', element: <ProductsPage /> },
-      { path: '/inventory/warehouses', element: <WarehousesPage /> },   // { path: '/apps/blog/posts', element: <Blog /> },
+      // Dashboard Routes
+      { path: '/', element: <Navigate to="/dashboard" /> },
+      { path: '/dashboard', element: <ModernDash /> },
+      { path: '/dashboards/modern', element: <ModernDash /> },
+
+      // User Management Routes
+      { path: '/users', element: <UsersManagement /> },
+      { path: '/company', element: <CompanySettings /> },
+      { path: '/permissions', element: <PermissionsPage /> },
+ 
+      // Product Management Routes
+      { path: '/products', element: <ProductsPage /> },
+      { path: '/inventory/products', element: <ProductsPage /> },
+      { path: '/groups', element: <GroupsPage /> },
+      { path: '/inventory/groups', element: <GroupsPage /> },
+      { path: '/units', element: <UnitsPage /> },
       { path: '/inventory/units', element: <UnitsPage /> },
-      { path: '/inventory/groups', element: <GroupsPage /> }, // { path: '/apps/blog/posts', element: <Blog /> },
+
+      // POS System Routes
+      { path: '/pos-screens', element: <PosScreensPage /> },
+      { path: '/pos/screens', element: <PosScreensPage /> },
+      { path: '/pos-payment-methods', element: <PosPaymentMethodsPage /> },
+      { path: '/pos/payment-methods', element: <PosPaymentMethodsPage /> },
+
+      // Business Entities Routes
+      { path: '/suppliers', element: <SuppliersPage /> },
       { path: '/purchases/suppliers', element: <SuppliersPage /> },
+      { path: '/warehouses', element: <WarehousesPage /> },
+      { path: '/inventory/warehouses', element: <WarehousesPage /> },
+
+      // Financial Routes
+      { path: '/accounts', element: <AccountsPage /> },
+      { path: '/accounting/accounts', element: <AccountsPage /> },
+      { path: '/safes', element: <SafesPage /> },
+      { path: '/accounting/safes', element: <SafesPage /> },
+
+      // Inventory Routes
+      { path: '/inventory/adjustments', element: <AdjustmentsListPage /> },
+      { path: '/inventory/inventory-adjustments', element: <AdjustmentsListPage /> },
+      { path: '/inventory/inventory-adjustments/new', element: <InventoryAdjustmentPage /> },
+      { path: '/inventory/inventory-adjustments/:id', element: <AdjustmentViewPage /> },
+
+      // Purchase Routes
+      { path: '/purchase-orders', element: <PurchaseOrdersPage /> },
       { path: '/purchases/purchase-orders', element: <PurchaseOrdersPage /> },
       { path: '/purchases/purchase-orders/add', element: <AddPurchaseOrderPage /> },
       { path: '/purchases/purchase-orders/edit/:id', element: <EditPurchaseOrderPage /> },
+      { path: '/purchases', element: <PurchasesPage /> },
       { path: '/purchases/purchases', element: <PurchasesPage /> },
       { path: '/purchases/purchases/add', element: <AddPurchasePage /> },
       { path: '/purchases/purchases/edit/:id', element: <EditPurchasePage /> },
       { path: '/purchases/purchases/view/:id', element: <ViewPurchasePage /> },
-      { path: '/reports/product-balance', element: <ProductBalanceReportPage /> },
-      { path: '/inventory/inventory-adjustments', element: <AdjustmentsListPage /> },
-      { path: '/inventory/inventory-adjustments/:id', element: <AdjustmentViewPage /> },
-      { path: '/inventory/inventory-adjustments/new', element: <InventoryAdjustmentPage /> },
-      { path: '/pos/payment-methods', element: <PosPaymentMethodsPage /> },
-      { path: '/accounting/safes', element: <SafesPage /> },
-      { path: '/accounting/accounts', element: <AccountsPage /> },
-      {path: '/pos/screens', element: <PosScreensPage/> },
-      // { path: '/frontend-pages/blog/detail/:id', element: <BlogDetail /> },
-      { path: '/apps/chats', element: <Chats /> },
-      { path: '/apps/email', element: <Email /> },
-      { path: '/apps/notes', element: <Notes /> },
-      { path: '/apps/tickets', element: <Tickets /> },
-      { path: '/apps/ecommerce/shop', element: <Ecommerce /> },
-      { path: '/apps/ecommerce/eco-product-list', element: <EcomProductList /> },
-      { path: '/apps/ecommerce/eco-checkout', element: <EcomProductCheckout /> },
-      { path: '/apps/ecommerce/add-product', element: <EcommerceAddProduct /> },
-      { path: '/apps/ecommerce/edit-product', element: <EcommerceEditProduct /> },
-      { path: '/apps/ecommerce/detail/:id', element: <EcommerceDetail /> },
-      { path: '/apps/followers', element: <Followers /> },
-      { path: '/apps/friends', element: <Friends /> },
-      { path: '/apps/gallery', element: <Gallery /> },
-      { path: '/apps/kanban', element: <Kanban /> },
-      { path: '/apps/invoice/list', element: <InvoiceList /> },
-      { path: '/apps/invoice/create', element: <InvoiceCreate /> },
-      { path: '/apps/invoice/detail/:id', element: <InvoiceDetail /> },
-      { path: '/apps/invoice/edit/:id', element: <InvoiceEdit /> },
-      { path: '/user-profile', element: <UserProfile /> },
-      { path: '/apps/calendar', element: <Calendar /> },
-      { path: '/ui-components/alert', element: <MuiAlert /> },
-      { path: '/ui-components/accordion', element: <MuiAccordion /> },
-      { path: '/ui-components/avatar', element: <MuiAvatar /> },
-      { path: '/ui-components/chip', element: <MuiChip /> },
-      { path: '/ui-components/dialog', element: <MuiDialog /> },
-      { path: '/ui-components/list', element: <MuiList /> },
-      { path: '/ui-components/popover', element: <MuiPopover /> },
-      { path: '/ui-components/rating', element: <MuiRating /> },
-      { path: '/ui-components/tabs', element: <MuiTabs /> },
-      { path: '/ui-components/tooltip', element: <MuiTooltip /> },
-      { path: '/ui-components/transfer-list', element: <MuiTransferList /> },
-      { path: '/ui-components/typography', element: <MuiTypography /> },
-      { path: '/pages/casl', element: <RollbaseCASL /> },
-      { path: '/pages/pricing', element: <Pricing /> },
-      { path: '/pages/faq', element: <Faq /> },
-      { path: '/pages/account-settings', element: <AccountSetting /> },
-      { path: '/tables/basic', element: <BasicTable /> },
-      { path: '/tables/enhanced', element: <EnhanceTable /> },
-      { path: '/tables/pagination', element: <PaginationTable /> },
-      { path: '/tables/fixed-header', element: <FixedHeaderTable /> },
-      { path: '/tables/collapsible', element: <CollapsibleTable /> },
-      { path: '/tables/search', element: <SearchTable /> },
-      { path: '/forms/form-elements/autocomplete', element: <MuiAutoComplete /> },
-      { path: '/forms/form-elements/button', element: <MuiButton /> },
-      { path: '/forms/form-elements/checkbox', element: <MuiCheckbox /> },
-      { path: '/forms/form-elements/radio', element: <MuiRadio /> },
-      { path: '/forms/form-elements/slider', element: <MuiSlider /> },
-      { path: '/forms/form-elements/date-time', element: <MuiDateTime /> },
-      { path: '/forms/form-elements/switch', element: <MuiSwitch /> },
-      { path: '/forms/form-elements/switch', element: <MuiSwitch /> },
-      { path: '/forms/form-layouts', element: <FormLayouts /> },
-      { path: '/forms/form-custom', element: <FormCustom /> },
-      { path: '/forms/form-wizard', element: <FormWizard /> },
-      { path: '/forms/form-validation', element: <FormValidation /> },
-      { path: '/forms/form-horizontal', element: <FormHorizontal /> },
-      { path: '/forms/form-vertical', element: <FormVertical /> },
-      { path: '/forms/form-tiptap', element: <TiptapEditor /> },
-      { path: '/charts/area-chart', element: <AreaChart /> },
-      { path: '/charts/line-chart', element: <LineChart /> },
-      { path: '/charts/gredient-chart', element: <GredientChart /> },
-      { path: '/charts/candlestick-chart', element: <CandlestickChart /> },
-      { path: '/charts/column-chart', element: <ColumnChart /> },
-      { path: '/charts/doughnut-pie-chart', element: <DoughnutChart /> },
-      { path: '/charts/radialbar-chart', element: <RadialbarChart /> },
-      { path: '/widgets/cards', element: <WidgetCards /> },
-      { path: '/widgets/banners', element: <WidgetBanners /> },
-      { path: '/widgets/charts', element: <WidgetCharts /> },
-      { path: '/react-tables/basic', element: <ReactBasicTable /> },
-      { path: '/react-tables/column-visiblity', element: <ReactColumnVisibilityTable /> },
-      { path: '/react-tables/drag-drop', element: <ReactDragDropTable /> },
-      { path: '/react-tables/dense', element: <ReactDenseTable /> },
-      { path: '/react-tables/editable', element: <ReactEditableTable /> },
-      { path: '/react-tables/empty', element: <ReactEmptyTable /> },
-      { path: '/react-tables/expanding', element: <ReactExpandingTable /> },
-      { path: '/react-tables/filter', element: <ReactFilterTable /> },
-      { path: '/react-tables/pagination', element: <ReactPaginationTable /> },
-      { path: '/react-tables/row-selection', element: <ReactRowSelectionTable /> },
-      { path: '/react-tables/sorting', element: <ReactSortingTable /> },
-      { path: '/react-tables/sticky', element: <ReactStickyTable /> },
 
-      { path: '/muicharts/barcharts', element: <BarCharts /> },
-      { path: '/muicharts/gaugecharts', element: <GaugeCharts /> },
-      { path: '/muicharts/linecharts/area', element: <AreaCharts /> },
-      { path: '/muicharts/linecharts/line', element: <LineCharts /> },
-      { path: '/muicharts/piecharts', element: <PieCharts /> },
-      { path: '/muicharts/scattercharts', element: <ScatterCharts /> },
-      { path: '/muicharts/sparklinecharts', element: <SparklineCharts /> },
-      { path: '*', element: <Navigate to="/auth/404" /> },
+      // Reports Routes
+      { path: '/reports/product-balance', element: <ProductBalanceReportPage /> },
+
+      // Fallback for protected routes
+      { path: '*', element: <Navigate to="/dashboard" /> },
     ],
   },
   {
     path: '/',
     element: <BlankLayout />,
     children: [
-      { path: '/auth/404', element: <Error /> },
+      // Auth Routes
       { path: '/auth/login', element: <Login /> },
+      { path: '/auth/branch-selection', element: <BranchSelection /> },
       { path: '/auth/register', element: <Register /> },
-      { path: '/auth/register2', element: <Register2 /> },
-      { path: '/auth/forgot-password', element: <ForgotPassword /> },
-      { path: '/auth/forgot-password2', element: <ForgotPassword2 /> },
-      { path: '/auth/two-steps', element: <TwoSteps /> },
-      { path: '/auth/two-steps2', element: <TwoSteps2 /> },
-      { path: '/auth/maintenance', element: <Maintenance /> },
-      { path: '/landingpage', element: <Landingpage /> },
-      { path: '/frontend-pages/homepage', element: <Homepage /> },
-      { path: '/frontend-pages/about', element: <About /> },
-      { path: '/frontend-pages/contact', element: <Contact /> },
-      { path: '/frontend-pages/portfolio', element: <Portfolio /> },
-      { path: '/frontend-pages/pricing', element: <PagePricing /> },
-      { path: '/frontend-pages/blog', element: <BlogPage /> },
-      { path: '/frontend-pages/blog/detail/:id', element: <BlogPost /> },
-      { path: '*', element: <Navigate to="/auth/404" /> },
+
+      // Error Routes
+      { path: '/auth/404', element: <Error /> },
+      { path: '/unauthorized', element: <Unauthorized /> },
+      { path: '/auth/no-branches', element: <NoBranches /> },
+
+      // Fallback for public routes
+      { path: '*', element: <Navigate to="/auth/login" /> },
     ],
   },
 ];
+
 const router = createBrowserRouter(Router);
 
 export default router;

@@ -24,6 +24,8 @@ import MobileProductBalanceFilter, { ProductBalanceFilterState } from './compone
 import * as reportsApi from 'src/utils/api/reportsApi';
 import { GroupedProductBalance } from 'src/utils/api/reportsApi';
 
+
+
 const ProductBalanceReportPage: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();

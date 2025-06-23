@@ -15,9 +15,23 @@ import MobileSafesFilter, { SafesFilterState } from './components/mobile/MobileS
 import * as apiSrv from 'src/utils/api/pagesApi/safesApi';
 import { Safe } from 'src/utils/api/pagesApi/safesApi';
 
-const SafesPage: React.FC = () => {
+interface PermissionProps {
+  canAdd?: boolean;
+  canEdit?: boolean;
+  canDelete?: boolean;
+  canExport?: boolean;
+  canImport?: boolean;
+  canView?: boolean;
+}
+interface Props extends PermissionProps {
+  // Add other props here if needed
+}
+
+
+const SafesPage: React.FC<Props> = (props) => {
   const { t } = useTranslation();
   const [safes, setSafes] = React.useState<Safe[]>([]);
+  const { canAdd = true } = props; // Default to true if not provided
   const [query, setQuery] = React.useState('');
   const [error, setErr] = React.useState('');
   const [loading, setLoad] = React.useState(true);
@@ -182,7 +196,8 @@ const SafesPage: React.FC = () => {
       {/* زر الإضافة للموبايل */}
       {isMobile && (
         <Box sx={{ mb: 2, textAlign: 'center' }}>
-          <Button
+          {canAdd && (
+        <Button
             variant="contained"
             startIcon={<IconPlus />}
             onClick={() => setDialog({ open: true, mode: 'add', current: undefined })}
@@ -195,6 +210,7 @@ const SafesPage: React.FC = () => {
           >
             {t('safes.add')}
           </Button>
+        )}
         </Box>
       )}
 

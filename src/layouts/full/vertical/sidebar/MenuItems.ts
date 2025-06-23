@@ -10,13 +10,23 @@
 import { uniqueId } from 'lodash';
 import {
   IconPackage,
-  IconLayoutGridAdd,
-  IconAdjustments,
   IconBuildingWarehouse,
   IconTruck,
   IconUsers,
   IconDots,
-
+  IconBuilding,
+  IconSettings,
+  IconShield,
+  IconWallet,
+  IconPigMoney,
+  IconDeviceDesktop,
+  IconCreditCard,
+  IconRuler,
+  IconTags,
+  IconChartBar,
+  IconFileText,
+  IconShoppingCart,
+  IconClipboardList
 } from '@tabler/icons-react';
 
 interface MenuItem {
@@ -36,279 +46,249 @@ interface MenuItem {
   disabled?: boolean;
 }
 
-
 const SidebarConfig: MenuItem[] = [
+
+  /* ---------------------------------------------------------------------- */
+  /*  System Administration                                                 */
+  /* ---------------------------------------------------------------------- */
+  {
+    title: 'sidebar.systemAdmin',
+    id: uniqueId(),
+    icon: IconSettings,
+    href: '/admin',
+    children: [
+      {
+        id: uniqueId(),
+        title: 'sidebar.userManagement',
+        icon: IconUsers,
+        href: '/users'
+      },
+      {
+        id: uniqueId(),
+        title: 'sidebar.companySettings',
+        icon: IconBuilding,
+        href: '/company'
+      },
+      {
+        id: uniqueId(),
+        title: 'sidebar.permissions',
+        icon: IconShield,
+        href: '/permissions'
+      }
+    ]
+  },
 
   /* ---------------------------------------------------------------------- */
   /*  Inventory                                                             */
   /* ---------------------------------------------------------------------- */
-  {  title: 'sidebar.inventory', id: uniqueId() ,    icon: IconBuildingWarehouse,
-           href: '/inventory/warehouses'
-, children: [
-
-{    id: uniqueId(),
-    title: 'sidebar.data',
-    icon: IconDots,
-    href: '/inventory/data',
-children: [
   {
+    title: 'sidebar.inventory',
     id: uniqueId(),
-    title: 'sidebar.warehouses',
     icon: IconBuildingWarehouse,
-    href: '/inventory/warehouses'
-  },
-  {
-    id: uniqueId(),
-    title: 'sidebar.units',
-    icon: IconAdjustments,
-    href: '/inventory/units'
-  },
-    {
-    id: uniqueId(),
-    title: 'groups.title',
-    icon: IconLayoutGridAdd,
-    href: '/inventory/groups'
-  },
-  {
-    id: uniqueId(),
-    title: 'sidebar.products',
-    icon: IconPackage,
-    href: '/inventory/products'
-  },
-  // {
-  //   id: uniqueId(),
-  //   title: 'sidebar.createProduct',
-  //   icon: IconLayoutGridAdd,
-  //   href: '/inventory/products/create'
-  // },
-  // {
-  //   id: uniqueId(),
-  //   title: 'sidebar.expiredProducts',
-  //   icon: IconClock,
-  //   href: '/inventory/products/expired'
-  // },
-  // {
-  //   id: uniqueId(),
-  //   title: 'sidebar.lowStocks',
-  //   icon: IconTrendingDown,
-  //   href: '/inventory/products/low-stock'
-  // },
-  // {
-  //   id: uniqueId(),
-  //   title: 'sidebar.category',
-  //   icon: IconCategory,
-  //   href: '/inventory/category'
-  // },
-  // {
-  //   id: uniqueId(),
-  //   title: 'sidebar.subCategory',
-  //   icon: IconHierarchy2,
-  //   href: '/inventory/sub-category'
-  // },
-  // {
-  //   id: uniqueId(),
-  //   title: 'sidebar.brands',
-  //   icon: IconTrademark,
-  //   href: '/inventory/brands'
-  // },
-  // {
-  //   id: uniqueId(),
-  //   title: 'sidebar.units',
-  //   icon: IconRuler,
-  //   href: '/inventory/units'
-  // },
-  // {
-  //   id: uniqueId(),
-  //   title: 'sidebar.variantAttributes',
-  //   icon: IconAdjustments,
-  //   href: '/inventory/variants'
-  // },
-  // {
-  //   id: uniqueId(),
-  //   title: 'sidebar.warranties',
-  //   icon: IconCertificate,
-  //   href: '/inventory/warranties'
-  // },
-  // {
-  //   id: uniqueId(),
-  //   title: 'sidebar.printBarcode',
-  //   icon: IconBarcode,
-  //   href: '/inventory/barcode'
-  // },
-  // {
-  //   id: uniqueId(),
-  //   title: 'sidebar.printQrCode',
-  //   icon: IconQrcode,
-  //   href: '/inventory/qrcode'
-  // }
-]
-  },
-  {
-    id: uniqueId(),
-    title: 'sidebar.transactions',
-    icon: IconDots,
-    href: '/inventory/Transactions'
-, children: [
-      {
-        id: uniqueId(),
-        title: 'sidebar.inventoryadjustments',
-        icon: IconAdjustments,
-        href: '/inventory/inventory-adjustments'
-      },
-
-    ]
-    
-  },
-  {
-    id: uniqueId(),
-    title: 'sidebar.reports',
-    icon: IconDots,
-    href: '/inventory/reports'
-, children: [
-      {
-        id: uniqueId(),
-        title: 'sidebar.productBalance',
-        icon: IconPackage,
-        href: '/reports/product-balance'
-      },
-    ]
-  }
-] },
-
-
-  {  title: 'sidebar.purchases', id: uniqueId() ,    icon: IconTruck,
-           href: '/purchases/purchases'
-, children: [
-
-{    id: uniqueId(),
-    title: 'sidebar.data',
-    icon: IconDots,
-    href: '/purchases/data',
-children: [
-  {
-    id: uniqueId(),
-    title: 'sidebar.suppliers',
-    icon: IconUsers,
-    href: '/purchases/suppliers'
-  },
-
-
-]
-  },
-  {
-    id: uniqueId(),
-    title: 'sidebar.transactions',
-    icon: IconDots,
-    href: '/inventory/Transactions',
+    href: '/inventory/warehouses',
     children: [
       {
         id: uniqueId(),
-        title: 'sidebar.purchaseOrders',
-        icon: IconLayoutGridAdd,
-        href: '/purchases/purchase-orders'
+        title: 'sidebar.data',
+        icon: IconDots,
+        href: '/inventory/data',
+        children: [
+          {
+            id: uniqueId(),
+            title: 'sidebar.warehouses',
+            icon: IconBuildingWarehouse,
+            href: '/inventory/warehouses'
+          },
+          {
+            id: uniqueId(),
+            title: 'sidebar.units',
+            icon: IconRuler,
+            href: '/inventory/units'
+          },
+          {
+            id: uniqueId(),
+            title: 'groups.title',
+            icon: IconTags,
+            href: '/inventory/groups'
+          },
+          {
+            id: uniqueId(),
+            title: 'sidebar.products',
+            icon: IconPackage,
+            href: '/inventory/products'
+          }
+        ]
       },
       {
         id: uniqueId(),
-        title: 'sidebar.purchases',
-        icon: IconLayoutGridAdd,
-        href: '/purchases/purchases'
-      }]
+        title: 'sidebar.transactions',
+        icon: IconDots,
+        href: '/inventory/transactions',
+        children: [
+          {
+            id: uniqueId(),
+            title: 'sidebar.inventoryadjustments',
+            icon: IconClipboardList,
+            href: '/inventory/inventory-adjustments'
+          }
+        ]
+      },
+      {
+        id: uniqueId(),
+        title: 'sidebar.reports',
+        icon: IconDots,
+        href: '/inventory/reports',
+        children: [
+          {
+            id: uniqueId(),
+            title: 'sidebar.productBalance',
+            icon: IconChartBar,
+            href: '/reports/product-balance'
+          }
+        ]
+      }
+    ]
   },
+
+  /* ---------------------------------------------------------------------- */
+  /*  Purchases                                                             */
+  /* ---------------------------------------------------------------------- */
   {
+    title: 'sidebar.purchases',
     id: uniqueId(),
-    title: 'sidebar.reports',
-    icon: IconDots,
-    href: '/inventory/reports'
+    icon: IconTruck,
+    href: '/purchases/purchases',
+    children: [
+      {
+        id: uniqueId(),
+        title: 'sidebar.data',
+        icon: IconDots,
+        href: '/purchases/data',
+        children: [
+          {
+            id: uniqueId(),
+            title: 'sidebar.suppliers',
+            icon: IconUsers,
+            href: '/purchases/suppliers'
+          }
+        ]
+      },
+      {
+        id: uniqueId(),
+        title: 'sidebar.transactions',
+        icon: IconDots,
+        href: '/purchases/transactions',
+        children: [
+          {
+            id: uniqueId(),
+            title: 'sidebar.purchaseOrders',
+            icon: IconFileText,
+            href: '/purchases/purchase-orders'
+          },
+          {
+            id: uniqueId(),
+            title: 'sidebar.purchases',
+            icon: IconShoppingCart,
+            href: '/purchases/purchases'
+          }
+        ]
+      },
+      {
+        id: uniqueId(),
+        title: 'sidebar.reports',
+        icon: IconDots,
+        href: '/purchases/reports'
+      }
+    ]
+  },
+
+  /* ---------------------------------------------------------------------- */
+  /*  Accounting                                                            */
+  /* ---------------------------------------------------------------------- */
+  {
+    title: 'sidebar.accounting',
+    id: uniqueId(),
+    icon: IconWallet,
+    href: '/accounting',
+    children: [
+      {
+        id: uniqueId(),
+        title: 'sidebar.data',
+        icon: IconDots,
+        href: '/accounting/data',
+        children: [
+          {
+            id: uniqueId(),
+            title: 'sidebar.accounts',
+            icon: IconWallet,
+            href: '/accounting/accounts'
+          },
+          {
+            id: uniqueId(),
+            title: 'sidebar.safes',
+            icon: IconPigMoney,
+            href: '/accounting/safes'
+          }
+        ]
+      },
+      {
+        id: uniqueId(),
+        title: 'sidebar.transactions',
+        icon: IconDots,
+        href: '/accounting/transactions'
+      },
+      {
+        id: uniqueId(),
+        title: 'sidebar.reports',
+        icon: IconDots,
+        href: '/accounting/reports'
+      }
+    ]
+  },
+
+  /* ---------------------------------------------------------------------- */
+  /*  POS System                                                            */
+  /* ---------------------------------------------------------------------- */
+  {
+    title: 'sidebar.pos',
+    id: uniqueId(),
+    icon: IconDeviceDesktop,
+    href: '/pos',
+    children: [
+      {
+        id: uniqueId(),
+        title: 'sidebar.data',
+        icon: IconDots,
+        href: '/pos/data',
+        children: [
+          {
+            id: uniqueId(),
+            title: 'sidebar.paymentMethods',
+            icon: IconCreditCard,
+            href: '/pos/payment-methods'
+          },
+          {
+            id: uniqueId(),
+            title: 'sidebar.screens',
+            icon: IconDeviceDesktop,
+            href: '/pos/screens'
+          }
+        ]
+      },
+      {
+        id: uniqueId(),
+        title: 'sidebar.transactions',
+        icon: IconDots,
+        href: '/pos/transactions'
+      },
+      {
+        id: uniqueId(),
+        title: 'sidebar.reports',
+        icon: IconDots,
+        href: '/pos/reports'
+      }
+    ]
   }
-] },
-
-
-
-
-
-
-
-  {  title: 'sidebar.accounting', id: uniqueId() ,    icon: IconTruck,
-           href: '/accounting'
-, children: [
-
-{    id: uniqueId(),
-    title: 'sidebar.data',
-    icon: IconDots,
-    href: '/accounting/data',
-children: [
-  {
-    id: uniqueId(),
-    title: 'sidebar.accounts',
-    icon: IconPackage,
-    href: '/accounting/accounts'
-  },
-  {
-    id: uniqueId(),
-    title: 'sidebar.safes',
-    icon: IconBuildingWarehouse,
-    href: '/accounting/safes'
-  }
-]
-  },
-  {
-    id: uniqueId(),
-    title: 'sidebar.transactions',
-    icon: IconDots,
-    href: '/accounting/Transactions',
-  },
-  {
-    id: uniqueId(),
-    title: 'sidebar.reports',
-    icon: IconDots,
-    href: '/accounting/reports'
-  }
-] },
-
-
-
-
-
-
-
-  {  title: 'sidebar.pos', id: uniqueId() ,    icon: IconTruck,
-           href: '/pos'
-, children: [
-
-{    id: uniqueId(),
-    title: 'sidebar.data',
-    icon: IconDots,
-    href: '/pos/data',
-children: [
-  {
-    id: uniqueId(),
-    title: 'sidebar.paymentMethods',
-    icon: IconPackage,
-    href: '/pos/payment-methods'
-  },
-  {
-    id: uniqueId(),
-    title: 'sidebar.screens',
-    icon: IconLayoutGridAdd,
-    href: '/pos/screens'
-  },
-]
-  },
-  {
-    id: uniqueId(),
-    title: 'sidebar.transactions',
-    icon: IconDots,
-    href: '/pos/Transactions',
-  },
-  {
-    id: uniqueId(),
-    title: 'sidebar.reports',
-    icon: IconDots,
-    href: '/pos/reports'
-  }
-] },
-
-
 ];
 
 export default SidebarConfig;

@@ -17,6 +17,8 @@ import * as warehousesApi from 'src/utils/api/pagesApi/warehousesApi';
 import { Purchase } from 'src/utils/api/pagesApi/purchaseApi';
 import PageHeader from './components/PageHeader';
 
+
+
 const PurchasesPage: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();

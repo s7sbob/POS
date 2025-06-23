@@ -15,7 +15,20 @@ import MobileAccountsFilter, { AccountsFilterState } from './components/mobile/M
 import * as apiSrv from 'src/utils/api/pagesApi/accountsApi';
 import { Account } from 'src/utils/api/pagesApi/accountsApi';
 
-const AccountsPage: React.FC = () => {
+interface PermissionProps {
+  canAdd?: boolean;
+  canEdit?: boolean;
+  canDelete?: boolean;
+  canExport?: boolean;
+  canImport?: boolean;
+  canView?: boolean;
+}
+interface Props extends PermissionProps {
+  // Add other props here if needed
+}
+
+
+const AccountsPage: React.FC<Props> = (props) => {
   const { t } = useTranslation();
   const [accounts, setAccounts] = React.useState<Account[]>([]);
   const [query, setQuery] = React.useState('');
@@ -27,6 +40,8 @@ const AccountsPage: React.FC = () => {
     mode: 'add' | 'edit';
     current?: Account;
   }>({ open: false, mode: 'add', current: undefined });
+
+  const canAdd = props.canAdd ?? true; // Default to true if not provided
 
   const isDownSm = useMediaQuery((th: any) => th.breakpoints.down('sm'));
   const isMobile = useMediaQuery((th: any) => th.breakpoints.down('md'));
@@ -192,7 +207,8 @@ const AccountsPage: React.FC = () => {
       {/* زر الإضافة للموبايل */}
       {isMobile && (
         <Box sx={{ mb: 2, textAlign: 'center' }}>
-          <Button
+          {canAdd && (
+        <Button
             variant="contained"
             startIcon={<IconPlus />}
             onClick={() => setDialog({ open: true, mode: 'add', current: undefined })}
@@ -205,6 +221,7 @@ const AccountsPage: React.FC = () => {
           >
             {t('accounts.add')}
           </Button>
+        )}
         </Box>
       )}
 

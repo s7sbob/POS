@@ -59,13 +59,17 @@ interface Props {
   data?: any[];
   loading?: boolean;
   compact?: boolean;
+  showImport?: boolean; // جديد
+  showExport?: boolean; // جديد
 }
 
 const ImportExportManager: React.FC<Props> = ({
   config,
   data = [],
   loading = false,
-  compact = false
+  compact = false,
+  showImport = true,
+  showExport = true
 }) => {
   const { t, i18n } = useTranslation();
   const theme = useTheme();
@@ -550,67 +554,59 @@ const exportToPDF = async () => {
         sx={{ mb: 2 }}
       >
         {/* Export Buttons */}
-        <Button
-          variant="outlined"
-          startIcon={<IconFileSpreadsheet size={16} />}
-          onClick={exportToExcel}
-          disabled={loading}
-          size={compact ? "small" : "medium"}
-          fullWidth={compact}
-          sx={{ 
-            minWidth: compact ? 'auto' : 140,
-            justifyContent: 'flex-start'
-          }}
-        >
-          {t('export.exportExcel')}
-        </Button>
-        
-        <Button
-          variant="outlined"
-          startIcon={<IconFile3d size={16} />}
-          onClick={exportToPDF}
-          disabled={loading}
-          size={compact ? "small" : "medium"}
-          fullWidth={compact}
-          sx={{ 
-            minWidth: compact ? 'auto' : 140,
-            justifyContent: 'flex-start'
-          }}
-        >
-          {t('export.exportPdf')}
-        </Button>
+ {showExport && (
+          <>
+            <Button
+              variant="outlined"
+              startIcon={<IconFileSpreadsheet size={16} />}
+              onClick={exportToExcel}
+              disabled={loading}
+              size={compact ? "small" : "medium"}
+              fullWidth={compact}
+            >
+              {t('export.exportExcel')}
+            </Button>
+            
+            <Button
+              variant="outlined"
+              startIcon={<IconFile3d size={16} />}
+              onClick={exportToPDF}
+              disabled={loading}
+              size={compact ? "small" : "medium"}
+              fullWidth={compact}
+            >
+              {t('export.exportPdf')}
+            </Button>
+          </>
+        )}
 
-        <Divider orientation={compact ? "horizontal" : "vertical"} flexItem />
+        {(showImport || showExport) && <Divider orientation={compact ? "horizontal" : "vertical"} flexItem />}
 
         {/* Import Buttons */}
-        <Button
-          variant="outlined"
-          startIcon={<IconDownload size={16} />}
-          onClick={downloadTemplate}
-          size={compact ? "small" : "medium"}
-          fullWidth={compact}
-          color="secondary"
-          sx={{ 
-            minWidth: compact ? 'auto' : 160,
-            justifyContent: 'flex-start'
-          }}
-        >
-          {t('import.downloadTemplate')}
-        </Button>
+ {showImport && (
+          <>
+            <Button
+              variant="outlined"
+              startIcon={<IconDownload size={16} />}
+              onClick={downloadTemplate}
+              size={compact ? "small" : "medium"}
+              fullWidth={compact}
+              color="secondary"
+            >
+              {t('import.downloadTemplate')}
+            </Button>
 
-        <Button
-          variant="contained"
-          startIcon={<IconFileImport size={16} />}
-          onClick={() => setImportDialog(true)}
-          size={compact ? "small" : "medium"}
-          fullWidth={compact}
-          sx={{ 
-            minWidth: compact ? 'auto' : 120,
-            justifyContent: 'flex-start'
-          }}
-        >
-          {t('import.import')}
-        </Button>
+            <Button
+              variant="contained"
+              startIcon={<IconFileImport size={16} />}
+              onClick={() => setImportDialog(true)}
+              size={compact ? "small" : "medium"}
+              fullWidth={compact}
+            >
+              {t('import.import')}
+            </Button>
+          </>
+        )}
       </Stack>
 
       {/* Import Dialog */}

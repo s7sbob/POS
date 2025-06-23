@@ -15,7 +15,20 @@ import MobileGroupsFilter, { GroupsFilterState } from './components/mobile/Mobil
 import * as apiSrv from 'src/utils/api/pagesApi/groupsApi';
 import { Group } from 'src/utils/api/pagesApi/groupsApi';
 
-const GroupsPage: React.FC = () => {
+interface PermissionProps {
+  canAdd?: boolean;
+  canEdit?: boolean;
+  canDelete?: boolean;
+  canExport?: boolean;
+  canImport?: boolean;
+  canView?: boolean;
+}
+interface Props extends PermissionProps {
+  // Add other props here if needed
+}
+
+
+const GroupsPage: React.FC<Props> = ({ canAdd = true }) => {
   const { t } = useTranslation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -246,7 +259,8 @@ const GroupsPage: React.FC = () => {
       {/* زر الإضافة للموبايل */}
       {isMobile && (
         <Box sx={{ mb: 2, textAlign: 'center' }}>
-          <Button
+          {canAdd && (
+        <Button
             variant="contained"
             startIcon={<IconPlus />}
             onClick={() => setDialog({ open: true, mode: 'add' })}
@@ -259,6 +273,7 @@ const GroupsPage: React.FC = () => {
           >
             {t('groups.add')}
           </Button>
+        )}
         </Box>
       )}
 

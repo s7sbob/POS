@@ -11,6 +11,7 @@ import { useDispatch } from 'src/store/Store';
 import { setLanguage, setDir } from './store/customizer/CustomizerSlice';
 import { useTranslation } from 'react-i18next';
 import Cookies from 'js-cookie';
+import { AuthProvider } from './contexts/AuthContext';
 
 function App() {
   const theme = ThemeSettings();
@@ -65,7 +66,9 @@ function App() {
     <ThemeProvider theme={themeWithDirection}>
       <RTL>
         <CssBaseline />
-        <RouterProvider router={router} />
+        <AuthProvider>
+          <RouterProvider router={router} />
+        </AuthProvider>
       </RTL>
     </ThemeProvider>
   );

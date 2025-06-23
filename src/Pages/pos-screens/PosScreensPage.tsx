@@ -15,10 +15,24 @@ import MobileScreensFilter, { ScreensFilterState } from './components/mobile/Mob
 import * as apiSrv from 'src/utils/api/pagesApi/posScreensApi';
 import { PosScreen } from 'src/utils/api/pagesApi/posScreensApi';
 
-const PosScreensPage: React.FC = () => {
+interface PermissionProps {
+  canAdd?: boolean;
+  canEdit?: boolean;
+  canDelete?: boolean;
+  canExport?: boolean;
+  canImport?: boolean;
+  canView?: boolean;
+}
+interface Props extends PermissionProps {
+  // Add other props here if needed
+}
+
+
+const PosScreensPage: React.FC<Props> = (props) => {
   const { t } = useTranslation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const { canAdd } = props;
   
   const [items, setItems] = React.useState<PosScreen[]>([]);
   const [query, setQuery] = React.useState('');
@@ -303,7 +317,8 @@ const PosScreensPage: React.FC = () => {
 
       {isMobile && (
         <Box sx={{ mb: 2, textAlign: 'center' }}>
-          <Button
+          {canAdd && (
+        <Button
             variant="contained"
             startIcon={<IconPlus />}
             onClick={() => setDialog({ open: true, mode: 'add' })}
@@ -313,6 +328,7 @@ const PosScreensPage: React.FC = () => {
           >
             {t('posScreens.add')}
           </Button>
+        )}
         </Box>
       )}
 

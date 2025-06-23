@@ -22,9 +22,13 @@
 
 
   "sidebar": {
-    "inventory": "المخزون",
-    "inventoryadjustments": "تسوية الجرد",
     "stock": "المخزون",
+     "systemAdmin": "إدارة النظام",
+    "userManagement": "إدارة المستخدمين",
+    "companySettings": "إعدادات الشركة",
+    "permissions": "الصلاحيات",
+    "inventory": "المخزون",
+    "inventoryadjustments": "تسويات المخزون",
     "sales": "المبيعات",
     "screens": "الشاشات",
     "promo": "العروض",
@@ -563,6 +567,8 @@
   },
   "common": {
     "search": "بحث",
+    "update": "تحديث",
+    "saveChanges": "حفظ التغييرات",
     "selected": "محدد",
     "hideColumn": "إخفاء العمود",
     "all": "الكل",
@@ -1127,6 +1133,8 @@
     "importing": "جاري الاستيراد",
     "errorsFound": "تم العثور على أخطاء",
     "importComplete": "تم الاستيراد بنجاح",
+        "rowError": "الصف {{row}}:",
+    "addError": "خطأ في الإضافة",
     "successfulRecords": "السجلات الناجحة",
     "failedRecords": "السجلات الفاشلة",
     "andMore": "و {count} أخطاء أخرى",
@@ -1138,6 +1146,171 @@
     "inRow": "في الصف",
     "validationError": "خطأ في التحقق",
     "importError": "خطأ في الاستيراد"
+  },
+
+  "auth": {
+    "login": {
+      "title": "تسجيل الدخول",
+      "description": "صفحة تسجيل الدخول",
+      "phoneNumber": "رقم الهاتف",
+      "password": "كلمة المرور",
+      "phonePlaceholder": "01xxxxxxxxx",
+      "passwordPlaceholder": "أدخل كلمة المرور",
+      "rememberMe": "تذكرني",
+      "forgotPassword": "نسيت كلمة المرور؟",
+      "signIn": "تسجيل الدخول",
+      "signingIn": "جاري تسجيل الدخول...",
+      "failed": "فشل في تسجيل الدخول",
+      "newUser": "مستخدم جديد؟",
+      "createAccount": "إنشاء حساب"
+    },
+    "branchSelection": {
+      "title": "اختيار الفرع",
+      "description": "صفحة اختيار الفرع",
+      "selectBranch": "اختر الفرع",
+      "welcomeMessage": "مرحباً {{userName}}، لديك صلاحية الوصول لأكثر من فرع",
+      "selectThisBranch": "اختيار هذا الفرع",
+      "selecting": "جاري التحديد...",
+      "noBranches": "لا توجد فروع متاحة",
+      "noBranchesMessage": "لا يوجد فروع مخصصة لهذا المستخدم. يرجى التواصل مع الإدارة."
+    },
+    "logout": "تسجيل الخروج",
+     "errors": {
+      "noBranches": "لا يوجد فروع متاحة لهذا المستخدم"
+    }
+  },
+  "users": {
+    "userName": "اسم المستخدم",
+    "phoneNo": "رقم الهاتف",
+    "email": "البريد الإلكتروني",
+    "password": "كلمة المرور",
+    "title": "إدارة المستخدمين",
+    "noUsers": "لا توجد مستخدمين",
+        "validation": {
+      "userNameTooShort": "اسم المستخدم يجب أن يكون أكثر من حرفين",
+      "userNameTooLong": "اسم المستخدم طويل جداً",
+      "invalidPhone": "رقم هاتف غير صحيح",
+      "invalidEmail": "بريد إلكتروني غير صحيح",
+            "requiredFields": "يرجى إدخال جميع البيانات المطلوبة",
+      "passwordRequired": "يرجى إدخال كلمة المرور للمستخدم الجديد",
+      "passwordTooShort": "كلمة المرور يجب أن تكون 6 أحرف على الأقل"
+    },
+    "table": {
+      "userName": "اسم المستخدم",
+      "phoneNumber": "رقم الهاتف",
+      "email": "البريد الإلكتروني",
+      "actions": "الإجراءات"
+    },
+    "actions": {
+      "add": "إضافة مستخدم"
+    },
+    "dialog": {
+      "addTitle": "إضافة مستخدم جديد",
+      "editTitle": "تعديل مستخدم"
+    },
+    "form": {
+      "userName": "اسم المستخدم",
+      "phoneNumber": "رقم الهاتف",
+      "password": "كلمة المرور",
+      "passwordHelp": "اتركها فارغة إذا كنت لا تريد تغييرها"
+    },
+    "messages": {
+      "addSuccess": "تم إضافة المستخدم بنجاح",
+      "addFailed": "فشل في إضافة المستخدم",
+      "editComingSoon": "سيتم إضافة وظيفة التعديل قريباً"
+    },
+    "errors": {
+      "loadFailed": "خطأ في تحميل المستخدمين",
+      "saveFailed": "خطأ في حفظ المستخدم"
+    }
+  },
+  "company": {
+    "title": "إعدادات الشركة والفروع",
+    "description": "إدارة بيانات الشركة والفروع التابعة لها",
+    "tabs": {
+      "companyInfo": "بيانات الشركة",
+      "branchManagement": "إدارة الفروع"
+    },
+    "form": {
+      "companyName": "اسم الشركة",
+      "companyAddress": "عنوان الشركة",
+      "companyPhone": "هاتف الشركة",
+      "companyEmail": "بريد الشركة الإلكتروني",
+      "branchName": "اسم الفرع",
+      "branchAddress": "عنوان الفرع",
+      "branchPhone": "هاتف الفرع"
+    },
+    "info": {
+      "currentCompanyInfo": "معلومات الشركة الحالية",
+      "companyName": "اسم الشركة",
+      "branchCount": "عدد الفروع",
+      "branchCountValue": "{{count}} فرع",
+      "currentBranch": "الفرع الحالي"
+    },
+    "branches": {
+      "title": "فروع الشركة ({{count}})",
+      "currentBranch": "الفرع الحالي",
+      "otherBranch": "فرع آخر"
+    },
+    "table": {
+      "branchName": "اسم الفرع",
+      "address": "العنوان",
+      "phone": "الهاتف",
+      "status": "الحالة",
+      "actions": "الإجراءات"
+    },
+    "dialog": {
+      "editBranch": "تعديل بيانات الفرع"
+    },
+    "messages": {
+      "updateSuccess": "تم تحديث بيانات الشركة بنجاح",
+      "branchUpdateSuccess": "تم تحديث بيانات الفرع بنجاح"
+    },
+    "errors": {
+      "updateFailed": "خطأ في تحديث بيانات الشركة",
+      "branchUpdateFailed": "خطأ في تحديث بيانات الفرع"
+    }
+  },
+   "permissions": {
+    "title": "إدارة الصلاحيات",
+    "description": "إدارة صلاحيات المستخدمين للوصول إلى صفحات ووظائف النظام",
+    "loading": "جاري تحميل البيانات...",
+    "noData": "لا توجد بيانات مستخدمين",
+    "pagesCount": "{{accessible}}/{{total}} صفحة",
+    "enabled": "مفعل",
+    "disabled": "معطل",
+    "subPermissions": "الصلاحيات الفرعية",
+    "messages": {
+      "updateSuccess": "تم تحديث الصلاحية بنجاح"
+    },
+    "errors": {
+      "loadFailed": "خطأ في تحميل البيانات",
+      "updateFailed": "خطأ في تحديث الصلاحية"
+    }
+  },
+  "errors": {
+    "unauthorized": {
+      "title": "غير مصرح لك",
+      "message": "ليس لديك صلاحية للوصول إلى هذه الصفحة",
+      "backToDashboard": "العودة للرئيسية"
+    },
+    "noBranches": {
+      "title": "لا توجد فروع متاحة",
+      "message": "لا يوجد فروع مخصصة لهذا المستخدم. يرجى التواصل مع الإدارة لتخصيص الفروع المناسبة."
+    }
+  },
+  "branch": {
+    "selectBranch": "اختر الفرع"
+  },
+  "profile": {
+    "user": "المستخدم",
+    "menu": {
+      "userManagement": "إدارة المستخدمين",
+      "companySettings": "إعدادات الشركة",
+      "permissions": "الصلاحيات",
+      "inbox": "صندوق الرسائل",
+      "taskList": "قائمة المهام"
+    }
   }
 
 

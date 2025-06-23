@@ -245,6 +245,10 @@
 
   "sidebar": {
     "inventory": "Inventory",
+     "systemAdmin": "System Administration",
+    "userManagement": "User Management",
+    "companySettings": "Company Settings",
+    "permissions": "Permissions",
     "inventoryadjustments": "Inventory Adjustment",
     "stock": "Stock",
     "sales": "Sales",
@@ -571,6 +575,8 @@
 
   },
   "common": {
+    "update": "Update",
+    "saveChanges": "Save Changes",
     "search": "Search",
     "all": "All",
     "home": "Home",
@@ -1082,6 +1088,8 @@
     "downloadTemplate": "Download Template",
     "importTitle": "Import Data",
     "selectFile": "Select Excel File",
+        "rowError": "Row {{row}}:",
+    "addError": "Error adding record",
     "importing": "Importing",
     "errorsFound": "Errors Found",
     "importComplete": "Import Complete",
@@ -1156,7 +1164,176 @@
       "results": "Results",
       "activeFilters": "active filters"
     }
+  },
+
+  "auth": {
+    "login": {
+      "title": "Login",
+      "description": "Login page",
+      "phoneNumber": "Phone Number",
+      "password": "Password",
+      "phonePlaceholder": "01xxxxxxxxx",
+      "passwordPlaceholder": "Enter your password",
+      "rememberMe": "Remember me",
+      "forgotPassword": "Forgot password?",
+      "signIn": "Sign In",
+      "signingIn": "Signing in...",
+      "failed": "Login failed",
+      "newUser": "New user?",
+      "createAccount": "Create an account"
+    },
+    "branchSelection": {
+      "title": "Branch Selection",
+      "description": "Branch selection page",
+      "selectBranch": "Select Branch",
+      "welcomeMessage": "Welcome {{userName}}, you have access to multiple branches",
+      "selectThisBranch": "Select This Branch",
+      "selecting": "Selecting...",
+      "noBranches": "No Branches Available",
+      "noBranchesMessage": "No branches are assigned to this user. Please contact administration."
+    },
+    "logout": "Logout",
+    "errors": {
+      "noBranches": "No branches available for this user"
+    }
+  },
+
+
+ "users": {
+    "userName": "User Name",
+    "phoneNo": "Phone Number",
+    "email": "Email",
+    "password": "Password",
+    "title": "User Management",
+    "noUsers": "No users found",
+    "table": {
+      "userName": "User Name",
+      "phoneNumber": "Phone Number",
+      "email": "Email",
+      "actions": "Actions"
+    },
+    "actions": {
+      "add": "Add User"
+    },
+    "dialog": {
+      "addTitle": "Add New User",
+      "editTitle": "Edit User"
+    },
+    "form": {
+      "userName": "User Name",
+      "phoneNumber": "Phone Number",
+      "password": "Password",
+      "passwordHelp": "Leave empty if you don't want to change it"
+    },
+    "validation": {
+      "requiredFields": "Please enter all required fields",
+      "passwordRequired": "Please enter password for new user",
+            "userNameTooShort": "User name must be more than 2 characters",
+      "userNameTooLong": "User name is too long",
+      "invalidPhone": "Invalid phone number",
+      "invalidEmail": "Invalid email address",
+      "passwordTooShort": "Password must be at least 6 characters"
+    },
+    "messages": {
+      "addSuccess": "User added successfully",
+      "addFailed": "Failed to add user",
+      "editComingSoon": "Edit functionality coming soon"
+    },
+    "errors": {
+      "loadFailed": "Error loading users",
+      "saveFailed": "Error saving user"
+    }
+  },
+  "company": {
+    "title": "Company & Branch Settings",
+    "description": "Manage company data and its branches",
+    "tabs": {
+      "companyInfo": "Company Information",
+      "branchManagement": "Branch Management"
+    },
+    "form": {
+      "companyName": "Company Name",
+      "companyAddress": "Company Address",
+      "companyPhone": "Company Phone",
+      "companyEmail": "Company Email",
+      "branchName": "Branch Name",
+      "branchAddress": "Branch Address",
+      "branchPhone": "Branch Phone"
+    },
+    "info": {
+      "currentCompanyInfo": "Current Company Information",
+      "companyName": "Company Name",
+      "branchCount": "Number of Branches",
+      "branchCountValue": "{{count}} branch",
+      "branchCountValue_plural": "{{count}} branches",
+      "currentBranch": "Current Branch"
+    },
+    "branches": {
+      "title": "Company Branches ({{count}})",
+      "currentBranch": "Current Branch",
+      "otherBranch": "Other Branch"
+    },
+    "table": {
+      "branchName": "Branch Name",
+      "address": "Address",
+      "phone": "Phone",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "dialog": {
+      "editBranch": "Edit Branch Data"
+    },
+    "messages": {
+      "updateSuccess": "Company data updated successfully",
+      "branchUpdateSuccess": "Branch data updated successfully"
+    },
+    "errors": {
+      "updateFailed": "Error updating company data",
+      "branchUpdateFailed": "Error updating branch data"
+    }
+  },
+  "permissions": {
+    "title": "Permissions Management",
+    "description": "Manage user permissions to access system pages and functions",
+    "loading": "Loading data...",
+    "noData": "No user data available",
+    "pagesCount": "{{accessible}}/{{total}} pages",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "subPermissions": "Sub Permissions",
+    "messages": {
+      "updateSuccess": "Permission updated successfully"
+    },
+    "errors": {
+      "loadFailed": "Error loading data",
+      "updateFailed": "Error updating permission"
+    }
+  },
+  "errors": {
+    "unauthorized": {
+      "title": "Unauthorized",
+      "message": "You don't have permission to access this page",
+      "backToDashboard": "Back to Dashboard"
+    },
+    "noBranches": {
+      "title": "No Branches Available",
+      "message": "No branches are assigned to this user. Please contact administration to assign appropriate branches."
+    }
+  },
+  "branch": {
+    "selectBranch": "Select Branch"
+  },
+   "profile": {
+    "user": "User",
+    "menu": {
+      "userManagement": "User Management",
+      "companySettings": "Company Settings",
+      "permissions": "Permissions",
+      "inbox": "Inbox",
+      "taskList": "Task List"
+    }
   }
+
 
 }
 

@@ -4,6 +4,7 @@ import * as groupsApi from 'src/utils/api/pagesApi/groupsApi';
 import * as unitsApi from 'src/utils/api/pagesApi/unitsApi';
 import * as productsApi from 'src/utils/api/pagesApi/productsApi';
 import * as posScreensApi from 'src/utils/api/pagesApi/posScreensApi';
+import { register } from 'src/utils/api/authApi';
 
 /* ───── Groups Configuration ───── */
 export const groupsImportExportConfig: ImportExportConfig = {
@@ -940,4 +941,92 @@ export const inventoryAdjustmentsImportExportConfig: ImportExportConfig = {
     return results;
   },
   maxRows: 1000
+};
+
+
+
+/* ───── Users Configuration ───── */
+export const usersImportExportConfig: ImportExportConfig = {
+  moduleName: 'users.title',
+  moduleNameEn: 'users.title',
+  fileName: 'users',
+  title: 'users.title',
+  titleEn: 'users.title',
+  columns: [
+    {
+      field: 'userName',
+      headerName: 'users.table.userName',
+      headerNameEn: 'users.table.userName',
+      type: 'string',
+      required: true,
+      example: 'أحمد محمد',
+      exampleEn: 'Ahmed Mohamed',
+      validate: (value) => {
+        if (!value || value.length < 2) return 'users.validation.userNameTooShort';
+        if (value.length > 100) return 'users.validation.userNameTooLong';
+        return null;
+      }
+    },
+    {
+      field: 'phoneNo',
+      headerName: 'users.table.phoneNumber',
+      headerNameEn: 'users.table.phoneNumber',
+      type: 'string',
+      required: true,
+      example: '01234567890',
+      exampleEn: '01234567890',
+      validate: (value) => {
+        if (!value || !/^01[0-9]{9}$/.test(value)) return 'users.validation.invalidPhone';
+        return null;
+      }
+    },
+    {
+      field: 'email',
+      headerName: 'users.table.email',
+      headerNameEn: 'users.table.email',
+      type: 'string',
+      required: false,
+      example: 'user@company.com',
+      exampleEn: 'user@company.com',
+      validate: (value) => {
+        if (value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'users.validation.invalidEmail';
+        return null;
+      }
+    },
+    {
+      field: 'password',
+      headerName: 'users.form.password',
+      headerNameEn: 'users.form.password',
+      type: 'string',
+      required: true,
+      example: '123456',
+      exampleEn: '123456',
+      validate: (value) => {
+        if (!value || value.length < 6) return 'users.validation.passwordTooShort';
+        return null;
+      }
+    }
+  ],
+  onImport: async (data) => {
+    const results = { success: 0, errors: [] as string[] };
+    
+    for (let i = 0; i < data.length; i++) {
+      try {
+        const item = data[i];
+        
+        const success = await register(item.userName, item.phoneNo, item.password);
+        
+        if (success) {
+          results.success++;
+        } else {
+          results.errors.push(`import.rowError ${i + 1}: users.errors.addFailed`);
+        }
+      } catch (error: any) {
+        results.errors.push(`import.rowError ${i + 1}: ${error.message || 'import.addError'}`);
+      }
+    }
+    
+    return results;
+  },
+  maxRows: 100
 };

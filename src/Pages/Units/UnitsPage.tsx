@@ -15,9 +15,20 @@ import * as apiSrv from 'src/utils/api/pagesApi/unitsApi';
 import { Unit } from 'src/utils/api/pagesApi/unitsApi';
 import { useTranslation } from 'react-i18next';
 
-const UnitsPage: React.FC = () => {
+interface PermissionProps {
+  canAdd?: boolean;
+  canEdit?: boolean;
+  canDelete?: boolean;
+  canExport?: boolean;
+  canImport?: boolean;
+  canView?: boolean;
+}
+
+
+const UnitsPage: React.FC<PermissionProps> = (props) => {
   const { t } = useTranslation();
   const [items, setItems] = React.useState<Unit[]>([]);
+  const { canAdd } = props;
   const [query, setQuery] = React.useState('');
   const [error, setErr] = React.useState('');
   const [loading, setLoad] = React.useState(true);
@@ -152,7 +163,8 @@ const UnitsPage: React.FC = () => {
       {/* زر الإضافة للموبايل */}
       {isMobile && (
         <Box sx={{ mb: 2, textAlign: 'center' }}>
-          <Button
+          {canAdd && (
+        <Button
             variant="contained"
             startIcon={<IconPlus />}
             onClick={() => setDialog({ open: true, mode: 'add' })}
@@ -165,6 +177,7 @@ const UnitsPage: React.FC = () => {
           >
             {t('units.add')}
           </Button>
+        )}
         </Box>
       )}
 

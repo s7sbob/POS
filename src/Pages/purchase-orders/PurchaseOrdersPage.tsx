@@ -17,6 +17,8 @@ import * as warehousesApi from 'src/utils/api/pagesApi/warehousesApi';
 import { PurchaseOrder } from 'src/utils/api/pagesApi/purchaseOrdersApi';
 import { t } from 'i18next';
 
+
+
 const PurchaseOrdersPage: React.FC = () => {
   const navigate = useNavigate();
   const [purchaseOrders, setPurchaseOrders] = React.useState<PurchaseOrder[]>([]);

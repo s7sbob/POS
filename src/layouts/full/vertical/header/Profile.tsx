@@ -1,127 +1,153 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-// @ts-ignore
-import React, { useState } from 'react';
+// File: src/layouts/full/vertical/header/Profile.tsx
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import {
+  Avatar,
   Box,
   Menu,
-  Avatar,
-  Typography,
-  Divider,
-  Button,
   IconButton,
-  Stack
-} from '@mui/material';
-import { IconMail } from '@tabler/icons-react';
-import { Link as RouterLink, useNavigate } from 'react-router-dom';
+  MenuItem,
+  ListItemIcon,
+  ListItemText,
+  Typography,
+  Divider} from '@mui/material';
+import { IconListCheck, IconMail, IconUser, IconSettings, IconLogout, IconBuilding } from '@tabler/icons-react';
+import { useTranslation } from 'react-i18next';
+import { useAuth } from 'src/contexts/AuthContext';
 
-import * as dropdownData from './data';                // ↩︎ احتفِظ بملف data كما هو
-import ProfileImg from 'src/assets/images/profile/user-1.jpg';
-import unlimitedImg from 'src/assets/images/backgrounds/unlimited-bg.png';
-import { clearAuth } from 'src/utils/auth';
-
-const ProfileMenu: React.FC = () => {
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+const Profile = () => {
+  const { t } = useTranslation();
+  const [anchorEl2, setAnchorEl2] = useState(null);
+  const { user, logout, selectedBranch } = useAuth();
   const navigate = useNavigate();
 
-  const open = Boolean(anchorEl);
-  const handleOpen = (e: React.MouseEvent<HTMLButtonElement>) => setAnchorEl(e.currentTarget);
-  const handleClose = () => setAnchorEl(null);
+  const handleClick2 = (event: any) => {
+    setAnchorEl2(event.currentTarget);
+  };
 
-  /* ------ تسجيل الخروج ------ */
+  const handleClose2 = () => {
+    setAnchorEl2(null);
+  };
+
   const handleLogout = () => {
-    clearAuth();
-    handleClose();
-    navigate('/auth/login', { replace: true });
+    logout();
+    navigate('/auth/login');
+    handleClose2();
   };
 
   return (
     <Box>
       <IconButton
         size="large"
-        color={open ? 'primary' : 'inherit'}
-        onClick={handleOpen}
+        aria-label="show 11 new notifications"
+        color="inherit"
+        aria-controls="msgs-menu"
+        aria-haspopup="true"
+        sx={{
+          ...(typeof anchorEl2 === 'object' && {
+            color: 'primary.main',
+          }),
+        }}
+        onClick={handleClick2}
       >
-        <Avatar src={ProfileImg} sx={{ width: 35, height: 35 }} />
+        <Avatar
+          src="/images/profile/user-1.jpg"
+          alt="image"
+          sx={{
+            width: 35,
+            height: 35,
+          }}
+        />
       </IconButton>
-
+      
       <Menu
-        id="profile-menu"
-        anchorEl={anchorEl}
-        open={open}
-        onClose={handleClose}
+        id="msgs-menu"
+        anchorEl={anchorEl2}
+        keepMounted
+        open={Boolean(anchorEl2)}
+        onClose={handleClose2}
         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
         transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-        sx={{ '& .MuiMenu-paper': { width: 360, p: 4 } }}
+        sx={{
+          '& .MuiMenu-paper': {
+            width: '280px',
+            p: 2,
+          },
+        }}
       >
-        {/* ---- Header ---- */}
-        <Typography variant="h5">User Profile</Typography>
-        <Stack direction="row" py={3} spacing={2} alignItems="center">
-          <Avatar src={ProfileImg} sx={{ width: 95, height: 95 }} />
-          <Box>
-            <Typography fontWeight={600}>Mathew Anderson</Typography>
-            <Typography color="text.secondary">Designer</Typography>
+        {/* User Info */}
+        <Box sx={{ mb: 2 }}>
+          <Typography variant="h6">{user?.userName || t('profile.user')}</Typography>
+          <Typography
+            color="textSecondary"
+            variant="caption"
+            fontSize="12px"
+            fontWeight="400"
+          >
+            {user?.phoneNo || ''}
+          </Typography>
+          {selectedBranch && (
             <Typography
-              color="text.secondary"
-              display="flex"
-              alignItems="center"
-              gap={1}
+              color="textSecondary"
+              variant="caption"
+              fontSize="11px"
+              fontWeight="400"
+              display="block"
             >
-              <IconMail width={15} height={15} /> info@modernize.com
+              {selectedBranch.name} - {selectedBranch.company.name}
             </Typography>
-          </Box>
-        </Stack>
+          )}
+        </Box>
+
         <Divider />
 
-        {/* ---- Links from data.ts ---- */}
-        {dropdownData.profile.map((item) => (
-          <Box key={item.title} py={2}>
-            <RouterLink to={item.href} onClick={handleClose}>
-              <Stack direction="row" spacing={2}>
-                <Box
-                  width={45}
-                  height={45}
-                  bgcolor="primary.light"
-                  display="flex"
-                  alignItems="center"
-                  justifyContent="center"
-                >
-                  <Avatar src={item.icon} sx={{ width: 24, height: 24, borderRadius: 0 }} />
-                </Box>
-                <Box>
-                  <Typography fontWeight={600} noWrap width={240}>
-                    {item.title}
-                  </Typography>
-                  <Typography color="text.secondary" noWrap width={240}>
-                    {item.subtitle}
-                  </Typography>
-                </Box>
-              </Stack>
-            </RouterLink>
-          </Box>
-        ))}
+        {/* Menu Items */}
+        <MenuItem component={Link} to="/users" onClick={handleClose2}>
+          <ListItemIcon>
+            <IconUser width={20} />
+          </ListItemIcon>
+          <ListItemText>{t('profile.menu.userManagement')}</ListItemText>
+        </MenuItem>
 
-        {/* ---- Upgrade Box ---- */}
-        <Box mt={2}>
-          <Box bgcolor="primary.light" p={3} mb={3} position="relative" overflow="hidden">
-            <Box display="flex" justifyContent="space-between">
-              <Box>
-                <Typography variant="h5" mb={2}>
-                  Unlimited <br /> Access
-                </Typography>
-                <Button variant="contained">Upgrade</Button>
-              </Box>
-              <img src={unlimitedImg} alt="" className="signup-bg" />
-            </Box>
-          </Box>
+        <MenuItem component={Link} to="/company" onClick={handleClose2}>
+          <ListItemIcon>
+            <IconBuilding width={20} />
+          </ListItemIcon>
+          <ListItemText>{t('profile.menu.companySettings')}</ListItemText>
+        </MenuItem>
 
-          {/* ---- Logout ---- */}
-          <Button variant="outlined" fullWidth onClick={handleLogout}>
-            Logout
-          </Button>
-        </Box>
+        <MenuItem component={Link} to="/permissions" onClick={handleClose2}>
+          <ListItemIcon>
+            <IconSettings width={20} />
+          </ListItemIcon>
+          <ListItemText>{t('profile.menu.permissions')}</ListItemText>
+        </MenuItem>
+
+        <MenuItem>
+          <ListItemIcon>
+            <IconMail width={20} />
+          </ListItemIcon>
+          <ListItemText>{t('profile.menu.inbox')}</ListItemText>
+        </MenuItem>
+
+        <MenuItem>
+          <ListItemIcon>
+            <IconListCheck width={20} />
+          </ListItemIcon>
+          <ListItemText>{t('profile.menu.taskList')}</ListItemText>
+        </MenuItem>
+
+        <Divider />
+
+        <MenuItem onClick={handleLogout}>
+          <ListItemIcon>
+            <IconLogout width={20} />
+          </ListItemIcon>
+          <ListItemText>{t('auth.logout')}</ListItemText>
+        </MenuItem>
       </Menu>
     </Box>
   );
 };
 
-export default ProfileMenu;
+export default Profile;
