@@ -14,11 +14,10 @@ import { IconFilter } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
 import * as adjustmentsListApi from 'src/utils/api/pagesApi/inventoryAdjustmentApi';
 import * as warehousesApi from 'src/utils/api/pagesApi/warehousesApi';
-import AdjustmentsListHeader from './components/AdjustmentsListHeader';
+import PageHeader from './components/PageHeader'; // استبدال AdjustmentsListHeader
 import AdjustmentsTable from './components/AdjustmentsTable';
 import AdjustmentsCards from './components/AdjustmentsCards';
 import MobileAdjustmentsFilter, { FilterState } from './components/mobile/MobileAdjustmentsFilter';
-import ExportButtons from '../../components/ExportButtons';
 
 const AdjustmentsListPage: React.FC = () => {
   const { t } = useTranslation();
@@ -148,66 +147,6 @@ const AdjustmentsListPage: React.FC = () => {
     return count;
   };
 
-  const exportColumns = [
-    { 
-      field: 'adjustmentId', 
-      headerName: t('adjustments.table.adjustmentId'),
-      type: 'string' as const,
-      format: (value: string) => value.substring(0, 8) + '...'
-    },
-    { 
-      field: 'warehouseName', 
-      headerName: t('adjustments.table.warehouse'),
-      type: 'string' as const
-    },
-    { 
-      field: 'adjustmentType', 
-      headerName: t('adjustments.table.type'),
-      type: 'string' as const,
-      format: (value: number) => {
-        switch (value) {
-          case 0: return t('adjustments.types.new');
-          case 1: return t('adjustments.types.openingBalance');
-          case 2: return t('adjustments.types.manualAdjustment');
-          default: return t('adjustments.types.unknown');
-        }
-      }
-    },
-    { 
-      field: 'adjustmentDate', 
-      headerName: t('adjustments.table.date'),
-      type: 'date' as const,
-      format: (value: string) => {
-        if (!value || value === '0001-01-01T00:00:00') return '-';
-        return new Date(value).toLocaleDateString();
-      }
-    },
-    { 
-      field: 'referenceNumber', 
-      headerName: t('adjustments.table.referenceNumber'),
-      type: 'string' as const,
-      format: (value: string) => value || '-'
-    },
-    { 
-      field: 'reason', 
-      headerName: t('adjustments.table.reason'),
-      type: 'string' as const,
-      format: (value: string) => value || '-'
-    },
-    { 
-      field: 'status', 
-      headerName: t('adjustments.table.status'),
-      type: 'string' as const,
-      format: (value: number) => {
-        switch (value) {
-          case 1: return t('adjustments.status.saved');
-          case 3: return t('adjustments.status.submitted');
-          default: return t('adjustments.status.unknown');
-        }
-      }
-    }
-  ];
-
   return (
     <Container 
       maxWidth={false} 
@@ -218,21 +157,12 @@ const AdjustmentsListPage: React.FC = () => {
         overflow: 'hidden'
       }}
     >
-      <AdjustmentsListHeader
+      {/* استبدال AdjustmentsListHeader و ExportButtons بـ PageHeader الجديد */}
+      <PageHeader
+        exportData={filteredAndSortedAdjustments}
+        loading={loading}
         onRefresh={loadData}
-        isLoading={loading}
       />
-
-      <Box sx={{ mb: { xs: 1, sm: 2 } }}>
-        <ExportButtons
-          data={filteredAndSortedAdjustments}
-          columns={exportColumns}
-          fileName="inventory-adjustments"
-          title={t('adjustments.list.title')}
-          loading={loading}
-          compact={isMobile}
-        />
-      </Box>
 
       <Box sx={{ 
         width: '100%',

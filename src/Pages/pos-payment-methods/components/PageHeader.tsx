@@ -7,7 +7,8 @@ import {
   useTheme
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
-import ExportButtons from '../../components/ExportButtons';
+import ImportExportManager from '../../components/ImportExportManager';
+import { posPaymentMethodsImportExportConfig } from '../../components/configs/importExportConfigs';
 import { PosPaymentMethod } from 'src/utils/api/pagesApi/posPaymentMethodsApi';
 
 interface Props {
@@ -20,37 +21,16 @@ const PageHeader: React.FC<Props> = ({ exportData, loading }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
-  const exportColumns = [
-    { 
-      field: 'name', 
-      headerName: t('posPaymentMethods.name'),
-      type: 'string' as const
-    },
-    { 
-      field: 'safeOrAccount.name', 
-      headerName: t('posPaymentMethods.safeOrAccount'),
-      type: 'string' as const,
-      format: (value: any) => value || '-'
-    },
-    { 
-      field: 'safeOrAccount.typeName', 
-      headerName: t('posPaymentMethods.accountType'),
-      type: 'string' as const,
-      format: (value: any) => value || '-'
-    },
-    { 
-      field: 'safeOrAccount.accountNumber', 
-      headerName: t('posPaymentMethods.accountNumber'),
-      type: 'string' as const,
-      format: (value: any) => value || '-'
-    },
-    { 
-      field: 'isActive', 
-      headerName: t('posPaymentMethods.status'),
-      type: 'string' as const,
-      format: (value: boolean) => value ? t('posPaymentMethods.active') : t('posPaymentMethods.inactive')
-    }
-  ];
+  const config = {
+    ...posPaymentMethodsImportExportConfig,
+    onExport: () => exportData.map(method => ({
+      name: method.name,
+      safeOrAccountName: method.safeOrAccount?.name || '',
+      type: method.type,
+      isActive: method.isActive,
+      createdOn: method.createdOn
+    }))
+  };
 
   return (
     <Box sx={{ mb: { xs: 2, sm: 3 } }}>
@@ -74,11 +54,9 @@ const PageHeader: React.FC<Props> = ({ exportData, loading }) => {
         </Typography>
       </Box>
 
-      <ExportButtons
+      <ImportExportManager
+        config={config}
         data={exportData}
-        columns={exportColumns}
-        fileName="pos-payment-methods"
-        title={t('posPaymentMethods.title')}
         loading={loading}
         compact={isMobile}
       />

@@ -7,7 +7,8 @@ import {
   useTheme
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
-import ExportButtons from '../../components/ExportButtons';
+import ImportExportManager from '../../components/ImportExportManager';
+import { safesImportExportConfig } from '../../components/configs/importExportConfigs';
 import { Safe } from 'src/utils/api/pagesApi/safesApi';
 
 interface Props {
@@ -20,36 +21,16 @@ const PageHeader: React.FC<Props> = ({ exportData, loading }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
-  const exportColumns = [
-    { 
-      field: 'name', 
-      headerName: t('safes.name'),
-      type: 'string' as const
-    },
-    { 
-      field: 'typeName', 
-      headerName: t('safes.type'),
-      type: 'string' as const
-    },
-    { 
-      field: 'accountNumber', 
-      headerName: t('safes.accountNumber'),
-      type: 'string' as const,
-      format: (value: string) => value || '-'
-    },
-    { 
-      field: 'collectionFeePercent', 
-      headerName: t('safes.collectionFeePercent'),
-      type: 'number' as const,
-      format: (value: number) => `${value}%`
-    },
-    { 
-      field: 'isActive', 
-      headerName: t('safes.status'),
-      type: 'string' as const,
-      format: (value: boolean) => value ? t('safes.active') : t('safes.inactive')
-    }
-  ];
+  const config = {
+    ...safesImportExportConfig,
+    onExport: () => exportData.map(safe => ({
+      name: safe.name,
+      typeName: safe.typeName,
+      accountNumber: safe.accountNumber,
+      collectionFeePercent: safe.collectionFeePercent,
+      isActive: safe.isActive
+    }))
+  };
 
   return (
     <Box sx={{ mb: { xs: 2, sm: 3 } }}>
@@ -73,11 +54,9 @@ const PageHeader: React.FC<Props> = ({ exportData, loading }) => {
         </Typography>
       </Box>
 
-      <ExportButtons
+      <ImportExportManager
+        config={config}
         data={exportData}
-        columns={exportColumns}
-        fileName="safes"
-        title={t('safes.title')}
         loading={loading}
         compact={isMobile}
       />

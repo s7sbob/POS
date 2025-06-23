@@ -1,31 +1,69 @@
 // File: src/pages/suppliers/components/PageHeader.tsx
 import React from 'react';
-import PageHeader from '../../components/PageHeader';
+import {
+  Box,
+  Typography,
+  useMediaQuery,
+  useTheme
+} from '@mui/material';
+import { useTranslation } from 'react-i18next';
+import ImportExportManager from '../../components/ImportExportManager';
+import { suppliersImportExportConfig } from '../../components/configs/importExportConfigs';
+import { Supplier } from 'src/utils/api/pagesApi/suppliersApi';
 
 interface Props {
-  exportData?: any[];
-  loading?: boolean;
+  exportData: Supplier[];
+  loading: boolean;
 }
 
-const SuppliersPageHeader: React.FC<Props> = ({ exportData = [], loading = false }) => {
-  const exportColumns = [
-    { field: 'name', headerName: 'اسم المورد', type: 'string' as const },
-    { field: 'phone', headerName: 'الهاتف', type: 'string' as const },
-    { field: 'address', headerName: 'العنوان', type: 'string' as const },
-    { field: 'createdOn', headerName: 'تاريخ الإنشاء', type: 'date' as const },
-    { field: 'isActive', headerName: 'الحالة', type: 'boolean' as const },
-  ];
+const PageHeader: React.FC<Props> = ({ exportData, loading }) => {
+  const { t } = useTranslation();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+
+  const config = {
+    ...suppliersImportExportConfig,
+    onExport: () => exportData.map(supplier => ({
+      name: supplier.name,
+      phone: supplier.phone,
+      address: supplier.address,
+      email: supplier.email,
+      taxNumber: supplier.taxNumber,
+      isActive: supplier.isActive,
+      createdOn: supplier.createdOn
+    }))
+  };
 
   return (
-    <PageHeader
-      titleKey="suppliers.title"
-      subtitleKey="suppliers.subtitle"
-      exportData={exportData}
-      exportColumns={exportColumns}
-      exportFileName="suppliers"
-      exportLoading={loading}
-    />
+    <Box sx={{ mb: { xs: 2, sm: 3 } }}>
+      <Box sx={{ 
+        display: 'flex', 
+        flexDirection: { xs: 'column', sm: 'row' },
+        justifyContent: 'space-between', 
+        alignItems: { xs: 'flex-start', sm: 'center' }, 
+        mb: { xs: 1, sm: 2 },
+        gap: { xs: 1, sm: 0 }
+      }}>
+        <Typography 
+          variant={isMobile ? "h5" : "h4"} 
+          component="h1"
+          sx={{
+            fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' },
+            fontWeight: { xs: 600, sm: 500 }
+          }}
+        >
+          {t('suppliers.title')}
+        </Typography>
+      </Box>
+
+      <ImportExportManager
+        config={config}
+        data={exportData}
+        loading={loading}
+        compact={isMobile}
+      />
+    </Box>
   );
 };
 
-export default SuppliersPageHeader;
+export default PageHeader;

@@ -7,7 +7,8 @@ import {
   useTheme
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
-import ExportButtons from '../../components/ExportButtons';
+import ImportExportManager from '../../components/ImportExportManager';
+import { accountsImportExportConfig } from '../../components/configs/importExportConfigs';
 import { Account } from 'src/utils/api/pagesApi/accountsApi';
 
 interface Props {
@@ -20,35 +21,16 @@ const PageHeader: React.FC<Props> = ({ exportData, loading }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
-  const exportColumns = [
-    { 
-      field: 'name', 
-      headerName: t('accounts.name'),
-      type: 'string' as const
-    },
-    { 
-      field: 'typeName', 
-      headerName: t('accounts.type'),
-      type: 'string' as const
-    },
-    { 
-      field: 'accountNumber', 
-      headerName: t('accounts.accountNumber'),
-      type: 'string' as const
-    },
-    { 
-      field: 'collectionFeePercent', 
-      headerName: t('accounts.collectionFeePercent'),
-      type: 'number' as const,
-      format: (value: number) => `${value}%`
-    },
-    { 
-      field: 'isActive', 
-      headerName: t('accounts.status'),
-      type: 'string' as const,
-      format: (value: boolean) => value ? t('accounts.active') : t('accounts.inactive')
-    }
-  ];
+  const config = {
+    ...accountsImportExportConfig,
+    onExport: () => exportData.map(account => ({
+      name: account.name,
+      typeName: account.typeName,
+      accountNumber: account.accountNumber,
+      collectionFeePercent: account.collectionFeePercent,
+      isActive: account.isActive
+    }))
+  };
 
   return (
     <Box sx={{ mb: { xs: 2, sm: 3 } }}>
@@ -72,11 +54,9 @@ const PageHeader: React.FC<Props> = ({ exportData, loading }) => {
         </Typography>
       </Box>
 
-      <ExportButtons
+      <ImportExportManager
+        config={config}
         data={exportData}
-        columns={exportColumns}
-        fileName="accounts"
-        title={t('accounts.title')}
         loading={loading}
         compact={isMobile}
       />

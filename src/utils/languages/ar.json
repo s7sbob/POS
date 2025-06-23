@@ -26,6 +26,7 @@
     "inventoryadjustments": "تسوية الجرد",
     "stock": "المخزون",
     "sales": "المبيعات",
+    "screens": "الشاشات",
     "promo": "العروض",
     "purchases": "المشتريات",
     "finance": "المالية والحسابات",
@@ -108,6 +109,23 @@
        "components": "المكونات",
            "loadingComponentDetails": "جاري تحميل تفاصيل المكون",
            "selectedComponent": "المكون المحدد",
+               "copySuccess": "تم نسخ إعدادات المنتج بنجاح",
+    "pasteSuccess": "تم لصق الإعدادات مع {{count}} أسعار",
+    "nameRequiredForCopy": "يجب إدخال اسم المنتج أولاً للنسخ",
+    "componentsCopySuccess": "تم نسخ المكونات بنجاح",
+    "componentsPasteSuccess": "تم لصق المكونات بنجاح",
+    "noComponentsToCopy": "لا توجد مكونات للنسخ",
+        "addComponentTitle": "إضافة مكون جديد",
+        "editComponentTitle": "تعديل المكون",
+        "componentName": "اسم المكون",
+        "componentCode": "كود المكون",
+        "componentGroup": "مجموعة المكون",
+        "componentType": "نوع المكون",
+        "componentDescription": "وصف المكون",
+        "componentReorderLevel": "حد الطلب للمكون",
+        "componentCost": "تكلفة المكون",
+        "componentLastPurePrice": "آخر سعر خالص للمكون",
+        "componentExpirationDays": "أيام انتهاء صلاحية المكون",
     "addComponent": "إضافة مكون",
         "scrollForMore": "مرر لأسفل لتحميل المزيد",
     "noComponents": "لا توجد مكونات",
@@ -292,7 +310,9 @@
     "subject": "تقرير البيانات",
     "author": "نظام إدارة المخزون",
     "errorPdf": "حدث خطأ أثناء تصدير PDF",
-    "errorExcel": "حدث خطأ أثناء تصدير Excel"
+    "errorExcel": "حدث خطأ أثناء تصدير Excel",
+        "exportExcel": "تصدير Excel",
+    "exportPdf": "تصدير PDF"
   },
    "suppliers": {
     "title": "الموردين",
@@ -548,6 +568,10 @@
     "all": "الكل",
     "home": "الرئيسية",
     "add": "إضافة",
+        "copy": "نسخ",
+    "paste": "لصق",
+    "clear": "مسح",
+    "expoerDate": "تاريخ التصدير",
     "edit": "تعديل",
     "cancel": "إلغاء",
     "loading": "جاري التحميل...",
@@ -1092,8 +1116,29 @@
       "results": "النتائج",
       "activeFilters": "فلاتر نشطة"
     }
+  },
+
+
+    "import": {
+    "import": "استيراد",
+    "downloadTemplate": "تحميل القالب",
+    "importTitle": "استيراد البيانات",
+    "selectFile": "اختر ملف Excel",
+    "importing": "جاري الاستيراد",
+    "errorsFound": "تم العثور على أخطاء",
+    "importComplete": "تم الاستيراد بنجاح",
+    "successfulRecords": "السجلات الناجحة",
+    "failedRecords": "السجلات الفاشلة",
+    "andMore": "و {count} أخطاء أخرى",
+    "dataPreview": "معاينة البيانات",
+    "records": "سجل",
+    "andMoreRecords": "و {count} سجلات أخرى",
+    "fileReadError": "خطأ في قراءة الملف",
+    "requiredField": "الحقل المطلوب",
+    "inRow": "في الصف",
+    "validationError": "خطأ في التحقق",
+    "importError": "خطأ في الاستيراد"
   }
-  
 
 
 }

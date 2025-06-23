@@ -14,6 +14,8 @@ export interface PosPaymentMethodBranch {
 }
 
 export interface PosPaymentMethod {
+  type: any;
+  createdOn: any;
   id: string;
   name: string;
   safeOrAccountID?: string;

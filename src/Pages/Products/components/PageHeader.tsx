@@ -1,32 +1,71 @@
 // File: src/pages/products/components/PageHeader.tsx
 import React from 'react';
-import PageHeader from '../../components/PageHeader';
+import {
+  Box,
+  Typography,
+  useMediaQuery,
+  useTheme
+} from '@mui/material';
+import { useTranslation } from 'react-i18next';
+import ImportExportManager from '../../components/ImportExportManager';
+import { productsImportExportConfig } from '../../components/configs/importExportConfigs';
+import { Product } from 'src/utils/api/pagesApi/productsApi';
 
 interface Props {
-  exportData?: any[];
-  loading?: boolean;
+  exportData: Product[];
+  loading: boolean;
 }
 
-const ProductsPageHeader: React.FC<Props> = ({ exportData = [], loading = false }) => {
-  const exportColumns = [
-    { field: 'name', headerName: 'اسم المنتج', type: 'string' as const },
-    { field: 'code', headerName: 'الكود', type: 'number' as const },
-    { field: 'group.name', headerName: 'المجموعة', type: 'string' as const, format: (value: any) => value?.name || 'غير محدد' },
-    { field: 'cost', headerName: 'التكلفة', type: 'number' as const },
-    { field: 'productType', headerName: 'النوع', type: 'string' as const, format: (value: number) => value === 1 ? 'POS' : 'Material' },
-    { field: 'isActive', headerName: 'الحالة', type: 'boolean' as const },
-  ];
+const PageHeader: React.FC<Props> = ({ exportData, loading }) => {
+  const { t } = useTranslation();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+
+  const config = {
+    ...productsImportExportConfig,
+    onExport: () => exportData.map(product => ({
+      productName: product.name,
+      groupName: product.group?.name || 'غير محدد',
+      productType: product.productType === 1 ? 'POS' : 'Material',
+      description: product.description,
+      reorderLevel: product.reorderLevel,
+      cost: product.cost,
+      expirationDays: product.expirationDays,
+      code: product.code,
+      isActive: product.isActive
+    }))
+  };
 
   return (
-    <PageHeader
-      titleKey="products.title"
-      subtitleKey="products.subtitle"
-      exportData={exportData}
-      exportColumns={exportColumns}
-      exportFileName="products"
-      exportLoading={loading}
-    />
+    <Box sx={{ mb: { xs: 2, sm: 3 } }}>
+      <Box sx={{ 
+        display: 'flex', 
+        flexDirection: { xs: 'column', sm: 'row' },
+        justifyContent: 'space-between', 
+        alignItems: { xs: 'flex-start', sm: 'center' }, 
+        mb: { xs: 1, sm: 2 },
+        gap: { xs: 1, sm: 0 }
+      }}>
+        <Typography 
+          variant={isMobile ? "h5" : "h4"} 
+          component="h1"
+          sx={{
+            fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' },
+            fontWeight: { xs: 600, sm: 500 }
+          }}
+        >
+          {t('products.title')}
+        </Typography>
+      </Box>
+
+      <ImportExportManager
+        config={config}
+        data={exportData}
+        loading={loading}
+        compact={isMobile}
+      />
+    </Box>
   );
 };
 
-export default ProductsPageHeader;
+export default PageHeader;

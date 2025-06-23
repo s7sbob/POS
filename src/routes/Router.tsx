@@ -151,12 +151,6 @@ const PieCharts = Loadable(lazy(() => import('../views/muicharts/piecharts/page'
 const ScatterCharts = Loadable(lazy(() => import('../views/muicharts/scattercharts/page')));
 const SparklineCharts = Loadable(lazy(() => import('../views/muicharts/sparklinecharts/page')));
 
-//mui charts
-const SimpletreeCustomization = Loadable(lazy(() => import('../views/mui-trees/simpletree/simpletree-customization/page')));
-const SimpletreeExpansion = Loadable(lazy(() => import('../views/mui-trees/simpletree/simpletree-expansion/page')));
-const SimpletreeFocus = Loadable(lazy(() => import('../views/mui-trees/simpletree/simpletree-focus/page')));
-const SimpletreeItems = Loadable(lazy(() => import('../views/mui-trees/simpletree/simpletree-items/page')));
-const SimpletreeSelection = Loadable(lazy(() => import('../views/mui-trees/simpletree/simpletree-selection/page')));
 
 // widget
 const WidgetCards = Loadable(lazy(() => import('../views/widgets/cards/WidgetCards')));
@@ -309,13 +303,6 @@ const Router = [
       { path: '/muicharts/piecharts', element: <PieCharts /> },
       { path: '/muicharts/scattercharts', element: <ScatterCharts /> },
       { path: '/muicharts/sparklinecharts', element: <SparklineCharts /> },
-
-      { path: '/mui-trees/simpletree/simpletree-customization', element: <SimpletreeCustomization /> },
-      { path: '/mui-trees/simpletree/simpletree-expansion', element: <SimpletreeExpansion /> },
-      { path: '/mui-trees/simpletree/simpletree-focus', element: <SimpletreeFocus /> },
-      { path: '/mui-trees/simpletree/simpletree-items', element: <SimpletreeItems /> },
-      { path: '/mui-trees/simpletree/simpletree-selection', element: <SimpletreeSelection /> },
-
       { path: '*', element: <Navigate to="/auth/404" /> },
     ],
   },

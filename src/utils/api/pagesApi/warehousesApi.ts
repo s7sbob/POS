@@ -1,6 +1,7 @@
 import api from '../../axios';
 
 export type Warehouse = {
+  [x: string]: any;
   id: string;
   /* code موجود لكن لا يُعرَض – نحتاجه فقط أثناء التعديل */
   code: number;

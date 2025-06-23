@@ -1,6 +1,7 @@
 import api from '../../axios';
 
 export type Supplier = {
+  [x: string]: any;
   id: string;
   code: number;
   name: string;

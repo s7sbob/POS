@@ -1,30 +1,66 @@
 // File: src/pages/warehouses/components/PageHeader.tsx
 import React from 'react';
-import PageHeader from '../../components/PageHeader';
+import {
+  Box,
+  Typography,
+  useMediaQuery,
+  useTheme
+} from '@mui/material';
+import { useTranslation } from 'react-i18next';
+import ImportExportManager from '../../components/ImportExportManager';
+import { warehousesImportExportConfig } from '../../components/configs/importExportConfigs';
+import { Warehouse } from 'src/utils/api/pagesApi/warehousesApi';
 
 interface Props {
-  exportData?: any[];
-  loading?: boolean;
+  exportData: Warehouse[];
+  loading: boolean;
 }
 
-const WarehousesPageHeader: React.FC<Props> = ({ exportData = [], loading = false }) => {
-  const exportColumns = [
-    { field: 'name', headerName: 'اسم المخزن', type: 'string' as const },
-    { field: 'address', headerName: 'العنوان', type: 'string' as const },
-    { field: 'createdOn', headerName: 'تاريخ الإنشاء', type: 'date' as const },
-    { field: 'isActive', headerName: 'الحالة', type: 'boolean' as const },
-  ];
+const PageHeader: React.FC<Props> = ({ exportData, loading }) => {
+  const { t } = useTranslation();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+
+  const config = {
+    ...warehousesImportExportConfig,
+    onExport: () => exportData.map(warehouse => ({
+      name: warehouse.name,
+      address: warehouse.address,
+      isActive: warehouse.isActive,
+      createdOn: warehouse.createdOn
+    }))
+  };
 
   return (
-    <PageHeader
-      titleKey="warehouses.title"
-      subtitleKey="warehouses.subtitle"
-      exportData={exportData}
-      exportColumns={exportColumns}
-      exportFileName="warehouses"
-      exportLoading={loading}
-    />
+    <Box sx={{ mb: { xs: 2, sm: 3 } }}>
+      <Box sx={{ 
+        display: 'flex', 
+        flexDirection: { xs: 'column', sm: 'row' },
+        justifyContent: 'space-between', 
+        alignItems: { xs: 'flex-start', sm: 'center' }, 
+        mb: { xs: 1, sm: 2 },
+        gap: { xs: 1, sm: 0 }
+      }}>
+        <Typography 
+          variant={isMobile ? "h5" : "h4"} 
+          component="h1"
+          sx={{
+            fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' },
+            fontWeight: { xs: 600, sm: 500 }
+          }}
+        >
+          {t('warehouses.title')}
+        </Typography>
+      </Box>
+
+      <ImportExportManager
+        config={config}
+        data={exportData}
+        loading={loading}
+        compact={isMobile}
+      />
+    </Box>
   );
 };
 
-export default WarehousesPageHeader;
+export default PageHeader;

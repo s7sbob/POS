@@ -38,6 +38,7 @@ export interface InventoryAdjustment {
 
 
 export interface AdjustmentListItem {
+  [x: string]: any;
   warehouseName: string;
   adjustmentId: string;
   adjustmentType: number;

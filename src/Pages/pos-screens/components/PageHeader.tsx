@@ -7,7 +7,8 @@ import {
   useTheme
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
-import ExportButtons from '../../components/ExportButtons';
+import ImportExportManager from '../../components/ImportExportManager';
+import { posScreensImportExportConfig } from '../../components/configs/importExportConfigs';
 import { PosScreen } from 'src/utils/api/pagesApi/posScreensApi';
 
 interface Props {
@@ -27,14 +28,13 @@ const PageHeader: React.FC<Props> = ({ exportData, loading }) => {
     const flatten = (screens: PosScreen[], level = 0) => {
       screens.forEach(screen => {
         result.push({
-          name: screen.name,
-          level: level,
+          screenName: screen.name,
+          parentScreenName: screen.parentScreen?.name || '',
           displayOrder: screen.displayOrder,
-          icon: screen.icon,
           colorHex: screen.colorHex,
+          icon: screen.icon,
           isVisible: screen.isVisible,
-          isActive: screen.isActive,
-          parentName: screen.parentScreen?.name || '-'
+          level: level
         });
         
         if (screen.children && screen.children.length > 0) {
@@ -47,50 +47,10 @@ const PageHeader: React.FC<Props> = ({ exportData, loading }) => {
     return result;
   };
 
-  const exportColumns = [
-    { 
-      field: 'name', 
-      headerName: t('posScreens.name'),
-      type: 'string' as const
-    },
-    { 
-      field: 'level', 
-      headerName: t('posScreens.level'),
-      type: 'number' as const
-    },
-    { 
-      field: 'displayOrder', 
-      headerName: t('posScreens.displayOrder'),
-      type: 'number' as const
-    },
-    { 
-      field: 'icon', 
-      headerName: t('posScreens.icon'),
-      type: 'string' as const
-    },
-    { 
-      field: 'colorHex', 
-      headerName: t('posScreens.color'),
-      type: 'string' as const
-    },
-    { 
-      field: 'isVisible', 
-      headerName: t('posScreens.visibility'),
-      type: 'string' as const,
-      format: (value: boolean) => value ? t('posScreens.visible') : t('posScreens.hidden')
-    },
-    { 
-      field: 'isActive', 
-      headerName: t('posScreens.status'),
-      type: 'string' as const,
-      format: (value: boolean) => value ? t('posScreens.active') : t('posScreens.inactive')
-    },
-    { 
-      field: 'parentName', 
-      headerName: t('posScreens.parentScreen'),
-      type: 'string' as const
-    }
-  ];
+  const config = {
+    ...posScreensImportExportConfig,
+    onExport: () => flattenScreens(exportData)
+  };
 
   return (
     <Box sx={{ mb: { xs: 2, sm: 3 } }}>
@@ -114,11 +74,9 @@ const PageHeader: React.FC<Props> = ({ exportData, loading }) => {
         </Typography>
       </Box>
 
-      <ExportButtons
-        data={flattenScreens(exportData)}
-        columns={exportColumns}
-        fileName="pos-screens"
-        title={t('posScreens.title')}
+      <ImportExportManager
+        config={config}
+        data={exportData}
         loading={loading}
         compact={isMobile}
       />

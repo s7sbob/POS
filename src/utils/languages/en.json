@@ -99,6 +99,8 @@
     "recordsCount": "{{count}} records",
     "exportedOn": "Exported on",
     "subject": "Data Report",
+        "exportExcel": "Export Excel",
+    "exportPdf": "Export PDF",
     "author": "Inventory Management System",
     "errorPdf": "Error occurred while exporting PDF",
     "errorExcel": "Error occurred while exporting Excel"
@@ -247,6 +249,7 @@
     "stock": "Stock",
     "sales": "Sales",
     "promo": "Promo",
+    "screens": "Screens",
     "purchases": "Purchases",
     "finance": "Finance & Accounts",
     "peoples": "Peoples",
@@ -333,6 +336,12 @@
     "searchPlaceholder": "Search by name or barcode...",
     "searchByBarcode": "Search by Barcode",
     "searchByName": "Search by Name",
+        "copySuccess": "Product settings copied successfully",
+    "pasteSuccess": "Settings pasted with {{count}} prices",
+    "nameRequiredForCopy": "Product name is required for copying",
+    "componentsCopySuccess": "Components copied successfully",
+    "componentsPasteSuccess": "Components pasted successfully",
+    "noComponentsToCopy": "No components to copy",
     "searchResults": "{{count}} results",
     "searching": "Searching...",
         "components": "Components",
@@ -565,12 +574,16 @@
     "search": "Search",
     "all": "All",
     "home": "Home",
+    "exportDate": "Export Date",
     "selected": "selected",
     "hideColumn": "Hide Column",
     "loading": "Loading...",
     "cancel": "Cancel",
     "save": "Save",
     "back": "Back",
+        "copy": "Copy",
+    "paste": "Paste",
+    "clear": "Clear",
     "saveError": "Save Error",
     "inLine": "in line",
     "searching": "Searching",
@@ -1064,7 +1077,26 @@
 
 
 
-
+"import": {
+    "import": "Import",
+    "downloadTemplate": "Download Template",
+    "importTitle": "Import Data",
+    "selectFile": "Select Excel File",
+    "importing": "Importing",
+    "errorsFound": "Errors Found",
+    "importComplete": "Import Complete",
+    "successfulRecords": "Successful Records",
+    "failedRecords": "Failed Records",
+    "andMore": "and {count} more errors",
+    "dataPreview": "Data Preview",
+    "records": "records",
+    "andMoreRecords": "and {count} more records",
+    "fileReadError": "File read error",
+    "requiredField": "Required field",
+    "inRow": "in row",
+    "validationError": "Validation error",
+    "importError": "Import error"
+  },
 
 
 
@@ -1125,6 +1157,6 @@
       "activeFilters": "active filters"
     }
   }
-  
+
 }
 

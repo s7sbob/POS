@@ -7,10 +7,12 @@ import {
   Box, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, Paper, IconButton, Stack,
   Card, CardContent, useMediaQuery, useTheme, Accordion,
-  AccordionSummary, AccordionDetails} from '@mui/material';
+  AccordionSummary, AccordionDetails, Snackbar, Alert
+} from '@mui/material';
 import { 
   IconPlus, IconTrash, IconDeviceFloppy, IconPlus as IconPlusNew,
-  IconChevronDown, IconComponents
+  IconChevronDown, IconComponents, IconCopy, IconClipboard, 
+  IconClipboardCheck, IconTrashX
 } from '@tabler/icons-react';
 import { useForm, Controller, useFieldArray } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
@@ -19,6 +21,8 @@ import { Group } from 'src/utils/api/pagesApi/groupsApi';
 import { Unit } from 'src/utils/api/pagesApi/unitsApi';
 import GroupTreeSelect from './GroupTreeSelect';
 import ProductPriceSearchSelect from './ProductPriceSearchSelect';
+import { useCopyPaste } from 'src/hooks/useCopyPaste';
+
 
 /* ---------- types ---------- */
 type FormValues = { 
@@ -55,6 +59,27 @@ interface Props {
   onSubmit: (data: any, saveAction: 'save' | 'saveAndNew') => Promise<void>;
 }
 
+// أنواع البيانات للـ Copy/Paste
+interface ProductCopyData {
+  groupId: string;
+  productType: number;
+  description: string;
+  reorderLevel: number;
+  expirationDays: number;
+  priceTemplates: Array<{
+    unitId: string;
+    unitFactor: number;
+    productComponents: Array<{
+      rawProductPriceId: string;
+      quantity: number;
+      notes: string;
+    }>;
+  }>;
+}
+
+
+
+
 const ProductForm: React.FC<Props> = ({
   open, mode, initialValues, groups, units, onClose, onSubmit
 }) => {
@@ -65,6 +90,46 @@ const ProductForm: React.FC<Props> = ({
   const [, setLastAddedPriceIndex] = React.useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [expandedPriceIndex, setExpandedPriceIndex] = React.useState<number | null>(null);
+  
+  // إضافة Snackbar state
+  const [snackbar, setSnackbar] = React.useState<{
+    open: boolean;
+    message: string;
+    severity: 'success' | 'warning' | 'error';
+  }>({
+    open: false,
+    message: '',
+    severity: 'success'
+  });
+
+
+
+
+const productCopyPaste = useCopyPaste<ProductCopyData>({
+  storageKey: 'productCopyData',
+  onCopySuccess: () => {
+    setSnackbar({
+      open: true,
+      message: t('products.copySuccess'),
+      severity: 'success'
+    });
+  },
+  onPasteSuccess: (data) => {
+    setSnackbar({
+      open: true,
+      message: t('products.pasteSuccess', { count: data.priceTemplates.length }),
+      severity: 'success'
+    });
+  },
+  onError: (error) => {
+    setSnackbar({
+      open: true,
+      message: error,
+      severity: 'error'
+    });
+  }
+});
+ 
   
   const defaults: FormValues = { 
     productName: '', 
@@ -78,7 +143,7 @@ const ProductForm: React.FC<Props> = ({
     productPrices: []
   };
 
-  const { control, handleSubmit, reset, watch, formState: { isSubmitSuccessful } } = useForm<FormValues>({
+  const { control, handleSubmit, reset, watch, setValue, getValues, formState: { isSubmitSuccessful } } = useForm<FormValues>({
     defaultValues: defaults
   });
 
@@ -150,6 +215,63 @@ const ProductForm: React.FC<Props> = ({
       }
     }
   }, [open, mode, initialValues, reset]);
+
+  // دالة نسخ المنتج
+  const handleCopyProduct = () => {
+    const currentValues = getValues();
+    
+    if (!currentValues.productName.trim()) {
+      setSnackbar({
+        open: true,
+        message: t('products.nameRequiredForCopy'),
+        severity: 'warning'
+      });
+      return;
+    }
+
+    const copyData: ProductCopyData = {
+      groupId: currentValues.groupId,
+      productType: currentValues.productType,
+      description: currentValues.description,
+      reorderLevel: currentValues.reorderLevel,
+      expirationDays: currentValues.expirationDays,
+      priceTemplates: currentValues.productPrices.map(price => ({
+        unitId: price.unitId,
+        unitFactor: price.unitFactor,
+        productComponents: price.productComponents.map(component => ({
+          rawProductPriceId: component.rawProductPriceId,
+          quantity: component.quantity,
+          notes: component.notes
+        }))
+      }))
+    };
+    
+    productCopyPaste.copyData(copyData);
+  };
+
+  // دالة لصق المنتج
+  const handlePasteProduct = () => {
+    const pastedData = productCopyPaste.pasteData();
+    
+    if (!pastedData) return;
+
+    // تطبيق البيانات المنسوخة
+    setValue('groupId', pastedData.groupId);
+    setValue('productType', pastedData.productType);
+    setValue('description', pastedData.description);
+    setValue('reorderLevel', pastedData.reorderLevel);
+    setValue('expirationDays', pastedData.expirationDays);
+    
+    // مسح الأسعار الحالية وإضافة القوالب المنسوخة
+    setValue('productPrices', pastedData.priceTemplates.map(template => ({
+      productPriceId: undefined,
+      unitId: template.unitId,
+      unitFactor: template.unitFactor,
+      barcode: '',
+      Price: 0,
+      productComponents: template.productComponents
+    })));
+  };
 
   const addPrice = () => {
     const newIndex = fields.length;
@@ -240,11 +362,10 @@ const ProductForm: React.FC<Props> = ({
     }
   };
 
-  // الحصول على اسم الوحدة
-
   // مكون إدارة المكونات لكل سعر
 
-const ProductComponentsManager: React.FC<{ priceIndex: number }> = ({ priceIndex }) => {
+
+const ProductComponentsManager: React.FC<{ priceIndex: number }> = React.memo(({ priceIndex }) => {
   const { fields: componentFields, append: appendComponent, remove: removeComponent } = useFieldArray({
     control,
     name: `productPrices.${priceIndex}.productComponents`
@@ -253,30 +374,101 @@ const ProductComponentsManager: React.FC<{ priceIndex: number }> = ({ priceIndex
   const [componentDetails, setComponentDetails] = React.useState<{[key: string]: any}>({});
   const [loadingComponents, setLoadingComponents] = React.useState<{[key: string]: boolean}>({});
 
-  const addComponent = () => {
+  const addComponent = React.useCallback(() => {
     appendComponent({
       rawProductPriceId: '',
       quantity: 1,
       notes: ''
     });
-  };
+  }, [appendComponent]);
 
-  // دالة محسنة لجلب تفاصيل المكون
-  const fetchComponentDetails = async (rawProductPriceId: string, _componentIndex: number) => {
-    if (!rawProductPriceId || componentDetails[rawProductPriceId] || loadingComponents[rawProductPriceId]) return;
+  // دالة نسخ المكونات - مبسطة تماماً
+  const copyComponents = React.useCallback(() => {
+    const components = getValues(`productPrices.${priceIndex}.productComponents`);
+    if (components && components.length > 0) {
+      // استخدام localStorage مباشرة بدون hook
+      const copyData = components.map(comp => ({
+        rawProductPriceId: comp.rawProductPriceId,
+        quantity: comp.quantity,
+        notes: comp.notes
+      }));
+      
+      localStorage.setItem(`componentsCopy_${priceIndex}`, JSON.stringify(copyData));
+      
+      setSnackbar({
+        open: true,
+        message: t('products.componentsCopySuccess'),
+        severity: 'success'
+      });
+    } else {
+      setSnackbar({
+        open: true,
+        message: t('products.noComponentsToCopy'),
+        severity: 'warning'
+      });
+    }
+  }, [priceIndex, getValues, setSnackbar, t]);
+
+  // دالة لصق المكونات - مبسطة تماماً
+  const pasteComponents = React.useCallback(() => {
+    try {
+      const savedData = localStorage.getItem(`componentsCopy_${priceIndex}`);
+      if (savedData) {
+        const componentsToPaste = JSON.parse(savedData);
+        
+        // مسح المكونات الحالية أولاً
+        for (let i = componentFields.length - 1; i >= 0; i--) {
+          removeComponent(i);
+        }
+        
+        // إضافة المكونات الجديدة
+        setTimeout(() => {
+          componentsToPaste.forEach((comp: any) => {
+            appendComponent({
+              rawProductPriceId: comp.rawProductPriceId,
+              quantity: comp.quantity,
+              notes: comp.notes
+            });
+          });
+          
+          setSnackbar({
+            open: true,
+            message: t('products.componentsPasteSuccess'),
+            severity: 'success'
+          });
+        }, 100);
+      } else {
+        setSnackbar({
+          open: true,
+          message: 'لا توجد مكونات منسوخة',
+          severity: 'warning'
+        });
+      }
+    } catch (error) {
+      setSnackbar({
+        open: true,
+        message: 'خطأ في لصق المكونات',
+        severity: 'error'
+      });
+    }
+  }, [priceIndex, componentFields.length, removeComponent, appendComponent, setSnackbar, t]);
+
+  // التحقق من وجود بيانات منسوخة
+  const hasCopiedData = React.useMemo(() => {
+    return localStorage.getItem(`componentsCopy_${priceIndex}`) !== null;
+  }, [priceIndex]);
+
+  // دالة جلب تفاصيل المكون - مبسطة
+  const fetchComponentDetails = React.useCallback(async (rawProductPriceId: string) => {
+    if (!rawProductPriceId || componentDetails[rawProductPriceId] || loadingComponents[rawProductPriceId]) {
+      return;
+    }
 
     setLoadingComponents(prev => ({ ...prev, [rawProductPriceId]: true }));
 
     try {
-      // أولاً، جرب البحث بالـ ID مباشرة
       const searchResponse = await searchProductPricesByNameOrBarcode(rawProductPriceId, 1, 10);
-      let foundInSearch = searchResponse.data.find(item => item.productPriceId === rawProductPriceId);
-      
-      // إذا لم نجد بالـ ID، جرب البحث بالباركود
-      if (!foundInSearch) {
-        const searchByBarcode = await searchProductPricesByNameOrBarcode('', 1, 100);
-        foundInSearch = searchByBarcode.data.find(item => item.productPriceId === rawProductPriceId);
-      }
+      const foundInSearch = searchResponse.data.find(item => item.productPriceId === rawProductPriceId);
 
       if (foundInSearch) {
         const details = {
@@ -292,66 +484,13 @@ const ProductComponentsManager: React.FC<{ priceIndex: number }> = ({ priceIndex
           ...prev,
           [rawProductPriceId]: details
         }));
-
-        console.log(`Component details loaded for ${rawProductPriceId}:`, details);
-      } else {
-        // إذا لم نجد التفاصيل، اعرض معلومات أساسية
-        setComponentDetails(prev => ({
-          ...prev,
-          [rawProductPriceId]: {
-            productName: `منتج (${rawProductPriceId.slice(-8)})`,
-            unitName: 'وحدة غير محددة',
-            unitFactor: 1,
-            price: 0,
-            barcode: 'غير محدد',
-            productId: ''
-          }
-        }));
       }
     } catch (error) {
       console.error('Error fetching component details:', error);
-      // في حالة الخطأ، اعرض معلومات أساسية
-      setComponentDetails(prev => ({
-        ...prev,
-        [rawProductPriceId]: {
-          productName: `منتج (${rawProductPriceId.slice(-8)})`,
-          unitName: 'وحدة غير محددة',
-          unitFactor: 1,
-          price: 0,
-          barcode: 'غير محدد',
-          productId: ''
-        }
-      }));
     } finally {
       setLoadingComponents(prev => ({ ...prev, [rawProductPriceId]: false }));
     }
-  };
-
-  // جلب تفاصيل المكونات الموجودة عند التحميل والتحديث
-  React.useEffect(() => {
-    const loadComponentsDetails = async () => {
-      for (let index = 0; index < componentFields.length; index++) {
-        const rawProductPriceId = watch(`productPrices.${priceIndex}.productComponents.${index}.rawProductPriceId`);
-        if (rawProductPriceId && !componentDetails[rawProductPriceId]) {
-          await fetchComponentDetails(rawProductPriceId, index);
-        }
-      }
-    };
-
-    if (componentFields.length > 0) {
-      loadComponentsDetails();
-    }
-  }, [componentFields.length, priceIndex]);
-
-  // مراقبة تغييرات القيم
-  React.useEffect(() => {
-    componentFields.forEach((_field, index) => {
-      const rawProductPriceId = watch(`productPrices.${priceIndex}.productComponents.${index}.rawProductPriceId`);
-      if (rawProductPriceId && !componentDetails[rawProductPriceId]) {
-        fetchComponentDetails(rawProductPriceId, index);
-      }
-    });
-  }, [componentFields, priceIndex]);
+  }, [componentDetails, loadingComponents]);
 
   return (
     <Box sx={{ mt: 2, p: 2, backgroundColor: 'grey.50', borderRadius: 1 }}>
@@ -360,14 +499,41 @@ const ProductComponentsManager: React.FC<{ priceIndex: number }> = ({ priceIndex
           <IconComponents size={16} />
           {t('products.components')} ({componentFields.length})
         </Typography>
-        <Button
-          size="small"
-          variant="outlined"
-          onClick={addComponent}
-          startIcon={<IconPlus size={16} />}
-        >
-          {t('products.addComponent')}
-        </Button>
+        
+        <Stack direction="row" spacing={1}>
+          <Button
+            size="small"
+            variant="outlined"
+            onClick={copyComponents}
+            disabled={componentFields.length === 0}
+            startIcon={<IconCopy size={14} />}
+            sx={{ minWidth: 80 }}
+          >
+            {t('common.copy')}
+          </Button>
+          
+          <Button
+            size="small"
+            variant="outlined"
+            onClick={pasteComponents}
+            disabled={!hasCopiedData}
+            startIcon={hasCopiedData ? <IconClipboardCheck size={14} /> : <IconClipboard size={14} />}
+            color={hasCopiedData ? 'success' : 'inherit'}
+            sx={{ minWidth: 80 }}
+          >
+            {t('common.paste')}
+          </Button>
+          
+          <Button
+            size="small"
+            variant="outlined"
+            onClick={addComponent}
+            startIcon={<IconPlus size={14} />}
+            sx={{ minWidth: 80 }}
+          >
+            {t('products.addComponent')}
+          </Button>
+        </Stack>
       </Box>
 
       {componentFields.length === 0 ? (
@@ -377,9 +543,6 @@ const ProductComponentsManager: React.FC<{ priceIndex: number }> = ({ priceIndex
       ) : (
         <Stack spacing={2}>
           {componentFields.map((field, componentIndex) => {
-            const currentRawProductPriceId = watch(`productPrices.${priceIndex}.productComponents.${componentIndex}.rawProductPriceId`);
-            const details = componentDetails[currentRawProductPriceId];
-            const isLoading = loadingComponents[currentRawProductPriceId];
             
             return (
               <Card key={field.id} variant="outlined" sx={{ p: 2 }}>
@@ -394,8 +557,8 @@ const ProductComponentsManager: React.FC<{ priceIndex: number }> = ({ priceIndex
                           value={field.value}
                           onChange={(value) => {
                             field.onChange(value);
-                            if (value) {
-                              fetchComponentDetails(value, componentIndex);
+                            if (value && !componentDetails[value]) {
+                              fetchComponentDetails(value);
                             }
                           }}
                           label={t('products.selectComponent')}
@@ -451,27 +614,6 @@ const ProductComponentsManager: React.FC<{ priceIndex: number }> = ({ priceIndex
                   </Grid>
                 </Grid>
 
-                {/* عرض تفاصيل المكون المحدد مع حالة التحميل */}
-                {currentRawProductPriceId && (
-                  <Box sx={{ mt: 2, p: 1, backgroundColor: 'Highlight', borderRadius: 1 }}>
-                    {isLoading ? (
-                      <Typography variant="caption" color="info.contrastText">
-                        {t('products.loadingComponentDetails')}...
-                      </Typography>
-                    ) : details ? (
-                      <Typography variant="caption" color="info.contrastText">
-                        {t('products.selectedComponent')}: {details.productName} - 
-                        {details.price?.toFixed(2)} - 
-                        {details.unitName} × {details.unitFactor}
-                        {details.barcode && details.barcode !== 'غير محدد' && ` - ${details.barcode}`}
-                      </Typography>
-                    ) : (
-                      <Typography variant="caption" color="info.contrastText">
-                        ID: {currentRawProductPriceId}
-                      </Typography>
-                    )}
-                  </Box>
-                )}
               </Card>
             );
           })}
@@ -479,7 +621,7 @@ const ProductComponentsManager: React.FC<{ priceIndex: number }> = ({ priceIndex
       )}
     </Box>
   );
-};
+});
 
   // مكون منفصل لعرض الأسعار في الموبايل
   const MobilePriceCard: React.FC<{ index: number; onRemove: () => void }> = ({ index, onRemove }) => (
@@ -723,125 +865,157 @@ const ProductComponentsManager: React.FC<{ priceIndex: number }> = ({ priceIndex
   );
 
   return (
-    <Dialog 
-      open={open} 
-      onClose={onClose} 
-      maxWidth="lg" 
-      fullWidth
-      disableEscapeKeyDown={false}
-      fullScreen={isMobile}
-    >
-      <DialogTitle>
-        {mode === 'add' ? t('products.add') : t('products.edit')}
-      </DialogTitle>
+    <>
+      <Dialog 
+        open={open} 
+        onClose={onClose} 
+        maxWidth="lg" 
+        fullWidth
+        disableEscapeKeyDown={false}
+        fullScreen={isMobile}
+      >
+        <DialogTitle>
+          <Box sx={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center',
+            flexDirection: { xs: 'column', sm: 'row' },
+            gap: { xs: 2, sm: 0 }
+          }}>
+            <Typography variant="h6">
+              {mode === 'add' ? t('products.add') : t('products.edit')}
+            </Typography>
+            
+            {/* أزرار Copy/Paste */}
+            <Stack direction="row" spacing={1}>
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<IconCopy size={16} />}
+                onClick={handleCopyProduct}
+                disabled={!watch('productName')}
+                sx={{ minWidth: { xs: 'auto', sm: 100 } }}
+              >
+                {isMobile ? '' : t('common.copy')}
+              </Button>
+              
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={productCopyPaste.hasCopiedData ? <IconClipboardCheck size={16} /> : <IconClipboard size={16} />}
+                onClick={handlePasteProduct}
+                disabled={!productCopyPaste.hasCopiedData}
+                color={productCopyPaste.hasCopiedData ? 'success' : 'inherit'}
+                sx={{ minWidth: { xs: 'auto', sm: 100 } }}
+              >
+                {isMobile ? '' : t('common.paste')}
+              </Button>
+              
+              {productCopyPaste.hasCopiedData && (
+                <Button
+                  variant="outlined"
+                  size="small"
+                  startIcon={<IconTrashX size={16} />}
+                  onClick={productCopyPaste.clearData}
+                  color="error"
+                  sx={{ minWidth: { xs: 'auto', sm: 100 } }}
+                >
+                  {isMobile ? '' : t('common.clear')}
+                </Button>
+              )}
+            </Stack>
+          </Box>
+        </DialogTitle>
 
-      <form>
-        <DialogContent sx={{ maxHeight: isMobile ? 'none' : '70vh', overflowY: 'auto' }}>
-          <Grid container spacing={3}>
-            {/* ---------- Basic Info ---------- */}
-            <Grid item xs={12} md={6}>
-              <Controller
-                name="productName"
-                control={control}
-                rules={{ required: t('products.nameRequired') }}
-                render={({ field, fieldState }) => (
-                  <TextField
-                    {...field}
-                    inputRef={nameFieldRef}
-                    label={t('products.name')}
-                    fullWidth
-                    error={!!fieldState.error}
-                    helperText={fieldState.error?.message}
-                    autoFocus
-                  />
-                )}
-              />
-            </Grid>
-
-            <Grid item xs={12} md={6}>
-              <Controller
-                name="groupId"
-                control={control}
-                rules={{ required: t('products.groupRequired') }}
-                render={({ field, fieldState }) => (
-                  <Box>
-                    <GroupTreeSelect
-                      groups={groups}
-                      value={field.value}
-                      onChange={field.onChange}
-                      label={t('products.group')}
-                    />
-                    {fieldState.error && (
-                      <Typography variant="caption" color="error" sx={{ mt: 1, ml: 2 }}>
-                        {fieldState.error.message}
-                      </Typography>
-                    )}
-                  </Box>
-                )}
-              />
-            </Grid>
-
-            <Grid item xs={12} md={6}>
-              <Controller
-                name="productType"
-                control={control}
-                render={({ field }) => (
-                  <FormControl fullWidth>
-                    <InputLabel>{t('products.type')}</InputLabel>
-                    <Select
-                      {...field}
-                      label={t('products.type')}
-                    >
-                      <MenuItem value={1}>POS</MenuItem>
-                      <MenuItem value={2}>Material</MenuItem>
-                    </Select>
-                  </FormControl>
-                )}
-              />
-            </Grid>
-
-            <Grid item xs={12} md={6}>
-              <Controller
-                name="description"
-                control={control}
-                render={({ field }) => (
-                  <TextField
-                    {...field}
-                    label={t('products.description')}
-                    fullWidth
-                    multiline
-                    rows={2}
-                  />
-                )}
-              />
-            </Grid>
-
-            <Grid item xs={12} md={6}>
-              <Controller
-                name="reorderLevel"
-                control={control}
-                render={({ field }) => (
-                  <TextField
-                    {...field}
-                    label={t('products.reorderLevel')}
-                    type="number"
-                    fullWidth
-                    inputProps={{ min: 0, step: 0.01 }}
-                  />
-                )}
-              />
-            </Grid>
-
-            {/* إظهار التكلفة فقط في الإضافة */}
-            {mode === 'add' && (
+        <form>
+          <DialogContent sx={{ maxHeight: isMobile ? 'none' : '70vh', overflowY: 'auto' }}>
+            <Grid container spacing={3}>
+              {/* ---------- Basic Info ---------- */}
               <Grid item xs={12} md={6}>
                 <Controller
-                  name="cost"
+                  name="productName"
+                  control={control}
+                  rules={{ required: t('products.nameRequired') }}
+                  render={({ field, fieldState }) => (
+                    <TextField
+                      {...field}
+                      inputRef={nameFieldRef}
+                      label={t('products.name')}
+                      fullWidth
+                      error={!!fieldState.error}
+                      helperText={fieldState.error?.message}
+                      autoFocus
+                    />
+                  )}
+                />
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <Controller
+                  name="groupId"
+                  control={control}
+                  rules={{ required: t('products.groupRequired') }}
+                  render={({ field, fieldState }) => (
+                    <Box>
+                      <GroupTreeSelect
+                        groups={groups}
+                        value={field.value}
+                        onChange={field.onChange}
+                        label={t('products.group')}
+                      />
+                      {fieldState.error && (
+                        <Typography variant="caption" color="error" sx={{ mt: 1, ml: 2 }}>
+                          {fieldState.error.message}
+                        </Typography>
+                      )}
+                    </Box>
+                  )}
+                />
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <Controller
+                  name="productType"
+                  control={control}
+                  render={({ field }) => (
+                    <FormControl fullWidth>
+                      <InputLabel>{t('products.type')}</InputLabel>
+                      <Select
+                        {...field}
+                        label={t('products.type')}
+                      >
+                        <MenuItem value={1}>POS</MenuItem>
+                        <MenuItem value={2}>Material</MenuItem>
+                      </Select>
+                    </FormControl>
+                  )}
+                />
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <Controller
+                  name="description"
                   control={control}
                   render={({ field }) => (
                     <TextField
                       {...field}
-                      label={t('products.cost')}
+                      label={t('products.description')}
+                      fullWidth
+                      multiline
+                      rows={2}
+                    />
+                  )}
+                />
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <Controller
+                  name="reorderLevel"
+                  control={control}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      label={t('products.reorderLevel')}
                       type="number"
                       fullWidth
                       inputProps={{ min: 0, step: 0.01 }}
@@ -849,134 +1023,184 @@ const ProductComponentsManager: React.FC<{ priceIndex: number }> = ({ priceIndex
                   )}
                 />
               </Grid>
-            )}
 
-            {/* إظهار التكلفة للقراءة فقط في التعديل */}
-            {mode === 'edit' && initialValues && (
               <Grid item xs={12} md={6}>
-                <TextField
-                  label={t('products.cost')}
-                  value={Number(initialValues.cost).toFixed(2)}
-                  fullWidth
-                  InputProps={{
-                    readOnly: true,
-                  }}
-                  variant="filled"
+                <Controller
+                  name="expirationDays"
+                  control={control}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      label={t('products.expirationDays')}
+                      type="number"
+                      fullWidth
+                      inputProps={{ min: 1, step: 1 }}
+                    />
+                  )}
                 />
               </Grid>
-            )}
 
-            <Grid item xs={12} md={6}>
-              <Controller
-                name="lastPurePrice"
-                control={control}
-                render={({ field }) => (
+              {/* إظهار التكلفة فقط في الإضافة */}
+              {mode === 'add' && (
+                <Grid item xs={12} md={6}>
+                  <Controller
+                    name="cost"
+                    control={control}
+                    render={({ field }) => (
+                      <TextField
+                        {...field}
+                        label={t('products.cost')}
+                        type="number"
+                        fullWidth
+                        inputProps={{ min: 0, step: 0.01 }}
+                      />
+                    )}
+                  />
+                </Grid>
+              )}
+
+              {/* إظهار التكلفة للقراءة فقط في التعديل */}
+              {mode === 'edit' && initialValues && (
+                <Grid item xs={12} md={6}>
                   <TextField
-                    {...field}
-                    label={t('products.lastPurePrice')}
-                    type="number"
+                    label={t('products.cost')}
+                    value={Number(initialValues.cost).toFixed(2)}
                     fullWidth
                     InputProps={{
                       readOnly: true,
                     }}
                     variant="filled"
-                    inputProps={{ min: 0, step: 0.01 }}
                   />
-                )}
-              />
-            </Grid>
-
-            {/* ---------- Product Prices ---------- */}
-            <Grid item xs={12}>
-              <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                <Typography variant="h6">
-                  {t('products.prices')}
-                </Typography>
-                <Button
-                  variant="outlined"
-                  startIcon={<IconPlus size={20} />}
-                  onClick={addPrice}
-                  type="button"
-                  size={isMobile ? "small" : "medium"}
-                >
-                  {t('products.addPrice')}
-                </Button>
-              </Box>
-
-              {/* عرض مختلف للموبايل والشاشات الكبيرة */}
-              {isMobile ? (
-                <Box>
-                  {fields.length === 0 ? (
-                    <Card variant="outlined">
-                      <CardContent>
-                        <Typography color="text.secondary" align="center">
-                          {t('products.noPrices')}
-                        </Typography>
-                      </CardContent>
-                    </Card>
-                  ) : (
-                    fields.map((field, index) => (
-                      <MobilePriceCard
-                        key={field.id}
-                        index={index}
-                        onRemove={() => remove(index)}
-                      />
-                    ))
-                  )}
-                </Box>
-              ) : (
-                <DesktopPriceTable />
+                </Grid>
               )}
-            </Grid>
-          </Grid>
-        </DialogContent>
 
-        {/* أزرار ثابتة في الأسفل */}
-        <DialogActions 
-          sx={{ 
-            position: 'sticky', 
-            bottom: 0, 
-            backgroundColor: 'background.paper',
-            borderTop: 1,
-            borderColor: 'divider',
-            p: 2,
-            flexDirection: isMobile ? 'column' : 'row',
-            gap: isMobile ? 1 : 0
-          }}
-        >
-          <Button 
-            onClick={onClose} 
-            type="button" 
-            disabled={isSubmitting}
-            fullWidth={isMobile}
+              <Grid item xs={12} md={6}>
+                <Controller
+                  name="lastPurePrice"
+                  control={control}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      label={t('products.lastPurePrice')}
+                      type="number"
+                      fullWidth
+                      InputProps={{
+                        readOnly: true,
+                      }}
+                      variant="filled"
+                      inputProps={{ min: 0, step: 0.01 }}
+                    />
+                  )}
+                />
+              </Grid>
+
+              {/* ---------- Product Prices ---------- */}
+              <Grid item xs={12}>
+                <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                  <Typography variant="h6">
+                    {t('products.prices')}
+                  </Typography>
+                  <Button
+                    variant="outlined"
+                    startIcon={<IconPlus size={20} />}
+                    onClick={addPrice}
+                    type="button"
+                    size={isMobile ? "small" : "medium"}
+                  >
+                    {t('products.addPrice')}
+                  </Button>
+                </Box>
+
+                {/* عرض مختلف للموبايل والشاشات الكبيرة */}
+                {isMobile ? (
+                  <Box>
+                    {fields.length === 0 ? (
+                      <Card variant="outlined">
+                        <CardContent>
+                          <Typography color="text.secondary" align="center">
+                            {t('products.noPrices')}
+                          </Typography>
+                        </CardContent>
+                      </Card>
+                    ) : (
+                      fields.map((field, index) => (
+                        <MobilePriceCard
+                          key={field.id}
+                          index={index}
+                          onRemove={() => remove(index)}
+                        />
+                      ))
+                    )}
+                  </Box>
+                ) : (
+                  <DesktopPriceTable />
+                )}
+              </Grid>
+            </Grid>
+          </DialogContent>
+
+          {/* أزرار ثابتة في الأسفل */}
+          <DialogActions 
+            sx={{ 
+              position: 'sticky', 
+              bottom: 0, 
+              backgroundColor: 'background.paper',
+              borderTop: 1,
+              borderColor: 'divider',
+              p: 2,
+              flexDirection: isMobile ? 'column' : 'row',
+              gap: isMobile ? 1 : 0
+            }}
           >
-            {t('common.cancel')}
-          </Button>
-          
-          <Stack direction={isMobile ? "column" : "row"} spacing={1} sx={{ width: isMobile ? '100%' : 'auto' }}>
             <Button 
-              variant="outlined"
-              startIcon={<IconDeviceFloppy size={20} />}
-              onClick={handleSubmit((data) => submit(data, 'save'))}
+              onClick={onClose} 
+              type="button" 
               disabled={isSubmitting}
               fullWidth={isMobile}
             >
-              {t('products.saveAndExit')}
+              {t('common.cancel')}
             </Button>
             
-            <Button 
-              variant="contained"
-              startIcon={<IconPlusNew size={20} />}
-              onClick={handleSubmit((data) => submit(data, 'saveAndNew'))}
-              disabled={isSubmitting}
-              fullWidth={isMobile}
-            >
-              {t('products.saveAndNew')}
-            </Button>
-          </Stack>
-        </DialogActions>
-      </form>
-    </Dialog>
+            <Stack direction={isMobile ? "column" : "row"} spacing={1} sx={{ width: isMobile ? '100%' : 'auto' }}>
+              <Button 
+                variant="outlined"
+                startIcon={<IconDeviceFloppy size={20} />}
+                onClick={handleSubmit((data) => submit(data, 'save'))}
+                disabled={isSubmitting}
+                fullWidth={isMobile}
+              >
+                {t('products.saveAndExit')}
+              </Button>
+              
+              <Button 
+                variant="contained"
+                startIcon={<IconPlusNew size={20} />}
+                onClick={handleSubmit((data) => submit(data, 'saveAndNew'))}
+                disabled={isSubmitting}
+                fullWidth={isMobile}
+              >
+                {t('products.saveAndNew')}
+              </Button>
+            </Stack>
+          </DialogActions>
+        </form>
+      </Dialog>
+
+      {/* Snackbar للرسائل */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert 
+          severity={snackbar.severity} 
+          onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
+    </>
   );
 };
 
