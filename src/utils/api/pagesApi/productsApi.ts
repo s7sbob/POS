@@ -1,258 +1,194 @@
 // File: src/utils/api/pagesApi/productsApi.ts
 import api from '../../axios';
 
-export type ProductComponent = {
-  componentId?: string;
+export interface ProductOptionItem {
+  id?: string;
+  name: string;
+  productPriceId?: string | null;
+  useOriginalPrice: boolean;
+  extraPrice: number;
+  isCommentOnly: boolean;
+  sortOrder: number;
+}
+
+export interface ProductOptionGroup {
+  id?: string;
+  productId?: string;
+  name: string;
+  isRequired: boolean;
+  allowMultiple: boolean;
+  minSelection: number;
+  maxSelection: number;
+  sortOrder: number;
+  optionItems: ProductOptionItem[];
+}
+
+export interface ProductComponent {
+  componentId: string;
   productPriceId: string;
   rawProductPriceId: string;
   quantity: number;
-  notes?: string;
-  productPrice?: any;
-  rawProductPrice?: {
-    productPriceId: string;
-    barcode: string;
-    isGenerated: boolean;
-    productID: string;
-    product?: {
-      productID: string;
-      productCode: number;
-      productName: string;
-      groupId: string;
-      group: any;
-      productType: number;
-      reorderLevel: number;
-      cost: number;
-      lastPurePrice: number;
-      expirationDays: number;
-      description: string;
-      imageUrl: string | null;
-      isActive: boolean;
-      createdOn: string;
-      lastModifiedOn: string;
-    };
-    unitId: string;
-    posPriceName: string;
-    unit: any;
-    price: number;
-    unitFactor: number;
-    isActive: boolean;
-    createdOn: string;
-    lastModifiedOn: string;
-  };
-  isActive: boolean;
-  createdOn: string;
-  lastModifiedOn: string;
-};
+  notes: string;
+  rawProductPrice?: ProductPrice;
+}
 
-export type ProductPrice = {
-  id?: string;
-  productId: string;
-  unitId: string;
-  unitFactor: number;
-  barcode: string;
-  price: number;
-  posPriceName: string;
-  isGenerated: boolean;
-  productComponents?: ProductComponent[];
-  isActive: boolean;
-  createdOn?: string;
-  lastModifiedOn?: string;
-  createUser?: string;
-  lastModifyUser?: string;
-  createCompany?: string;
-  createBranch?: string;
-};
-
-export type Product = {
+export interface ProductPrice {
   id: string;
-  code: number;
+  productPriceId: string;
+  barcode: string;
+  isGenerated: boolean;
+  productID: string;
+  product?: Product;
+  unitId: string;
+  unit?: {
+    unitID: string;
+    unitName: string;
+  };
+  posPriceName: string; // ⭐ إضافة posPriceName
+  price: number;
+  unitFactor: number;
+  productComponents: ProductComponent[];
+}
+
+export interface Product {
+  id: string;
+  productID: string;
+  productCode: number;
   name: string;
+  productName: string;
+  code: number;
   groupId: string;
-  group: {
-    id: string;
-    code: number;
+  group?: {
+    groupID: string;
+    groupCode: number;
+    groupName: string;
     name: string;
-    parentId: string | null;
-    parentGroup: string | null;
-    backgroundColor: string;
-    fontColor: string;
-    isActive: boolean;
-    createdOn: string;
-    lastModifiedOn: string;
-    createUser: string;
-    lastModifyUser: string;
-    createCompany: string;
-    createBranch: string;
-  } | null;
+  };
   productType: number;
-  description: string | null;
+  description: string;
   reorderLevel: number;
   cost: number;
   lastPurePrice: number;
   expirationDays: number;
-  imageUrl: string | null;
+  isActive: boolean; // ⭐ إضافة isActive
+  posScreenId?: string;
+  posScreen?: {
+    id: string;
+    name: string;
+  };
   productPrices: ProductPrice[];
-  isActive: boolean;
-  createdOn: string;
-  lastModifiedOn: string;
+  productOptionGroups: ProductOptionGroup[]; // ⭐ إضافة productOptionGroups
+  imageUrl: string | null;
+  createDate: string;
+  lastModifyDate: string;
   createUser: string;
   lastModifyUser: string;
   createCompany: string;
   createBranch: string;
-};
+}
 
-export type ProductsResponse = {
+export interface ProductsResponse {
   totalCount: number;
   pageCount: number;
   pageNumber: number;
   pageSize: number;
   data: Product[];
-};
+}
 
-// إضافة type جديد للـ search response
-export type ProductPriceSearchResponse = {
-  totalCount: number;
-  pageCount: number;
-  pageNumber: number;
-  pageSize: number;
-  data: Array<{
-    productPriceId: string;
-    barcode: string;
-    unitId?: string;
-    unit: {
-      unitID: string;
-      unitCode: number;
-      unitName: string;
-      branchID?: string;
-      companyID?: string;
-      isActive: boolean;
-    };
-    price: number;
-    posPriceName?: string;
-    unitFactor: number;
-    isGenerated: boolean;
-    product: {
-      productID: string;
-      productName: string;
-      groupId?: string;
-      productType: number;
-      cost: number;
-      description?: string;
-      imageUrl?: string;
-      reorderLevel: number;
-      lastPurePrice: number;
-      expirationDays: number;
-      productPrices: any[];
-    };
-    productPrices: any[];
-    components: any[];
-  }>;
-};
+// دالة تحويل ProductOptionItem
+const toProductOptionItem = (raw: any): ProductOptionItem => ({
+  id: raw.id,
+  name: raw.name || '',
+  productPriceId: raw.productPriceId || null,
+  useOriginalPrice: Boolean(raw.useOriginalPrice),
+  extraPrice: Number(raw.extraPrice) || 0,
+  isCommentOnly: Boolean(raw.isCommentOnly),
+  sortOrder: Number(raw.sortOrder) || 0
+});
+
+// دالة تحويل ProductOptionGroup
+const toProductOptionGroup = (raw: any): ProductOptionGroup => ({
+  id: raw.id,
+  productId: raw.productId,
+  name: raw.name || '',
+  isRequired: Boolean(raw.isRequired),
+  allowMultiple: Boolean(raw.allowMultiple),
+  minSelection: Number(raw.minSelection) || 0,
+  maxSelection: Number(raw.maxSelection) || 1,
+  sortOrder: Number(raw.sortOrder) || 0,
+  optionItems: raw.optionItems?.map(toProductOptionItem) || []
+});
 
 const toProductComponent = (raw: any): ProductComponent => ({
-  componentId: raw.componentId,
-  productPriceId: raw.productPriceId || '',
-  rawProductPriceId: raw.rawProductPriceId || '',
+  componentId: String(raw.componentId || ''),
+  productPriceId: String(raw.productPriceId || ''),
+  rawProductPriceId: String(raw.rawProductPriceId || ''),
   quantity: Number(raw.quantity) || 0,
-  notes: raw.notes || '',
-  productPrice: raw.productPrice,
-  rawProductPrice: raw.rawProductPrice ? {
-    productPriceId: String(raw.rawProductPrice.productPriceId || ''),
-    barcode: String(raw.rawProductPrice.barcode || ''),
-    isGenerated: Boolean(raw.rawProductPrice.isGenerated),
-    productID: String(raw.rawProductPrice.productID || ''),
-    product: raw.rawProductPrice.product ? {
-      productID: String(raw.rawProductPrice.product.productID || ''),
-      productCode: Number(raw.rawProductPrice.product.productCode) || 0,
-      productName: String(raw.rawProductPrice.product.productName || ''),
-      groupId: String(raw.rawProductPrice.product.groupId || ''),
-      group: raw.rawProductPrice.product.group,
-      productType: Number(raw.rawProductPrice.product.productType) || 0,
-      reorderLevel: Number(raw.rawProductPrice.product.reorderLevel) || 0,
-      cost: Number(raw.rawProductPrice.product.cost) || 0,
-      lastPurePrice: Number(raw.rawProductPrice.product.lastPurePrice) || 0,
-      expirationDays: Number(raw.rawProductPrice.product.expirationDays) || 0,
-      description: String(raw.rawProductPrice.product.description || ''),
-      imageUrl: raw.rawProductPrice.product.imageUrl || null,
-      isActive: Boolean(raw.rawProductPrice.product.isActive),
-      createdOn: String(raw.rawProductPrice.product.createDate || ''),
-      lastModifiedOn: String(raw.rawProductPrice.product.lastModifyDate || ''),
-    } : undefined,
-    unitId: String(raw.rawProductPrice.unitId || ''),
-    posPriceName: String(raw.rawProductPrice.posPriceName || ''),
-    unit: raw.rawProductPrice.unit,
-    price: Number(raw.rawProductPrice.price) || 0,
-    unitFactor: Number(raw.rawProductPrice.unitFactor) || 1,
-    isActive: Boolean(raw.rawProductPrice.isActive),
-    createdOn: String(raw.rawProductPrice.createDate || ''),
-    lastModifiedOn: String(raw.rawProductPrice.lastModifyDate || ''),
-  } : undefined,
-  isActive: Boolean(raw.isActive),
-  createdOn: String(raw.createDate || ''),
-  lastModifiedOn: String(raw.lastModifyDate || ''),
+  notes: String(raw.notes || ''),
+  rawProductPrice: raw.rawProductPrice ? toProductPrice(raw.rawProductPrice) : undefined
 });
 
 const toProductPrice = (raw: any): ProductPrice => ({
-  id: raw.productPriceId || '',
-  productId: String(raw.productID || ''),
-  unitId: String(raw.unitId || ''),
-  unitFactor: Number(raw.unitFactor) || 1,
+  id: String(raw.productPriceId || ''),
+  productPriceId: String(raw.productPriceId || ''),
   barcode: String(raw.barcode || ''),
-  price: Number(raw.price) || 0,
-  posPriceName: String(raw.posPriceName || ''),
   isGenerated: Boolean(raw.isGenerated),
-  productComponents: raw.productComponents?.map(toProductComponent) || [],
-  isActive: Boolean(raw.isActive),
-  createdOn: raw.createDate || '',
-  lastModifiedOn: raw.lastModifyDate || '',
-  createUser: raw.createUser || '',
-  lastModifyUser: raw.lastModifyUser || '',
-  createCompany: raw.createCompany || '',
-  createBranch: raw.createBranch || '',
+  productID: String(raw.productID || ''),
+  product: raw.product ? toProduct(raw.product) : undefined,
+  unitId: String(raw.unitId || ''),
+  unit: raw.unit ? {
+    unitID: raw.unit.unitID,
+    unitName: raw.unit.unitName
+  } : undefined,
+  posPriceName: String(raw.posPriceName || ''), // ⭐ إضافة posPriceName
+  price: Number(raw.price) || 0,
+  unitFactor: Number(raw.unitFactor) || 1,
+  productComponents: raw.productComponents?.map(toProductComponent) || []
 });
 
 const toProduct = (raw: any): Product => ({
   id: String(raw.productID || ''),
-  code: Number(raw.productCode) || 0,
+  productID: String(raw.productID || ''),
+  productCode: Number(raw.productCode) || 0,
   name: String(raw.productName || ''),
+  productName: String(raw.productName || ''),
+  code: Number(raw.productCode) || 0,
   groupId: String(raw.groupId || ''),
   group: raw.group ? {
-    id: String(raw.group.groupID || ''),
-    code: Number(raw.group.groupCode) || 0,
-    name: String(raw.group.groupName || ''),
-    parentId: raw.group.parentID || null,
-    parentGroup: raw.group.parentGroup || null,
-    backgroundColor: String(raw.group.backcolor || ''),
-    fontColor: String(raw.group.fontColor || ''),
-    isActive: Boolean(raw.group.isActive),
-    createdOn: String(raw.group.createDate || ''),
-    lastModifiedOn: String(raw.group.lastModifyDate || ''),
-    createUser: String(raw.group.createUser || ''),
-    lastModifyUser: String(raw.group.lastModifyUser || ''),
-    createCompany: String(raw.group.createCompany || ''),
-    createBranch: String(raw.group.createBranch || ''),
-  } : null,
+    groupID: raw.group.groupID,
+    groupCode: raw.group.groupCode,
+    groupName: raw.group.groupName,
+    name: raw.group.groupName
+  } : undefined,
   productType: Number(raw.productType) || 0,
-  description: raw.description || null,
+  description: String(raw.description || ''),
   reorderLevel: Number(raw.reorderLevel) || 0,
   cost: Number(raw.cost) || 0,
   lastPurePrice: Number(raw.lastPurePrice) || 0,
   expirationDays: Number(raw.expirationDays) || 0,
-  imageUrl: raw.imageUrl || null,
+  isActive: Boolean(raw.isActive), // ⭐ إضافة isActive
+  posScreenId: raw.posScreenId || undefined,
+  posScreen: raw.posScreen ? {
+    id: raw.posScreen.id,
+    name: raw.posScreen.name
+  } : undefined,
   productPrices: raw.productPrices?.map(toProductPrice) || [],
-  isActive: Boolean(raw.isActive),
-  createdOn: String(raw.createDate || ''),
-  lastModifiedOn: String(raw.lastModifyDate || ''),
+  productOptionGroups: raw.productOptionGroups?.map(toProductOptionGroup) || [], // ⭐ إضافة productOptionGroups
+  imageUrl: raw.imageUrl || null,
+  createDate: String(raw.createDate || ''),
+  lastModifyDate: String(raw.lastModifyDate || ''),
   createUser: String(raw.createUser || ''),
   lastModifyUser: String(raw.lastModifyUser || ''),
   createCompany: String(raw.createCompany || ''),
-  createBranch: String(raw.createBranch || ''),
+  createBranch: String(raw.createBranch || '')
 });
 
 /* ---------------- API Functions ---------------- */
 
 export const getAll = async (pageNumber: number = 1, pageSize: number = 20): Promise<ProductsResponse> => {
-  const response = await api.get(`/getProducts?pageNumber=${pageNumber}&pageSize=${pageSize}`);
+  const response = await api.get('/getProducts', {
+    params: { pageNumber, pageSize }
+  });
   return {
     totalCount: response.data.data.totalCount,
     pageCount: response.data.data.pageCount,
@@ -262,8 +198,14 @@ export const getAll = async (pageNumber: number = 1, pageSize: number = 20): Pro
   };
 };
 
-export const searchByName = async (name: string, pageNumber: number = 1, pageSize: number = 50): Promise<ProductsResponse> => {
-  const response = await api.get(`/getProductsByName?name=${encodeURIComponent(name)}&pageNumber=${pageNumber}&pageSize=${pageSize}`);
+export const getByType = async (
+  productType: number, 
+  pageNumber: number = 1, 
+  pageSize: number = 20
+): Promise<ProductsResponse> => {
+  const response = await api.get('/getProductsByType', {
+    params: { pageNumber, pageSize, productType }
+  });
   return {
     totalCount: response.data.data.totalCount,
     pageCount: response.data.data.pageCount,
@@ -271,45 +213,88 @@ export const searchByName = async (name: string, pageNumber: number = 1, pageSiz
     pageSize: response.data.data.pageSize,
     data: response.data.data.data.map(toProduct)
   };
+};
+
+export const getById = async (productId: string): Promise<Product> => {
+  const response = await api.get('/getProduct', {
+    params: { ProductId: productId }
+  });
+  return toProduct(response.data.data);
 };
 
 export const getByBarcode = async (barcode: string): Promise<Product | null> => {
   try {
-    const response = await api.get(`/getProductByBarcode?barcode=${encodeURIComponent(barcode)}`);
-    return toProduct(response.data.data);
+    const searchResponse = await searchProductPricesByNameOrBarcode(barcode, 1, 1);
+    if (searchResponse.data.length > 0) {
+      const productPrice = searchResponse.data[0];
+      if (productPrice.product) {
+        return productPrice.product;
+      }
+    }
+    return null;
   } catch (error) {
+    console.error('Error searching by barcode:', error);
     return null;
   }
 };
 
-// استخدام الـ API الصحيح لجلب منتج واحد
-export const getById = async (id: string): Promise<Product> => {
-  const { data } = await api.get(`/getProduct?ProductId=${id}`);
-  return toProduct(data.data);
-};
-
-// APIs للبحث والـ pagination
-export const getProductPricesWithPagination = async (pageNumber: number = 1, pageSize: number = 20): Promise<ProductsResponse> => {
-  const response = await api.get(`/getProducts?pageNumber=${pageNumber}&pageSize=${pageSize}`);
+export const searchByName = async (
+  name: string, 
+  pageNumber: number = 1, 
+  pageSize: number = 50
+): Promise<ProductsResponse> => {
+  const response = await api.get('/getProductPricebyNameOrBarcode', {
+    params: { FilterText: name, pageNumber, pageSize }
+  });
+  
+  const uniqueProducts = new Map<string, Product>();
+  
+  response.data.data.forEach((item: any) => {
+    if (item.product && !uniqueProducts.has(item.product.productID)) {
+      uniqueProducts.set(item.product.productID, {
+        ...item.product,
+        id: item.product.productID,
+        name: item.product.productName
+      });
+    }
+  });
+  
   return {
-    totalCount: response.data.data.totalCount,
-    pageCount: response.data.data.pageCount,
-    pageNumber: response.data.data.pageNumber,
-    pageSize: response.data.data.pageSize,
-    data: response.data.data.data.map(toProduct)
+    totalCount: uniqueProducts.size,
+    pageCount: Math.ceil(uniqueProducts.size / pageSize),
+    pageNumber,
+    pageSize,
+    data: Array.from(uniqueProducts.values())
   };
 };
 
-export const searchProductPricesByNameOrBarcode = async (filterText: string, pageNumber: number = 1, pageSize: number = 50): Promise<ProductPriceSearchResponse> => {
-  const response = await api.get(`/getProductPricebyNameOrBarcode?FilterText=${encodeURIComponent(filterText)}&pageNumber=${pageNumber}&pageSize=${pageSize}`);
-  return {
-    totalCount: response.data.data.totalCount,
-    pageCount: response.data.data.pageCount,
-    pageNumber: response.data.data.pageNumber,
-    pageSize: response.data.data.pageSize,
-    data: response.data.data.data
-  };
+export const searchProductPricesByNameOrBarcode = async (
+  filterText: string,
+  pageNumber: number = 1,
+  pageSize: number = 50
+) => {
+  try {
+    const response = await api.get('/getProductPricebyNameOrBarcode', {
+      params: { FilterText: filterText, pageNumber, pageSize }
+    });
+    
+    // ⭐ البيانات موجودة في response.data.data.data
+    if (response.data && response.data.isvalid && response.data.data && response.data.data.data) {
+      return {
+        data: response.data.data.data // ⭐ الـ data الفعلي
+      };
+    }
+    
+    return { data: [] };
+  } catch (error) {
+    console.error('API Error:', error);
+    return { data: [] };
+  }
 };
+
+
+// File: src/utils/api/pagesApi/productsApi.ts
+// في دالة add:
 
 export const add = async (body: { 
   productName: string; 
@@ -320,49 +305,102 @@ export const add = async (body: {
   cost: number;
   lastPurePrice: number;
   expirationDays: number;
+  isActive: boolean;
+  posScreenId?: string;
   productPrices: Array<{
-    unitId: string;
-    unitFactor: number;
+    unitId?: string; // ⭐ اختياري للـ POS/Addition
+    unitFactor?: number; // ⭐ اختياري للـ POS/Addition
     barcode: string;
     Price: number;
-    productComponents?: Array<{
+    posPriceName?: string;
+    components?: Array<{
       rawProductPriceId: string;
       quantity: number;
       notes?: string;
     }>;
   }>;
+  productOptionGroups?: ProductOptionGroup[];
 }) => {
-  // تنسيق البيانات حسب الـ API المطلوب
   const bodyWithCorrectFormat = {
     productName: body.productName,
     groupId: body.groupId,
-    ProductType: body.productType, // تأكد من الكتابة الصحيحة
+    ProductType: body.productType,
     description: body.description || "",
     reorderLevel: Number(body.reorderLevel),
     cost: Number(body.cost),
     lastPurePrice: Number(body.lastPurePrice),
     expirationDays: Number(body.expirationDays),
-    productPrices: body.productPrices.map(price => ({
-      unitId: price.unitId,
-      unitFactor: Number(price.unitFactor),
-      barcode: price.barcode,
-      Price: Number(price.Price),
-      PosPriceName: "",
-      // استخدام "components" بدلاً من "productComponents"
-      components: price.productComponents?.map(component => ({
-        rawProductPriceId: component.rawProductPriceId,
-        quantity: Number(component.quantity),
-        notes: component.notes || ""
-      })) || []
-    }))
+    isActive: Boolean(body.isActive),
+    // إرسال PosScreenId فقط للمنتجات من نوع POS (1)
+    ...(body.productType === 1 && body.posScreenId && { PosScreenId: body.posScreenId }),
+    productPrices: body.productPrices.map(price => {
+      const priceData: any = {
+        barcode: price.barcode,
+        Price: Number(price.Price),
+        components: price.components?.map(component => ({
+          rawProductPriceId: component.rawProductPriceId,
+          quantity: Number(component.quantity),
+          notes: component.notes || ""
+        })) || []
+      };
+
+      // ⭐ إضافة unitId و unitFactor فقط للـ Materials (type 2)
+      if (body.productType === 2) {
+        priceData.unitId = price.unitId;
+        priceData.unitFactor = Number(price.unitFactor);
+      }
+
+      // ⭐ إضافة PosPriceName فقط للـ POS (1) أو Addition (3)
+      if (body.productType === 1 || body.productType === 3) {
+        priceData.PosPriceName = price.posPriceName || "";
+      }
+
+      return priceData;
+    }),
+    // إرسال productOptionGroups فقط للمنتجات من نوع POS (1) أو Addition (3)
+    ...((body.productType === 1 || body.productType === 3) && 
+        body.productOptionGroups && 
+        body.productOptionGroups.length > 0 && {
+      productOptionGroups: body.productOptionGroups.map(group => ({
+        name: group.name,
+        isRequired: group.isRequired,
+        allowMultiple: group.allowMultiple,
+        minSelection: group.minSelection,
+        maxSelection: group.maxSelection,
+        sortOrder: group.sortOrder,
+        optionItems: group.optionItems.map(item => ({
+          name: item.name,
+          productPriceId: item.productPriceId || null,
+          useOriginalPrice: item.useOriginalPrice,
+          extraPrice: Number(item.extraPrice),
+          isCommentOnly: item.isCommentOnly,
+          sortOrder: item.sortOrder
+        }))
+      }))
+    })
   };
   
   console.log('Adding product with correct format:', JSON.stringify(bodyWithCorrectFormat, null, 2));
   
-  const { data } = await api.post('/addProduct', bodyWithCorrectFormat);
-  return toProduct(data.data);
+  try {
+    const { data } = await api.post('/addProduct', bodyWithCorrectFormat);
+    return toProduct(data.data);
+  } catch (error: any) {
+    console.error('Add Product API Error:', error);
+    if (error.response?.data) {
+      throw {
+        ...error,
+        response: {
+          ...error.response,
+          data: error.response.data
+        }
+      };
+    }
+    throw error;
+  }
 };
 
+// في دالة update:
 export const update = async (body: {
   ProductId: string;
   productName: string;
@@ -372,22 +410,25 @@ export const update = async (body: {
   reorderLevel: number;
   lastPurePrice: number;
   expirationDays: number;
+  isActive: boolean;
+  posScreenId?: string;
   productPrices: Array<{
     productPriceId?: string;
-    unitId: string;
-    unitFactor: number;
+    unitId?: string; // ⭐ اختياري للـ POS/Addition
+    unitFactor?: number; // ⭐ اختياري للـ POS/Addition
     barcode: string;
     Price: number;
-    productComponents?: Array<{
+    posPriceName?: string;
+    components?: Array<{
       componentId?: string;
       rawProductPriceId: string;
       quantity: number;
       notes?: string;
     }>;
   }>;
+  productOptionGroups?: ProductOptionGroup[];
 }) => {
   try {
-    // تنسيق البيانات حسب الـ API المطلوب للتحديث
     const updateBody = {
       ProductId: body.ProductId,
       productName: body.productName,
@@ -396,22 +437,58 @@ export const update = async (body: {
       description: body.description || "",
       reorderLevel: Number(body.reorderLevel),
       expirationDays: Number(body.expirationDays),
-      // لا نرسل lastPurePrice في التحديث
-      productPrices: body.productPrices.map(price => ({
-        ...(price.productPriceId && { productPriceId: price.productPriceId }),
-        unitId: price.unitId,
-        unitFactor: Number(price.unitFactor),
-        barcode: price.barcode,
-        Price: Number(price.Price),
-        PosPriceName: "",
-        // استخدام "components" بدلاً من "productComponents"
-        components: price.productComponents?.map(component => ({
-          ...(component.componentId && { componentId: component.componentId }),
-          rawProductPriceId: component.rawProductPriceId,
-          quantity: Number(component.quantity),
-          notes: component.notes || ""
-        })) || []
-      }))
+      isActive: Boolean(body.isActive),
+      // إرسال PosScreenId فقط للمنتجات من نوع POS (1)
+      ...(body.ProductType === 1 && body.posScreenId && { PosScreenId: body.posScreenId }),
+      productPrices: body.productPrices.map(price => {
+        const priceData: any = {
+          ...(price.productPriceId && { productPriceId: price.productPriceId }),
+          barcode: price.barcode,
+          Price: Number(price.Price),
+          components: price.components?.map(component => ({
+            ...(component.componentId && { componentId: component.componentId }),
+            rawProductPriceId: component.rawProductPriceId,
+            quantity: Number(component.quantity),
+            notes: component.notes || ""
+          })) || []
+        };
+
+        // ⭐ إضافة unitId و unitFactor فقط للـ Materials (type 2)
+        if (body.ProductType === 2) {
+          priceData.unitId = price.unitId;
+          priceData.unitFactor = Number(price.unitFactor);
+        }
+
+        // ⭐ إضافة PosPriceName فقط للـ POS (1) أو Addition (3)
+        if (body.ProductType === 1 || body.ProductType === 3) {
+          priceData.PosPriceName = price.posPriceName || "";
+        }
+
+        return priceData;
+      }),
+      // إرسال productOptionGroups فقط للمنتجات من نوع POS (1) أو Addition (3)
+      ...((body.ProductType === 1 || body.ProductType === 3) && 
+          body.productOptionGroups && 
+          body.productOptionGroups.length > 0 && {
+        productOptionGroups: body.productOptionGroups.map(group => ({
+          ...(group.id && { id: group.id }),
+          name: group.name,
+          isRequired: group.isRequired,
+          allowMultiple: group.allowMultiple,
+          minSelection: group.minSelection,
+          maxSelection: group.maxSelection,
+          sortOrder: group.sortOrder,
+          optionItems: group.optionItems.map(item => ({
+            ...(item.id && { id: item.id }),
+            name: item.name,
+            productPriceId: item.productPriceId || null,
+            useOriginalPrice: item.useOriginalPrice,
+            extraPrice: Number(item.extraPrice),
+            isCommentOnly: item.isCommentOnly,
+            sortOrder: item.sortOrder
+          }))
+        }))
+      })
     };
     
     console.log('Updating product with correct format:', JSON.stringify(updateBody, null, 2));
@@ -419,10 +496,19 @@ export const update = async (body: {
     const { data } = await api.post('/UpdateProduct', updateBody);
     console.log('Update response:', data);
     
-    // استخدام getById لجلب البيانات الكاملة بعد التحديث
     return await getById(body.ProductId);
-  } catch (error) {
+  } catch (error: any) {
     console.error('Update API Error:', error);
+    if (error.response?.data) {
+      throw {
+        ...error,
+        response: {
+          ...error.response,
+          data: error.response.data
+        }
+      };
+    }
     throw error;
   }
 };
+

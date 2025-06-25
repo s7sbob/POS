@@ -6,6 +6,7 @@ import Loadable from '../layouts/full/shared/loadable/Loadable';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { authLoader } from './authLoader';
 import { createProtectedPage } from 'src/utils/pageWrapper';
+import Ecommerce from 'src/views/apps/eCommerce/Ecommerce';
 
 /* ***Layouts**** */
 const FullLayout = Loadable(lazy(() => import('../layouts/full/FullLayout')));
@@ -48,7 +49,8 @@ const AddPurchasePageOriginal = Loadable(lazy(() => import('../Pages/purchases/A
 const EditPurchasePageOriginal = Loadable(lazy(() => import('../Pages/purchases/EditPurchasePage')));
 const ViewPurchasePageOriginal = Loadable(lazy(() => import('../Pages/purchases/components/ViewPurchasePage')));
 const ProductBalanceReportPageOriginal = Loadable(lazy(() => import('../Pages/reports/ProductBalanceReportPage')));
-
+const PosProductsPageOriginal = Loadable(lazy(() => import('../Pages/pos/products/PosProductsPage')));
+const AdditionProductsPage = Loadable(lazy(() => import('../Pages/pos/additions/AdditionProductsPage')))
 /* ****إنشاء الصفحات المحمية***** */
 const UsersManagement = createProtectedPage(UsersManagementOriginal, 'USERS');
 const CompanySettings = createProtectedPage(CompanySettingsOriginal, 'COMPANY');
@@ -73,7 +75,8 @@ const AddPurchasePage = createProtectedPage(AddPurchasePageOriginal, 'PURCHASES'
 const EditPurchasePage = createProtectedPage(EditPurchasePageOriginal, 'PURCHASES');
 const ViewPurchasePage = createProtectedPage(ViewPurchasePageOriginal, 'PURCHASES');
 const ProductBalanceReportPage = createProtectedPage(ProductBalanceReportPageOriginal, 'REPORTS');
-
+const PosProductsPage = createProtectedPage(PosProductsPageOriginal, 'POS_PRODUCTS');
+const AdditionProducts = createProtectedPage(AdditionProductsPage, 'ADDITION_PRODUCTS');
 const Router = [
   {
     path: '/',
@@ -99,16 +102,17 @@ const Router = [
       { path: '/inventory/units', element: <UnitsPage /> },
 
       // POS System Routes
-      { path: '/pos-screens', element: <PosScreensPage /> },
       { path: '/pos/screens', element: <PosScreensPage /> },
-      { path: '/pos-payment-methods', element: <PosPaymentMethodsPage /> },
       { path: '/pos/payment-methods', element: <PosPaymentMethodsPage /> },
+      {path: '/pos/products', element: <PosProductsPage /> },
+      {path: '/addition/products', element: <AdditionProducts />},
 
       // Business Entities Routes
       { path: '/suppliers', element: <SuppliersPage /> },
       { path: '/purchases/suppliers', element: <SuppliersPage /> },
       { path: '/warehouses', element: <WarehousesPage /> },
       { path: '/inventory/warehouses', element: <WarehousesPage /> },
+      { path: '/apps/ecommerce/shop', element: <Ecommerce /> },
 
       // Financial Routes
       { path: '/accounts', element: <AccountsPage /> },

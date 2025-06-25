@@ -12,11 +12,20 @@ import { productsImportExportConfig } from '../../components/configs/importExpor
 import { Product } from 'src/utils/api/pagesApi/productsApi';
 
 interface Props {
+  title: string; // ⭐ إضافة title كـ prop
   exportData: Product[];
   loading: boolean;
+  showImport?: boolean; // ⭐ إضافة تحكم في الـ import/export
+  showExport?: boolean;
 }
 
-const PageHeader: React.FC<Props> = ({ exportData, loading }) => {
+const PageHeader: React.FC<Props> = ({ 
+  title, 
+  exportData, 
+  loading, 
+  showImport = true, 
+  showExport = true 
+}) => {
   const { t } = useTranslation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -25,14 +34,16 @@ const PageHeader: React.FC<Props> = ({ exportData, loading }) => {
     ...productsImportExportConfig,
     onExport: () => exportData.map(product => ({
       productName: product.name,
-      groupName: product.group?.name || 'غير محدد',
-      productType: product.productType === 1 ? 'POS' : 'Material',
+      groupName: product.group?.name || t('common.notSpecified'),
+      productType: product.productType === 1 ? 'POS' : 
+                   product.productType === 2 ? 'Material' : 
+                   product.productType === 3 ? 'Addition' : 'Unknown',
       description: product.description,
       reorderLevel: product.reorderLevel,
       cost: product.cost,
       expirationDays: product.expirationDays,
       code: product.code,
-      isActive: product.isActive
+      isActive: product.isActive ? t('common.active') : t('common.inactive')
     }))
   };
 
@@ -54,7 +65,7 @@ const PageHeader: React.FC<Props> = ({ exportData, loading }) => {
             fontWeight: { xs: 600, sm: 500 }
           }}
         >
-          {t('products.title')}
+          {title} {/* ⭐ استخدام title المُمرر */}
         </Typography>
       </Box>
 
@@ -63,6 +74,8 @@ const PageHeader: React.FC<Props> = ({ exportData, loading }) => {
         data={exportData}
         loading={loading}
         compact={isMobile}
+        showImport={showImport} // ⭐ تمرير الـ props
+        showExport={showExport}
       />
     </Box>
   );

@@ -23,10 +23,8 @@ interface PermissionProps {
   canImport?: boolean;
   canView?: boolean;
 }
-interface Props extends PermissionProps {
-  // Add other props here if needed
-}
 
+interface Props extends PermissionProps {}
 
 const PosScreensPage: React.FC<Props> = (props) => {
   const { t } = useTranslation();
@@ -55,7 +53,6 @@ const PosScreensPage: React.FC<Props> = (props) => {
     sortOrder: 'asc'
   });
 
-  /* ───── fetch all ───── */
   const fetchScreens = React.useCallback(async () => {
     try {
       setLoad(true);
@@ -72,7 +69,6 @@ const PosScreensPage: React.FC<Props> = (props) => {
     fetchScreens();
   }, [fetchScreens]);
 
-  /* ───── filter for desktop ───── */
   const filterTree = React.useCallback((screens: PosScreen[], searchQuery: string): PosScreen[] => {
     if (!searchQuery) return screens;
     
@@ -96,7 +92,6 @@ const PosScreensPage: React.FC<Props> = (props) => {
     [items, query, filterTree]
   );
 
-  /* ───── filter for mobile ───── */
   const mobileFiltered = React.useMemo(() => {
     let result = [...items];
 
@@ -213,10 +208,8 @@ const PosScreensPage: React.FC<Props> = (props) => {
   const totalCount = React.useMemo(() => getTotalCount(items), [items, getTotalCount]);
   const filteredCount = React.useMemo(() => getTotalCount(filtered), [filtered, getTotalCount]);
 
-  /* ───── Reorder Handler ───── */
   const handleReorder = React.useCallback(async (reorderedScreens: PosScreen[], parentId?: string) => {
     try {
-      // تحديث الحالة المحلية أولاً
       const updateTreeWithNewOrder = (screens: PosScreen[]): PosScreen[] => {
         if (!parentId) {
           return reorderedScreens.map((screen, index) => ({
@@ -245,7 +238,6 @@ const PosScreensPage: React.FC<Props> = (props) => {
       const newItems = updateTreeWithNewOrder(items);
       setItems(newItems);
 
-      // إرسال التحديث للخادم
       const reorderData = reorderedScreens.map((screen, index) => ({
         screenId: screen.id,
         displayOrder: index + 1,
@@ -264,45 +256,46 @@ const PosScreensPage: React.FC<Props> = (props) => {
     }
   }, [items, fetchScreens]);
 
-  /* ───── CRUD ───── */
-  const handleAdd = React.useCallback(async (body: {
-    screenName: string;
-    ParentScreenId?: string;
-    isVisible: boolean;
-    displayOrder: number;
-    colorHex: string;
-    icon: string;
-  }) => {
+  const handleSubmit = async (formData: any) => {
     try {
-      await apiSrv.add(body);
+      if (!formData.screenName || formData.screenName.trim() === '') {
+        setErr(t('posScreens.nameRequired'));
+        return;
+      }
+      
+      if (dialog.mode === 'add') {
+        const addData = {
+          screenName: formData.screenName,
+          ParentScreenId: formData.ParentScreenId || undefined,
+          isVisible: Boolean(formData.isVisible),
+          displayOrder: Number(formData.displayOrder),
+          colorHex: formData.colorHex,
+          icon: formData.icon
+        };
+        
+        await apiSrv.add(addData);
+      } else if (dialog.mode === 'edit' && dialog.current) {
+        const updateData = {
+          Screenid: dialog.current.id,
+          screenName: formData.screenName,
+          ParentScreenId: formData.ParentScreenId || undefined,
+          isVisible: Boolean(formData.isVisible),
+          displayOrder: Number(formData.displayOrder),
+          colorHex: formData.colorHex,
+          icon: formData.icon
+        };
+        
+        await apiSrv.update(updateData);
+      }
+      
       await fetchScreens();
       setDialog({ open: false, mode: 'add' });
-    } catch (e: any) {
-      const msg = e?.errors?.screenName?.[0] || e?.message || 'Add failed';
-      setErr(msg);
+      
+    } catch (error: any) {
+      setErr(error?.message || t('posScreens.submitError'));
     }
-  }, [fetchScreens]);
+  };
 
-  const handleUpdate = React.useCallback(async (screen: PosScreen) => {
-    try {
-      await apiSrv.update({
-        Screenid: screen.id,
-        screenName: screen.name,
-        ParentScreenId: screen.parentId || undefined,
-        isVisible: screen.isVisible,
-        displayOrder: screen.displayOrder,
-        colorHex: screen.colorHex,
-        icon: screen.icon
-      });
-      await fetchScreens();
-      setDialog({ open: false, mode: 'add' });
-    } catch (e: any) {
-      const msg = e?.errors?.screenName?.[0] || e?.message || 'Update failed';
-      setErr(msg);
-    }
-  }, [fetchScreens]);
-
-  /* ───── UI ───── */
   return (
     <Container maxWidth="xl">
       <PageHeader exportData={filtered} loading={loading}/>
@@ -318,17 +311,17 @@ const PosScreensPage: React.FC<Props> = (props) => {
       {isMobile && (
         <Box sx={{ mb: 2, textAlign: 'center' }}>
           {canAdd && (
-        <Button
-            variant="contained"
-            startIcon={<IconPlus />}
-            onClick={() => setDialog({ open: true, mode: 'add' })}
-            fullWidth
-            size="large"
-            sx={{ minHeight: 48, fontSize: '1rem' }}
-          >
-            {t('posScreens.add')}
-          </Button>
-        )}
+            <Button
+              variant="contained"
+              startIcon={<IconPlus />}
+              onClick={() => setDialog({ open: true, mode: 'add' })}
+              fullWidth
+              size="large"
+              sx={{ minHeight: 48, fontSize: '1rem' }}
+            >
+              {t('posScreens.add')}
+            </Button>
+          )}
         </Box>
       )}
 
@@ -351,16 +344,16 @@ const PosScreensPage: React.FC<Props> = (props) => {
             loading={loading}
           />
         ) : (
-<OptimizedDragTree
-  screens={filtered}
-  onEdit={(screen) => setDialog({ open: true, mode: 'edit', current: screen })}
-  onAddChild={(parentScreen) => setDialog({ 
-    open: true, 
-    mode: 'add', 
-    parentScreen 
-  })}
-  onReorder={handleReorder}
-/>
+          <OptimizedDragTree
+            screens={filtered}
+            onEdit={(screen) => setDialog({ open: true, mode: 'edit', current: screen })}
+            onAddChild={(parentScreen) => setDialog({ 
+              open: true, 
+              mode: 'add', 
+              parentScreen 
+            })}
+            onReorder={handleReorder}
+          />
         )}
       </Box>
 
@@ -400,13 +393,7 @@ const PosScreensPage: React.FC<Props> = (props) => {
         parentScreen={dialog.parentScreen}
         allScreens={items}
         onClose={() => setDialog({ open: false, mode: 'add' })}
-        onSubmit={dialog.mode === 'add'
-          ? ((data) => handleAdd({
-              ...data, ParentScreenId: (data as any).parentScreenId ?? undefined,
-              screenName: ''
-          }))
-          : ((data) => handleUpdate(data as PosScreen))
-        }
+        onSubmit={handleSubmit}
       />
 
       <Snackbar open={!!error} autoHideDuration={6000} onClose={() => setErr('')}>

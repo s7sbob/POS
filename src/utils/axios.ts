@@ -18,14 +18,21 @@ api.interceptors.request.use((config) => {
   // إضافة BranchID و CompanyID من localStorage
   const branchId = localStorage.getItem('branch_id') || 'branch_1';
   const companyId = localStorage.getItem('company_id') || 'company_1';
+  const tenantId = localStorage.getItem('tenant_id'); // ⭐ إضافة TenantId
   
   config.headers.BranchID = branchId;
   config.headers.CompanyID = companyId;
+  
+  // ⭐ إضافة TenantId header
+  if (tenantId) {
+    config.headers.TenantId = tenantId;
+  }
   
   console.log('🔍 Request Headers:', {
     Authorization: config.headers.Authorization,
     BranchID: config.headers.BranchID,
     CompanyID: config.headers.CompanyID,
+    TenantId: config.headers.TenantId, // ⭐ إضافة للـ log
     url: config.url
   });
   
@@ -63,13 +70,19 @@ api.interceptors.response.use(
 );
 
 // دوال مساعدة لإدارة البيانات - محسنة
-export const setAuthHeaders = (token: string, companyId: string, branchId: string) => {
-  console.log('🔐 Setting auth headers:', { token: token.substring(0, 20) + '...', companyId, branchId });
+export const setAuthHeaders = (token: string, companyId: string, branchId: string, tenantId: string) => { // ⭐ إضافة tenantId
+  console.log('🔐 Setting auth headers:', { 
+    token: token.substring(0, 20) + '...', 
+    companyId, 
+    branchId, 
+    tenantId // ⭐ إضافة للـ log
+  });
   
   // حفظ في localStorage أولاً (أولوية عالية)
   localStorage.setItem('auth_token', token);
   localStorage.setItem('company_id', companyId);
   localStorage.setItem('branch_id', branchId);
+  localStorage.setItem('tenant_id', tenantId); // ⭐ حفظ TenantId
   
   // حفظ في Cookies كـ backup
   Cookies.set('token', token, { expires: 7 });
@@ -78,6 +91,7 @@ export const setAuthHeaders = (token: string, companyId: string, branchId: strin
   api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
   api.defaults.headers.common['BranchID'] = branchId;
   api.defaults.headers.common['CompanyID'] = companyId;
+  api.defaults.headers.common['TenantId'] = tenantId; // ⭐ إضافة TenantId
   
   console.log('✅ Auth headers set successfully');
 };
@@ -89,6 +103,7 @@ export const clearAuthHeaders = () => {
   localStorage.removeItem('auth_token');
   localStorage.removeItem('company_id');
   localStorage.removeItem('branch_id');
+  localStorage.removeItem('tenant_id'); // ⭐ مسح TenantId
   localStorage.removeItem('user_data');
   localStorage.removeItem('selected_branch');
   localStorage.removeItem('user_branches');
@@ -100,6 +115,7 @@ export const clearAuthHeaders = () => {
   delete api.defaults.headers.common['Authorization'];
   delete api.defaults.headers.common['BranchID'];
   delete api.defaults.headers.common['CompanyID'];
+  delete api.defaults.headers.common['TenantId']; // ⭐ مسح TenantId
 };
 
 export const updateBranchHeaders = (branchId: string, companyId: string) => {
@@ -117,9 +133,16 @@ export const isAuthenticated = () => {
   const token = localStorage.getItem('auth_token') || Cookies.get('token');
   const branchId = localStorage.getItem('branch_id');
   const companyId = localStorage.getItem('company_id');
-  const isAuth = !!(token && branchId && companyId);
+  const tenantId = localStorage.getItem('tenant_id'); // ⭐ إضافة TenantId للتحقق
+  const isAuth = !!(token && branchId && companyId && tenantId);
   
-  console.log('🔍 Auth check:', { hasToken: !!token, hasBranch: !!branchId, hasCompany: !!companyId, isAuth });
+  console.log('🔍 Auth check:', { 
+    hasToken: !!token, 
+    hasBranch: !!branchId, 
+    hasCompany: !!companyId, 
+    hasTenant: !!tenantId, // ⭐ إضافة للـ log
+    isAuth 
+  });
   
   return isAuth;
 };

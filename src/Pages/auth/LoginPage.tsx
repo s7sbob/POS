@@ -1,4 +1,4 @@
-// File: src/pages/auth/LoginPage.tsx
+// File: src/Pages/auth/LoginPage.tsx
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Grid, Box, Card, Stack, Typography, Snackbar, Alert } from '@mui/material';
@@ -15,9 +15,10 @@ const LoginPage: React.FC = () => {
   const { login, isLoading } = useAuth();
   const [msg, setMsg] = React.useState('');
 
-  const handleLogin = async (phone: string, password: string) => {
+  // ⭐ تحديث handleLogin لاستقبال tenantId
+  const handleLogin = async (phone: string, password: string, tenantId: string) => {
     try {
-      await login(phone, password, (branches: Branch[], selectedBranch?: Branch) => {
+      await login(phone, password, tenantId, (branches: Branch[], selectedBranch?: Branch) => {
         console.log('🚀 Login success callback triggered');
         console.log('- branches.length:', branches.length);
         console.log('- selectedBranch:', selectedBranch);

@@ -9,6 +9,7 @@ import {
   CircularProgress,
   Paper
 } from '@mui/material';
+import { debounce } from '@mui/material/utils';
 import { useTranslation } from 'react-i18next';
 import { searchProductPricesByNameOrBarcode } from 'src/utils/api/pagesApi/productsApi';
 
@@ -24,6 +25,7 @@ interface ProductPriceOption {
   unitFactor: number;
   price: number;
   barcode: string;
+  posPriceName?: string;
 }
 
 interface Props {
@@ -32,6 +34,9 @@ interface Props {
   label: string;
   error?: boolean;
   excludeProductId?: string;
+  showPriceName?: boolean;
+  hideUnitInfo?: boolean;
+  placeholder?: string;
 }
 
 const ProductPriceSearchSelect: React.FC<Props> = ({
@@ -39,23 +44,111 @@ const ProductPriceSearchSelect: React.FC<Props> = ({
   onChange,
   label,
   error = false,
-  excludeProductId
+  excludeProductId,
+  showPriceName = false,
+  hideUnitInfo = false,
+  placeholder
 }) => {
   const { t } = useTranslation();
-  const [options, setOptions] = React.useState<ProductPriceOption[]>([]);
+const [options, setOptions] = React.useState<ProductPriceOption[]>([]); // ✅ دايماً array فاضي
   const [loading, setLoading] = React.useState(false);
   const [inputValue, setInputValue] = React.useState('');
   const [selectedOption, setSelectedOption] = React.useState<ProductPriceOption | null>(null);
   const [open, setOpen] = React.useState(false);
 
-  // البحث في المنتجات
-  const searchProducts = React.useCallback(async (searchTerm: string) => {
+  // إضافة AbortController لإلغاء الطلبات السابقة
+  const abortControllerRef = React.useRef<AbortController | null>(null);
+
+  // ⭐ دالة لتحميل النتائج الأولية (أول 10)
+const loadInitialResults = React.useCallback(async () => {
+  if (abortControllerRef.current) {
+    abortControllerRef.current.abort();
+  }
+
+  abortControllerRef.current = new AbortController();
+  setLoading(true);
+  
+  try {
+    const response = await searchProductPricesByNameOrBarcode('', 1, 10);
+    
+    let filteredData: ProductPriceOption[] = [];
+    // ⭐ تحديث المسار للبيانات
+    const apiData = response.data;
+    if (apiData && Array.isArray(apiData)) {
+      filteredData = apiData
+        .filter(item => item && item.product && item.productPriceId)
+        .map(item => ({
+          productPriceId: item.productPriceId,
+          product: {
+            productID: item.product.productID,
+            productName: item.product.productName
+          },
+          unit: {
+            unitName: item.unit?.unitName || 'قطعة'
+          },
+          unitFactor: item.unitFactor || 1,
+          price: item.price || 0,
+          barcode: item.barcode || '',
+          posPriceName: item.posPriceName || ''
+        }));
+    }
+
+    if (excludeProductId) {
+      filteredData = filteredData.filter(item => 
+        item.product?.productID !== excludeProductId
+      );
+    }
+
+    setOptions(filteredData);
+  } catch (error) {
+    console.error('Error loading initial results:', error);
+    setOptions([]);
+  } finally {
+    setLoading(false);
+  }
+}, [excludeProductId]);
+
+
+
+  // دالة البحث مع debounce
+const debouncedSearch = React.useMemo(
+  () => debounce(async (searchTerm: string) => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    abortControllerRef.current = new AbortController();
+
+    if (!searchTerm.trim()) {
+      await loadInitialResults();
+      return;
+    }
+
     setLoading(true);
     try {
-      const response = await searchProductPricesByNameOrBarcode(searchTerm || '', 1, 50);
-      let filteredData = response.data;
+      const response = await searchProductPricesByNameOrBarcode(searchTerm, 1, 50);
+      
+      // ⭐ تحديد نوع البيانات
+      let filteredData: ProductPriceOption[] = [];
+      if (response.data && Array.isArray(response.data)) {
+        filteredData = response.data
+          .filter(item => item && item.product && item.productPriceId)
+          .map(item => ({
+            productPriceId: item.productPriceId,
+            product: {
+              productID: item.product.productID,
+              productName: item.product.productName
+            },
+            unit: {
+              unitName: item.unit?.unitName || 'قطعة'
+            },
+            unitFactor: item.unitFactor || 1,
+            price: item.price || 0,
+            barcode: item.barcode || '',
+            posPriceName: item.posPriceName || ''
+          }));
+      }
 
-      // استبعاد المنتج الحالي إذا كان محدد
       if (excludeProductId) {
         filteredData = filteredData.filter(item => 
           item.product?.productID !== excludeProductId
@@ -64,38 +157,50 @@ const ProductPriceSearchSelect: React.FC<Props> = ({
 
       setOptions(filteredData);
     } catch (error) {
-      console.error('Error searching products:', error);
-      setOptions([]);
+      if (typeof error === 'object' && error !== null && 'name' in error && (error as any).name !== 'AbortError') {
+        console.error('Error searching products:', error);
+        setOptions([]);
+      }
     } finally {
       setLoading(false);
     }
-  }, [excludeProductId]);
+  }, 300),
+  [excludeProductId, loadInitialResults]
+);
 
-  // البحث عند فتح القائمة أو تغيير النص
+  // ⭐ تحديث useEffect للبحث
   React.useEffect(() => {
     if (open) {
-      const timeoutId = setTimeout(() => {
-        searchProducts(inputValue);
-      }, 300);
-
-      return () => clearTimeout(timeoutId);
+      if (inputValue.trim()) {
+        debouncedSearch(inputValue);
+      } else {
+        // عرض أول 10 نتائج عند فتح القائمة بدون بحث
+        loadInitialResults();
+      }
     }
-  }, [inputValue, searchProducts, open]);
+  }, [inputValue, debouncedSearch, open, loadInitialResults]);
+
+  // تنظيف عند unmount
+  React.useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      debouncedSearch.clear();
+    };
+  }, [debouncedSearch]);
 
   // تحديد الخيار المحدد عند تغيير القيمة
   React.useEffect(() => {
     if (value && options.length > 0) {
       const found = options.find(option => option.productPriceId === value);
-      if (found) {
+      if (found && (!selectedOption || selectedOption.productPriceId !== found.productPriceId)) {
         setSelectedOption(found);
       }
-    } else if (value && !selectedOption) {
-      // إذا كان هناك قيمة محددة ولكن لا توجد في الخيارات، ابحث عنها
-      searchProducts('');
-    } else if (!value) {
+    } else if (!value && selectedOption) {
       setSelectedOption(null);
     }
-  }, [value, options, selectedOption, searchProducts]);
+  }, [value, options]);
 
   // دالة عرض الخيار في القائمة
   const renderOption = (props: any, option: ProductPriceOption) => {
@@ -119,7 +224,10 @@ const ProductPriceSearchSelect: React.FC<Props> = ({
         <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%', py: 0.5 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <Typography variant="body2" sx={{ fontWeight: 500 }}>
-              {option.product?.productName || 'منتج غير محدد'}
+              {showPriceName && option.posPriceName 
+                ? option.posPriceName 
+                : option.product?.productName || 'منتج غير محدد'
+              }
             </Typography>
             {isSelected && (
               <Chip 
@@ -130,14 +238,24 @@ const ProductPriceSearchSelect: React.FC<Props> = ({
               />
             )}
           </Box>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 0.5 }}>
+          
+          {!hideUnitInfo && (
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 0.5 }}>
+              <Typography variant="caption" color="text.secondary">
+                {option.unit?.unitName || 'وحدة غير محددة'} × {option.unitFactor}
+              </Typography>
+              <Typography variant="caption" sx={{ fontWeight: 600, color: 'primary.main' }}>
+                {option.price?.toFixed(2)} جنيه
+              </Typography>
+            </Box>
+          )}
+          
+          {showPriceName && option.posPriceName && (
             <Typography variant="caption" color="text.secondary">
-              {option.unit?.unitName || 'وحدة غير محددة'} × {option.unitFactor}
+              {option.product?.productName} - {option.price?.toFixed(2)} جنيه
             </Typography>
-            <Typography variant="caption" sx={{ fontWeight: 600, color: 'primary.main' }}>
-              {option.price?.toFixed(2)} جنيه
-            </Typography>
-          </Box>
+          )}
+          
           {option.barcode && (
             <Typography variant="caption" color="text.secondary">
               {option.barcode}
@@ -153,6 +271,14 @@ const ProductPriceSearchSelect: React.FC<Props> = ({
     if (typeof option === 'string') return option;
     if (!option.product?.productName) return '';
     
+    if (showPriceName && option.posPriceName) {
+      return option.posPriceName;
+    }
+    
+    if (hideUnitInfo) {
+      return option.product.productName;
+    }
+    
     return `${option.product.productName} - ${option.unit?.unitName || 'وحدة'} × ${option.unitFactor} - ${option.price?.toFixed(2)} جنيه`;
   };
 
@@ -166,8 +292,10 @@ const ProductPriceSearchSelect: React.FC<Props> = ({
         onChange(newValue?.productPriceId || '');
       }}
       inputValue={inputValue}
-      onInputChange={(_, newInputValue) => {
-        setInputValue(newInputValue);
+      onInputChange={(_, newInputValue, reason) => {
+        if (reason === 'input') {
+          setInputValue(newInputValue);
+        }
       }}
       options={options}
       getOptionLabel={getOptionLabel}
@@ -176,7 +304,7 @@ const ProductPriceSearchSelect: React.FC<Props> = ({
       loadingText={t('common.loading')}
       noOptionsText={inputValue ? t('products.noProductsFound') : t('products.startTyping')}
       isOptionEqualToValue={(option, value) => option.productPriceId === value.productPriceId}
-      filterOptions={(x) => x} // تعطيل الفلترة المحلية
+      filterOptions={(x) => x}
       PaperComponent={(props) => (
         <Paper 
           {...props} 
@@ -201,7 +329,7 @@ const ProductPriceSearchSelect: React.FC<Props> = ({
           label={label}
           error={error}
           size="small"
-          placeholder={selectedOption ? selectedOption.product?.productName : t('products.searchPlaceholder')}
+          placeholder={placeholder || (selectedOption ? selectedOption.product?.productName : t('products.searchPlaceholder'))}
           InputProps={{
             ...params.InputProps,
             endAdornment: (
@@ -210,6 +338,12 @@ const ProductPriceSearchSelect: React.FC<Props> = ({
                 {params.InputProps.endAdornment}
               </>
             ),
+          }}
+          // ⭐ تحديد النص عند Focus
+          onFocus={(e) => {
+            if (e.target.value) {
+              e.target.select();
+            }
           }}
         />
       )}

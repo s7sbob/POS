@@ -11,7 +11,7 @@ import {
   InputAdornment,
   IconButton
 } from '@mui/material';
-import { IconEye, IconEyeOff, IconPhone, IconLock } from '@tabler/icons-react';
+import { IconEye, IconEyeOff, IconPhone, IconLock, IconBuilding } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
 import CustomCheckbox from 'src/components/forms/theme-elements/CustomCheckbox';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
@@ -22,7 +22,7 @@ interface Props {
   title?: React.ReactNode;
   subtitle?: React.ReactNode;
   subtext?: React.ReactNode;
-  onSubmit: (phone: string, password: string) => void;
+  onSubmit: (phone: string, password: string, tenantId: string) => void; // ⭐ إضافة tenantId
   isLoading?: boolean;
 }
 
@@ -33,6 +33,7 @@ const AuthLogin: React.FC<Props> = ({
   isLoading = false 
 }) => {
   const { t } = useTranslation();
+  const [tenantId, setTenantId] = React.useState(''); // ⭐ إضافة tenantId state
   const [phone, setPhone] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [showPassword, setShowPassword] = React.useState(false);
@@ -40,11 +41,16 @@ const AuthLogin: React.FC<Props> = ({
 
   React.useEffect(() => {
     const savedPhone = localStorage.getItem('remembered_phone');
+    const savedTenantId = localStorage.getItem('remembered_tenant'); // ⭐ إضافة حفظ TenantId
     const savedRemember = localStorage.getItem('remember_me') === 'true';
     
     if (savedRemember && savedPhone) {
       setPhone(savedPhone);
       setRememberMe(true);
+    }
+    
+    if (savedRemember && savedTenantId) {
+      setTenantId(savedTenantId);
     }
   }, []);
 
@@ -53,13 +59,15 @@ const AuthLogin: React.FC<Props> = ({
     
     if (rememberMe) {
       localStorage.setItem('remembered_phone', phone);
+      localStorage.setItem('remembered_tenant', tenantId); // ⭐ حفظ TenantId
       localStorage.setItem('remember_me', 'true');
     } else {
       localStorage.removeItem('remembered_phone');
+      localStorage.removeItem('remembered_tenant'); // ⭐ مسح TenantId
       localStorage.removeItem('remember_me');
     }
     
-    onSubmit(phone, password);
+    onSubmit(phone, password, tenantId); // ⭐ تمرير tenantId
   };
 
   const togglePasswordVisibility = () => {
@@ -72,6 +80,26 @@ const AuthLogin: React.FC<Props> = ({
 
       <form onSubmit={handle}>
         <Stack spacing={2}>
+          {/* ⭐ إضافة حقل TenantId */}
+          <Box>
+            <CustomFormLabel htmlFor="tenantId">{t('auth.login.tenantId')}</CustomFormLabel>
+            <CustomTextField 
+              id="tenantId" 
+              fullWidth 
+              value={tenantId} 
+              onChange={(e: { target: { value: React.SetStateAction<string>; }; }) => setTenantId(e.target.value)}
+              placeholder={t('auth.login.tenantPlaceholder')}
+              disabled={isLoading}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <IconBuilding size={20} />
+                  </InputAdornment>
+                )
+              }}
+            />
+          </Box>
+
           <Box>
             <CustomFormLabel htmlFor="phone">{t('auth.login.phoneNumber')}</CustomFormLabel>
             <CustomTextField 
@@ -154,7 +182,7 @@ const AuthLogin: React.FC<Props> = ({
             variant="contained" 
             type="submit" 
             fullWidth
-            disabled={isLoading || !phone.trim() || !password.trim()}
+            disabled={isLoading || !tenantId.trim() || !phone.trim() || !password.trim()} // ⭐ إضافة tenantId للتحقق
             sx={{ 
               py: 1.5,
               fontSize: '1rem'

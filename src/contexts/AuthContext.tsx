@@ -12,7 +12,7 @@ interface AuthContextType {
   branches: Branch[];
   selectedBranch: Branch | null;
   userPages: UserPage[];
-  login: (phoneNo: string, password: string, onSuccess?: (branches: Branch[], selectedBranch?: Branch) => void) => Promise<void>; // ⭐ إضافة callback
+  login: (phoneNo: string, password: string, tenantId: string, onSuccess?: (branches: Branch[], selectedBranch?: Branch) => void) => Promise<void>;
   logout: () => void;
   selectBranch: (branch: Branch) => void;
   hasPageAccess: (pageName: string) => boolean;
@@ -66,7 +66,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             setBranches(branchesData);
             
             // تأكد من تحديث headers
-            setAuthHeaders(savedToken, branchData.refCompanyId, branchData.id);
+            const savedTenantId = localStorage.getItem('tenant_id');
+            setAuthHeaders(savedToken, branchData.refCompanyId, branchData.id, savedTenantId || '');
             
             // ⭐ تحديث حالة المصادقة فوراً
             setIsAuthenticatedState(true);
@@ -114,20 +115,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // تسجيل الدخول مع redirect فوري
 
-const login = async (phoneNo: string, password: string, onSuccess?: (branches: Branch[], selectedBranch?: Branch) => void) => {
+
+const login = async (phoneNo: string, password: string, tenantId: string, onSuccess?: (branches: Branch[], selectedBranch?: Branch) => void) => {
   try {
     setIsLoading(true);
-    console.log('🔐 Starting login process...');
+    console.log('🔐 Starting login process with tenant:', tenantId);
     
-    const response: LoginResponse = await loginApi(phoneNo, password);
+    const response: LoginResponse = await loginApi(phoneNo, password, tenantId); // ⭐ تمرير tenantId
     console.log('✅ Login response:', response);
     
     const branches = response.branches?.data || [];
     console.log('🏢 Branches found:', branches);
     
     if (branches.length === 0) {
-    throw new Error(t('auth.errors.noBranches'));
-
+      throw new Error(t('auth.errors.noBranches'));
     }
 
     // حفظ البيانات
@@ -153,25 +154,23 @@ const login = async (phoneNo: string, password: string, onSuccess?: (branches: B
       const selectedBranch = branches[0];
       
       setSelectedBranch(selectedBranch);
-      setAuthHeaders(response.token, selectedBranch.refCompanyId, selectedBranch.id);
+      setAuthHeaders(response.token, selectedBranch.refCompanyId, selectedBranch.id, tenantId); // ⭐ تمرير tenantId
       localStorage.setItem('selected_branch', JSON.stringify(selectedBranch));
       setIsAuthenticatedState(true);
       
-      // ⭐ استدعاء callback مع البيانات
       if (onSuccess) {
         onSuccess(branches, selectedBranch);
       }
       
-      // تحميل الصفحات في الخلفية
       setTimeout(() => loadUserPages(), 200);
       
     } else {
       console.log('🏢 Multiple branches found');
       const firstBranch = branches[0];
-      setAuthHeaders(response.token, firstBranch.refCompanyId, firstBranch.id);
+      setAuthHeaders(response.token, firstBranch.refCompanyId, firstBranch.id, tenantId); // ⭐ تمرير tenantId
+      
       setIsAuthenticatedState(true);
       
-      // ⭐ استدعاء callback مع البيانات
       if (onSuccess) {
         onSuccess(branches);
       }
@@ -195,7 +194,8 @@ const login = async (phoneNo: string, password: string, onSuccess?: (branches: B
       
       // تحديث headers في axios
       if (token) {
-        setAuthHeaders(token, branch.refCompanyId, branch.id);
+        const savedTenantId = localStorage.getItem('tenant_id') || '';
+        setAuthHeaders(token, branch.refCompanyId, branch.id, savedTenantId);
       }
       
       // حفظ الفرع المختار

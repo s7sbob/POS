@@ -23,7 +23,9 @@
 
   "sidebar": {
     "stock": "المخزون",
+    "posProducts": "منتجات نقاط البيع",
      "systemAdmin": "إدارة النظام",
+     "additionProducts": "منتجات الإضافات",
     "userManagement": "إدارة المستخدمين",
     "companySettings": "إعدادات الشركة",
     "permissions": "الصلاحيات",
@@ -107,6 +109,71 @@
   },
  "products": {
     "title": "المنتجات",
+    "tabs": {
+      "basicInfoAndPrices": "المعلومات الأساسية والأسعار",
+      "basicInfo": "المعلومات الأساسية",
+      "prices": "الأسعار",
+      "options": "خيارات المنتج"
+    },
+     "types": {
+      "pos": "نقطة بيع",
+      "material": "مادة خام",
+      "addition": "إضافة",
+      "unknown": "غير محدد"
+    },
+      "form": {
+         "isActive": "نشط",
+      "posPriceName": "اسم السعر",
+      "posNamePlaceholder": "أدخل اسم السعر...",
+      "required": "مطلوب",
+      "addComment": "إضافة تعليق",
+      "comment": "تعليق",
+      "product": "منتج",
+      "selectProductPrice": "اختر سعر المنتج",
+      "selectProductPricePlaceholder": "ابحث عن منتج...",
+      "addFromProducts": "إضافة من المنتجات",
+      "selectProducts": "اختيار المنتجات",
+      "searchProducts": "البحث في المنتجات...",
+      "filterByGroup": "فلترة حسب المجموعة",
+      "allGroups": "كل المجموعات",
+      "productsFound": "تم العثور على {{count}} منتج",
+      "selected": "مختار: {{count}}",
+      "selectAll": "اختيار الكل",
+      "deselectAll": "إلغاء اختيار الكل",
+      "priceName": "اسم السعر",
+      "noProductsFound": "لا توجد منتجات",
+      "addSelected": "إضافة المختار ({{count}})",
+      "productName": "اسم المنتج",
+      "price": "السعر",
+      "barcode": "الباركود",
+      "productOptions": "خيارات المنتج",
+      "addOptionGroup": "إضافة مجموعة خيارات",
+      "noOptionGroups": "لا توجد مجموعات خيارات",
+      "optionGroup": "مجموعة خيارات",
+      "optionGroupName": "اسم مجموعة الخيارات",
+      "isRequired": "مطلوب",
+      "allowMultiple": "السماح بالاختيار المتعدد",
+      "minSelection": "الحد الأدنى للاختيار",
+      "maxSelection": "الحد الأقصى للاختيار",
+      "optionItems": "عناصر الخيارات",
+      "addOptionItem": "إضافة عنصر",
+      "optionItemName": "اسم العنصر",
+      "extraPrice": "سعر إضافي",
+      "commentOnly": "تعليق فقط",
+            "posScreen": "شاشة نقطة البيع",
+      "noPosScreen": "بدون شاشة"
+    },
+  "status": {
+      "active": "نشط",
+      "title": "الحالة",
+      "inactive": "غير نشط"
+    },
+    "validation": {
+      "optionGroupNameRequired": "اسم مجموعة الخيارات مطلوب",
+      "optionItemNameRequired": "اسم عنصر الخيار مطلوب"
+    },
+       "hasBarcode": "يحتوي على باركود",
+    "optionGroup": "مجموعة خيارات",
     "subtitle": "إدارة المنتجات والأسعار في النظام",
     "searchPlaceholder": "البحث بالاسم أو الباركود...",
     "searchByBarcode": "البحث بالباركود",
@@ -155,7 +222,6 @@
     "cost": "التكلفة",
     "lastPurePrice": "آخر سعر خالص",
     "expirationDays": "أيام انتهاء الصلاحية",
-    "status": "الحالة",
     "created": "تاريخ الإنشاء",
     "add": "إضافة منتج",
     "edit": "تعديل المنتج",
@@ -1151,6 +1217,8 @@
   "auth": {
     "login": {
       "title": "تسجيل الدخول",
+      "tenantId": "كود الشركة",
+      "tenantPlaceholder": "أدخل كود الشركة",
       "description": "صفحة تسجيل الدخول",
       "phoneNumber": "رقم الهاتف",
       "password": "كلمة المرور",
@@ -1311,7 +1379,60 @@
       "inbox": "صندوق الرسائل",
       "taskList": "قائمة المهام"
     }
+  },
+
+   "posProducts": {
+    "title": "منتجات نقاط البيع",
+    "searchPlaceholder": "البحث في منتجات نقاط البيع...",
+    "searchByBarcode": "البحث بالباركود",
+    "searchByName": "البحث بالاسم",
+    "searchResults": "{{count}} نتيجة",
+    "add": "إضافة منتج POS",
+    "searching": "جاري البحث...",
+    "noSearchResults": "لا توجد نتائج للبحث",
+    "noProducts": "لا توجد منتجات POS",
+    "errors": {
+      "loadFailed": "فشل في تحميل منتجات نقاط البيع",
+      "searchFailed": "فشل في البحث",
+      "addFailed": "فشل في إضافة المنتج",
+      "updateFailed": "فشل في تحديث المنتج"
+    }
+  },
+    "materials": {
+    "title": "المواد الخام",
+    "searchPlaceholder": "البحث في المواد الخام...",
+    "searchByBarcode": "البحث بالباركود",
+    "searchByName": "البحث بالاسم",
+    "searchResults": "{{count}} نتيجة",
+    "add": "إضافة مادة خام",
+    "searching": "جاري البحث...",
+    "noSearchResults": "لا توجد نتائج للبحث",
+    "noMaterials": "لا توجد مواد خام",
+    "errors": {
+      "loadFailed": "فشل في تحميل المواد الخام",
+      "searchFailed": "فشل في البحث",
+      "addFailed": "فشل في إضافة المادة",
+      "updateFailed": "فشل في تحديث المادة"
+    }
+  },
+    "additionProducts": {
+    "title": "منتجات الإضافات",
+    "searchPlaceholder": "البحث في منتجات الإضافات...",
+    "searchByBarcode": "البحث بالباركود",
+    "searchByName": "البحث بالاسم",
+    "searchResults": "{{count}} نتيجة",
+    "add": "إضافة منتج إضافة",
+    "searching": "جاري البحث...",
+    "noSearchResults": "لا توجد نتائج للبحث",
+    "noProducts": "لا توجد منتجات إضافات",
+    "errors": {
+      "loadFailed": "فشل في تحميل منتجات الإضافات",
+      "searchFailed": "فشل في البحث",
+      "addFailed": "فشل في إضافة المنتج",
+      "updateFailed": "فشل في تحديث المنتج"
+    }
   }
+
 
 
 }

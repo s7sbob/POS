@@ -60,8 +60,13 @@ export interface PagePermission {
 }
 
 // تسجيل الدخول
-export const login = async (phoneNo: string, password: string): Promise<LoginResponse> => {
-  const response = await api.post(`/login?PhoneNo=${phoneNo}&Password=${password}`);
+export const login = async (phoneNo: string, password: string, tenantId: string): Promise<LoginResponse> => {
+  // ⭐ إضافة TenantId في الـ headers قبل الطلب
+  const response = await api.post(`/login?PhoneNo=${phoneNo}&Password=${password}`, {}, {
+    headers: {
+      'TenantId': tenantId // ⭐ إرسال TenantId في الـ header
+    }
+  });
   return response.data;
 };
 

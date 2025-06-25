@@ -24,7 +24,6 @@ export type PosScreen = {
 
 const toPosScreen = (raw: any): PosScreen => {
   if (!raw || !raw.screenId) {
-    console.warn('Invalid screen data:', raw);
     return null as any;
   }
 
@@ -49,27 +48,20 @@ const toPosScreen = (raw: any): PosScreen => {
   };
 };
 
-// تحويل البيانات المسطحة إلى هيكل شجري محسن
 const buildTree = (screens: PosScreen[]): PosScreen[] => {
-  console.log('Building tree from screens:', screens);
-  
-  // فلترة الشاشات الصحيحة فقط
   const validScreens = screens.filter(screen => screen && screen.id);
   
   if (validScreens.length === 0) {
-    console.warn('No valid screens found');
     return [];
   }
 
   const screenMap = new Map<string, PosScreen>();
   const roots: PosScreen[] = [];
 
-  // إنشاء خريطة للشاشات
   validScreens.forEach(screen => {
     screenMap.set(screen.id, { ...screen, children: [] });
   });
 
-  // بناء الشجرة
   validScreens.forEach(screen => {
     const screenNode = screenMap.get(screen.id)!;
     if (screen.parentId && screenMap.has(screen.parentId)) {
@@ -83,7 +75,6 @@ const buildTree = (screens: PosScreen[]): PosScreen[] => {
     }
   });
 
-  // ترتيب العناصر حسب displayOrder
   const sortByDisplayOrder = (items: PosScreen[]): PosScreen[] => {
     return items.sort((a, b) => a.displayOrder - b.displayOrder).map(item => ({
       ...item,
@@ -91,41 +82,26 @@ const buildTree = (screens: PosScreen[]): PosScreen[] => {
     }));
   };
 
-  const result = sortByDisplayOrder(roots);
-  console.log('Built tree result:', result);
-  return result;
+  return sortByDisplayOrder(roots);
 };
-
-/* ---------------- API Functions ---------------- */
 
 export const getAll = async (): Promise<PosScreen[]> => {
   try {
-    console.log('Fetching all screens...');
     const response = await api.get('/GetAllScreens');
-    console.log('API Response:', response.data);
     
     if (!response.data || !response.data.data) {
-      console.warn('Invalid API response structure');
       return [];
     }
 
     const rawScreens = response.data.data;
-    console.log('Raw screens from API:', rawScreens);
     
-    // تحويل البيانات الخام وفلترة العناصر الصحيحة
     const flatScreens = rawScreens
-      .filter((raw: any) => raw && raw.screenId) // فلترة العناصر الصحيحة فقط
+      .filter((raw: any) => raw && raw.screenId)
       .map(toPosScreen)
-      .filter((screen: PosScreen) => screen && screen.id); // فلترة مرة أخرى بعد التحويل
+      .filter((screen: PosScreen) => screen && screen.id);
     
-    console.log('Converted flat screens:', flatScreens);
-    
-    const treeResult = buildTree(flatScreens);
-    console.log('Final tree result:', treeResult);
-    
-    return treeResult;
+    return buildTree(flatScreens);
   } catch (error) {
-    console.error('Error in getAll:', error);
     throw error;
   }
 };
@@ -143,7 +119,20 @@ export const add = async (body: {
   colorHex: string;
   icon: string;
 }): Promise<PosScreen> => {
-  const { data } = await api.post('/AddScreen', body);
+  if (!body.screenName || body.screenName.trim() === '') {
+    throw new Error('Screen name is required');
+  }
+  
+  const requestBody = {
+    screenName: body.screenName.trim(),
+    ...(body.ParentScreenId && { ParentScreenId: body.ParentScreenId }),
+    isVisible: Boolean(body.isVisible),
+    displayOrder: Number(body.displayOrder),
+    colorHex: body.colorHex,
+    icon: body.icon
+  };
+  
+  const { data } = await api.post('/AddScreen', requestBody);
   return toPosScreen(data.data);
 };
 
@@ -156,11 +145,24 @@ export const update = async (body: {
   colorHex: string;
   icon: string;
 }): Promise<PosScreen> => {
-  const { data } = await api.post('/updatescreen', body);
+  if (!body.screenName || body.screenName.trim() === '') {
+    throw new Error('Screen name is required');
+  }
+  
+  const requestBody = {
+    Screenid: body.Screenid,
+    screenName: body.screenName.trim(),
+    ...(body.ParentScreenId && { ParentScreenId: body.ParentScreenId }),
+    isVisible: Boolean(body.isVisible),
+    displayOrder: Number(body.displayOrder),
+    colorHex: body.colorHex,
+    icon: body.icon
+  };
+  
+  const { data } = await api.post('/updatescreen', requestBody);
   return toPosScreen(data.data);
 };
 
-// دالة لإعادة ترتيب الشاشات
 export const reorderScreens = async (screens: Array<{
   screenId: string;
   displayOrder: number;
@@ -170,7 +172,6 @@ export const reorderScreens = async (screens: Array<{
   colorHex: string;
   icon: string;
 }>): Promise<void> => {
-  // تحديث كل شاشة بترتيبها الجديد مع جميع البيانات المطلوبة
   await Promise.all(
     screens.map(screen => 
       api.post('/updatescreen', {

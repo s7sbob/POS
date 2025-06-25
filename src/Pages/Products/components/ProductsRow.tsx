@@ -1,89 +1,170 @@
+// File: src/pages/products/components/ProductsRow.tsx
+import React from 'react';
 import {
   Card,
   CardContent,
   Typography,
-  Stack,
-  IconButton,
+  Box,
   Chip,
-  Box
+  IconButton,
+  Stack,
+  Divider,
+  Tooltip
 } from '@mui/material';
-import { IconEdit, IconEye } from '@tabler/icons-react';
-import { Product } from 'src/utils/api/pagesApi/productsApi';
+import { IconEdit, IconEye, IconBarcode } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
+import { Product } from 'src/utils/api/pagesApi/productsApi';
 
 interface Props {
   product: Product;
   onEdit: () => void;
   onViewPrices: () => void;
-  isSelected: boolean;
+  isSelected?: boolean;
 }
 
-const ProductRow: React.FC<Props> = ({ product, onEdit, onViewPrices, isSelected }) => {
+const ProductRow: React.FC<Props> = ({
+  product,
+  onEdit,
+  onViewPrices,
+  isSelected = false
+}) => {
   const { t } = useTranslation();
 
   const getProductTypeLabel = (type: number) => {
     switch (type) {
-      case 1: return 'POS';
-      case 2: return 'Material';
-      default: return 'Unknown';
+      case 1: return t('products.types.pos');
+      case 2: return t('products.types.material');
+      case 3: return t('products.types.addition');
+      default: return t('products.types.unknown');
+    }
+  };
+
+  const getProductTypeColor = (type: number): "default" | "primary" | "secondary" | "error" | "info" | "success" | "warning" => {
+    switch (type) {
+      case 1: return 'primary';   // POS
+      case 2: return 'secondary'; // Material
+      case 3: return 'info';      // Addition
+      default: return 'default';
     }
   };
 
   return (
     <Card 
+      variant="outlined" 
       sx={{ 
-        mb: 2, 
-        border: isSelected ? 2 : 1,
-        borderColor: isSelected ? 'primary.main' : 'divider',
+        mb: 2,
+        ...(isSelected && {
+          borderColor: 'primary.main',
+          backgroundColor: 'action.selected'
+        })
       }}
     >
       <CardContent>
-        <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
-          <Stack spacing={1} flex={1}>
-            <Typography variant="h6" component="div">
+        {/* Header */}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+          <Box sx={{ flex: 1 }}>
+            <Typography variant="h6" sx={{ fontSize: '1.1rem', fontWeight: 600, mb: 0.5 }}>
               {product.name}
             </Typography>
-            <Box>
+            <Typography variant="body2" color="text.secondary">
+              {t('products.code')}: {product.code}
+            </Typography>
+          </Box>
+          
+          {/* ⭐ عرض حالة المنتج */}
+          <Chip
+            label={product.isActive ? t('products.status.active') : t('products.status.inactive')}
+            color={product.isActive ? 'success' : 'error'}
+            size="small"
+            variant={product.isActive ? 'filled' : 'outlined'}
+          />
+        </Box>
+
+        {/* Product Info */}
+        <Stack spacing={1} sx={{ mb: 2 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Typography variant="body2" color="text.secondary">
+              {t('products.group')}:
+            </Typography>
+            <Typography variant="body2">
+              {product.group?.name || t('common.notSpecified')}
+            </Typography>
+          </Box>
+          
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Typography variant="body2" color="text.secondary">
+              {t('products.type')}:
+            </Typography>
+            <Chip
+              label={getProductTypeLabel(product.productType)}
+              color={getProductTypeColor(product.productType)}
+              size="small"
+              variant="outlined"
+            />
+          </Box>
+          
+          {/* ⭐ عرض POS Screen للمنتجات من نوع POS */}
+          {product.productType === 1 && product.posScreen && (
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <Typography variant="body2" color="text.secondary">
-                {t('products.group')}: {product.group?.name || 'No Group'}
+                {t('products.form.posScreen')}:
               </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {t('products.cost')}: {Number(product.cost).toFixed(2)}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {t('products.pricesCount')}: {product.productPrices?.length || 0}
+              <Typography variant="body2">
+                📱 {product.posScreen.name}
               </Typography>
             </Box>
-            <Stack direction="row" spacing={1}>
-              <Chip
-                label={getProductTypeLabel(product.productType)}
-                color={product.productType === 1 ? 'primary' : 'secondary'}
-                size="small"
-              />
-              <Chip
-                label={product.isActive ? t('products.active') : t('products.inactive')}
-                color={product.isActive ? 'success' : 'default'}
-                size="small"
-              />
-            </Stack>
-          </Stack>
+          )}
           
-          <Stack direction="row" spacing={1}>
-            <IconButton 
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Typography variant="body2" color="text.secondary">
+              {t('products.prices')}:
+            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Typography variant="body2">
+                {product.productPrices.length}
+              </Typography>
+              {product.productPrices.some(p => p.barcode) && (
+                <Tooltip title={t('products.hasBarcode')}>
+                  <IconBarcode size={16} color="green" />
+                </Tooltip>
+              )}
+            </Box>
+          </Box>
+        </Stack>
+
+        {/* Description */}
+        {product.description && (
+          <>
+            <Divider sx={{ my: 1 }} />
+            <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.875rem' }}>
+              {product.description}
+            </Typography>
+          </>
+        )}
+
+        {/* Actions */}
+        <Divider sx={{ my: 2 }} />
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+          <Tooltip title={t('products.viewPrices')}>
+            <IconButton
+              size="small"
               onClick={onViewPrices}
-              color={isSelected ? 'primary' : 'default'}
-              title={t('products.viewPrices')}
+              color="info"
             >
               <IconEye size={18} />
             </IconButton>
-            <IconButton 
+          </Tooltip>
+          
+          <Tooltip title={t('common.edit')}>
+            <IconButton
+              size="small"
               onClick={onEdit}
-              title={t('products.edit')}
+              color="primary"
             >
               <IconEdit size={18} />
             </IconButton>
-          </Stack>
-        </Stack>
+          </Tooltip>
+        </Box>
       </CardContent>
     </Card>
   );

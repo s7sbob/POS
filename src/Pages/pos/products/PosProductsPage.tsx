@@ -1,4 +1,4 @@
-// File: src/pages/products/ProductsPage.tsx
+// File: src/Pages/pos/products/PosProductsPage.tsx
 import React from 'react';
 import {
   Container, useMediaQuery,
@@ -7,19 +7,21 @@ import {
 } from '@mui/material';
 import { IconSearch, IconBarcode, IconX, IconFilter, IconPlus } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
-import PageHeader from './components/PageHeader';
-import ActionsBar from './components/ActionsBar';
-import ProductTable from './components/ProductTable';
-import ProductRow from './components/ProductsRow';
-import ProductForm from './components/ProductForm';
-import ProductPricesDrawer from './components/ProductPricesDrawer';
-import MobileProductsFilter, { ProductsFilterState } from './components/mobile/MobileProductsFilter';
+import PageHeader from '../../products/components/PageHeader';
+import ActionsBar from '../../products/components/ActionsBar';
+import ProductTable from '../../products/components/ProductTable';
+import ProductRow from '../../products/components/ProductsRow';
+import ProductForm from '../../products/components/ProductForm';
+import ProductPricesDrawer from '../../products/components/ProductPricesDrawer';
+import MobileProductsFilter, { ProductsFilterState } from '../../products/components/mobile/MobileProductsFilter';
 import * as apiSrv from 'src/utils/api/pagesApi/productsApi';
 import * as groupsApi from 'src/utils/api/pagesApi/groupsApi';
 import * as unitsApi from 'src/utils/api/pagesApi/unitsApi';
+import * as posScreensApi from 'src/utils/api/pagesApi/posScreensApi'; // ⭐ إضافة import للـ POS Screens
 import { Product, ProductsResponse } from 'src/utils/api/pagesApi/productsApi';
 import { Group } from 'src/utils/api/pagesApi/groupsApi';
 import { Unit } from 'src/utils/api/pagesApi/unitsApi';
+import { PosScreen } from 'src/utils/api/pagesApi/posScreensApi'; // ⭐ إضافة import للـ PosScreen type
 
 interface PermissionProps {
   canAdd?: boolean;
@@ -29,13 +31,13 @@ interface PermissionProps {
   canImport?: boolean;
   canView?: boolean;
 }
+
 interface Props extends PermissionProps {
   // Add other props here if needed
 }
 
-
-const ProductsPage: React.FC<Props> = (props) => {
-  const { canAdd = true } = props;
+const PosProductsPage: React.FC<Props> = (props) => {
+  const { canAdd = true, canImport = true, canExport = true } = props;
   const { t } = useTranslation();
   const [productsData, setProductsData] = React.useState<ProductsResponse>({
     totalCount: 0,
@@ -46,6 +48,7 @@ const ProductsPage: React.FC<Props> = (props) => {
   });
   const [groups, setGroups] = React.useState<Group[]>([]);
   const [units, setUnits] = React.useState<Unit[]>([]);
+  const [posScreens, setPosScreens] = React.useState<PosScreen[]>([]); // ⭐ إضافة state للـ POS Screens
   const [selectedProduct, setSelectedProduct] = React.useState<Product | null>(null);
   const [searchQuery, setSearchQuery] = React.useState('');
   const [searchMode, setSearchMode] = React.useState<'name' | 'barcode' | null>(null);
@@ -64,7 +67,6 @@ const ProductsPage: React.FC<Props> = (props) => {
   const isDownSm = useMediaQuery((th: any) => th.breakpoints.down('sm'));
   const isMobile = useMediaQuery((th: any) => th.breakpoints.down('md'));
 
-  // حالة الفلاتر للموبايل
   const [mobileFilters, setMobileFilters] = React.useState<ProductsFilterState>({
     searchQuery: '',
     groupId: '',
@@ -74,22 +76,21 @@ const ProductsPage: React.FC<Props> = (props) => {
     sortOrder: 'asc'
   });
 
-  /* ───── fetch products with pagination ───── */
-const fetchProducts = async (page: number = 1, pageSize: number = 20) => {
-  try {
-    setLoad(true);
-    // ⭐ هنا التغيير الوحيد - نجيب Materials بس
-    const data = await apiSrv.getByType(2, page, pageSize); // ProductType.Material = 2
-    setProductsData(data);
-    setCurrentPage(page);
-  } catch (e: any) {
-    setErr(e?.message || 'Failed to load materials');
-  } finally {
-    setLoad(false);
-  }
-};
+  /* ───── fetch POS products only ───── */
+  const fetchProducts = async (page: number = 1, pageSize: number = 20) => {
+    try {
+      setLoad(true);
+      const data = await apiSrv.getByType(1, page, pageSize);
+      setProductsData(data);
+      setCurrentPage(page);
+    } catch (e: any) {
+      setErr(e?.message || t('posProducts.errors.loadFailed'));
+    } finally {
+      setLoad(false);
+    }
+  };
 
-  /* ───── search products ───── */
+  /* ───── search POS products ───── */
   const searchProducts = async (query: string, mode: 'name' | 'barcode') => {
     if (!query.trim()) {
       clearSearch();
@@ -101,7 +102,7 @@ const fetchProducts = async (page: number = 1, pageSize: number = 20) => {
       
       if (mode === 'barcode') {
         const product = await apiSrv.getByBarcode(query);
-        if (product) {
+        if (product && product.productType === 1) {
           setProductsData({
             totalCount: 1,
             pageCount: 1,
@@ -120,53 +121,61 @@ const fetchProducts = async (page: number = 1, pageSize: number = 20) => {
         }
       } else {
         const data = await apiSrv.searchByName(query, 1, 50);
-        setProductsData(data);
+        const filteredData = {
+          ...data,
+          data: data.data.filter(p => p.productType === 1)
+        };
+        setProductsData(filteredData);
       }
       
       setSearchMode(mode);
       setCurrentPage(1);
     } catch (e: any) {
-      setErr(e?.message || 'Search failed');
+      setErr(e?.message || t('posProducts.errors.searchFailed'));
     } finally {
       setSearching(false);
     }
   };
 
-  /* ───── clear search ───── */
   const clearSearch = async () => {
     setSearchQuery('');
     setSearchMode(null);
     await fetchProducts(1);
   };
 
-  /* ───── initial load ───── */
+  // ⭐ تحديث useEffect لتحميل POS Screens
   React.useEffect(() => {
     (async () => {
       try { 
-        const [groupsData, unitsData] = await Promise.all([
+        const [groupsData, unitsData, posScreensData] = await Promise.all([
           groupsApi.getAll(),
-          unitsApi.getAll()
+          unitsApi.getAll(),
+          posScreensApi.getAll() // ⭐ تحميل POS Screens
         ]);
         setGroups(groupsData);
         setUnits(unitsData);
+        setPosScreens(posScreensData); // ⭐ حفظ POS Screens في الـ state
         await fetchProducts(1);
       }
       catch (e: any) { 
-        setErr(e?.message || 'Load failed'); 
+        setErr(e?.message || t('posProducts.errors.loadFailed')); 
       }
     })();
   }, []);
 
-  /* ───── handle page change ───── */
   const handlePageChange = async (_event: React.ChangeEvent<unknown>, page: number) => {
     if (searchMode === 'name' && searchQuery) {
       try {
         setSearching(true);
         const data = await apiSrv.searchByName(searchQuery, page, 50);
-        setProductsData(data);
+        const filteredData = {
+          ...data,
+          data: data.data.filter(p => p.productType === 1)
+        };
+        setProductsData(filteredData);
         setCurrentPage(page);
       } catch (e: any) {
-        setErr(e?.message || 'Search failed');
+        setErr(e?.message || t('posProducts.errors.searchFailed'));
       } finally {
         setSearching(false);
       }
@@ -175,11 +184,9 @@ const fetchProducts = async (page: number = 1, pageSize: number = 20) => {
     }
   };
 
-  /* ───── search handlers ───── */
   const handleSearch = (query: string) => {
     setSearchQuery(query);
     if (query.trim()) {
-      // تحديد نوع البحث بناءً على المحتوى
       const isBarcode = /^\d+$/.test(query.trim());
       searchProducts(query, isBarcode ? 'barcode' : 'name');
     } else {
@@ -193,11 +200,9 @@ const fetchProducts = async (page: number = 1, pageSize: number = 20) => {
     }
   };
 
-  /* ───── mobile filter data ───── */
   const mobileFilteredData = React.useMemo(() => {
     let result = [...productsData.data];
 
-    // تطبيق فلاتر الموبايل على البيانات المحملة
     if (mobileFilters.searchQuery.trim()) {
       const searchLower = mobileFilters.searchQuery.toLowerCase();
       result = result.filter(product => 
@@ -211,27 +216,20 @@ const fetchProducts = async (page: number = 1, pageSize: number = 20) => {
       result = result.filter(product => product.groupId === mobileFilters.groupId);
     }
 
-    if (mobileFilters.productType) {
-      result = result.filter(product => product.productType.toString() === mobileFilters.productType);
-    }
-
     if (mobileFilters.status) {
       const isActive = mobileFilters.status === 'true';
       result = result.filter(product => product.isActive === isActive);
     }
 
-    // الترتيب
     result.sort((a, b) => {
       let aValue: any = a[mobileFilters.sortBy as keyof typeof a];
       let bValue: any = b[mobileFilters.sortBy as keyof typeof b];
 
-      // معالجة خاصة للتواريخ
       if (mobileFilters.sortBy === 'createdOn') {
         aValue = new Date(aValue || 0).getTime();
         bValue = new Date(bValue || 0).getTime();
       }
 
-      // معالجة خاصة للنصوص
       if (typeof aValue === 'string') {
         aValue = aValue.toLowerCase();
         bValue = bValue.toLowerCase();
@@ -247,32 +245,30 @@ const fetchProducts = async (page: number = 1, pageSize: number = 20) => {
     return result;
   }, [productsData.data, mobileFilters]);
 
-  // اختيار البيانات المعروضة حسب نوع الجهاز
   const displayedData = isMobile ? mobileFilteredData : productsData.data;
 
-  // حساب عدد الفلاتر النشطة للموبايل
   const getActiveFiltersCount = () => {
     let count = 0;
     if (mobileFilters.searchQuery) count++;
     if (mobileFilters.groupId) count++;
-    if (mobileFilters.productType) count++;
     if (mobileFilters.status) count++;
     return count;
   };
 
-  /* ───── CRUD ───── */
   const handleAdd = async (data: any) => {
     try {
-      console.log('Adding product:', data);
-      await apiSrv.add(data);
-      // إعادة تحميل الصفحة الحالية
+      const addData = {
+        ...data,
+        productType: 1
+      };
+      await apiSrv.add(addData);
       if (searchMode) {
         await clearSearch();
       } else {
         await fetchProducts(currentPage);
       }
     } catch (e: any) {
-      const msg = e?.errors?.productName?.[0] || e?.message || 'Add failed';
+      const msg = e?.errors?.productName?.[0] || e?.message || t('posProducts.errors.addFailed');
       setErr(msg);
       throw e;
     }
@@ -280,24 +276,25 @@ const fetchProducts = async (page: number = 1, pageSize: number = 20) => {
 
   const handleUpdate = async (data: any) => {
     try {
-      console.log('Updating product:', data);
-      const updatedProduct = await apiSrv.update(data);
+      const updateData = {
+        ...data,
+        productType: 1
+      };
+      const updatedProduct = await apiSrv.update(updateData);
       
-      // تحديث المنتج في القائمة الحالية
       setProductsData(prev => ({
         ...prev,
         data: prev.data.map(p => p.id === updatedProduct.id ? updatedProduct : p)
       }));
       
-      // تحديث المنتج في الـ drawer إذا كان مفتوح
-      if (selectedProduct && selectedProduct.id === data.ProductId) {
+      if (selectedProduct && selectedProduct.id === data.productId) {
         setSelectedProduct(updatedProduct);
       }
       
       return updatedProduct;
     } catch (e: any) {
       console.error('Update error:', e);
-      const msg = e?.errors?.productName?.[0] || e?.message || 'Update failed';
+      const msg = e?.errors?.productName?.[0] || e?.message || t('posProducts.errors.updateFailed');
       setErr(msg);
       throw e;
     }
@@ -330,18 +327,22 @@ const fetchProducts = async (page: number = 1, pageSize: number = 20) => {
     setDialog({ open: true, mode: 'edit', current: product });
   };
 
-  /* ───── UI ───── */
   return (
     <Container maxWidth="xl">
-      <PageHeader exportData={displayedData} loading={loading} title={t('products.title')}/>
+      <PageHeader 
+        title={t('posProducts.title')}
+        exportData={displayedData} 
+        loading={loading}
+        showImport={canImport}
+        showExport={canExport}
+      />
       
-      {/* شريط البحث المحسن - يظهر فقط في الديسكتوب */}
       {!isMobile && (
         <Box mb={3}>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="center" justifyContent="space-between">
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: { xs: '100%', sm: 'auto' } }}>
               <TextField
-                placeholder={t('products.searchPlaceholder')}
+                placeholder={t('posProducts.searchPlaceholder')}
                 value={searchQuery}
                 onChange={(e) => handleSearch(e.target.value)}
                 InputProps={{
@@ -365,7 +366,7 @@ const fetchProducts = async (page: number = 1, pageSize: number = 20) => {
               <IconButton 
                 onClick={handleBarcodeSearch}
                 color="primary"
-                title={t('products.searchByBarcode')}
+                title={t('posProducts.searchByBarcode')}
                 disabled={!searchQuery.trim() || searching}
               >
                 <IconBarcode size={20} />
@@ -377,21 +378,20 @@ const fetchProducts = async (page: number = 1, pageSize: number = 20) => {
             />
           </Stack>
 
-          {/* مؤشرات البحث */}
           {searchMode && (
             <Box mt={2}>
               <Stack direction="row" spacing={1} alignItems="center">
                 <Chip
                   label={searchMode === 'barcode' 
-                    ? `${t('products.searchByBarcode')}: ${searchQuery}`
-                    : `${t('products.searchByName')}: ${searchQuery}`
+                    ? `${t('posProducts.searchByBarcode')}: ${searchQuery}`
+                    : `${t('posProducts.searchByName')}: ${searchQuery}`
                   }
                   onDelete={clearSearch}
                   color="primary"
                   variant="outlined"
                 />
                 <Typography variant="body2" color="text.secondary">
-                  {t('products.searchResults', { count: productsData.totalCount })}
+                  {t('posProducts.searchResults', { count: productsData.totalCount })}
                 </Typography>
               </Stack>
             </Box>
@@ -399,41 +399,39 @@ const fetchProducts = async (page: number = 1, pageSize: number = 20) => {
         </Box>
       )}
 
-      {/* زر الإضافة للموبايل */}
       {isMobile && (
         <Box sx={{ mb: 2, textAlign: 'center' }}>
           {canAdd && (
-        <Button
-            variant="contained"
-            startIcon={<IconPlus />}
-            onClick={() => setDialog({ open: true, mode: 'add', current: undefined })}
-            fullWidth
-            size="large"
-            sx={{
-              minHeight: 48,
-              fontSize: '1rem'
-            }}
-          >
-            {t('products.add')}
-          </Button>
-        )}
+            <Button
+              variant="contained"
+              startIcon={<IconPlus />}
+              onClick={() => setDialog({ open: true, mode: 'add', current: undefined })}
+              fullWidth
+              size="large"
+              sx={{
+                minHeight: 48,
+                fontSize: '1rem'
+              }}
+            >
+              {t('posProducts.add')}
+            </Button>
+          )}
         </Box>
       )}
 
-      {/* جدول المنتجات */}
       <Box mb={4}>
         <Typography variant="h5" gutterBottom>
-          {t('products.title')} ({isMobile ? displayedData.length : productsData.totalCount})
+          {t('posProducts.title')} ({isMobile ? displayedData.length : productsData.totalCount})
         </Typography>
         
         {loading || searching ? (
           <Box textAlign="center" py={4}>
-            <Typography>{searching ? t('products.searching') : t('common.loading')}</Typography>
+            <Typography>{searching ? t('posProducts.searching') : t('common.loading')}</Typography>
           </Box>
         ) : displayedData.length === 0 ? (
           <Box textAlign="center" py={4}>
             <Typography color="text.secondary">
-              {searchMode || getActiveFiltersCount() > 0 ? t('products.noSearchResults') : t('products.noProducts')}
+              {searchMode || getActiveFiltersCount() > 0 ? t('posProducts.noSearchResults') : t('posProducts.noProducts')}
             </Typography>
           </Box>
         ) : (
@@ -457,7 +455,6 @@ const fetchProducts = async (page: number = 1, pageSize: number = 20) => {
                   />
                 )}
 
-            {/* Pagination - يظهر فقط في الديسكتوب */}
             {!isMobile && productsData.pageCount > 1 && (
               <Box display="flex" justifyContent="center" mt={3}>
                 <Pagination
@@ -474,7 +471,6 @@ const fetchProducts = async (page: number = 1, pageSize: number = 20) => {
         )}
       </Box>
 
-      {/* زر الفلترة للموبايل */}
       {isMobile && (
         <Fab
           color="primary"
@@ -492,7 +488,6 @@ const fetchProducts = async (page: number = 1, pageSize: number = 20) => {
         </Fab>
       )}
 
-      {/* مكون الفلترة للموبايل */}
       {isMobile && (
         <MobileProductsFilter
           open={filterOpen}
@@ -505,19 +500,19 @@ const fetchProducts = async (page: number = 1, pageSize: number = 20) => {
         />
       )}
 
-      {/* Form Dialog */}
-<ProductForm
-  open={dialog.open}
-  mode={dialog.mode}
-  initialValues={dialog.current}
-  groups={groups}
-  units={units}
-  productType={2} // ⭐ Material
-  onClose={() => setDialog({ open: false, mode: 'add', current: undefined })}
-  onSubmit={handleSubmit}
-/>
+      {/* ⭐ تمرير posScreens للـ ProductForm */}
+      <ProductForm
+        open={dialog.open}
+        mode={dialog.mode}
+        initialValues={dialog.current}
+        groups={groups}
+        units={units}
+        posScreens={posScreens} // ⭐ تمرير POS Screens
+        productType={1}
+        onClose={() => setDialog({ open: false, mode: 'add', current: undefined })}
+        onSubmit={handleSubmit}
+      />
 
-      {/* Prices Drawer */}
       <ProductPricesDrawer
         open={pricesDrawerOpen}
         product={selectedProduct}
@@ -534,4 +529,4 @@ const fetchProducts = async (page: number = 1, pageSize: number = 20) => {
   );
 };
 
-export default ProductsPage;
+export default PosProductsPage;

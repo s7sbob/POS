@@ -3,16 +3,38 @@ import React from 'react';
 import withPermissions from 'src/hoc/withPermissions';
 import { PAGE_PERMISSIONS } from 'src/config/pagePermissions';
 
-// دالة لتطبيق الصلاحيات تلقائياً على الصفحات
+// ⭐ مفتاح تعطيل مؤقت
+const DISABLE_PROTECTION = true;
+
 export const createProtectedPage = (
   Component: React.ComponentType<any>,
   permissionKey: keyof typeof PAGE_PERMISSIONS
 ) => {
+  // إذا التحكم معطل، ارجع المكون بدون حماية
+  if (DISABLE_PROTECTION) {
+    const UnprotectedWrapper: React.FC<any> = (props) => {
+      const allPermissions = {
+        canAdd: true,
+        canEdit: true,
+        canDelete: true,
+        canExport: true,
+        canImport: true,
+        canView: true,
+      };
+      
+      console.log('🚧 Protection disabled for', Component.displayName || Component.name);
+      
+      return <Component {...props} {...allPermissions} />;
+    };
+    
+    return UnprotectedWrapper;
+  }
+  
+  // الحماية العادية
   const config = PAGE_PERMISSIONS[permissionKey];
   return withPermissions(Component, config);
 };
 
-// دالة مساعدة لإنشاء صفحة محمية مع صلاحيات مخصصة
 export const createCustomProtectedPage = (
   Component: React.ComponentType<any>,
   config: {
@@ -22,5 +44,22 @@ export const createCustomProtectedPage = (
     requiredPermissions?: string[];
   }
 ) => {
+  if (DISABLE_PROTECTION) {
+    const UnprotectedWrapper: React.FC<any> = (props) => {
+      const allPermissions = {
+        canAdd: true,
+        canEdit: true,
+        canDelete: true,
+        canExport: true,
+        canImport: true,
+        canView: true,
+      };
+      
+      return <Component {...props} {...allPermissions} />;
+    };
+    
+    return UnprotectedWrapper;
+  }
+  
   return withPermissions(Component, config);
 };

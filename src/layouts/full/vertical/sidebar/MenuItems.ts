@@ -272,6 +272,18 @@ const SidebarConfig: MenuItem[] = [
             title: 'sidebar.screens',
             icon: IconDeviceDesktop,
             href: '/pos/screens'
+          },
+          {
+            id: uniqueId(),
+            title: 'sidebar.posProducts',
+            icon: IconPackage,
+            href: '/pos/products'
+          },
+          {
+            id: uniqueId(),
+            title: 'sidebar.additionProducts',
+            icon: IconPackage,
+            href: '/addition/products'
           }
         ]
       },

@@ -12,7 +12,6 @@ import ScreenTreeSelect from './ScreenTreeSelect';
 import { StatusPill } from './StatusPill';
 import { VisibilityPill } from './VisibilityPill';
 
-/* ---------- types ---------- */
 type FormValues = { 
   screenName: string; 
   ParentScreenId?: string;
@@ -29,7 +28,7 @@ interface Props {
   parentScreen?: PosScreen;
   allScreens: PosScreen[];
   onClose: () => void;
-  onSubmit: (data: FormValues | PosScreen) => void;
+  onSubmit: (data: FormValues) => void;
 }
 
 const ScreenForm: React.FC<Props> = ({
@@ -37,7 +36,6 @@ const ScreenForm: React.FC<Props> = ({
 }) => {
   const { t } = useTranslation();
   
-  // حساب الترتيب التالي
   const getNextDisplayOrder = () => {
     if (parentScreen) {
       return (parentScreen.children?.length || 0) + 1;
@@ -56,8 +54,8 @@ const ScreenForm: React.FC<Props> = ({
 
   const { control, handleSubmit, reset, watch } = useForm<FormValues>({
     defaultValues: mode === 'add' ? defaults : {
-      screenName: initialValues?.name ?? '',
-      ParentScreenId: initialValues?.parentId ?? '',
+      screenName: initialValues?.name || '',
+      ParentScreenId: initialValues?.parentId || '',
       isVisible: initialValues?.isVisible ?? true,
       displayOrder: initialValues?.displayOrder ?? 1,
       colorHex: initialValues?.colorHex ?? '#2196F3',
@@ -89,11 +87,9 @@ const ScreenForm: React.FC<Props> = ({
     }
   }, [mode, initialValues, parentScreen, reset]);
 
-  const submit = (data: FormValues) =>
-    onSubmit(mode === 'add'
-      ? data
-      : { ...initialValues!, ...data, name: data.screenName, parentId: data.ParentScreenId }
-    );
+  const submit = (data: FormValues) => {
+    onSubmit(data);
+  };
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
@@ -112,25 +108,33 @@ const ScreenForm: React.FC<Props> = ({
       <form onSubmit={handleSubmit(submit)}>
         <DialogContent>
           <Grid container spacing={3}>
-            {/* ---------- Name ---------- */}
             <Grid item xs={12}>
               <Controller
                 name="screenName"
                 control={control}
-                rules={{ required: t('posScreens.nameRequired') }}
+                rules={{ 
+                  required: t('posScreens.nameRequired'),
+                  validate: (value) => {
+                    if (!value || value.trim() === '') {
+                      return t('posScreens.nameRequired');
+                    }
+                    return true;
+                  }
+                }}
                 render={({ field, fieldState }) => (
                   <TextField
                     {...field}
                     label={t('posScreens.name')}
                     fullWidth
+                    required
                     error={!!fieldState.error}
                     helperText={fieldState.error?.message}
+                    onFocus={(e) => e.target.select()}
                   />
                 )}
               />
             </Grid>
 
-            {/* ---------- Parent Screen ---------- */}
             {!parentScreen && (
               <Grid item xs={12}>
                 <Controller
@@ -149,7 +153,6 @@ const ScreenForm: React.FC<Props> = ({
               </Grid>
             )}
 
-            {/* ---------- Display Order ---------- */}
             <Grid item xs={6}>
               <Controller
                 name="displayOrder"
@@ -164,12 +167,12 @@ const ScreenForm: React.FC<Props> = ({
                     error={!!fieldState.error}
                     helperText={fieldState.error?.message}
                     inputProps={{ min: 1 }}
+                    onFocus={(e) => e.target.select()}
                   />
                 )}
               />
             </Grid>
 
-            {/* ---------- Visibility ---------- */}
             <Grid item xs={6}>
               <Controller
                 name="isVisible"
@@ -193,7 +196,6 @@ const ScreenForm: React.FC<Props> = ({
               />
             </Grid>
 
-            {/* ---------- Icon ---------- */}
             <Grid item xs={6}>
               <Controller
                 name="icon"
@@ -207,12 +209,12 @@ const ScreenForm: React.FC<Props> = ({
                     error={!!fieldState.error}
                     helperText={fieldState.error?.message || t('posScreens.iconHelp')}
                     placeholder="📱"
+                    onFocus={(e) => e.target.select()}
                   />
                 )}
               />
             </Grid>
 
-            {/* ---------- Color ---------- */}
             <Grid item xs={6}>
               <Controller
                 name="colorHex"
@@ -228,7 +230,6 @@ const ScreenForm: React.FC<Props> = ({
               />
             </Grid>
 
-            {/* ---------- Preview ---------- */}
             <Grid item xs={12}>
               <Box
                 sx={{

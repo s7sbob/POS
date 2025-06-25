@@ -19,8 +19,6 @@
     "Calendar": "Calendar",
     "Email": "Email",
     "Tickets": "Tickets",
-
-
   "reports": {
     "productBalance": {
       "title": "Product Balance Report",
@@ -90,8 +88,6 @@
       "loadFailed": "Failed to load data"
     }
   },
-
-
       "export": {
     "title": "Export Data",
     "pdf": "Export PDF",
@@ -105,7 +101,6 @@
     "errorPdf": "Error occurred while exporting PDF",
     "errorExcel": "Error occurred while exporting Excel"
   },
-
  "purchases": {
     "title": "Purchase Invoices",
     "description": "Manage purchase invoices and payments",
@@ -245,7 +240,9 @@
 
   "sidebar": {
     "inventory": "Inventory",
+    "posProducts": "POS Products",
      "systemAdmin": "System Administration",
+     "additionProducts": "Addition Products",
     "userManagement": "User Management",
     "companySettings": "Company Settings",
     "permissions": "Permissions",
@@ -336,6 +333,71 @@
 
  "products": {
     "title": "Products",
+  "tabs": {
+      "basicInfoAndPrices": "Basic Info & Prices",
+      "basicInfo": "Basic Information", 
+      "prices": "Prices",
+      "options": "Product Options"
+    },
+      "types": {
+      "pos": "POS",
+      "material": "Material",
+      "addition": "Addition",
+      "unknown": "Unknown"
+    },
+    "form": {
+       "isActive": "Active",
+      "posPriceName": "Price Name",
+      "posNamePlaceholder": "Enter price name...",
+      "required": "Required",
+      "addComment": "Add Comment",
+      "comment": "Comment",
+      "product": "Product",
+      "selectProductPrice": "Select Product Price",
+      "selectProductPricePlaceholder": "Search for product...",
+      "addFromProducts": "Add from Products",
+      "selectProducts": "Select Products",
+      "searchProducts": "Search products...",
+      "filterByGroup": "Filter by Group",
+      "allGroups": "All Groups",
+      "productsFound": "Found {{count}} products",
+      "selected": "Selected: {{count}}",
+      "selectAll": "Select All",
+      "deselectAll": "Deselect All",
+      "priceName": "Price Name",
+      "noProductsFound": "No products found",
+      "addSelected": "Add Selected ({{count}})",
+      "productName": "Product Name",
+      "price": "Price",
+      "barcode": "Barcode",
+      "productOptions": "Product Options",
+      "addOptionGroup": "Add Option Group",
+      "noOptionGroups": "No option groups",
+      "optionGroup": "Option Group",
+      "optionGroupName": "Option Group Name",
+      "isRequired": "Required",
+      "allowMultiple": "Allow Multiple Selection",
+      "minSelection": "Minimum Selection",
+      "maxSelection": "Maximum Selection",
+      "optionItems": "Option Items",
+      "addOptionItem": "Add Item",
+      "optionItemName": "Item Name",
+      "extraPrice": "Extra Price",
+      "commentOnly": "Comment Only",
+            "posScreen": "POS Screen",
+      "noPosScreen": "Without Screen"
+    },
+    "validation": {
+      "optionGroupNameRequired": "Option group name is required",
+      "optionItemNameRequired": "Option item name is required"
+    },
+      "status": {
+      "title": "Status",
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+      "hasBarcode": "Has Barcode",
+    "optionGroup": "Option Group",
     "subtitle": "Manage products and prices in the system",
     "searchPlaceholder": "Search by name or barcode...",
     "searchByBarcode": "Search by Barcode",
@@ -373,7 +435,6 @@
     "cost": "Cost",
     "lastPurePrice": "Last Pure Price",
     "expirationDays": "Expiration Days",
-    "status": "Status",
     "created": "Created Date",
     "add": "Add Product",
     "edit": "Edit Product",
@@ -774,11 +835,6 @@
   },
 
 
-
-
-
-
-
    "adjustment": {
     "title": "Inventory Adjustment",
     "types": {
@@ -906,41 +962,6 @@
       "totalNegative": "Total Decrease"
     }
   },
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
    "safes": {
@@ -1078,11 +1099,6 @@
     }
   },
 
-
-
-
-
-
 "import": {
     "import": "Import",
     "downloadTemplate": "Download Template",
@@ -1105,21 +1121,6 @@
     "validationError": "Validation error",
     "importError": "Import error"
   },
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
    "posScreens": {
@@ -1169,6 +1170,8 @@
   "auth": {
     "login": {
       "title": "Login",
+      "tenantId": "Company Code",
+      "tenantPlaceholder": "Enter company code",
       "description": "Login page",
       "phoneNumber": "Phone Number",
       "password": "Password",
@@ -1332,8 +1335,58 @@
       "inbox": "Inbox",
       "taskList": "Task List"
     }
+  },
+
+
+  "posProducts": {
+    "title": "POS Products",
+    "searchPlaceholder": "Search in POS products...",
+    "searchByBarcode": "Search by Barcode",
+    "searchByName": "Search by Name",
+    "searchResults": "{{count}} results",
+    "add": "Add POS Product",
+    "searching": "Searching...",
+    "noSearchResults": "No search results",
+    "noProducts": "No POS products",
+    "errors": {
+      "loadFailed": "Failed to load POS products",
+      "searchFailed": "Search failed",
+      "addFailed": "Failed to add product",
+      "updateFailed": "Failed to update product"
+    }
+  },
+    "materials": {
+    "title": "Raw Materials",
+    "searchPlaceholder": "Search in raw materials...",
+    "searchByBarcode": "Search by Barcode",
+    "searchByName": "Search by Name",
+    "searchResults": "{{count}} results",
+    "add": "Add Raw Material",
+    "searching": "Searching...",
+    "noSearchResults": "No search results",
+    "noMaterials": "No raw materials",
+    "errors": {
+      "loadFailed": "Failed to load raw materials",
+      "searchFailed": "Search failed",
+      "addFailed": "Failed to add material",
+      "updateFailed": "Failed to update material"
+    }
+  },
+    "additionProducts": {
+    "title": "Addition Products",
+    "searchPlaceholder": "Search in addition products...",
+    "searchByBarcode": "Search by Barcode",
+    "searchByName": "Search by Name",
+    "searchResults": "{{count}} results",
+    "add": "Add Addition Product",
+    "searching": "Searching...",
+    "noSearchResults": "No search results",
+    "noProducts": "No addition products",
+    "errors": {
+      "loadFailed": "Failed to load addition products",
+      "searchFailed": "Search failed",
+      "addFailed": "Failed to add product",
+      "updateFailed": "Failed to update product"
+    }
   }
-
-
 }
-

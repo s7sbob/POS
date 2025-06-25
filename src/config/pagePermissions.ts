@@ -20,7 +20,8 @@ export const PAGE_PERMISSIONS = {
   // POS
   POS_SCREENS: { pageId: 16, pageName: 'PosScreens', moduleId: 1 },
   PAYMENT_METHODS: { pageId: 17, pageName: 'PaymentMethods', moduleId: 1 },
-  
+  POS_PRODUCTS: { pageId: 21, pageName: 'PosProducts', moduleId: 1 },
+ ADDITION_PRODUCTS: {pageId:22, pageName:'AddisionProducts', moduleId: 1 },
   // Accounting
   ACCOUNTS: { pageId: 18, pageName: 'Accounts', moduleId: 5 },
   SAFES: { pageId: 19, pageName: 'Safes', moduleId: 5 },
