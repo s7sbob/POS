@@ -25,6 +25,8 @@
     "stock": "المخزون",
     "posProducts": "منتجات نقاط البيع",
      "systemAdmin": "إدارة النظام",
+       "deliveryZones": "مناطق التوصيل",
+    "deliveryAgents": "مناديب التوصيل",
      "additionProducts": "منتجات الإضافات",
     "userManagement": "إدارة المستخدمين",
     "companySettings": "إعدادات الشركة",
@@ -636,6 +638,9 @@
     "update": "تحديث",
     "saveChanges": "حفظ التغييرات",
     "selected": "محدد",
+    "active": "نشط",
+    "inactive": "غير نشط",
+    "currency": "جنيه",
     "hideColumn": "إخفاء العمود",
     "all": "الكل",
     "home": "الرئيسية",
@@ -1430,6 +1435,66 @@
       "searchFailed": "فشل في البحث",
       "addFailed": "فشل في إضافة المنتج",
       "updateFailed": "فشل في تحديث المنتج"
+    }
+  },
+
+    "deliveryZones": {
+    "title": "مناطق التوصيل",
+    "add": "إضافة منطقة",
+    "edit": "تعديل منطقة",
+    "searchPlaceholder": "البحث في المناطق...",
+    "searchResults": "نتائج البحث",
+    "resultsCount": "{{count}} نتيجة",
+    "noZones": "لا توجد مناطق توصيل",
+    "noSearchResults": "لا توجد نتائج للبحث",
+    "saveAndExit": "حفظ وخروج",
+    "saveAndNew": "حفظ وإضافة جديد",
+    "nameRequired": "اسم المنطقة مطلوب",
+    "deliveryChargeRequired": "رسوم التوصيل مطلوبة",
+    "defaultBonusRequired": "المكافأة الافتراضية مطلوبة",
+    "form": {
+      "name": "اسم المنطقة",
+      "deliveryCharge": "رسوم التوصيل",
+      "defaultBonus": "المكافأة الافتراضية",
+      "branch": "الفرع",
+      "allBranches": "كل الفروع",
+      "status": "الحالة",
+      "isActive": "نشط"
+    },
+    "errors": {
+      "loadFailed": "فشل في تحميل المناطق",
+      "addFailed": "فشل في إضافة المنطقة",
+      "updateFailed": "فشل في تحديث المنطقة"
+    }
+  },
+  "deliveryAgents": {
+    "title": "مناديب التوصيل",
+    "add": "إضافة مندوب",
+    "edit": "تعديل مندوب",
+    "searchPlaceholder": "البحث في المناديب...",
+    "searchResults": "نتائج البحث",
+    "resultsCount": "{{count}} نتيجة",
+    "noAgents": "لا توجد مناديب توصيل",
+    "noSearchResults": "لا توجد نتائج للبحث",
+    "saveAndExit": "حفظ وخروج",
+    "saveAndNew": "حفظ وإضافة جديد",
+    "nameRequired": "اسم المندوب مطلوب",
+    "phoneRequired": "رقم الهاتف مطلوب",
+    "phoneInvalid": "رقم الهاتف غير صحيح",
+    "branchRequired": "الفرع مطلوب",
+    "deleteConfirmTitle": "تأكيد الحذف",
+    "deleteConfirmMessage": "هل أنت متأكد من حذف المندوب {{name}}؟",
+    "form": {
+      "name": "اسم المندوب",
+      "phone": "رقم الهاتف",
+      "branch": "الفرع",
+      "status": "الحالة"
+    },
+    "errors": {
+      "loadFailed": "فشل في تحميل المناديب",
+      "addFailed": "فشل في إضافة المندوب",
+      "updateFailed": "فشل في تحديث المندوب",
+      "deleteFailed": "فشل في حذف المندوب"
     }
   }
 

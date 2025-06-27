@@ -241,6 +241,8 @@
   "sidebar": {
     "inventory": "Inventory",
     "posProducts": "POS Products",
+       "deliveryZones": "Delivery Zones",
+    "deliveryAgents": "Delivery Agents",
      "systemAdmin": "System Administration",
      "additionProducts": "Addition Products",
     "userManagement": "User Management",
@@ -640,7 +642,10 @@
     "saveChanges": "Save Changes",
     "search": "Search",
     "all": "All",
+        "active": "Active",
+    "inactive": "Inactive",
     "home": "Home",
+    "currency": "EGP",
     "exportDate": "Export Date",
     "selected": "selected",
     "hideColumn": "Hide Column",
@@ -1387,6 +1392,68 @@
       "searchFailed": "Search failed",
       "addFailed": "Failed to add product",
       "updateFailed": "Failed to update product"
+    }
+  },
+
+
+
+    "deliveryZones": {
+    "title": "Delivery Zones",
+    "add": "Add Zone",
+    "edit": "Edit Zone",
+    "searchPlaceholder": "Search zones...",
+    "searchResults": "Search Results",
+    "resultsCount": "{{count}} results",
+    "noZones": "No delivery zones",
+    "noSearchResults": "No search results",
+    "saveAndExit": "Save & Exit",
+    "saveAndNew": "Save & Add New",
+    "nameRequired": "Zone name is required",
+    "deliveryChargeRequired": "Delivery charge is required",
+    "defaultBonusRequired": "Default bonus is required",
+    "form": {
+      "name": "Zone Name",
+      "deliveryCharge": "Delivery Charge",
+      "defaultBonus": "Default Bonus",
+      "branch": "Branch",
+      "allBranches": "All Branches",
+      "status": "Status",
+      "isActive": "Active"
+    },
+    "errors": {
+      "loadFailed": "Failed to load zones",
+      "addFailed": "Failed to add zone",
+      "updateFailed": "Failed to update zone"
+    }
+  },
+  "deliveryAgents": {
+    "title": "Delivery Agents",
+    "add": "Add Agent",
+    "edit": "Edit Agent",
+    "searchPlaceholder": "Search agents...",
+    "searchResults": "Search Results",
+    "resultsCount": "{{count}} results",
+    "noAgents": "No delivery agents",
+    "noSearchResults": "No search results",
+    "saveAndExit": "Save & Exit",
+    "saveAndNew": "Save & Add New",
+    "nameRequired": "Agent name is required",
+    "phoneRequired": "Phone number is required",
+    "phoneInvalid": "Invalid phone number",
+    "branchRequired": "Branch is required",
+    "deleteConfirmTitle": "Confirm Delete",
+    "deleteConfirmMessage": "Are you sure you want to delete agent {{name}}?",
+    "form": {
+      "name": "Agent Name",
+      "phone": "Phone Number",
+      "branch": "Branch",
+      "status": "Status"
+    },
+    "errors": {
+      "loadFailed": "Failed to load agents",
+      "addFailed": "Failed to add agent",
+      "updateFailed": "Failed to update agent",
+      "deleteFailed": "Failed to delete agent"
     }
   }
 }

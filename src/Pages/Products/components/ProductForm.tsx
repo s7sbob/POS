@@ -215,11 +215,23 @@ const ProductForm: React.FC<Props> = ({
 
 const OptionGroupComponent: React.FC<{ groupIndex: number }> = ({ groupIndex }) => {
   const [productSelectionOpen, setProductSelectionOpen] = React.useState(false);
-  
+    const [groupName, setGroupName] = React.useState(''); // ⭐ state منفصل للاسم
+
   const { fields: itemFields, append: appendItem, remove: removeItem } = useFieldArray({
     control,
     name: `productOptionGroups.${groupIndex}.optionItems`
   });
+
+    // ⭐ تحديث الاسم عند تغيير القيمة بدون watch
+  React.useEffect(() => {
+    const subscription = watch((value) => {
+      const currentName = value.productOptionGroups?.[groupIndex]?.name;
+      if (currentName !== groupName) {
+        setGroupName(currentName || '');
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [watch, groupIndex, groupName]);
 
   // ⭐ الحصول على المنتجات المختارة حالياً
   const getCurrentlySelectedProducts = React.useCallback(() => {
@@ -287,15 +299,14 @@ const OptionGroupComponent: React.FC<{ groupIndex: number }> = ({ groupIndex }) 
     });
   };
 
-  const groupName = watch(`productOptionGroups.${groupIndex}.name`);
-
   return (
     <>
       <Accordion key={groupIndex}>
-        <AccordionSummary expandIcon={<IconChevronDown />}>
+       <AccordionSummary expandIcon={<IconChevronDown />}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%' }}>
             <IconGripVertical size={16} />
             <Typography variant="h6" sx={{ flex: 1 }}>
+              {/* ⭐ استخدام state بدلاً من watch */}
               {groupName || `${t('products.form.optionGroup')} ${groupIndex + 1}`}
             </Typography>
             

@@ -26,7 +26,9 @@ import {
   IconChartBar,
   IconFileText,
   IconShoppingCart,
-  IconClipboardList
+  IconClipboardList,
+  IconComponents,
+  IconMapPin
 } from '@tabler/icons-react';
 
 interface MenuItem {
@@ -282,9 +284,22 @@ const SidebarConfig: MenuItem[] = [
           {
             id: uniqueId(),
             title: 'sidebar.additionProducts',
-            icon: IconPackage,
+            icon: IconComponents,
             href: '/addition/products'
-          }
+          },
+          {
+            id: uniqueId(),
+            title: 'sidebar.deliveryAgents',
+            icon: IconTruck,
+            href: '/pos/delivery/agents'
+          },
+                    {
+            id: uniqueId(),
+            title: 'sidebar.deliveryZones',
+            icon: IconMapPin,
+            href: '/pos/delivery/zones'
+          },
+
         ]
       },
       {

@@ -7,6 +7,9 @@ import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { authLoader } from './authLoader';
 import { createProtectedPage } from 'src/utils/pageWrapper';
 import Ecommerce from 'src/views/apps/eCommerce/Ecommerce';
+import { element } from 'prop-types';
+import DeliveryAgentsPage from 'src/Pages/pos/delivery/agents/DeliveryAgentsPage';
+import DeliveryZonesPage from 'src/Pages/pos/delivery/zones/DeliveryZonesPage';
 
 /* ***Layouts**** */
 const FullLayout = Loadable(lazy(() => import('../layouts/full/FullLayout')));
@@ -106,7 +109,8 @@ const Router = [
       { path: '/pos/payment-methods', element: <PosPaymentMethodsPage /> },
       {path: '/pos/products', element: <PosProductsPage /> },
       {path: '/addition/products', element: <AdditionProducts />},
-
+      {path: '/pos/delivery/agents', element: <DeliveryAgentsPage/>},
+      {path: '/pos/delivery/zones', element: <DeliveryZonesPage/>},
       // Business Entities Routes
       { path: '/suppliers', element: <SuppliersPage /> },
       { path: '/purchases/suppliers', element: <SuppliersPage /> },
