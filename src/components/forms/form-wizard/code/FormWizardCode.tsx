@@ -14,8 +14,7 @@ import {
   StepLabel,
   Button,
   Typography,
-  FormControlLabel,
-  Alert,
+  FormControlLabel
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { TextField } from '@mui/material';
@@ -202,7 +201,6 @@ const [activeStep, setActiveStep] = React.useState(0);
     setActiveStep(0);
   };
 
-
 <Box width="100%">
     <Stepper activeStep={activeStep}>
         {steps.map((label, index) => {
@@ -227,9 +225,9 @@ const [activeStep, setActiveStep] = React.useState(0);
     {activeStep === steps.length ? (
         <>
             <Stack spacing={2} mt={3}>
-                <Alert severity="success">
+                <severity="success">
                   All steps completed - you&apos;re finished
-                </Alert>
+                </>
 
                 <Box textAlign="right">
                   <Button onClick={handleReset} variant="contained" color="error">

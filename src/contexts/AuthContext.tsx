@@ -3,6 +3,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { setAuthHeaders, clearAuthHeaders, isAuthenticated } from 'src/utils/axios';
 import { login as loginApi, LoginResponse, Branch, User, UserPage } from 'src/utils/api/authApi';
 import { useTranslation } from 'react-i18next';
+import { useGlobalErrorHandler } from '../hooks/useGlobalErrorHandler';
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -42,13 +43,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [selectedBranch, setSelectedBranch] = useState<Branch | null>(null);
   const [userPages, setUserPages] = useState<UserPage[]>([]);
   const { t } = useTranslation();
+  useGlobalErrorHandler();
 
   // تحميل البيانات من localStorage عند بدء التطبيق
   useEffect(() => {
     const initAuth = async () => {
       try {
-        console.log('🚀 Initializing auth...');
-        
         if (isAuthenticated()) {
           const savedToken = localStorage.getItem('auth_token');
           const savedUser = localStorage.getItem('user_data');
@@ -77,7 +77,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           }
         }
       } catch (error) {
-        console.error('❌ Error initializing auth:', error);
         logout();
       } finally {
         setIsLoading(false);
@@ -91,42 +90,29 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const loadUserPages = async (retries = 3) => {
     for (let attempt = 1; attempt <= retries; attempt++) {
       try {
-        console.log(`📄 Loading user pages (attempt ${attempt}/${retries})`);
-        
         const { getUserPages } = await import('src/utils/api/authApi');
         const pages = await getUserPages();
         
-        console.log('✅ User pages loaded:', pages);
         setUserPages(pages);
         return;
         
       } catch (error) {
-        console.error(`❌ Error loading user pages (attempt ${attempt}):`, error);
-        
         if (attempt < retries) {
           // انتظار متزايد بين المحاولات
           await new Promise(resolve => setTimeout(resolve, attempt * 500));
         } else {
-          console.error('❌ Failed to load user pages after all retries');
-        }
+          }
       }
     }
   };
 
   // تسجيل الدخول مع redirect فوري
 
-
 const login = async (phoneNo: string, password: string, tenantId: string, onSuccess?: (branches: Branch[], selectedBranch?: Branch) => void) => {
   try {
     setIsLoading(true);
-    console.log('🔐 Starting login process with tenant:', tenantId);
-    
     const response: LoginResponse = await loginApi(phoneNo, password, tenantId); // ⭐ تمرير tenantId
-    console.log('✅ Login response:', response);
-    
     const branches = response.branches?.data || [];
-    console.log('🏢 Branches found:', branches);
-    
     if (branches.length === 0) {
       throw new Error(t('auth.errors.noBranches'));
     }
@@ -150,7 +136,6 @@ const login = async (phoneNo: string, password: string, tenantId: string, onSucc
 
     // إذا كان فرع واحد، اختره تلقائياً
     if (branches.length === 1) {
-      console.log('🏢 Single branch found, selecting automatically');
       const selectedBranch = branches[0];
       
       setSelectedBranch(selectedBranch);
@@ -165,7 +150,6 @@ const login = async (phoneNo: string, password: string, tenantId: string, onSucc
       setTimeout(() => loadUserPages(), 200);
       
     } else {
-      console.log('🏢 Multiple branches found');
       const firstBranch = branches[0];
       setAuthHeaders(response.token, firstBranch.refCompanyId, firstBranch.id, tenantId); // ⭐ تمرير tenantId
       
@@ -179,7 +163,6 @@ const login = async (phoneNo: string, password: string, tenantId: string, onSucc
     }
     
   } catch (error) {
-    console.error('❌ Login error:', error);
     throw error;
   } finally {
     setIsLoading(false);
@@ -188,8 +171,6 @@ const login = async (phoneNo: string, password: string, tenantId: string, onSucc
   // دالة داخلية لاختيار الفرع
   const selectBranchInternal = async (branch: Branch, isFromLogin = false) => {
     try {
-      console.log('🏢 Selecting branch:', branch.name);
-      
       setSelectedBranch(branch);
       
       // تحديث headers في axios
@@ -208,7 +189,6 @@ const login = async (phoneNo: string, password: string, tenantId: string, onSucc
       setTimeout(() => loadUserPages(), 200);
       
     } catch (error) {
-      console.error('❌ Error selecting branch:', error);
       if (!isFromLogin) {
         throw error;
       }
@@ -222,8 +202,6 @@ const login = async (phoneNo: string, password: string, tenantId: string, onSucc
 
   // تسجيل الخروج
   const logout = () => {
-    console.log('🚪 Logging out...');
-    
     setIsAuthenticatedState(false);
     setUser(null);
     setToken(null);

@@ -53,7 +53,6 @@ const MobileProductSearch: React.FC<Props> = ({ open, onClose, onSelect }) => {
       const result = await productsApi.searchProductPrices(searchQuery, 1, 50);
       setSearchResults(result.data);
     } catch (error) {
-      console.error('Search error:', error);
       setSearchResults([]);
     } finally {
       setLoading(false);

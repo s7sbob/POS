@@ -7,7 +7,7 @@ import {
   Box, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, Paper, IconButton, Stack,
   Card, CardContent, useMediaQuery, useTheme, Accordion,
-  AccordionSummary, AccordionDetails, Snackbar, Alert,
+  AccordionSummary, AccordionDetails,
   FormControlLabel, Switch, Tabs, Tab, Chip,
   Divider
 } from '@mui/material';
@@ -135,8 +135,8 @@ const ProductForm: React.FC<Props> = ({
   const [expandedPriceIndex, setExpandedPriceIndex] = React.useState<number | null>(null);
   const [currentTab, setCurrentTab] = React.useState(0);
   
-  // إضافة Snackbar state
-  const [snackbar, setSnackbar] = React.useState<{
+  // إضافةstate
+  const [, set] = React.useState<{
     open: boolean;
     message: string;
     severity: 'success' | 'warning' | 'error';
@@ -149,21 +149,21 @@ const ProductForm: React.FC<Props> = ({
   const productCopyPaste = useCopyPaste<ProductCopyData>({
     storageKey: 'productCopyData',
     onCopySuccess: () => {
-      setSnackbar({
+      set({
         open: true,
         message: t('products.copySuccess'),
         severity: 'success'
       });
     },
     onPasteSuccess: (data) => {
-      setSnackbar({
+      set({
         open: true,
         message: t('products.pasteSuccess', { count: data.priceTemplates.length }),
         severity: 'success'
       });
     },
     onError: (error) => {
-      setSnackbar({
+      set({
         open: true,
         message: error,
         severity: 'error'
@@ -636,7 +636,7 @@ const OptionGroupComponent: React.FC<{ groupIndex: number }> = ({ groupIndex }) 
     const currentValues = getValues();
     
     if (!currentValues.productName.trim()) {
-      setSnackbar({
+      set({
         open: true,
         message: t('products.nameRequiredForCopy'),
         severity: 'warning'
@@ -903,19 +903,19 @@ const submit = async (data: FormValues, saveAction: 'save' | 'saveAndNew') => {
         
         localStorage.setItem(`componentsCopy_${priceIndex}`, JSON.stringify(copyData));
         
-        setSnackbar({
+        set({
           open: true,
           message: t('products.componentsCopySuccess'),
           severity: 'success'
         });
       } else {
-        setSnackbar({
+        set({
           open: true,
           message: t('products.noComponentsToCopy'),
           severity: 'warning'
         });
       }
-    }, [priceIndex, getValues, setSnackbar, t]);
+    }, [priceIndex, getValues, set, t]);
 
     const pasteComponents = React.useCallback(() => {
       try {
@@ -936,27 +936,27 @@ const submit = async (data: FormValues, saveAction: 'save' | 'saveAndNew') => {
               });
             });
             
-            setSnackbar({
+            set({
               open: true,
               message: t('products.componentsPasteSuccess'),
               severity: 'success'
             });
           }, 100);
         } else {
-          setSnackbar({
+          set({
             open: true,
             message: 'لا توجد مكونات منسوخة',
             severity: 'warning'
           });
         }
       } catch (error) {
-        setSnackbar({
+        set({
           open: true,
           message: 'خطأ في لصق المكونات',
           severity: 'error'
         });
       }
-    }, [priceIndex, componentFields.length, removeComponent, appendComponent, setSnackbar, t]);
+    }, [priceIndex, componentFields.length, removeComponent, appendComponent, set, t]);
 
     const hasCopiedData = React.useMemo(() => {
       return localStorage.getItem(`componentsCopy_${priceIndex}`) !== null;
@@ -989,8 +989,7 @@ const submit = async (data: FormValues, saveAction: 'save' | 'saveAndNew') => {
           }));
         }
       } catch (error) {
-        console.error('Error fetching component details:', error);
-      } finally {
+        } finally {
         setLoadingComponents(prev => ({ ...prev, [rawProductPriceId]: false }));
       }
     }, [componentDetails, loadingComponents]);
@@ -1887,7 +1886,6 @@ const DesktopPriceTable = () => (
   </Box>
 )}
 
-
           </DialogContent>
 
           <DialogActions 
@@ -1934,26 +1932,7 @@ const DesktopPriceTable = () => (
             </Stack>
           </DialogActions>
         </form>
-      </Dialog>
-
-<Snackbar
-  open={snackbar.open}
-  autoHideDuration={snackbar.severity === 'error' ? 8000 : 3000} // ⭐ وقت أطول للأخطاء
-  onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
-  anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
->
-  <Alert 
-    severity={snackbar.severity} 
-    onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
-    sx={{ 
-      maxWidth: 600, 
-      whiteSpace: 'pre-line' // ⭐ للسماح بـ line breaks
-    }}
-  >
-    {snackbar.message}
-  </Alert>
-</Snackbar>
-    </>
+      </Dialog></>
   );
 };
 

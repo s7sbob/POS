@@ -13,8 +13,7 @@ import {
   Button,
   Grid2 as Grid,
   MenuItem,
-  FormControl,
-  Alert,
+  FormControl
 } from "@mui/material";
 import { styled } from '@mui/material/styles';
 import { Typography } from '@mui/material';
@@ -160,7 +159,7 @@ const handleChange4 = (event: any) => {
 
 <div>
     <>
-      <Alert severity="info">Person Info</Alert>
+      <severity="info">Person Info</>
       <form>
         <Grid container spacing={3} mb={3}>
           <Grid
@@ -241,7 +240,7 @@ const handleChange4 = (event: any) => {
           </Grid>
         </Grid>
       </form>
-      <Alert severity="info">Address</Alert>
+      <severity="info">Address</>
       <Grid container spacing={3} mb={3} mt={1}>
         <Grid
           size={{

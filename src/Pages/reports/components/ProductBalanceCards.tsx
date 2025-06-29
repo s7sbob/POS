@@ -14,7 +14,7 @@ import {
 } from '@mui/material';
 import {
   IconChevronDown,
-  IconAlertTriangle,
+  IconTriangle,
   IconCheck,
   IconPackage,
   IconBuilding,
@@ -37,13 +37,13 @@ const ProductBalanceCards: React.FC<Props> = ({ data, loading }) => {
       return {
         label: t('reports.stockStatus.outOfStock'),
         color: 'error' as const,
-        icon: IconAlertTriangle
+        icon: IconTriangle
       };
     } else if (quantity < 10) {
       return {
         label: t('reports.stockStatus.lowStock'),
         color: 'warning' as const,
-        icon: IconAlertTriangle
+        icon: IconTriangle
       };
     } else {
       return {

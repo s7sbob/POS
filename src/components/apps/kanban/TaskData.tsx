@@ -7,15 +7,13 @@ import { Draggable } from '@hello-pangea/dnd';
 import axios from 'src/utils/axios';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
-import {
-  Box,
+import { Box,
   Chip,
   IconButton,
   ListItemIcon,
   ListItemText,
   Stack,
-  Typography,
-} from '@mui/material';
+  Typography } from '@mui/material';
 import BlankCard from '../../shared/BlankCard';
 import dayjs from 'dayjs';
 interface TaskDataProps {
@@ -56,9 +54,7 @@ const TaskData: React.FC<TaskDataProps> = ({ task, onDeleteTask, index }: any) =
       } else {
         throw new Error('Failed to edit task');
       }
-    } catch (error: any) {
-      setError(error.message);
-    }
+    } catch (error: any) {    }
   };
 
   // Function to format the date as 'DD MMM' (Day and Month)

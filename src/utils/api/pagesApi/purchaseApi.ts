@@ -117,7 +117,6 @@ const fetchPurchaseOrderDetails = async (purchaseOrderId: string) => {
     }
     return null;
   } catch (error) {
-    console.error('Error fetching purchase order details:', error);
     return null;
   }
 };
@@ -236,7 +235,6 @@ export const getAll = async (): Promise<Purchase[]> => {
     );
     return purchases;
   } catch (error) {
-    console.error('Error fetching purchases:', error);
     throw error;
   }
 };
@@ -246,7 +244,6 @@ export const getById = async (id: string): Promise<Purchase> => {
     const response = await api.get(`/GetPurchase?id=${id}`);
     return await toPurchase(response.data.data);
   } catch (error) {
-    console.error('Error fetching purchase:', error);
     throw error;
   }
 };

@@ -18,7 +18,7 @@ import {
 import {
   IconChevronDown,
   IconChevronRight,
-  IconAlertTriangle,
+  IconTriangle,
   IconCheck
 } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
@@ -49,13 +49,13 @@ const ProductBalanceTable: React.FC<Props> = ({ data, loading }) => {
       return {
         label: t('reports.stockStatus.outOfStock'),
         color: 'error' as const,
-        icon: IconAlertTriangle
+        icon: IconTriangle
       };
     } else if (quantity < 10) {
       return {
         label: t('reports.stockStatus.lowStock'),
         color: 'warning' as const,
-        icon: IconAlertTriangle
+        icon: IconTriangle
       };
     } else {
       return {

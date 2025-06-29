@@ -16,13 +16,12 @@ import {
   useTheme
 } from '@mui/material';
 import { EmailType } from 'src/types/apps/email';
-import { IconStar, IconAlertCircle, IconTrash } from '@tabler/icons-react';
+import { IconStar, IconCircle, IconTrash } from '@tabler/icons-react';
 import { useSelector, useDispatch } from 'src/store/Store';
 import { starEmail, importantEmail, deleteEmail } from '../../../store/apps/email/EmailSlice';
 import emailIcon from 'src/assets/images/breadcrumb/emailSv.png';
 
 import TiptapEdit from 'src/views/forms/from-tiptap/TiptapEdit'
-
 
 const EmailContent = () => {
   const emailDetails: EmailType = useSelector(
@@ -30,7 +29,6 @@ const EmailContent = () => {
   );
 
   const [show, setShow] = useState(false);
-
 
   const toggleEditor = () => {
     setShow(!show);
@@ -60,7 +58,7 @@ const EmailContent = () => {
         </Tooltip>
         <Tooltip title={emailDetails ? 'Important' : 'Not Important'}>
           <IconButton onClick={() => dispatch(importantEmail(emailDetails.id))}>
-            <IconAlertCircle
+            <IconCircle
               size="18"
               stroke={1.3}
               style={{

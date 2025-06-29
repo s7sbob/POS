@@ -2,7 +2,7 @@
 // @ts-ignore
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Grid, Box, Card, Stack, Typography, Snackbar, Alert } from '@mui/material';
+import { Grid, Box, Card, Stack, Typography} from '@mui/material';
 import PageContainer from 'src/components/container/PageContainer';
 import Logo from 'src/layouts/full/shared/logo/Logo';
 import AuthLogin from '../authForms/AuthLogin';
@@ -56,9 +56,9 @@ const Login2: React.FC = () => {
         </Grid>
       </Box>
 
-      <Snackbar open={!!msg} autoHideDuration={4000} onClose={() => setMsg('')}>
-        <Alert severity="error" onClose={() => setMsg('')}>{msg}</Alert>
-      </Snackbar>
+      <open={!!msg} autoHideDuration={4000} onClose={() => setMsg('')}>
+        <severity="error" onClose={() => setMsg('')}>{msg}</>
+      </>
     </PageContainer>
   );
 };

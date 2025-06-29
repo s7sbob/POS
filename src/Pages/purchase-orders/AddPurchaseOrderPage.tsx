@@ -1,6 +1,6 @@
 // File: src/pages/purchases/purchase-orders/AddPurchaseOrderPage.tsx
 import React, { useState, useEffect } from 'react';
-import { useMediaQuery, useTheme, Snackbar, Alert, Box, Typography, CircularProgress } from '@mui/material';
+import { useMediaQuery, useTheme, Box, Typography, CircularProgress } from '@mui/material';
 import PurchaseOrderForm from './components/PurchaseOrderForm';
 import MobilePurchaseOrderForm from './components/mobile/MobilePurchaseOrderForm';
 import * as apiSrv from 'src/utils/api/pagesApi/purchaseOrdersApi';
@@ -15,7 +15,7 @@ const AddPurchaseOrderPage: React.FC = () => {
   
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
-  const [error, setError] = useState('');
+  const [] = useState('');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -27,9 +27,7 @@ const AddPurchaseOrderPage: React.FC = () => {
         ]);
         setSuppliers(suppliersData);
         setWarehouses(warehousesData);
-      } catch (e: any) {
-        setError(e?.message || 'Failed to load data');
-      } finally {
+      } catch (e: any) {      } finally {
         setLoading(false);
       }
     };
@@ -41,8 +39,6 @@ const AddPurchaseOrderPage: React.FC = () => {
     try {
       await apiSrv.add(data);
     } catch (e: any) {
-      const msg = e?.message || 'Add failed';
-      setError(msg);
       throw e;
     }
   };
@@ -72,14 +68,7 @@ const AddPurchaseOrderPage: React.FC = () => {
           warehouses={warehouses}
           onSubmit={handleSubmit}
         />
-      )}
-
-      <Snackbar open={!!error} autoHideDuration={6000} onClose={() => setError('')}>
-        <Alert severity="error" onClose={() => setError('')}>
-          {error}
-        </Alert>
-      </Snackbar>
-    </>
+      )}</>
   );
 };
 

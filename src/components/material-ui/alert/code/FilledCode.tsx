@@ -7,23 +7,22 @@ const FilledCode = () => {
 
 import React from 'react';
 import {
-  Stack,
-  Alert,
+  Stack
 } from "@mui/material";
 
 <Stack spacing={1}>
-    <Alert variant="filled" severity="error">
+    <variant="filled" severity="error">
         This is an error alert — check it out!
-    </Alert>
-    <Alert variant="filled" severity="warning">
+    </>
+    <variant="filled" severity="warning">
         This is a warning alert — check it out!
-    </Alert>
-    <Alert variant="filled" severity="info">
+    </>
+    <variant="filled" severity="info">
         This is an info alert — check it out!
-    </Alert>
-    <Alert variant="filled" severity="success">
+    </>
+    <variant="filled" severity="success">
         This is a success alert — check it out!
-    </Alert>
+    </>
 </Stack>`}
       </CodeDialog>
     </>

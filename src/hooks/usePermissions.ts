@@ -32,7 +32,6 @@ export const usePermissions = (): UsePermissionsReturn => {
               const pagePermissions = await getUserPagePermission(page.pageId);
               permissionsData[page.pageId] = pagePermissions;
             } catch (error) {
-              console.error(`Error loading permissions for page ${page.pageId}:`, error);
               permissionsData[page.pageId] = [];
             }
           }
@@ -40,8 +39,7 @@ export const usePermissions = (): UsePermissionsReturn => {
         
         setPermissions(permissionsData);
       } catch (error) {
-        console.error('Error loading permissions:', error);
-      } finally {
+        } finally {
         setLoading(false);
       }
     };

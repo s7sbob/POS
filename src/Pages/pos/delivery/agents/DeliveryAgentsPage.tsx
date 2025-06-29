@@ -1,8 +1,7 @@
 // File: src/pages/delivery/agents/DeliveryAgentsPage.tsx
 import React from 'react';
 import {
-  Container, useMediaQuery, useTheme, Box, Button, Fab, Badge,
-  Snackbar, Alert, Typography, Stack, TextField, 
+  Container, useMediaQuery, useTheme, Box, Button, Fab, Badge, Typography, Stack, TextField, 
   InputAdornment, IconButton, Chip, Dialog, DialogTitle,
   DialogContent, DialogContentText, DialogActions
 } from '@mui/material';
@@ -16,7 +15,6 @@ import AgentForm from './components/AgentForm';
 import MobileAgentsFilter, { AgentsFilterState } from './components/mobile/MobileAgentsFilter';
 import * as apiSrv from 'src/utils/api/pagesApi/deliveryAgentsApi';
 import { DeliveryAgent } from 'src/utils/api/pagesApi/deliveryAgentsApi';
-import { getUserBranchesFromStorage, getDefaultBranch } from 'src/utils/branchUtils';
 
 interface PermissionProps {
   canAdd?: boolean;
@@ -30,7 +28,7 @@ interface PermissionProps {
 interface Props extends PermissionProps {}
 
 const DeliveryAgentsPage: React.FC<Props> = (props) => {
-  const { canAdd = true, canEdit = true, canDelete = true, canImport = true, canExport = true } = props;
+  const { canAdd = true, canEdit = true, canDelete = true } = props;
   const { t } = useTranslation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -38,9 +36,7 @@ const DeliveryAgentsPage: React.FC<Props> = (props) => {
 
   const [agents, setAgents] = React.useState<DeliveryAgent[]>([]);
   const [selectedAgent, setSelectedAgent] = React.useState<DeliveryAgent | null>(null);
-  const [searchQuery, setSearchQuery] = React.useState('');
-  const [error, setErr] = React.useState('');
-  const [loading, setLoad] = React.useState(true);
+  const [searchQuery, setSearchQuery] = React.useState('');  const [loading, setLoad] = React.useState(true);
   const [filterOpen, setFilterOpen] = React.useState(false);
   const [dialog, setDialog] = React.useState<{
     open: boolean;
@@ -144,10 +140,7 @@ const DeliveryAgentsPage: React.FC<Props> = (props) => {
     try {
       await apiSrv.add(data);
       await fetchAgents();
-    } catch (e: any) {
-      const msg = e?.message || t('deliveryAgents.errors.addFailed');
-      setErr(msg);
-      throw e;
+    } catch (e: any) {      throw e;
     }
   };
 
@@ -161,11 +154,7 @@ const DeliveryAgentsPage: React.FC<Props> = (props) => {
       }
       
       return updatedAgent;
-    } catch (e: any) {
-      console.error('Update error:', e);
-      const msg = e?.message || t('deliveryAgents.errors.updateFailed');
-      setErr(msg);
-      throw e;
+    } catch (e: any) {      throw e;
     }
   };
 
@@ -178,10 +167,7 @@ const DeliveryAgentsPage: React.FC<Props> = (props) => {
       if (selectedAgent?.id === agent.id) {
         setSelectedAgent(null);
       }
-    } catch (e: any) {
-      const msg = e?.message || t('deliveryAgents.errors.deleteFailed');
-      setErr(msg);
-    }
+    } catch (e: any) {    }
   };
 
   const handleSubmit = async (data: any, saveAction: 'save' | 'saveAndNew') => {
@@ -212,13 +198,11 @@ const DeliveryAgentsPage: React.FC<Props> = (props) => {
 
   return (
     <Container maxWidth="xl">
-      <PageHeader 
-        title={t('deliveryAgents.title')}
-        exportData={displayedData} 
-        loading={loading}
-        showImport={canImport}
-        showExport={canExport}
-      />
+<PageHeader 
+  exportData={agents} 
+  loading={loading}
+  onDataChange={fetchAgents} // ⭐ إضافة callback
+/>
       
       {!isMobile && (
         <Box mb={3}>
@@ -386,15 +370,12 @@ const DeliveryAgentsPage: React.FC<Props> = (props) => {
             {t('common.delete')}
           </Button>
         </DialogActions>
-      </Dialog>
-
-      <Snackbar open={!!error} autoHideDuration={6000} onClose={() => setErr('')}>
-        <Alert severity="error" onClose={() => setErr('')}>
-          {error}
-        </Alert>
-      </Snackbar>
-    </Container>
+      </Dialog></Container>
   );
 };
 
 export default DeliveryAgentsPage;
+
+function setErr(_arg0: any) {
+  throw new Error('Function not implemented.');
+}

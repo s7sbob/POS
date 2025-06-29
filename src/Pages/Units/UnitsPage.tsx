@@ -1,8 +1,7 @@
 // File: src/pages/units/UnitsPage.tsx
 import React from 'react';
 import {
-  Container, useMediaQuery,
-  Snackbar, Alert, Fab, Badge, Box, Button
+  Container, useMediaQuery, Fab, Badge, Box, Button
 } from '@mui/material';
 import { IconFilter, IconPlus } from '@tabler/icons-react';
 import PageHeader from './components/PageHeader';
@@ -24,14 +23,11 @@ interface PermissionProps {
   canView?: boolean;
 }
 
-
 const UnitsPage: React.FC<PermissionProps> = (props) => {
   const { t } = useTranslation();
   const [items, setItems] = React.useState<Unit[]>([]);
   const { canAdd } = props;
-  const [query, setQuery] = React.useState('');
-  const [error, setErr] = React.useState('');
-  const [loading, setLoad] = React.useState(true);
+  const [query, setQuery] = React.useState('');  const [loading, setLoad] = React.useState(true);
   const [filterOpen, setFilterOpen] = React.useState(false);
   const [dialog, setDialog] = React.useState<{
     open: boolean;
@@ -127,8 +123,6 @@ const UnitsPage: React.FC<PermissionProps> = (props) => {
       setItems(p => [nw, ...p]);
       setDialog({ open: false, mode: 'add' });
     } catch (e: any) {
-      const msg = e?.errors?.UnitName?.[0] || e?.message || 'Add failed';
-      setErr(msg);
     }
   };
 
@@ -138,11 +132,6 @@ const UnitsPage: React.FC<PermissionProps> = (props) => {
       setItems(p => p.map(x => x.id === up.id ? up : x));
       setDialog({ open: false, mode: 'add' });
     } catch (e: any) {
-      const msg =
-        e?.errors?.UnitName?.[0] ||
-        e?.message ||
-        'Update failed';
-      setErr(msg);
     }
   };
 
@@ -236,17 +225,13 @@ const UnitsPage: React.FC<PermissionProps> = (props) => {
           ? ((data) => handleAdd(data as { name: string; }))
           : ((data) => handleUpdate(data as Unit))
         }
-      />
-
-      <Snackbar open={!!error} autoHideDuration={6000} onClose={() => setErr('')}>
-        <Alert severity="error" onClose={() => setErr('')}>
-          {error}
-        </Alert>
-      </Snackbar>
-
-      {loading && <div>Loading…</div>}
+      />{loading && <div>Loading…</div>}
     </Container>
   );
 };
 
 export default UnitsPage;
+function setErr(_arg0: any) {
+  throw new Error('Function not implemented.');
+}
+

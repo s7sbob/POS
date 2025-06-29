@@ -1,8 +1,7 @@
 // File: src/pages/warehouses/WarehousesPage.tsx
 import React from 'react';
 import {
-  Container, useMediaQuery,
-  Snackbar, Alert, Fab, Badge, Box, Button
+  Container, useMediaQuery, Fab, Badge, Box, Button
 } from '@mui/material';
 import { IconFilter, IconPlus } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
@@ -29,12 +28,11 @@ interface Props extends PermissionProps {
   // Add other props here if needed
 }
 
-
 const WarehousesPage: React.FC<Props> = (props) => {
   const { t } = useTranslation();
   const [items, setItems] = React.useState<Warehouse[]>([]);
   const [query, setQuery] = React.useState('');
-  const [error, setErr]   = React.useState('');
+  const [, setErr]   = React.useState('');
   const [loading, setLoad] = React.useState(true);
   const [filterOpen, setFilterOpen] = React.useState(false);
 
@@ -146,11 +144,6 @@ const WarehousesPage: React.FC<Props> = (props) => {
       setItems(p => p.map(x => x.id === up.id ? up : x));
       setDialog({ open: false, mode: 'add' });
     } catch (e: any) {
-      const msg =
-        e?.errors?.WarehouseName?.[0] ||
-        e?.message ||
-        'Update failed';
-      setErr(msg);
     }
   };
 
@@ -247,13 +240,7 @@ const WarehousesPage: React.FC<Props> = (props) => {
           ? ((data) => handleAdd(data as { name: string; address: string }))
           : ((data) => handleUpdate(data as Warehouse))
         }
-      />
-
-      <Snackbar open={!!error} autoHideDuration={4000} onClose={() => setErr('')}>
-        <Alert severity="error">{error}</Alert>
-      </Snackbar>
-
-      {loading && <p>Loading…</p>}
+      />{loading && <p>Loading…</p>}
     </Container>
   );
 };

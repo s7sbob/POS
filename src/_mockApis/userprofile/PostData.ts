@@ -193,8 +193,6 @@ mock.onPost('/api/data/posts/like').reply((config) => {
 
     return [200, { posts: [...posts] }];
   } catch (err) {
-    console.error(err);
-
     return [500, { message: 'Internal server error' }];
   }
 });
@@ -209,8 +207,6 @@ mock.onPost('/api/data/posts/comments/add').reply((config) => {
 
     return [200, { posts: [...posts] }];
   } catch (err) {
-    console.error(err);
-
     return [500, { message: 'Internal server error' }];
   }
 });
@@ -228,8 +224,6 @@ mock.onPost('/api/data/posts/replies/add').reply((config) => {
 
     return [200, { posts: [...posts] }];
   } catch (err) {
-    console.error(err);
-
     return [500, { message: 'Internal server error' }];
   }
 });
@@ -253,8 +247,6 @@ mock.onPost('/api/data/posts/replies/like').reply((config) => {
 
     return [200, { posts: [...posts] }];
   } catch (err) {
-    console.error(err);
-
     return [500, { message: 'Internal server error' }];
   }
 });

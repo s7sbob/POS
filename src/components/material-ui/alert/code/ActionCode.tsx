@@ -8,16 +8,14 @@ const ActionCode = () => {
 import React from 'react';
 import {
   Stack,
-  Button,
-  Alert,
+  Button
 } from "@mui/material";
 
 <Stack spacing={1}>
-    <Alert variant="filled" severity="warning">
+    <variant="filled" severity="warning">
         This is a success alert — check it out!
-    </Alert>
-    <Alert
-        variant="filled"
+    </>
+    <variant="filled"
         severity="info"
         action={
             <Button color="inherit" size="small">
@@ -26,7 +24,7 @@ import {
         }
     >
         This is a success alert — check it out!
-    </Alert>
+    </>
 </Stack>`}
       </CodeDialog>
     </>

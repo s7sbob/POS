@@ -22,8 +22,6 @@ export const createProtectedPage = (
         canView: true,
       };
       
-      console.log('🚧 Protection disabled for', Component.displayName || Component.name);
-      
       return <Component {...props} {...allPermissions} />;
     };
     

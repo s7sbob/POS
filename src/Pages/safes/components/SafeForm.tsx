@@ -88,8 +88,7 @@ const SafeForm: React.FC<Props> = ({
         });
       }
     } catch (error) {
-      console.error('Submit error:', error);
-    } finally {
+      } finally {
       setIsSubmitting(false);
     }
   };

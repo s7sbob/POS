@@ -11,7 +11,7 @@ import {
 import {
   IconPackage,
   IconBuilding,
-  IconAlertTriangle,
+  IconTriangle,
   IconCheck
 } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
@@ -65,7 +65,7 @@ const ProductBalanceStats: React.FC<Props> = ({ data }) => {
     {
       title: t('reports.stats.outOfStock'),
       value: stats.outOfStockProducts,
-      icon: IconAlertTriangle,
+      icon: IconTriangle,
       color: theme.palette.error.main,
       bgColor: theme.palette.error.light + '20'
     }

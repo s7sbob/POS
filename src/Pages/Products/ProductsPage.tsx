@@ -1,8 +1,7 @@
 // File: src/pages/products/ProductsPage.tsx
 import React from 'react';
 import {
-  Container, useMediaQuery,
-  Snackbar, Alert, Box, Typography, Pagination,
+  Container, useMediaQuery, Box, Typography, Pagination,
   Stack, TextField, InputAdornment, IconButton, Chip, Button, Fab, Badge
 } from '@mui/material';
 import { IconSearch, IconBarcode, IconX, IconFilter, IconPlus } from '@tabler/icons-react';
@@ -33,7 +32,6 @@ interface Props extends PermissionProps {
   // Add other props here if needed
 }
 
-
 const ProductsPage: React.FC<Props> = (props) => {
   const { canAdd = true } = props;
   const { t } = useTranslation();
@@ -49,9 +47,7 @@ const ProductsPage: React.FC<Props> = (props) => {
   const [selectedProduct, setSelectedProduct] = React.useState<Product | null>(null);
   const [searchQuery, setSearchQuery] = React.useState('');
   const [searchMode, setSearchMode] = React.useState<'name' | 'barcode' | null>(null);
-  const [currentPage, setCurrentPage] = React.useState(1);
-  const [error, setErr] = React.useState('');
-  const [loading, setLoad] = React.useState(true);
+  const [currentPage, setCurrentPage] = React.useState(1);  const [loading, setLoad] = React.useState(true);
   const [searching, setSearching] = React.useState(false);
   const [filterOpen, setFilterOpen] = React.useState(false);
   const [dialog, setDialog] = React.useState<{
@@ -82,9 +78,7 @@ const fetchProducts = async (page: number = 1, pageSize: number = 20) => {
     const data = await apiSrv.getByType(2, page, pageSize); // ProductType.Material = 2
     setProductsData(data);
     setCurrentPage(page);
-  } catch (e: any) {
-    setErr(e?.message || 'Failed to load materials');
-  } finally {
+  } catch (e: any) {  } finally {
     setLoad(false);
   }
 };
@@ -125,9 +119,7 @@ const fetchProducts = async (page: number = 1, pageSize: number = 20) => {
       
       setSearchMode(mode);
       setCurrentPage(1);
-    } catch (e: any) {
-      setErr(e?.message || 'Search failed');
-    } finally {
+    } catch (e: any) {    } finally {
       setSearching(false);
     }
   };
@@ -151,9 +143,7 @@ const fetchProducts = async (page: number = 1, pageSize: number = 20) => {
         setUnits(unitsData);
         await fetchProducts(1);
       }
-      catch (e: any) { 
-        setErr(e?.message || 'Load failed'); 
-      }
+      catch (e: any) {      }
     })();
   }, []);
 
@@ -165,9 +155,7 @@ const fetchProducts = async (page: number = 1, pageSize: number = 20) => {
         const data = await apiSrv.searchByName(searchQuery, page, 50);
         setProductsData(data);
         setCurrentPage(page);
-      } catch (e: any) {
-        setErr(e?.message || 'Search failed');
-      } finally {
+      } catch (e: any) {      } finally {
         setSearching(false);
       }
     } else if (!searchMode) {
@@ -263,7 +251,6 @@ const fetchProducts = async (page: number = 1, pageSize: number = 20) => {
   /* ───── CRUD ───── */
   const handleAdd = async (data: any) => {
     try {
-      console.log('Adding product:', data);
       await apiSrv.add(data);
       // إعادة تحميل الصفحة الحالية
       if (searchMode) {
@@ -272,15 +259,12 @@ const fetchProducts = async (page: number = 1, pageSize: number = 20) => {
         await fetchProducts(currentPage);
       }
     } catch (e: any) {
-      const msg = e?.errors?.productName?.[0] || e?.message || 'Add failed';
-      setErr(msg);
       throw e;
     }
   };
 
   const handleUpdate = async (data: any) => {
     try {
-      console.log('Updating product:', data);
       const updatedProduct = await apiSrv.update(data);
       
       // تحديث المنتج في القائمة الحالية
@@ -296,9 +280,6 @@ const fetchProducts = async (page: number = 1, pageSize: number = 20) => {
       
       return updatedProduct;
     } catch (e: any) {
-      console.error('Update error:', e);
-      const msg = e?.errors?.productName?.[0] || e?.message || 'Update failed';
-      setErr(msg);
       throw e;
     }
   };
@@ -523,14 +504,7 @@ const fetchProducts = async (page: number = 1, pageSize: number = 20) => {
         product={selectedProduct}
         units={units}
         onClose={() => setPricesDrawerOpen(false)}
-      />
-
-      <Snackbar open={!!error} autoHideDuration={6000} onClose={() => setErr('')}>
-        <Alert severity="error" onClose={() => setErr('')}>
-          {error}
-        </Alert>
-      </Snackbar>
-    </Container>
+      /></Container>
   );
 };
 

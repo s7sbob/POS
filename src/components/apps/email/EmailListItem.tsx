@@ -2,17 +2,15 @@
 // @ts-ignore
 import React from 'react';
 
-import {
-  ListItemText,
+import { ListItemText,
   ListItemIcon,
   Chip,
   ListItemButton,
   Typography,
   Stack,
-  useTheme,
-} from '@mui/material';
+  useTheme } from '@mui/material';
 import CustomCheckbox from 'src/components/forms/theme-elements/CustomCheckbox';
-import { IconAlertCircle, IconStar, IconTrash } from '@tabler/icons-react';
+import { IconCircle, IconStar, IconTrash } from '@tabler/icons-react';
 import { formatDistanceToNowStrict } from 'date-fns';
 
 interface EmailListType {
@@ -89,7 +87,7 @@ const EmailListItem = ({
             size="18"
             style={{ fill: starred ? warningColor : '', stroke: starred ? warningColor : '' }}
           />
-          <IconAlertCircle
+          <IconCircle
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             // @ts-ignore
             onClick={onImportant}

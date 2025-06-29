@@ -36,7 +36,6 @@ export interface InventoryAdjustment {
   isActive: boolean;
 }
 
-
 export interface AdjustmentListItem {
   [x: string]: any;
   warehouseName: string;
@@ -68,18 +67,14 @@ export interface AdjustmentListItem {
   isActive: boolean;
 }
 
-
-
 export const getAdjustmentById = async (adjustmentId: string): Promise<InventoryAdjustment> => {
   try {
     const response = await api.get(`/getAdjustment?adjustmentid=${adjustmentId}`);
     return response.data.data;
   } catch (error) {
-    console.error('Error fetching adjustment by ID:', error);
     throw error;
   }
 };
-
 
 export const getAdjustments = async (): Promise<AdjustmentListItem[]> => {
   try {
@@ -104,11 +99,9 @@ export const getAdjustments = async (): Promise<AdjustmentListItem[]> => {
     
     return adjustmentsWithWarehouseNames;
   } catch (error) {
-    console.error('Error fetching adjustments:', error);
     throw error;
   }
 };
-
 
 // GET فقط لجلب البيانات
 export const getOrCreatePendingAdjustment = async (warehouseId: string): Promise<InventoryAdjustment> => {
@@ -116,7 +109,6 @@ export const getOrCreatePendingAdjustment = async (warehouseId: string): Promise
     const response = await api.post(`/GetOrCreatePendingAdjustment?warehouseid=${warehouseId}`);
     return response.data.data;
   } catch (error) {
-    console.error('Error fetching adjustment:', error);
     throw error;
   }
 };
@@ -135,7 +127,6 @@ export const updateAdjustment = async (adjustmentData: {
     const response = await api.post('/UpdateAdjustment', adjustmentData);
     return response.data.data;
   } catch (error) {
-    console.error('Error updating adjustment:', error);
     throw error;
   }
 };

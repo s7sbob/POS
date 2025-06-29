@@ -19,12 +19,78 @@
     "Calendar": "التقويم",
     "Email": "بريد إلكتروني",
     "Tickets": "تذاكر",
-
+ "header": {
+    "print": {
+      "tooltip": "خيارات الطباعة",
+      "normal": "طباعة عادية",
+      "normalDesc": "طباعة باستخدام طابعة النظام",
+      "thermal": "طباعة حرارية",
+      "printer": "طابعة",
+      "test": "اختبار الطباعة",
+      "testDesc": "اختبار الطابعة الحرارية",
+      "testSuccess": "تم اختبار الطباعة بنجاح",
+      "testFailed": "فشل في اختبار الطباعة",
+      "testError": "خطأ في اختبار الطباعة",
+      "thermalDisabled": "الطباعة الحرارية غير مفعلة",
+      "enableThermal": "تفعيل الطباعة الحرارية",
+      "goToSettings": "الذهاب للإعدادات",
+      "clickToEnable": "اضغط هنا لتفعيل الطباعة الحرارية",
+      "settings": "إعدادات الطباعة",
+      "manageSettings": "إدارة إعدادات الطابعة",
+      "printerSettings": "إعدادات الطابعة",
+      "configureOptions": "تكوين خيارات الطباعة"
+    },
+    "printerSettings": "إعدادات الطابعة"
+  },
+  "settings": {
+    "printer": {
+      "title": "إعدادات الطابعة",
+      "description": "إدارة إعدادات الطباعة العادية والحرارية",
+      "thermalSettings": "إعدادات الطباعة الحرارية",
+      "enableThermal": "تفعيل الطباعة الحرارية",
+      "quickEnable": "تفعيل سريع",
+      "disabledInfo": "الطباعة الحرارية غير مفعلة. يمكنك تفعيلها للحصول على خيارات طباعة إضافية.",
+      "type": "نوع الطابعة",
+      "network": "شبكة",
+      "ip": "عنوان IP",
+      "port": "المنفذ",
+      "ipHelp": "عنوان IP الخاص بالطابعة الحرارية",
+      "portHelp": "منفذ الاتصال (عادة 9100)",
+      "testPrint": "اختبار الطباعة",
+      "ctrlPInfo": "بعد الحفظ، يمكنك استخدام زرار الطباعة في الشريط العلوي",
+      "saved": "تم حفظ الإعدادات بنجاح",
+      "saveError": "خطأ في حفظ الإعدادات",
+      "testCompleted": "تم إجراء اختبار الطباعة",
+        "basicSettings": "الإعدادات الأساسية",
+      "advancedSettings": "الإعدادات المتقدمة",
+      "systemInfo": "معلومات النظام",
+      "testing": "جاري الاختبار...",
+      "testConnection": "اختبار الاتصال",
+      "connectionSuccess": "تم الاتصال بالطابعة بنجاح",
+      "connectionFailed": "فشل الاتصال بالطابعة",
+      "connectionError": "خطأ في الاتصال",
+      "testSuccess": "تم اختبار الطباعة بنجاح",
+      "testFailed": "فشل اختبار الطباعة",
+      "testError": "خطأ في اختبار الطباعة",
+      "resetSuccess": "تم إعادة تعيين الإعدادات",
+      "reset": "إعادة تعيين",
+      "autoConnect": "اتصال تلقائي",
+      "autoConnectDesc": "الاتصال بالطابعة تلقائياً بدون طلب اختيار البورت",
+      "silentPrint": "طباعة صامتة",
+      "silentPrintDesc": "طباعة مباشرة بدون عرض نوافذ اختيار",
+      "supported": "مدعوم",
+      "notSupported": "غير مدعوم",
+      "networkPrinting": "الطباعة الشبكية",
+      "networkDesc": "طباعة عبر الشبكة المحلية"
+    }
+  },
 
   "sidebar": {
     "stock": "المخزون",
+     "tableSections": "أقسام الطاولات",
     "posProducts": "منتجات نقاط البيع",
-     "systemAdmin": "إدارة النظام",
+       "hallCaptains": "كباتن الصالة",
+            "systemAdmin": "إدارة النظام",
        "deliveryZones": "مناطق التوصيل",
     "deliveryAgents": "مناديب التوصيل",
      "additionProducts": "منتجات الإضافات",
@@ -718,7 +784,9 @@
     "of": "من",
     "checkboxSelection": "تحديد الصناديق",
     "noResults": "لا توجد نتائج",
-    "saveAndNew": "حفظ مع جديد"
+    "saveAndNew": "حفظ مع جديد",
+       "supported": "مدعوم",
+    "notSupported": "غير مدعوم"
 
     
   },
@@ -1137,7 +1205,33 @@
 
 
 
-
+ "errors": {
+    "title": "خطأ",
+    "validationError": "خطأ في البيانات",
+    "forbidden": "ممنوع",
+    "notFound": "غير موجود",
+    "conflict": "تعارض في البيانات",
+    "serverError": "خطأ في الخادم",
+    "multipleErrors": "أخطاء متعددة",
+        "unauthorized": {
+      "title": "غير مصرح لك",
+      "message": "ليس لديك صلاحية للوصول إلى هذه الصفحة",
+      "backToDashboard": "العودة للرئيسية"
+    },
+    "noBranches": {
+      "title": "لا توجد فروع متاحة",
+      "message": "لا يوجد فروع مخصصة لهذا المستخدم. يرجى التواصل مع الإدارة لتخصيص الفروع المناسبة."
+    }
+  },
+  "success": {
+    "title": "نجح"
+  },
+  "warning": {
+    "title": "تحذير"
+  },
+  "info": {
+    "title": "معلومات"
+  },
 
 
 
@@ -1361,17 +1455,7 @@
       "updateFailed": "خطأ في تحديث الصلاحية"
     }
   },
-  "errors": {
-    "unauthorized": {
-      "title": "غير مصرح لك",
-      "message": "ليس لديك صلاحية للوصول إلى هذه الصفحة",
-      "backToDashboard": "العودة للرئيسية"
-    },
-    "noBranches": {
-      "title": "لا توجد فروع متاحة",
-      "message": "لا يوجد فروع مخصصة لهذا المستخدم. يرجى التواصل مع الإدارة لتخصيص الفروع المناسبة."
-    }
-  },
+
   "branch": {
     "selectBranch": "اختر الفرع"
   },
@@ -1495,6 +1579,126 @@
       "addFailed": "فشل في إضافة المندوب",
       "updateFailed": "فشل في تحديث المندوب",
       "deleteFailed": "فشل في حذف المندوب"
+    }
+  },
+   "tableSections": {
+    "title": "أقسام الطاولات",
+    "add": "إضافة قسم",
+    "edit": "تعديل قسم",
+    "searchPlaceholder": "البحث في الأقسام والطاولات...",
+    "searchResults": "نتائج البحث",
+    "resultsCount": "{{count}} نتيجة",
+    "noSections": "لا توجد أقسام",
+    "noSearchResults": "لا توجد نتائج للبحث",
+    "saveAndExit": "حفظ وخروج",
+    "saveAndNew": "حفظ وإضافة جديد",
+    "nameRequired": "اسم القسم مطلوب",
+    "serviceChargeRequired": "رسوم الخدمة مطلوبة",
+    "tableNameRequired": "اسم الطاولة مطلوب",
+    "capacityRequired": "سعة الطاولة مطلوبة",
+    "totalTables": "إجمالي الطاولات: {{count}}",
+    "form": {
+      "name": "اسم القسم",
+      "serviceCharge": "رسوم الخدمة",
+      "tables": "الطاولات",
+      "tablesCount": "عدد الطاولات",
+      "totalCapacity": "السعة الإجمالية",
+      "branch": "الفرع",
+      "status": "الحالة",
+      "tableName": "اسم الطاولة",
+      "capacity": "السعة",
+      "persons": "شخص",
+      "addTable": "إضافة طاولة",
+      "noTables": "لا توجد طاولات - اضغط لإضافة طاولة"
+    },
+    "errors": {
+      "loadFailed": "فشل في تحميل الأقسام",
+      "addFailed": "فشل في إضافة القسم",
+      "updateFailed": "فشل في تحديث القسم"
+    }
+  },
+
+  "hallCaptains": {
+    "title": "كباتن الصالة",
+    "add": "إضافة كابتن",
+    "edit": "تعديل كابتن",
+    "searchPlaceholder": "البحث في الكباتن...",
+    "searchResults": "نتائج البحث",
+    "resultsCount": "{{count}} نتيجة",
+    "noCaptains": "لا توجد كباتن",
+    "noSearchResults": "لا توجد نتائج للبحث",
+    "saveAndExit": "حفظ وخروج",
+    "saveAndNew": "حفظ وإضافة جديد",
+    "nameRequired": "اسم الكابتن مطلوب",
+    "phoneRequired": "رقم الهاتف مطلوب",
+    "phoneInvalid": "رقم الهاتف غير صحيح",
+    "branchRequired": "الفرع مطلوب",
+    "form": {
+      "name": "اسم الكابتن",
+      "phone": "رقم الهاتف",
+      "notes": "ملاحظات",
+      "notesPlaceholder": "أدخل أي ملاحظات إضافية...",
+      "branch": "الفرع",
+      "isActive": "نشط"
+    },
+    "errors": {
+      "loadFailed": "فشل في تحميل الكباتن",
+      "addFailed": "فشل في إضافة الكابتن",
+      "updateFailed": "فشل في تحديث الكابتن"
+    }
+  },
+  "customers": {
+    "title": "العملاء",
+    "add": "إضافة عميل",
+    "edit": "تعديل عميل",
+    "searchPlaceholder": "البحث في العملاء...",
+    "searchResults": "نتائج البحث",
+    "resultsCount": "{{count}} نتيجة",
+    "noCustomers": "لا توجد عملاء",
+    "noSearchResults": "لا توجد نتائج للبحث",
+    "saveAndExit": "حفظ وخروج",
+    "saveAndNew": "حفظ وإضافة جديد",
+    "pageInfo": "الصفحة {{page}} من {{total}}",
+    "nameRequired": "اسم العميل مطلوب",
+    "phone1Required": "رقم الهاتف الأساسي مطلوب",
+    "phoneInvalid": "رقم الهاتف غير صحيح",
+    "addressLineRequired": "عنوان الشارع مطلوب",
+    "zoneRequired": "المنطقة مطلوبة",
+    "deleteConfirmTitle": "تأكيد الحذف",
+    "deleteConfirmMessage": "هل أنت متأكد من حذف العميل {{name}}؟",
+    "form": {
+      "basicInfo": "البيانات الأساسية",
+      "name": "اسم العميل",
+      "phone1": "الهاتف الأساسي",
+      "phone2": "الهاتف الثاني",
+      "phone3": "الهاتف الثالث",
+      "phone4": "الهاتف الرابع",
+      "isVIP": "عميل مميز",
+      "isBlocked": "محظور",
+      "isActive": "نشط",
+      "type": "نوع العميل",
+      "vip": "مميز",
+      "blocked": "محظور",
+      "regular": "عادي",
+      "addresses": "العناوين",
+      "addressCount": "عنوان",
+      "addressesCount": "عدد العناوين",
+      "primaryAddress": "العنوان الأساسي",
+      "addAddress": "إضافة عنوان",
+      "noAddresses": "لا توجد عناوين - اضغط لإضافة عنوان",
+      "address": "العنوان",
+      "addressLine": "عنوان الشارع",
+      "zone": "المنطقة",
+      "floor": "الطابق",
+      "apartment": "الشقة",
+      "landmark": "علامة مميزة",
+      "notes": "ملاحظات"
+    },
+    "errors": {
+      "loadFailed": "فشل في تحميل العملاء",
+      "addFailed": "فشل في إضافة العميل",
+      "updateFailed": "فشل في تحديث العميل",
+      "deleteFailed": "فشل في حذف العميل"
     }
   }
 

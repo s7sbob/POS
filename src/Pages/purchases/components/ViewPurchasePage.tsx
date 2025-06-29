@@ -22,10 +22,7 @@ import {
   useTheme,
   Breadcrumbs,
   Link,
-  Chip,
-  Snackbar,
-  Alert
-} from '@mui/material';
+  Chip} from '@mui/material';
 import { IconArrowLeft, IconHome, IconEdit } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
 import * as apiSrv from 'src/utils/api/pagesApi/purchaseApi';
@@ -388,14 +385,7 @@ const ViewPurchasePage: React.FC = () => {
             </TableContainer>
           )}
         </Box>
-      </Paper>
-
-      <Snackbar open={!!error} autoHideDuration={6000} onClose={() => setError('')}>
-        <Alert severity="error" onClose={() => setError('')}>
-          {error}
-        </Alert>
-      </Snackbar>
-    </Container>
+      </Paper></Container>
   );
 };
 

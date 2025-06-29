@@ -18,7 +18,6 @@ export const getAllSafesAndAccounts = async (): Promise<SafeOrAccount[]> => {
     const response = await api.get('/GetAllSafesAndAccounts');
     return response.data.data;
   } catch (error) {
-    console.error('Error fetching safes and accounts:', error);
     throw error;
   }
 };

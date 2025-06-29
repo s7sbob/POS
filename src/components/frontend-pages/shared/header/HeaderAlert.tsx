@@ -25,13 +25,13 @@ const NotificationBg3 = styled(Box)(() => ({
   bottom: '-5px',
 }));
 
-const HeaderAlert = () => {
+const Header= () => {
   // State to track if the div should be shown or hidden
-  const [isAlertVisible, setIsAlertVisible] = useState(true);
+  const [isVisible, setIsVisible] = useState(true);
 
   // Function to toggle the visibility
-  const handleAlert = () => {
-    setIsAlertVisible(false); // Hides the div when the button is clicked
+  const handle= () => {
+    setIsVisible(false); // Hides the div when the button is clicked
   };
 
   //   sidebar
@@ -39,7 +39,7 @@ const HeaderAlert = () => {
 
   return (
     <>
-      {isAlertVisible ? (
+      {isVisible ? (
         <Box
           bgcolor="primary.main"
           borderRadius={0}
@@ -78,7 +78,7 @@ const HeaderAlert = () => {
             </Typography>
           </Stack>
           <IconButton
-            onClick={handleAlert}
+            onClick={handle}
             color="secondary"
             sx={{
               zIndex: 1,
@@ -110,4 +110,4 @@ const HeaderAlert = () => {
   );
 };
 
-export default HeaderAlert;
+export default Header;

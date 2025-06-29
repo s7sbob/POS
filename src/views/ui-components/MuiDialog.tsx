@@ -7,7 +7,7 @@ import PageContainer from 'src/components/container/PageContainer';
 import ParentCard from 'src/components/shared/ParentCard';
 import ChildCard from 'src/components/shared/ChildCard';
 import SimpleDialog from 'src/components/material-ui/dialog/SimpleDialog';
-import AlertDialog from 'src/components/material-ui/dialog/AlertDialog';
+importDialog from 'src/components/material-ui/dialog/Dialog';
 import TransitionDialog from 'src/components/material-ui/dialog/TransitionDialog';
 import FormDialog from 'src/components/material-ui/dialog/FormDialog';
 import FullscreenDialog from 'src/components/material-ui/dialog/FullscreenDialog';
@@ -16,7 +16,7 @@ import ScrollContentDialog from 'src/components/material-ui/dialog/ScrollContent
 import ResponsiveDialog from 'src/components/material-ui/dialog/ResponsiveDialog';
 
 import SimpleCode from 'src/components/material-ui/dialog/code/SimpleCode';
-import AlertCode from 'src/components/material-ui/dialog/code/AlertCode';
+importCode from 'src/components/material-ui/dialog/code/Code';
 import TransitionCode from 'src/components/material-ui/dialog/code/TransitionCode';
 import FormCode from 'src/components/material-ui/dialog/code/FormCode';
 import FullScreenCode from 'src/components/material-ui/dialog/code/FullScreenCode';
@@ -62,8 +62,8 @@ const MuiDialog = () => (
             lg: 4,
             sm: 6
           }}>
-          <ChildCard title="Alert" codeModel={<AlertCode />}>
-            <AlertDialog />
+          <ChildCard title="" codeModel={<Code />}>
+            <Dialog />
           </ChildCard>
         </Grid>
         <Grid

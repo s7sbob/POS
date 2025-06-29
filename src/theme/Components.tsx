@@ -77,7 +77,7 @@ const components: any = (theme: Theme) => {
         '.theme-timeline .MuiTimelineOppositeContent-root': {
           minWidth: '90px',
         },
-        '.MuiAlert-root .MuiAlert-icon': {
+        '.Mui-root .Mui-icon': {
           color: 'inherit!important',
         },
         '.MuiTimelineConnector-root': {
@@ -373,7 +373,7 @@ const components: any = (theme: Theme) => {
         },
       },
     },
-    MuiAlert: {
+    Mui: {
       styleOverrides: {
         filledSuccess: {
           color: 'white',

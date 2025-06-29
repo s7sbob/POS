@@ -6,10 +6,12 @@ import Loadable from '../layouts/full/shared/loadable/Loadable';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { authLoader } from './authLoader';
 import { createProtectedPage } from 'src/utils/pageWrapper';
-import Ecommerce from 'src/views/apps/eCommerce/Ecommerce';
-import { element } from 'prop-types';
 import DeliveryAgentsPage from 'src/Pages/pos/delivery/agents/DeliveryAgentsPage';
 import DeliveryZonesPage from 'src/Pages/pos/delivery/zones/DeliveryZonesPage';
+import TableSectionsPage from 'src/Pages/pos/table-sections/TableSectionsPage';
+import PrinterSettingsPage from 'src/Pages/settings/components/PrinterSettings';
+import HallCaptainsPage from 'src/Pages/pos/hall-captains/HallCaptainsPage';
+import CustomersPage from 'src/Pages/pos/customers/CustomersPage';
 
 /* ***Layouts**** */
 const FullLayout = Loadable(lazy(() => import('../layouts/full/FullLayout')));
@@ -35,8 +37,8 @@ const PermissionsPageOriginal = Loadable(lazy(() => import('../Pages/permissions
 const ProductsPageOriginal = Loadable(lazy(() => import('../Pages/products/ProductsPage')));
 const GroupsPageOriginal = Loadable(lazy(() => import('../Pages/groups/GroupsPage')));
 const UnitsPageOriginal = Loadable(lazy(() => import('../Pages/units/UnitsPage')));
-const PosScreensPageOriginal = Loadable(lazy(() => import('../Pages/pos-screens/PosScreensPage')));
-const PosPaymentMethodsPageOriginal = Loadable(lazy(() => import('../Pages/pos-payment-methods/PosPaymentMethodsPage')));
+const PosScreensPageOriginal = Loadable(lazy(() => import('../Pages/pos/screens/PosScreensPage')));
+const PosPaymentMethodsPageOriginal = Loadable(lazy(() => import('../Pages/pos/payment-methods/PosPaymentMethodsPage')));
 const SuppliersPageOriginal = Loadable(lazy(() => import('../Pages/suppliers/SuppliersPage')));
 const WarehousesPageOriginal = Loadable(lazy(() => import('../Pages/warehouses/WarehousesPage')));
 const AccountsPageOriginal = Loadable(lazy(() => import('../Pages/accounts/AccountsPage')));
@@ -90,6 +92,7 @@ const Router = [
       { path: '/', element: <Navigate to="/dashboard" /> },
       { path: '/dashboard', element: <ModernDash /> },
       { path: '/dashboards/modern', element: <ModernDash /> },
+      {path: '/settings/printer', element: <PrinterSettingsPage />},
 
       // User Management Routes
       { path: '/users', element: <UsersManagement /> },
@@ -111,12 +114,15 @@ const Router = [
       {path: '/addition/products', element: <AdditionProducts />},
       {path: '/pos/delivery/agents', element: <DeliveryAgentsPage/>},
       {path: '/pos/delivery/zones', element: <DeliveryZonesPage/>},
+      {path: '/pos/table-sections', element: <TableSectionsPage />},
+      {path: '/pos/hall-captains', element: <HallCaptainsPage />},
+      {path: '/pos/customers',element: <CustomersPage />},
+
       // Business Entities Routes
       { path: '/suppliers', element: <SuppliersPage /> },
       { path: '/purchases/suppliers', element: <SuppliersPage /> },
       { path: '/warehouses', element: <WarehousesPage /> },
       { path: '/inventory/warehouses', element: <WarehousesPage /> },
-      { path: '/apps/ecommerce/shop', element: <Ecommerce /> },
 
       // Financial Routes
       { path: '/accounts', element: <AccountsPage /> },

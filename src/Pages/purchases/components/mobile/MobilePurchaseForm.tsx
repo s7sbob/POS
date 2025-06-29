@@ -84,8 +84,8 @@ const MobilePurchaseForm: React.FC<Props> = ({
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [productSearchOpen, setProductSearchOpen] = useState(false);
-  const [alertMessage, setAlertMessage] = useState('');
-  const [alertSeverity, setAlertSeverity] = useState<'error' | 'warning' | 'info' | 'success'>('error');
+  const [alertMessage, setMessage] = useState('');
+  const [alertSeverity, setSeverity] = useState<'error' | 'warning' | 'info' | 'success'>('error');
   const [expandedSection, setExpandedSection] = useState<string>('basic');
 
   const defaults: FormValues = {
@@ -239,8 +239,8 @@ const MobilePurchaseForm: React.FC<Props> = ({
   const validateNumber = (value: any, fieldName: string) => {
     const numValue = parseFloat(value);
     if (isNaN(numValue) || numValue < 0) {
-      setAlertMessage(`${t('validation.enterValidNumber')} ${fieldName}`);
-      setAlertSeverity('error');
+      setMessage(`${t('validation.enterValidNumber')} ${fieldName}`);
+      setSeverity('error');
       return false;
     }
     return true;
@@ -250,20 +250,20 @@ const MobilePurchaseForm: React.FC<Props> = ({
     if (isSubmitting) return;
 
     if (!data.supplierId) {
-      setAlertMessage(t('validation.supplierRequired') || 'يجب اختيار المورد');
-      setAlertSeverity('error');
+      setMessage(t('validation.supplierRequired') || 'يجب اختيار المورد');
+      setSeverity('error');
       return;
     }
 
     if (!data.warehouseId) {
-      setAlertMessage(t('validation.warehouseRequired') || 'يجب اختيار المخزن');
-      setAlertSeverity('error');
+      setMessage(t('validation.warehouseRequired') || 'يجب اختيار المخزن');
+      setSeverity('error');
       return;
     }
 
     if (data.details.length === 0) {
-      setAlertMessage(t('validation.itemsRequired') || 'يجب إضافة منتج واحد على الأقل');
-      setAlertSeverity('error');
+      setMessage(t('validation.itemsRequired') || 'يجب إضافة منتج واحد على الأقل');
+      setSeverity('error');
       return;
     }
 
@@ -313,8 +313,7 @@ const MobilePurchaseForm: React.FC<Props> = ({
         navigate('/purchases/purchases');
       }
     } catch (error) {
-      console.error('Submit error:', error);
-      setAlertSeverity('error');
+      setSeverity('error');
     } finally {
       setIsSubmitting(false);
     }
@@ -646,11 +645,11 @@ const MobilePurchaseForm: React.FC<Props> = ({
       <Snackbar
         open={!!alertMessage}
         autoHideDuration={6000}
-        onClose={() => setAlertMessage('')}
+        onClose={() => setMessage('')}
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
       >
         <Alert
-          onClose={() => setAlertMessage('')}
+          onClose={() => setMessage('')}
           severity={alertSeverity}
           sx={{ width: '100%' }}
         >

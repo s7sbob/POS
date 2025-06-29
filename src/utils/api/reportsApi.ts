@@ -54,7 +54,6 @@ export const getProductBalancesReport = async (): Promise<ProductBalance[]> => {
     const response = await api.get('/getProductbalancesreport');
     return response.data.data.map(toProductBalance);
   } catch (error) {
-    console.error('Error fetching product balances report:', error);
     throw error;
   }
 };

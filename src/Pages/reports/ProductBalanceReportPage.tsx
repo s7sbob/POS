@@ -8,8 +8,6 @@ import {
   Link,
   useMediaQuery,
   useTheme,
-  Snackbar,
-  Alert,
   Fab,
   Badge
 } from '@mui/material';
@@ -24,8 +22,6 @@ import MobileProductBalanceFilter, { ProductBalanceFilterState } from './compone
 import * as reportsApi from 'src/utils/api/reportsApi';
 import { GroupedProductBalance } from 'src/utils/api/reportsApi';
 
-
-
 const ProductBalanceReportPage: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -34,7 +30,7 @@ const ProductBalanceReportPage: React.FC = () => {
 
   const [data, setData] = useState<GroupedProductBalance[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [, setError] = useState('');
   const [filterOpen, setFilterOpen] = useState(false);
 
   // Desktop filters (existing)
@@ -293,18 +289,7 @@ const ProductBalanceReportPage: React.FC = () => {
         />
       )}
 
-      {/* Error Snackbar */}
-      <Snackbar
-        open={!!error}
-        autoHideDuration={6000}
-        onClose={() => setError('')}
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-      >
-        <Alert severity="error" onClose={() => setError('')}>
-          {error}
-        </Alert>
-      </Snackbar>
-    </Container>
+      {/* Error*/}</Container>
   );
 };
 

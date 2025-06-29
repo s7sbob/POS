@@ -21,6 +21,7 @@ import Cart from 'src/layouts/full/vertical/header/Cart';
 import Profile from 'src/layouts/full/vertical/header/Profile';
 import Search from 'src/layouts/full/vertical/header/Search';
 import Language from 'src/layouts/full/vertical/header/Language';
+import PrintButton from 'src/layouts/full/vertical/header/PrintButton'; // ⭐ إضافة import
 // import Logo from 'src/layouts/full/shared/logo/Logo';
 import BranchSelector from 'src/components/BranchSelector';
 import { useAuth } from 'src/contexts/AuthContext';
@@ -98,6 +99,9 @@ const Header = () => {
           {selectedBranch && lgDown && (
             <BranchSelector />
           )}
+          
+          {/* ⭐ إضافة زرار الطباعة */}
+          <PrintButton />
           
           <Language />
           {/* ------------------------------------------- */}

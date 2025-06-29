@@ -44,8 +44,7 @@ const BranchSelector: React.FC<Props> = ({ compact = false }) => {
       await selectBranch(branch);
       handleClose();
     } catch (error) {
-      console.error('Error selecting branch:', error);
-    }
+      }
   };
 
   if (!selectedBranch) return null;

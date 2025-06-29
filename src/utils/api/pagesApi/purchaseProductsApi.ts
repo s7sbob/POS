@@ -125,7 +125,6 @@ export const searchProductPrices = async (
       };
     }
   } catch (error) {
-    console.error('Error searching product prices:', error);
     return {
       totalCount: 0,
       pageCount: 0,

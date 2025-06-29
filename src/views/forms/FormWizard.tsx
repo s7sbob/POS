@@ -8,8 +8,7 @@ import {
   StepLabel,
   Button,
   Typography,
-  FormControlLabel,
-  Alert,
+  FormControlLabel
   Stack
 } from '@mui/material';
 import PageContainer from 'src/components/container/PageContainer';
@@ -138,9 +137,9 @@ const FormWizard = () => {
           {activeStep === steps.length ? (
             <>
               <Stack spacing={2} mt={3}>
-                <Alert severity="success">
+                <severity="success">
                   All steps completed - you&apos;re finished
-                </Alert>
+                </>
 
                 <Box textAlign="right">
                   <Button onClick={handleReset} variant="contained" color="error">

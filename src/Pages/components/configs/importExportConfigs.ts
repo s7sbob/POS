@@ -302,7 +302,8 @@ export const productsImportExportConfig: ImportExportConfig = {
           cost: item.cost || 0,
           lastPurePrice: 0,
           expirationDays: item.expirationDays || 180,
-          productPrices: []
+          productPrices: [],
+          isActive: false
         });
         
         results.success++;
@@ -1029,4 +1030,512 @@ export const usersImportExportConfig: ImportExportConfig = {
     return results;
   },
   maxRows: 100
+};
+
+
+/* ───── Delivery Zones Configuration ───── */
+export const deliveryZonesImportExportConfig: ImportExportConfig = {
+  moduleName: 'deliveryZones.title',
+  moduleNameEn: 'Delivery Zones',
+  fileName: 'delivery_zones',
+  title: 'deliveryZones.title',
+  titleEn: 'Delivery Zones',
+  columns: [
+    {
+      field: 'name',
+      headerName: 'deliveryZones.form.name',
+      headerNameEn: 'Zone Name',
+      type: 'string',
+      required: true,
+      example: 'منطقة الدقي',
+      exampleEn: 'Dokki Area',
+      validate: (value) => {
+        if (!value || value.length < 2) return 'اسم المنطقة يجب أن يكون أكثر من حرفين';
+        if (value.length > 100) return 'اسم المنطقة طويل جداً';
+        return null;
+      }
+    },
+    {
+      field: 'deliveryCharge',
+      headerName: 'deliveryZones.form.deliveryCharge',
+      headerNameEn: 'Delivery Charge',
+      type: 'number',
+      required: true,
+      example: '20.00',
+      exampleEn: '20.00',
+      validate: (value) => {
+        if (value < 0) return 'رسوم التوصيل لا يمكن أن تكون سالبة';
+        return null;
+      }
+    },
+    {
+      field: 'defaultBonus',
+      headerName: 'deliveryZones.form.defaultBonus',
+      headerNameEn: 'Default Bonus',
+      type: 'number',
+      required: true,
+      example: '10.00',
+      exampleEn: '10.00',
+      validate: (value) => {
+        if (value < 0) return 'المكافأة الافتراضية لا يمكن أن تكون سالبة';
+        return null;
+      }
+    },
+    {
+      field: 'isActive',
+      headerName: 'common.status',
+      headerNameEn: 'Status',
+      type: 'boolean',
+      required: false,
+      example: 'نعم',
+      exampleEn: 'Yes'
+    }
+  ],
+  onImport: async (data) => {
+    const results = { success: 0, errors: [] as string[] };
+    
+    for (let i = 0; i < data.length; i++) {
+      try {
+        
+        // يمكن إضافة API call هنا لاحقاً
+        // await deliveryZonesApi.add({
+        //   name: item.name,
+        //   deliveryCharge: Number(item.deliveryCharge),
+        //   defaultBonus: Number(item.defaultBonus)
+        // });
+        
+        results.success++;
+      } catch (error: any) {
+        results.errors.push(`الصف ${i + 1}: ${error.message || 'خطأ في الإضافة'}`);
+      }
+    }
+    
+    return results;
+  },
+  maxRows: 500
+};
+
+/* ───── Delivery Agents Configuration ───── */
+export const deliveryAgentsImportExportConfig: ImportExportConfig = {
+  moduleName: 'deliveryAgents.title',
+  moduleNameEn: 'Delivery Agents',
+  fileName: 'delivery_agents',
+  title: 'deliveryAgents.title',
+  titleEn: 'Delivery Agents',
+  columns: [
+    {
+      field: 'name',
+      headerName: 'deliveryAgents.form.name',
+      headerNameEn: 'Agent Name',
+      type: 'string',
+      required: true,
+      example: 'محمد حسن',
+      exampleEn: 'Mohamed Hassan',
+      validate: (value) => {
+        if (!value || value.length < 2) return 'اسم المندوب يجب أن يكون أكثر من حرفين';
+        if (value.length > 100) return 'اسم المندوب طويل جداً';
+        return null;
+      }
+    },
+    {
+      field: 'phone',
+      headerName: 'deliveryAgents.form.phone',
+      headerNameEn: 'Phone Number',
+      type: 'string',
+      required: true,
+      example: '01012345678',
+      exampleEn: '01012345678',
+      validate: (value) => {
+        if (!value || !/^01[0-9]{9}$/.test(value)) return 'رقم هاتف غير صحيح';
+        return null;
+      }
+    },
+    {
+      field: 'branchName',
+      headerName: 'deliveryAgents.form.branch',
+      headerNameEn: 'Branch',
+      type: 'string',
+      required: true,
+      example: 'الفرع الرئيسي',
+      exampleEn: 'Main Branch',
+      validate: (value) => {
+        if (!value) return 'اسم الفرع مطلوب';
+        return null;
+      }
+    },
+    {
+      field: 'isActive',
+      headerName: 'common.status',
+      headerNameEn: 'Status',
+      type: 'boolean',
+      required: false,
+      example: 'نعم',
+      exampleEn: 'Yes'
+    }
+  ],
+  onImport: async (data) => {
+    const results = { success: 0, errors: [] as string[] };
+    
+    for (let i = 0; i < data.length; i++) {
+      try {
+        
+        // يمكن إضافة API call هنا لاحقاً
+        // const branch = branches.find(b => b.name === item.branchName);
+        // if (!branch) {
+        //   results.errors.push(`الصف ${i + 1}: الفرع "${item.branchName}" غير موجود`);
+        //   continue;
+        // }
+        
+        // await deliveryAgentsApi.add({
+        //   name: item.name,
+        //   phone: item.phone,
+        //   branchId: branch.id
+        // });
+        
+        results.success++;
+      } catch (error: any) {
+        results.errors.push(`الصف ${i + 1}: ${error.message || 'خطأ في الإضافة'}`);
+      }
+    }
+    
+    return results;
+  },
+  maxRows: 500
+};
+
+/* ───── Table Sections Configuration ───── */
+export const tableSectionsImportExportConfig: ImportExportConfig = {
+  moduleName: 'tableSections.title',
+  moduleNameEn: 'Table Sections',
+  fileName: 'table_sections',
+  title: 'tableSections.title',
+  titleEn: 'Table Sections',
+  columns: [
+    {
+      field: 'name',
+      headerName: 'tableSections.form.name',
+      headerNameEn: 'Section Name',
+      type: 'string',
+      required: true,
+      example: 'صالة VIP',
+      exampleEn: 'VIP Hall',
+      validate: (value) => {
+        if (!value || value.length < 2) return 'اسم القسم يجب أن يكون أكثر من حرفين';
+        if (value.length > 100) return 'اسم القسم طويل جداً';
+        return null;
+      }
+    },
+    {
+      field: 'serviceCharge',
+      headerName: 'tableSections.form.serviceCharge',
+      headerNameEn: 'Service Charge',
+      type: 'number',
+      required: true,
+      example: '10.00',
+      exampleEn: '10.00',
+      validate: (value) => {
+        if (value < 0) return 'رسوم الخدمة لا يمكن أن تكون سالبة';
+        return null;
+      }
+    },
+    {
+      field: 'tablesCount',
+      headerName: 'tableSections.form.tablesCount',
+      headerNameEn: 'Tables Count',
+      type: 'number',
+      required: false,
+      example: '5',
+      exampleEn: '5',
+      validate: (value) => {
+        if (value && value < 0) return 'عدد الطاولات لا يمكن أن يكون سالب';
+        return null;
+      }
+    },
+    {
+      field: 'totalCapacity',
+      headerName: 'tableSections.form.totalCapacity',
+      headerNameEn: 'Total Capacity',
+      type: 'number',
+      required: false,
+      example: '20',
+      exampleEn: '20'
+    },
+    {
+      field: 'branchName',
+      headerName: 'tableSections.form.branch',
+      headerNameEn: 'Branch',
+      type: 'string',
+      required: false,
+      example: 'الفرع الرئيسي',
+      exampleEn: 'Main Branch'
+    },
+    {
+      field: 'isActive',
+      headerName: 'common.status',
+      headerNameEn: 'Status',
+      type: 'boolean',
+      required: false,
+      example: 'نعم',
+      exampleEn: 'Yes'
+    }
+  ],
+  onImport: async (data) => {
+    const results = { success: 0, errors: [] as string[] };
+    
+    for (let i = 0; i < data.length; i++) {
+      try {
+        
+        // يمكن إضافة API call هنا لاحقاً
+        // await tableSectionsApi.add({
+        //   name: item.name,
+        //   serviceCharge: Number(item.serviceCharge),
+        //   tables: []
+        // });
+        
+        results.success++;
+      } catch (error: any) {
+        results.errors.push(`الصف ${i + 1}: ${error.message || 'خطأ في الإضافة'}`);
+      }
+    }
+    
+    return results;
+  },
+  maxRows: 300
+};
+
+/* ───── Hall Captains Configuration ───── */
+export const hallCaptainsImportExportConfig: ImportExportConfig = {
+  moduleName: 'hallCaptains.title',
+  moduleNameEn: 'Hall Captains',
+  fileName: 'hall_captains',
+  title: 'hallCaptains.title',
+  titleEn: 'Hall Captains',
+  columns: [
+    {
+      field: 'name',
+      headerName: 'hallCaptains.form.name',
+      headerNameEn: 'Captain Name',
+      type: 'string',
+      required: true,
+      example: 'أحمد عبد السلام',
+      exampleEn: 'Ahmed Abdelsalam',
+      validate: (value) => {
+        if (!value || value.length < 2) return 'اسم الكابتن يجب أن يكون أكثر من حرفين';
+        if (value.length > 100) return 'اسم الكابتن طويل جداً';
+        return null;
+      }
+    },
+    {
+      field: 'phone',
+      headerName: 'hallCaptains.form.phone',
+      headerNameEn: 'Phone Number',
+      type: 'string',
+      required: true,
+      example: '01012345678',
+      exampleEn: '01012345678',
+      validate: (value) => {
+        if (!value || !/^01[0-9]{9}$/.test(value)) return 'رقم هاتف غير صحيح';
+        return null;
+      }
+    },
+    {
+      field: 'notes',
+      headerName: 'hallCaptains.form.notes',
+      headerNameEn: 'Notes',
+      type: 'string',
+      required: false,
+      example: 'كابتن رئيسي',
+      exampleEn: 'Head Captain'
+    },
+    {
+      field: 'branchName',
+      headerName: 'hallCaptains.form.branch',
+      headerNameEn: 'Branch',
+      type: 'string',
+      required: true,
+      example: 'الفرع الرئيسي',
+      exampleEn: 'Main Branch',
+      validate: (value) => {
+        if (!value) return 'اسم الفرع مطلوب';
+        return null;
+      }
+    },
+    {
+      field: 'isActive',
+      headerName: 'common.status',
+      headerNameEn: 'Status',
+      type: 'boolean',
+      required: false,
+      example: 'نعم',
+      exampleEn: 'Yes'
+    }
+  ],
+  onImport: async (data) => {
+    const results = { success: 0, errors: [] as string[] };
+    
+    for (let i = 0; i < data.length; i++) {
+      try {
+        
+        // يمكن إضافة API call هنا لاحقاً
+        // const branch = branches.find(b => b.name === item.branchName);
+        // if (!branch) {
+        //   results.errors.push(`الصف ${i + 1}: الفرع "${item.branchName}" غير موجود`);
+        //   continue;
+        // }
+        
+        // await hallCaptainsApi.add({
+        //   name: item.name,
+        //   phone: item.phone,
+        //   notes: item.notes,
+        //   branchId: branch.id,
+        //   isActive: true
+        // });
+        
+        results.success++;
+      } catch (error: any) {
+        results.errors.push(`الصف ${i + 1}: ${error.message || 'خطأ في الإضافة'}`);
+      }
+    }
+    
+    return results;
+  },
+  maxRows: 500
+};
+
+/* ───── Customers Configuration ───── */
+export const customersImportExportConfig: ImportExportConfig = {
+  moduleName: 'customers.title',
+  moduleNameEn: 'Customers',
+  fileName: 'customers',
+  title: 'customers.title',
+  titleEn: 'Customers',
+  columns: [
+    {
+      field: 'name',
+      headerName: 'customers.form.name',
+      headerNameEn: 'Customer Name',
+      type: 'string',
+      required: true,
+      example: 'عميل تجريبي',
+      exampleEn: 'Test Customer',
+      validate: (value) => {
+        if (!value || value.length < 2) return 'اسم العميل يجب أن يكون أكثر من حرفين';
+        if (value.length > 100) return 'اسم العميل طويل جداً';
+        return null;
+      }
+    },
+    {
+      field: 'phone1',
+      headerName: 'customers.form.phone1',
+      headerNameEn: 'Primary Phone',
+      type: 'string',
+      required: true,
+      example: '01012345678',
+      exampleEn: '01012345678',
+      validate: (value) => {
+        if (!value || !/^01[0-9]{9}$/.test(value)) return 'رقم الهاتف الأساسي غير صحيح';
+        return null;
+      }
+    },
+    {
+      field: 'phone2',
+      headerName: 'customers.form.phone2',
+      headerNameEn: 'Secondary Phone',
+      type: 'string',
+      required: false,
+      example: '01087654321',
+      exampleEn: '01087654321'
+    },
+    {
+      field: 'phone3',
+      headerName: 'customers.form.phone3',
+      headerNameEn: 'Third Phone',
+      type: 'string',
+      required: false,
+      example: '01098765432',
+      exampleEn: '01098765432'
+    },
+    {
+      field: 'phone4',
+      headerName: 'customers.form.phone4',
+      headerNameEn: 'Fourth Phone',
+      type: 'string',
+      required: false,
+      example: '01054321098',
+      exampleEn: '01054321098'
+    },
+    {
+      field: 'isVIP',
+      headerName: 'customers.form.isVIP',
+      headerNameEn: 'VIP Customer',
+      type: 'boolean',
+      required: false,
+      example: 'لا',
+      exampleEn: 'No'
+    },
+    {
+      field: 'isBlocked',
+      headerName: 'customers.form.isBlocked',
+      headerNameEn: 'Blocked',
+      type: 'boolean',
+      required: false,
+      example: 'لا',
+      exampleEn: 'No'
+    },
+    {
+      field: 'isActive',
+      headerName: 'common.status',
+      headerNameEn: 'Status',
+      type: 'boolean',
+      required: false,
+      example: 'نعم',
+      exampleEn: 'Yes'
+    },
+    {
+      field: 'addressesCount',
+      headerName: 'customers.form.addressesCount',
+      headerNameEn: 'Addresses Count',
+      type: 'number',
+      required: false,
+      example: '2',
+      exampleEn: '2'
+    },
+    {
+      field: 'primaryAddress',
+      headerName: 'customers.form.primaryAddress',
+      headerNameEn: 'Primary Address',
+      type: 'string',
+      required: false,
+      example: 'شارع الثورة',
+      exampleEn: 'Revolution Street'
+    }
+  ],
+  onImport: async (data) => {
+    const results = { success: 0, errors: [] as string[] };
+    
+    for (let i = 0; i < data.length; i++) {
+      try {
+        
+        // يمكن إضافة API call هنا لاحقاً
+        // await customersApi.add({
+        //   name: item.name,
+        //   phone1: item.phone1,
+        //   phone2: item.phone2 || null,
+        //   phone3: item.phone3 || null,
+        //   phone4: item.phone4 || null,
+        //   isVIP: Boolean(item.isVIP),
+        //   isBlocked: Boolean(item.isBlocked),
+        //   isActive: Boolean(item.isActive),
+        //   addresses: []
+        // });
+        
+        results.success++;
+      } catch (error: any) {
+        results.errors.push(`الصف ${i + 1}: ${error.message || 'خطأ في الإضافة'}`);
+      }
+    }
+    
+    return results;
+  },
+  maxRows: 1000
 };

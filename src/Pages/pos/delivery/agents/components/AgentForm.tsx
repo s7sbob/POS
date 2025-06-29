@@ -2,7 +2,7 @@
 import React from 'react';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
-  Grid, TextField, Button, Box, Typography,
+  Grid, TextField, Button, Typography,
   FormControl, InputLabel, Select, MenuItem
 } from '@mui/material';
 import { IconDeviceFloppy, IconPlus as IconPlusNew } from '@tabler/icons-react';
@@ -94,8 +94,7 @@ const AgentForm: React.FC<Props> = ({
         }, 100);
       }
     } catch (error) {
-      console.error('Submit error:', error);
-    } finally {
+      } finally {
       setIsSubmitting(false);
     }
   };

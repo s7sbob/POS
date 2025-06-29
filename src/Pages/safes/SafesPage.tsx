@@ -1,8 +1,7 @@
 // File: src/pages/safes/SafesPage.tsx
 import React from 'react';
 import {
-  Container, useMediaQuery,
-  Snackbar, Alert, Box, Button, Fab, Badge
+  Container, useMediaQuery, Box, Button, Fab, Badge
 } from '@mui/material';
 import { IconFilter, IconPlus } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
@@ -27,14 +26,11 @@ interface Props extends PermissionProps {
   // Add other props here if needed
 }
 
-
 const SafesPage: React.FC<Props> = (props) => {
   const { t } = useTranslation();
   const [safes, setSafes] = React.useState<Safe[]>([]);
   const { canAdd = true } = props; // Default to true if not provided
-  const [query, setQuery] = React.useState('');
-  const [error, setErr] = React.useState('');
-  const [loading, setLoad] = React.useState(true);
+  const [query, setQuery] = React.useState('');  const [loading, setLoad] = React.useState(true);
   const [filterOpen, setFilterOpen] = React.useState(false);
   const [dialog, setDialog] = React.useState<{
     open: boolean;
@@ -138,27 +134,17 @@ const SafesPage: React.FC<Props> = (props) => {
   /* ───── CRUD ───── */
   const handleAdd = async (data: any) => {
     try {
-      console.log('Adding safe:', data);
       await apiSrv.add(data);
       await fetchSafes();
-    } catch (e: any) {
-      console.error('Add error:', e);
-      const msg = e?.errors?.SafeName?.[0] || e?.message || t('safes.errors.addFailed');
-      setErr(msg);
-      throw e;
+    } catch (e: any) {      throw e;
     }
   };
 
   const handleUpdate = async (data: any) => {
     try {
-      console.log('Updating safe:', data);
       await apiSrv.update(data);
       await fetchSafes();
-    } catch (e: any) {
-      console.error('Update error:', e);
-      const msg = e?.errors?.SafeName?.[0] || e?.message || t('safes.errors.updateFailed');
-      setErr(msg);
-      throw e;
+    } catch (e: any) {      throw e;
     }
   };
 
@@ -268,17 +254,13 @@ const SafesPage: React.FC<Props> = (props) => {
         initialValues={dialog.current}
         onClose={() => setDialog({ open: false, mode: 'add', current: undefined })}
         onSubmit={handleSubmit}
-      />
-
-      <Snackbar open={!!error} autoHideDuration={6000} onClose={() => setErr('')}>
-        <Alert severity="error" onClose={() => setErr('')}>
-          {error}
-        </Alert>
-      </Snackbar>
-
-      {loading && <div>Loading…</div>}
+      />{loading && <div>Loading…</div>}
     </Container>
   );
 };
 
 export default SafesPage;
+function setErr(_arg0: any) {
+  throw new Error('Function not implemented.');
+}
+

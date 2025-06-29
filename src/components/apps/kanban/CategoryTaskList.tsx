@@ -75,8 +75,7 @@ function CategoryTaskList({ id }: any) {
         throw new Error('Failed to update category');
       }
     } catch (error) {
-      console.error('Error updating category:', error);
-    }
+      }
   };
   //Adds a new task to the category.
   const handleAddTask = async () => {
@@ -98,13 +97,11 @@ function CategoryTaskList({ id }: any) {
         });
         handleCloseModal();
         setNewTaskData('Task added successfully');
-        console.log('Task added successfully:', response.data);
-      } else {
+        } else {
         throw new Error('Failed to add task');
       }
     } catch (error) {
-      console.error('Error adding task:', error);
-    }
+      }
   };
   // Clears all tasks from the current category.
   const handleClearAll = () => {

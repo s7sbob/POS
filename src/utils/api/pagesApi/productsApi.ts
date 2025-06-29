@@ -233,7 +233,6 @@ export const getByBarcode = async (barcode: string): Promise<Product | null> => 
     }
     return null;
   } catch (error) {
-    console.error('Error searching by barcode:', error);
     return null;
   }
 };
@@ -287,11 +286,9 @@ export const searchProductPricesByNameOrBarcode = async (
     
     return { data: [] };
   } catch (error) {
-    console.error('API Error:', error);
     return { data: [] };
   }
 };
-
 
 // File: src/utils/api/pagesApi/productsApi.ts
 // في دالة add:
@@ -380,13 +377,10 @@ export const add = async (body: {
     })
   };
   
-  console.log('Adding product with correct format:', JSON.stringify(bodyWithCorrectFormat, null, 2));
-  
   try {
     const { data } = await api.post('/addProduct', bodyWithCorrectFormat);
     return toProduct(data.data);
   } catch (error: any) {
-    console.error('Add Product API Error:', error);
     if (error.response?.data) {
       throw {
         ...error,
@@ -491,14 +485,9 @@ export const update = async (body: {
       })
     };
     
-    console.log('Updating product with correct format:', JSON.stringify(updateBody, null, 2));
-    
     const { data } = await api.post('/UpdateProduct', updateBody);
-    console.log('Update response:', data);
-    
     return await getById(body.ProductId);
   } catch (error: any) {
-    console.error('Update API Error:', error);
     if (error.response?.data) {
       throw {
         ...error,

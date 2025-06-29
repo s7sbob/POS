@@ -34,7 +34,6 @@ export const getAll = async (): Promise<Account[]> => {
     const response = await api.get('/getAccounts');
     return response.data.data;
   } catch (error) {
-    console.error('Error fetching accounts:', error);
     throw error;
   }
 };
@@ -44,7 +43,6 @@ export const getById = async (id: string): Promise<Account> => {
     const response = await api.get(`/getAccount?id=${id}`);
     return response.data.data;
   } catch (error) {
-    console.error('Error fetching account by ID:', error);
     throw error;
   }
 };
@@ -54,7 +52,6 @@ export const add = async (data: AddAccountRequest): Promise<Account> => {
     const response = await api.post('/AddAccount', data);
     return response.data.data;
   } catch (error) {
-    console.error('Error adding account:', error);
     throw error;
   }
 };
@@ -64,7 +61,6 @@ export const update = async (data: UpdateAccountRequest): Promise<Account> => {
     const response = await api.put('/UpdateAccount', data);
     return response.data.data;
   } catch (error) {
-    console.error('Error updating account:', error);
     throw error;
   }
 };

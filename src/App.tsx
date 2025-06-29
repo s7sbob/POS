@@ -12,6 +12,8 @@ import { setLanguage, setDir } from './store/customizer/CustomizerSlice';
 import { useTranslation } from 'react-i18next';
 import Cookies from 'js-cookie';
 import { AuthProvider } from './contexts/AuthContext';
+import { ErrorProvider } from './contexts/ErrorContext';
+import GlobalPrintHandler from './components/GlobalPrintHandler';
 
 function App() {
   const theme = ThemeSettings();
@@ -20,20 +22,26 @@ function App() {
   const { i18n } = useTranslation();
   const isInitialized = useRef(false);
 
-  // تطبيق الإعدادات المحفوظة عند تحميل التطبيق مرة واحدة فقط
+  const thermalPrinterConfig = {
+    enabled: localStorage.getItem('thermal_printer_enabled') === 'true',
+    type: (localStorage.getItem('thermal_printer_type') as 'usb' | 'network') || 'usb',
+    networkConfig: {
+      ip: localStorage.getItem('thermal_printer_ip') || '192.168.1.100',
+      port: Number(localStorage.getItem('thermal_printer_port')) || 9100
+    }
+  };
+
   useEffect(() => {
     if (isInitialized.current) return;
     
     const savedLanguage = Cookies.get('language');
     const savedDirection = Cookies.get('direction');
     
-    // تطبيق اللغة المحفوظة
     if (savedLanguage && savedLanguage.trim() !== '') {
       dispatch(setLanguage(savedLanguage));
       i18n.changeLanguage(savedLanguage);
       document.documentElement.lang = savedLanguage;
     } else {
-      // إعداد افتراضي للإنجليزية
       const defaultLang = 'en';
       dispatch(setLanguage(defaultLang));
       i18n.changeLanguage(defaultLang);
@@ -41,12 +49,10 @@ function App() {
       Cookies.set('language', defaultLang, { expires: 365 });
     }
     
-    // تطبيق الاتجاه المحفوظ
     if (savedDirection && savedDirection.trim() !== '') {
       dispatch(setDir(savedDirection));
       document.documentElement.dir = savedDirection;
     } else {
-      // إعداد افتراضي للـ LTR
       const defaultDir = 'ltr';
       dispatch(setDir(defaultDir));
       document.documentElement.dir = defaultDir;
@@ -54,9 +60,8 @@ function App() {
     }
     
     isInitialized.current = true;
-  }, []); // dependency array فارغ للتشغيل مرة واحدة فقط
+  }, []);
 
-  // تحديث الثيم ليدعم الاتجاه
   const themeWithDirection = {
     ...theme,
     direction: customizer.activeDir,
@@ -66,9 +71,13 @@ function App() {
     <ThemeProvider theme={themeWithDirection}>
       <RTL>
         <CssBaseline />
-        <AuthProvider>
-          <RouterProvider router={router} />
-        </AuthProvider>
+        <ErrorProvider>
+          <AuthProvider>
+            <GlobalPrintHandler thermalPrinterConfig={thermalPrinterConfig}>
+              <RouterProvider router={router} />
+            </GlobalPrintHandler>
+          </AuthProvider>
+        </ErrorProvider>
       </RTL>
     </ThemeProvider>
   );

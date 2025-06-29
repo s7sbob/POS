@@ -2,29 +2,25 @@
 // @ts-ignore
 import React from 'react';
 import { useSelector, useDispatch } from 'src/store/Store';
-import {
-  ListItemText,
+import { ListItemText,
   ListItemButton,
   List,
   Divider,
   ListItemIcon,
   Box,
-  Typography,
-} from '@mui/material';
+  Typography } from '@mui/material';
 
 import { setVisibilityFilter } from '../../../store/apps/email/EmailSlice';
 import EmailCompose from './EmailCompose';
 import Scrollbar from 'src/components/custom-scroll/Scrollbar';
-import {
-  IconMail,
+import { IconMail,
   IconSend,
   IconFlag,
   IconTrash,
   IconStar,
-  IconAlertCircle,
+  IconCircle,
   IconFolder,
-  IconNote,
-} from '@tabler/icons-react';
+  IconNote } from '@tabler/icons-react';
 import { GeneralIcon } from 'src/types/apps/icon';
 
 interface fitlerType {
@@ -90,7 +86,7 @@ const EmailFilter = () => {
     {
       id: 8,
       name: 'important',
-      icon: IconAlertCircle,
+      icon: IconCircle,
       color: 'inherit',
     },
     {

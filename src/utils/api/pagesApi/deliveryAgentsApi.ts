@@ -29,7 +29,6 @@ export const getAll = async (): Promise<DeliveryAgent[]> => {
     }
     return [];
   } catch (error) {
-    console.error('Error fetching delivery agents:', error);
     throw error;
   }
 };
@@ -42,7 +41,6 @@ export const getById = async (id: string): Promise<DeliveryAgent> => {
     }
     throw new Error('Agent not found');
   } catch (error) {
-    console.error('Error fetching delivery agent:', error);
     throw error;
   }
 };
@@ -55,7 +53,6 @@ export const getByBranch = async (branchId: string): Promise<DeliveryAgent[]> =>
     }
     return [];
   } catch (error) {
-    console.error('Error fetching agents by branch:', error);
     throw error;
   }
 };
@@ -69,7 +66,6 @@ export const add = async (body: {
     const { data } = await api.post('/AddAgent', body);
     return toDeliveryAgent(data.data);
   } catch (error) {
-    console.error('Error adding delivery agent:', error);
     throw error;
   }
 };
@@ -84,7 +80,6 @@ export const update = async (body: {
     const { data } = await api.post('/UpdateAgent', body);
     return toDeliveryAgent(data.data);
   } catch (error) {
-    console.error('Error updating delivery agent:', error);
     throw error;
   }
 };
@@ -93,7 +88,6 @@ export const deleteAgent = async (id: string): Promise<void> => {
   try {
     await api.post('/DeleteAgent', id);
   } catch (error) {
-    console.error('Error deleting delivery agent:', error);
     throw error;
   }
 };

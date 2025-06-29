@@ -1,8 +1,7 @@
 // File: src/Pages/pos/additions/AdditionProductsPage.tsx
 import React from 'react';
 import {
-  Container, useMediaQuery,
-  Snackbar, Alert, Box, Typography, Pagination,
+  Container, useMediaQuery, Box, Typography, Pagination,
   Stack, TextField, InputAdornment, IconButton, Chip, Button, Fab, Badge
 } from '@mui/material';
 import { IconSearch, IconBarcode, IconX, IconFilter, IconPlus } from '@tabler/icons-react';
@@ -49,9 +48,7 @@ const AdditionProductsPage: React.FC<Props> = (props) => {
   const [selectedProduct, setSelectedProduct] = React.useState<Product | null>(null);
   const [searchQuery, setSearchQuery] = React.useState('');
   const [searchMode, setSearchMode] = React.useState<'name' | 'barcode' | null>(null);
-  const [currentPage, setCurrentPage] = React.useState(1);
-  const [error, setErr] = React.useState('');
-  const [loading, setLoad] = React.useState(true);
+  const [currentPage, setCurrentPage] = React.useState(1);  const [loading, setLoad] = React.useState(true);
   const [searching, setSearching] = React.useState(false);
   const [filterOpen, setFilterOpen] = React.useState(false);
   const [dialog, setDialog] = React.useState<{
@@ -263,10 +260,7 @@ const AdditionProductsPage: React.FC<Props> = (props) => {
       } else {
         await fetchProducts(currentPage);
       }
-    } catch (e: any) {
-      const msg = e?.errors?.productName?.[0] || e?.message || t('additionProducts.errors.addFailed');
-      setErr(msg);
-      throw e;
+    } catch (e: any) {      throw e;
     }
   };
 
@@ -288,11 +282,7 @@ const AdditionProductsPage: React.FC<Props> = (props) => {
       }
       
       return updatedProduct;
-    } catch (e: any) {
-      console.error('Update error:', e);
-      const msg = e?.errors?.productName?.[0] || e?.message || t('additionProducts.errors.updateFailed');
-      setErr(msg);
-      throw e;
+    } catch (e: any) {      throw e;
     }
   };
 
@@ -512,15 +502,12 @@ const AdditionProductsPage: React.FC<Props> = (props) => {
         product={selectedProduct}
         units={units}
         onClose={() => setPricesDrawerOpen(false)}
-      />
-
-      <Snackbar open={!!error} autoHideDuration={6000} onClose={() => setErr('')}>
-        <Alert severity="error" onClose={() => setErr('')}>
-          {error}
-        </Alert>
-      </Snackbar>
-    </Container>
+      /></Container>
   );
 };
 
 export default AdditionProductsPage;
+function setErr(_arg0: any) {
+  throw new Error('Function not implemented.');
+}
+

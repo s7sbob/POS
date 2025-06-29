@@ -1,5 +1,5 @@
 import PageContainer from 'src/components/container/PageContainer';
-import HeaderAlert from '../../../components/frontend-pages/shared/header/HeaderAlert';
+import Headerfrom '../../../components/frontend-pages/shared/header/Header';
 import HpHeader from '../../../components/frontend-pages/shared/header/HpHeader';
 
 import C2a from '../../../components/frontend-pages/shared/c2a';
@@ -12,7 +12,7 @@ const Contact = () => {
     return (
         <PageContainer title="Contact" description="this is Contact">
 
-            <HeaderAlert />
+            <Header/>
             <HpHeader />
             <Banner />
             <Form />

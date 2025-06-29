@@ -1,8 +1,7 @@
 // File: src/pages/purchases/PurchasesPage.tsx
 import React from 'react';
 import {
-  Container, useMediaQuery,
-  Snackbar, Alert, Box, Typography, Fab, Badge, Button
+  Container, useMediaQuery, Box, Typography, Fab, Badge, Button
 } from '@mui/material';
 import { IconFilter, IconPlus } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
@@ -17,17 +16,13 @@ import * as warehousesApi from 'src/utils/api/pagesApi/warehousesApi';
 import { Purchase } from 'src/utils/api/pagesApi/purchaseApi';
 import PageHeader from './components/PageHeader';
 
-
-
 const PurchasesPage: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [purchases, setPurchases] = React.useState<Purchase[]>([]);
   const [suppliers, setSuppliers] = React.useState<Array<{ id: string; name: string }>>([]);
   const [warehouses, setWarehouses] = React.useState<Array<{ id: string; name: string }>>([]);
-  const [query, setQuery] = React.useState('');
-  const [error, setErr] = React.useState('');
-  const [loading, setLoad] = React.useState(true);
+  const [query, setQuery] = React.useState('');  const [loading, setLoad] = React.useState(true);
   const [filterOpen, setFilterOpen] = React.useState(false);
 
   const isDownSm = useMediaQuery((th: any) => th.breakpoints.down('sm'));
@@ -59,8 +54,7 @@ const PurchasesPage: React.FC = () => {
       const suppliersData = await suppliersApi.getAll();
       setSuppliers(suppliersData.map((s: { id: any; name: any; }) => ({ id: s.id, name: s.name })));
     } catch (e: any) {
-      console.error('Failed to load suppliers:', e);
-    }
+      }
   };
 
   const fetchWarehouses = async () => {
@@ -68,8 +62,7 @@ const PurchasesPage: React.FC = () => {
       const warehousesData = await warehousesApi.getAll();
       setWarehouses(warehousesData.map((w: { id: any; name: any; }) => ({ id: w.id, name: w.name })));
     } catch (e: any) {
-      console.error('Failed to load warehouses:', e);
-    }
+      }
   };
 
   React.useEffect(() => {
@@ -304,15 +297,12 @@ const PurchasesPage: React.FC = () => {
           totalResults={purchases.length}
           filteredResults={filtered.length}
         />
-      )}
-
-      <Snackbar open={!!error} autoHideDuration={6000} onClose={() => setErr('')}>
-        <Alert severity="error" onClose={() => setErr('')}>
-          {error}
-        </Alert>
-      </Snackbar>
-    </Container>
+      )}</Container>
   );
 };
 
 export default PurchasesPage;
+function setErr(_arg0: any) {
+  throw new Error('Function not implemented.');
+}
+

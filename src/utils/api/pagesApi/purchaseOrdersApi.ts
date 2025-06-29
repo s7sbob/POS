@@ -79,8 +79,6 @@ export type PurchaseOrderDetail = {
 };
 
 const toPurchaseOrder = (raw: any): PurchaseOrder => {
-  console.log('Converting raw purchase order:', raw);
-  
   const converted: PurchaseOrder = {
     id: raw.purchaseOrderID,
     code: raw.purchaseOrderCode,
@@ -139,8 +137,7 @@ const toPurchaseOrder = (raw: any): PurchaseOrder => {
   };
 
   if (!converted.id) {
-    console.error('Converted purchase order missing ID:', converted);
-  }
+    }
   return converted;
 };
 
@@ -174,12 +171,9 @@ const toPurchaseOrderDetail = (raw: any): PurchaseOrderDetail => ({
 export const getAll = async (): Promise<PurchaseOrder[]> => {
   try {
     const response = await api.get('/GetAllPurchaseOrders');
-    console.log('Raw purchase orders from API:', response.data.data);
     const converted = response.data.data.map(toPurchaseOrder);
-    console.log('Converted purchase orders:', converted);
     return converted;
   } catch (error) {
-    console.error('Error fetching purchase orders:', error);
     throw error;
   }
 };
@@ -189,7 +183,6 @@ export const getById = async (id: string): Promise<PurchaseOrder> => {
     const response = await api.get(`/GetPurchaseOrder?id=${id}`);
     return toPurchaseOrder(response.data.data);
   } catch (error) {
-    console.error('Error fetching purchase order:', error);
     throw error;
   }
 };
@@ -211,11 +204,9 @@ export const add = async (body: PurchaseOrder) => {
     details: body.details.map((detail, index) => {
       // التحقق من البيانات المطلوبة
       if (!detail.productID) {
-        console.error(`Detail ${index} missing productID:`, detail);
         throw new Error(`Detail ${index} is missing productID`);
       }
       if (!detail.productPriceID) {
-        console.error(`Detail ${index} missing productPriceID:`, detail);
         throw new Error(`Detail ${index} is missing ProductPriceID`);
       }
 
@@ -236,16 +227,12 @@ export const add = async (body: PurchaseOrder) => {
     })
   };
 
-  console.log('API Body before sending (ADD):', JSON.stringify(apiBody, null, 2));
-  
   // التحقق النهائي قبل الإرسال
   apiBody.details.forEach((d, idx) => {
     if (!d.productID) {
-      console.error(`Detail ${idx} missing productID:`, d);
       throw new Error(`Detail ${idx} is missing productID`);
     }
     if (!d.ProductPriceID) {
-      console.error(`Detail ${idx} missing ProductPriceID:`, d);
       throw new Error(`Detail ${idx} is missing ProductPriceID`);
     }
   });
@@ -272,11 +259,9 @@ export const update = async (body: PurchaseOrder & { id: string }) => {
     details: body.details.map((detail, index) => {
       // التحقق من البيانات المطلوبة
       if (!detail.productID) {
-        console.error(`Detail ${index} missing productID:`, detail);
         throw new Error(`Detail ${index} is missing productID`);
       }
       if (!detail.productPriceID) {
-        console.error(`Detail ${index} missing productPriceID:`, detail);
         throw new Error(`Detail ${index} is missing ProductPriceID`);
       }
 
@@ -299,30 +284,17 @@ export const update = async (body: PurchaseOrder & { id: string }) => {
       if (detail.id && detail.id.trim() !== '') {
         detailData.purchaseOrderDetailID = detail.id;
         detailData.purchaseOrderID = body.id; // إضافة purchaseOrderID أيضاً
-        console.log(`Adding IDs for existing detail ${index}:`, {
-          purchaseOrderDetailID: detail.id,
-          purchaseOrderID: body.id
-        });
-      } else {
+        } else {
         // سطر جديد - لا نضيف purchaseOrderDetailID
-        console.log(`New detail ${index} - no IDs added`);
-      }
+        }
 
       return detailData;
     })
   };
 
-  console.log('API Body before sending (UPDATE):', JSON.stringify(apiBody, null, 2));
-  
   // التحقق النهائي
   apiBody.details.forEach((d, idx) => {
-    console.log(`Detail ${idx} final check:`, {
-      hasProductID: !!d.productID,
-      hasProductPriceID: !!d.ProductPriceID,
-      hasPurchaseOrderDetailID: !!d.purchaseOrderDetailID,
-      hasPurchaseOrderID: !!d.purchaseOrderID
     });
-  });
 
   const { data } = await api.post('/UpdatePurchaseOrder', apiBody);
   return toPurchaseOrder(data.data);
@@ -331,10 +303,8 @@ export const update = async (body: PurchaseOrder & { id: string }) => {
 export const getByIdWithDetails = async (id: string): Promise<PurchaseOrder> => {
   try {
     const response = await api.get(`/GetPurchaseOrder?id=${id}`);
-    console.log('Purchase order with details from API:', response.data.data);
     return toPurchaseOrder(response.data.data);
   } catch (error) {
-    console.error('Error fetching purchase order with details:', error);
     throw error;
   }
 };

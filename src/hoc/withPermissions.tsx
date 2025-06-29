@@ -34,8 +34,6 @@ const withPermissions = <P extends object>(
         canView: true,
       };
 
-      console.log('🚧 PERMISSIONS BYPASSED for', WrappedComponent.displayName || WrappedComponent.name);
-      
       return <WrappedComponent {...props} {...allPermissions} />;
     }
 

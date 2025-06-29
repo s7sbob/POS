@@ -238,10 +238,40 @@
     }
   },
 
+    "errors": {
+    "title": "Error",
+    "validationError": "Validation Error",
+    "forbidden": "Forbidden",
+    "notFound": "Not Found",
+    "conflict": "Data Conflict",
+    "serverError": "Server Error",
+    "multipleErrors": "Multiple Errors",
+        "unauthorized": {
+      "title": "Unauthorized",
+      "message": "You don't have permission to access this page",
+      "backToDashboard": "Back to Dashboard"
+    },
+    "noBranches": {
+      "title": "No Branches Available",
+      "message": "No branches are assigned to this user. Please contact administration to assign appropriate branches."
+    }
+  },
+  "success": {
+    "title": "Success"
+  },
+  "warning": {
+    "title": "Warning"
+  },
+  "info": {
+    "title": "Information"
+  },
+
   "sidebar": {
     "inventory": "Inventory",
     "posProducts": "POS Products",
+        "hallCaptains": "Hall Captains",
        "deliveryZones": "Delivery Zones",
+        "tableSections": "Table Sections",
     "deliveryAgents": "Delivery Agents",
      "systemAdmin": "System Administration",
      "additionProducts": "Addition Products",
@@ -722,7 +752,9 @@
     "of": "Of",
     "checkboxSelection": "Checkbox Selection",
     "noResults": "No results found",
-    "saveAndNew": "Save & New"
+    "saveAndNew": "Save & New",
+    "supported": "Supported",
+    "notSupported": "Not Supported"
 
   },
     "warehouses": {
@@ -1317,17 +1349,6 @@
       "updateFailed": "Error updating permission"
     }
   },
-  "errors": {
-    "unauthorized": {
-      "title": "Unauthorized",
-      "message": "You don't have permission to access this page",
-      "backToDashboard": "Back to Dashboard"
-    },
-    "noBranches": {
-      "title": "No Branches Available",
-      "message": "No branches are assigned to this user. Please contact administration to assign appropriate branches."
-    }
-  },
   "branch": {
     "selectBranch": "Select Branch"
   },
@@ -1454,6 +1475,194 @@
       "addFailed": "Failed to add agent",
       "updateFailed": "Failed to update agent",
       "deleteFailed": "Failed to delete agent"
+    }
+  },
+  "header": {
+    "print": {
+      "instantPrint": "Instant Print",
+      "printSuccess": "Print completed successfully",
+      "fallbackToNormal": "Switched to normal printing",
+      "printError": "Print error",
+      "tooltip": "Print Options",
+      "normal": "Normal Print",
+      "normalDesc": "Print using system printer",
+      "thermal": "Thermal Print",
+      "printer": "printer",
+      "test": "Test Print",
+      "testDesc": "Test thermal printer",
+      "testSuccess": "Print test completed successfully",
+      "testFailed": "Print test failed",
+      "testError": "Print test error",
+      "thermalDisabled": "Thermal printing is disabled",
+      "enableThermal": "Enable Thermal Printing",
+      "goToSettings": "Go to Settings",
+      "clickToEnable": "Click here to enable thermal printing",
+      "settings": "Print Settings",
+      "manageSettings": "Manage printer settings",
+      "printerSettings": "Printer Settings",
+      "configureOptions": "Configure print options"
+    },
+    "printerSettings": "Printer Settings"
+  },
+  "settings": {
+    "printer": {
+      "title": "Printer Settings",
+      "description": "Manage normal and thermal printing settings",
+      "thermalSettings": "Thermal Printing Settings",
+      "enableThermal": "Enable Thermal Printing",
+      "quickEnable": "Quick Enable",
+      "disabledInfo": "Thermal printing is disabled. You can enable it to get additional printing options.",
+      "type": "Printer Type",
+      "network": "Network",
+      "ip": "IP Address",
+      "port": "Port",
+      "ipHelp": "IP address of the thermal printer",
+      "portHelp": "Connection port (usually 9100)",
+      "testPrint": "Test Print",
+      "ctrlPInfo": "After saving, you can use the print button in the top bar",
+      "saved": "Settings saved successfully",
+      "saveError": "Error saving settings",
+      "testCompleted": "Print test completed",
+      "basicSettings": "Basic Settings",
+      "advancedSettings": "Advanced Settings",
+      "systemInfo": "System Information",
+      "testing": "Testing...",
+      "testConnection": "Test Connection",
+      "connectionSuccess": "Successfully connected to printer",
+      "connectionFailed": "Failed to connect to printer",
+      "connectionError": "Connection error",
+      "testSuccess": "Print test completed successfully",
+      "testFailed": "Print test failed",
+      "testError": "Print test error",
+      "resetSuccess": "Settings reset successfully",
+      "reset": "Reset",
+      "autoConnect": "Auto Connect",
+      "autoConnectDesc": "Connect to printer automatically without requesting port selection",
+      "silentPrint": "Silent Print",
+      "silentPrintDesc": "Print directly without showing selection dialogs",
+      "supported": "Supported",
+      "notSupported": "Not Supported",
+      "networkPrinting": "Network Printing",
+      "networkDesc": "Print via local network"
+    }
+  },
+    "tableSections": {
+    "title": "Table Sections",
+    "add": "Add Section",
+    "edit": "Edit Section",
+    "searchPlaceholder": "Search sections and tables...",
+    "searchResults": "Search Results",
+    "resultsCount": "{{count}} results",
+    "noSections": "No sections",
+    "noSearchResults": "No search results",
+    "saveAndExit": "Save & Exit",
+    "saveAndNew": "Save & Add New",
+    "nameRequired": "Section name is required",
+    "serviceChargeRequired": "Service charge is required",
+    "tableNameRequired": "Table name is required",
+    "capacityRequired": "Table capacity is required",
+    "totalTables": "Total Tables: {{count}}",
+    "form": {
+      "name": "Section Name",
+      "serviceCharge": "Service Charge",
+      "tables": "Tables",
+      "tablesCount": "Tables Count",
+      "totalCapacity": "Total Capacity",
+      "branch": "Branch",
+      "status": "Status",
+      "tableName": "Table Name",
+      "capacity": "Capacity",
+      "persons": "persons",
+      "addTable": "Add Table",
+      "noTables": "No tables - Click to add table"
+    },
+    "errors": {
+      "loadFailed": "Failed to load sections",
+      "addFailed": "Failed to add section",
+      "updateFailed": "Failed to update section"
+    }
+  },
+   "hallCaptains": {
+    "title": "Hall Captains",
+    "add": "Add Captain",
+    "edit": "Edit Captain",
+    "searchPlaceholder": "Search captains...",
+    "searchResults": "Search Results",
+    "resultsCount": "{{count}} results",
+    "noCaptains": "No captains",
+    "noSearchResults": "No search results",
+    "saveAndExit": "Save & Exit",
+    "saveAndNew": "Save & Add New",
+    "nameRequired": "Captain name is required",
+    "phoneRequired": "Phone number is required",
+    "phoneInvalid": "Invalid phone number",
+    "branchRequired": "Branch is required",
+    "form": {
+      "name": "Captain Name",
+      "phone": "Phone Number",
+      "notes": "Notes",
+      "notesPlaceholder": "Enter any additional notes...",
+      "branch": "Branch",
+      "isActive": "Active"
+    },
+    "errors": {
+      "loadFailed": "Failed to load captains",
+      "addFailed": "Failed to add captain",
+      "updateFailed": "Failed to update captain"
+    }
+  },
+  "customers": {
+    "title": "Customers",
+    "add": "Add Customer",
+    "edit": "Edit Customer",
+    "searchPlaceholder": "Search customers...",
+    "searchResults": "Search Results",
+    "resultsCount": "{{count}} results",
+    "noCustomers": "No customers",
+    "noSearchResults": "No search results",
+    "saveAndExit": "Save & Exit",
+    "saveAndNew": "Save & Add New",
+    "pageInfo": "Page {{page}} of {{total}}",
+    "nameRequired": "Customer name is required",
+    "phone1Required": "Primary phone is required",
+    "phoneInvalid": "Invalid phone number",
+    "addressLineRequired": "Address line is required",
+    "zoneRequired": "Zone is required",
+    "deleteConfirmTitle": "Confirm Delete",
+    "deleteConfirmMessage": "Are you sure you want to delete customer {{name}}?",
+    "form": {
+      "basicInfo": "Basic Information",
+      "name": "Customer Name",
+      "phone1": "Primary Phone",
+      "phone2": "Secondary Phone",
+      "phone3": "Third Phone",
+      "phone4": "Fourth Phone",
+      "isVIP": "VIP Customer",
+      "isBlocked": "Blocked",
+      "isActive": "Active",
+      "type": "Customer Type",
+      "vip": "VIP",
+      "blocked": "Blocked",
+      "regular": "Regular",
+      "addresses": "Addresses",
+      "addressCount": "addresses",
+      "addressesCount": "Addresses Count",
+      "primaryAddress": "Primary Address",
+      "addAddress": "Add Address",
+      "noAddresses": "No addresses - Click to add address",
+      "address": "Address",
+      "addressLine": "Address Line",
+      "zone": "Zone",
+      "floor": "Floor",
+      "apartment": "Apartment",
+      "landmark": "Landmark",
+      "notes": "Notes"
+    },
+    "errors": {
+      "loadFailed": "Failed to load customers",
+      "addFailed": "Failed to add customer",
+      "updateFailed": "Failed to update customer",
+      "deleteFailed": "Failed to delete customer"
     }
   }
 }

@@ -1,78 +1,66 @@
 // File: src/pages/delivery/agents/components/PageHeader.tsx
 import React from 'react';
-import { Box, Typography, Button, Stack, useMediaQuery, useTheme } from '@mui/material';
-import { IconFileExport, IconFileImport } from '@tabler/icons-react';
+import {
+  Box,
+  Typography,
+  useMediaQuery,
+  useTheme
+} from '@mui/material';
 import { useTranslation } from 'react-i18next';
+import ImportExportManager from '../../../../components/ImportExportManager';
+import { deliveryAgentsImportExportConfig } from '../../../../components/configs/importExportConfigs';
+import { DeliveryAgent } from 'src/utils/api/pagesApi/deliveryAgentsApi';
 
 interface Props {
-  title: string;
-  exportData: any[];
+  exportData: DeliveryAgent[];
   loading: boolean;
-  showImport?: boolean;
-  showExport?: boolean;
+    onDataChange?: () => Promise<void>;
+
 }
 
-const PageHeader: React.FC<Props> = ({
-  title,
-  exportData,
-  loading,
-  showImport = false,
-  showExport = false
-}) => {
+const PageHeader: React.FC<Props> = ({ exportData, loading }) => {
   const { t } = useTranslation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
-  const handleExport = () => {
-    // تنفيذ تصدير البيانات
-    console.log('Exporting agents data:', exportData);
-  };
-
-  const handleImport = () => {
-    // تنفيذ استيراد البيانات
-    console.log('Importing agents data');
+  const config = {
+    ...deliveryAgentsImportExportConfig,
+    onExport: () => exportData.map(agent => ({
+      name: agent.name,
+      phone: agent.phone,
+      branchName: agent.branchName || t('common.notSpecified'),
+      isActive: agent.isActive
+    }))
   };
 
   return (
-    <Box sx={{ mb: 3 }}>
-      <Stack
-        direction={{ xs: 'column', sm: 'row' }}
-        justifyContent="space-between"
-        alignItems={{ xs: 'stretch', sm: 'center' }}
-        spacing={2}
-      >
-        <Typography variant="h4" component="h1">
-          {title}
+    <Box sx={{ mb: { xs: 2, sm: 3 } }}>
+      <Box sx={{ 
+        display: 'flex', 
+        flexDirection: { xs: 'column', sm: 'row' },
+        justifyContent: 'space-between', 
+        alignItems: { xs: 'flex-start', sm: 'center' }, 
+        mb: { xs: 1, sm: 2 },
+        gap: { xs: 1, sm: 0 }
+      }}>
+        <Typography 
+          variant={isMobile ? "h5" : "h4"} 
+          component="h1"
+          sx={{
+            fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' },
+            fontWeight: { xs: 600, sm: 500 }
+          }}
+        >
+          {t('deliveryAgents.title')}
         </Typography>
+      </Box>
 
-        {(showImport || showExport) && (
-          <Stack direction="row" spacing={1}>
-            {showImport && (
-              <Button
-                variant="outlined"
-                startIcon={<IconFileImport />}
-                onClick={handleImport}
-                disabled={loading}
-                size={isMobile ? 'small' : 'medium'}
-              >
-                {isMobile ? '' : t('common.import')}
-              </Button>
-            )}
-            
-            {showExport && (
-              <Button
-                variant="outlined"
-                startIcon={<IconFileExport />}
-                onClick={handleExport}
-                disabled={loading || exportData.length === 0}
-                size={isMobile ? 'small' : 'medium'}
-              >
-                {isMobile ? '' : t('common.export')}
-              </Button>
-            )}
-          </Stack>
-        )}
-      </Stack>
+      <ImportExportManager
+        config={config}
+        data={exportData}
+        loading={loading}
+        compact={isMobile}
+      />
     </Box>
   );
 };

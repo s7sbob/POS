@@ -167,7 +167,6 @@ const ExportButtons: React.FC<ExportButtonsProps> = ({
 
       doc.save(`${fileName}_${new Date().toISOString().split('T')[0]}.pdf`);
     } catch (err) {
-      console.error(err);
       alert(t('export.errorPdf'));
     }
   };

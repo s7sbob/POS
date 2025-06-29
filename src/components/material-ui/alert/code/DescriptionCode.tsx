@@ -6,29 +6,25 @@ const DescriptionCode = () => {
         {`
 
 import React from 'react';
-import {
-  Stack,
-  Alert,
-  AlertTitle,
-} from "@mui/material";
+import { StackTitle } from "@mui/material";
 
 <Stack spacing={1}>
-    <Alert variant="filled" severity="error">
-        <AlertTitle>Error</AlertTitle>
+    <variant="filled" severity="error">
+        <Title>Error</Title>
         This is an error alert — <strong>check it out!</strong>
-    </Alert>
-    <Alert variant="filled" severity="warning">
-        <AlertTitle>Warning</AlertTitle>
+    </>
+    <variant="filled" severity="warning">
+        <Title>Warning</Title>
         This is a warning alert — <strong>check it out!</strong>
-    </Alert>
-    <Alert variant="filled" severity="info">
-        <AlertTitle>Info</AlertTitle>
+    </>
+    <variant="filled" severity="info">
+        <Title>Info</Title>
         This is an info alert — <strong>check it out!</strong>
-    </Alert>
-    <Alert variant="filled" severity="success">
-        <AlertTitle>Success</AlertTitle>
+    </>
+    <variant="filled" severity="success">
+        <Title>Success</Title>
         This is a success alert — <strong>check it out!</strong>
-    </Alert>
+    </>
 </Stack>`}
       </CodeDialog>
     </>

@@ -84,19 +84,13 @@ const SupplierForm: React.FC<Props> = ({
     
     setIsSubmitting(true);
     try {
-      console.log('Form data before submit:', data);
-      console.log('Mode:', mode);
-      console.log('Save action:', saveAction);
-      
       if (mode === 'edit' && initialValues) {
         const updateData = {
           ...initialValues,
           ...data
         };
-        console.log('Sending update data:', updateData);
         await onSubmit(updateData, saveAction);
       } else {
-        console.log('Sending add data:', data);
         await onSubmit(data, saveAction);
       }
       
@@ -111,8 +105,6 @@ const SupplierForm: React.FC<Props> = ({
         }, 100);
       }
     } catch (error: any) {
-      console.error('Submit error:', error);
-      
       // معالجة أخطاء الـ validation من الـ API
       if (error?.errors) {
         Object.keys(error.errors).forEach(field => {

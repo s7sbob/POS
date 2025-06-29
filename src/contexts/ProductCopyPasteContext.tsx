@@ -52,8 +52,7 @@ export const ProductCopyPasteProvider: React.FC<{ children: ReactNode }> = ({ ch
         setCopiedData(parsed);
         return parsed;
       } catch (error) {
-        console.error('Error parsing saved copy data:', error);
-      }
+        }
     }
     
     return null;

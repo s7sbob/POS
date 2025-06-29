@@ -59,7 +59,6 @@ export const getAll = async (): Promise<PosPaymentMethod[]> => {
     const response = await api.get('/GetAllPosPaymentMethods');
     return response.data.data;
   } catch (error) {
-    console.error('Error fetching POS payment methods:', error);
     throw error;
   }
 };
@@ -69,7 +68,6 @@ export const getById = async (id: string): Promise<PosPaymentMethod> => {
     const response = await api.get(`/GetPosPaymentMethod?id=${id}`);
     return response.data.data;
   } catch (error) {
-    console.error('Error fetching POS payment method by ID:', error);
     throw error;
   }
 };
@@ -79,7 +77,6 @@ export const add = async (data: AddPosPaymentMethodRequest): Promise<PosPaymentM
     const response = await api.post('/AddPosPaymentMethod', data);
     return response.data.data;
   } catch (error) {
-    console.error('Error adding POS payment method:', error);
     throw error;
   }
 };
@@ -89,7 +86,6 @@ export const update = async (data: UpdatePosPaymentMethodRequest): Promise<PosPa
     const response = await api.post('/UpdatePosPaymentMethod', data);
     return response.data.data;
   } catch (error) {
-    console.error('Error updating POS payment method:', error);
     throw error;
   }
 };

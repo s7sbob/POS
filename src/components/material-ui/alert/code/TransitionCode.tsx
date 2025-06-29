@@ -10,14 +10,12 @@ import {
   Stack,
   Button,
   IconButton,
-  Collapse,
-  Alert,
+  Collapse
 } from "@mui/material";
 
 <Stack spacing={1}>
     <Collapse in={open}>
-        <Alert
-            variant="filled"
+        <variant="filled"
             severity="info"
             sx={{ mb: 1 }}
             action={
@@ -34,7 +32,7 @@ import {
             }
         >
             Close me!
-        </Alert>
+        </>
     </Collapse>
 </Stack>
 <Button

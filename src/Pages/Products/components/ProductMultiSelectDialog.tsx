@@ -56,8 +56,7 @@ const ProductMultiSelectDialog: React.FC<Props> = ({
       const groupsData = await groupsApi.getAll();
       setGroups(groupsData);
     } catch (error) {
-      console.error('Error loading groups:', error);
-    }
+      }
   };
 
   const loadProducts = async () => {
@@ -72,8 +71,7 @@ const ProductMultiSelectDialog: React.FC<Props> = ({
       );
       setProducts(filteredProducts);
     } catch (error) {
-      console.error('Error loading products:', error);
-    } finally {
+      } finally {
       setLoading(false);
     }
   };

@@ -1,7 +1,7 @@
 // File: src/pages/purchases/purchase-orders/EditPurchaseOrderPage.tsx
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { useMediaQuery, useTheme, Snackbar, Alert, Box, Typography, CircularProgress } from '@mui/material';
+import { useMediaQuery, useTheme, Box, Typography, CircularProgress } from '@mui/material';
 import PurchaseOrderForm from './components/PurchaseOrderForm';
 import MobilePurchaseOrderForm from './components/mobile/MobilePurchaseOrderForm';
 import * as apiSrv from 'src/utils/api/pagesApi/purchaseOrdersApi';
@@ -19,7 +19,7 @@ const EditPurchaseOrderPage: React.FC = () => {
   const [purchaseOrder, setPurchaseOrder] = useState<PurchaseOrder | null>(null);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
-  const [error, setError] = useState('');
+  const [error] = useState('');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -36,9 +36,7 @@ const EditPurchaseOrderPage: React.FC = () => {
         setPurchaseOrder(purchaseOrderData);
         setSuppliers(suppliersData);
         setWarehouses(warehousesData);
-      } catch (e: any) {
-        setError(e?.message || 'Failed to load data');
-      } finally {
+      } catch (e: any) {      } finally {
         setLoading(false);
       }
     };
@@ -53,8 +51,6 @@ const EditPurchaseOrderPage: React.FC = () => {
       }
       await apiSrv.update({ ...data, id: purchaseOrder.id! });
     } catch (e: any) {
-      const msg = e?.message || 'Update failed';
-      setError(msg);
       throw e;
     }
   };
@@ -102,14 +98,7 @@ const EditPurchaseOrderPage: React.FC = () => {
           warehouses={warehouses}
           onSubmit={handleSubmit}
         />
-      )}
-
-      <Snackbar open={!!error} autoHideDuration={6000} onClose={() => setError('')}>
-        <Alert severity="error" onClose={() => setError('')}>
-          {error}
-        </Alert>
-      </Snackbar>
-    </>
+      )}</>
   );
 };
 

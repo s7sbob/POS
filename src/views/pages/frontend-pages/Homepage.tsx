@@ -1,6 +1,6 @@
 import PageContainer from 'src/components/container/PageContainer';
 import Banner from 'src/components/frontend-pages/homepage/banner/Banner';
-import HeaderAlert from 'src/components/frontend-pages/shared/header/HeaderAlert';
+import Headerfrom 'src/components/frontend-pages/shared/header/Header';
 import HpHeader from 'src/components/frontend-pages/shared/header/HpHeader';
 import Features from 'src/components/frontend-pages/homepage/features/Features';
 import DefendFocus from 'src/components/frontend-pages/homepage/defend-focus';
@@ -17,7 +17,7 @@ import ScrollToTop from 'src/components/frontend-pages/shared/scroll-to-top';
 const HomePage = () => {
   return (
     <PageContainer title="Homepage" description="this is Homepage">
-      <HeaderAlert />
+      <Header/>
       <HpHeader />
       <Banner />
       <Features />

@@ -31,7 +31,6 @@ export const getAll = async (): Promise<DeliveryZone[]> => {
     }
     return [];
   } catch (error) {
-    console.error('Error fetching delivery zones:', error);
     throw error;
   }
 };
@@ -44,7 +43,6 @@ export const getById = async (id: string): Promise<DeliveryZone> => {
     }
     throw new Error('Zone not found');
   } catch (error) {
-    console.error('Error fetching delivery zone:', error);
     throw error;
   }
 };
@@ -58,7 +56,6 @@ export const add = async (body: {
     const { data } = await api.post('/AddZone', body);
     return toDeliveryZone(data.data);
   } catch (error) {
-    console.error('Error adding delivery zone:', error);
     throw error;
   }
 };
@@ -75,7 +72,6 @@ export const update = async (body: {
     const { data } = await api.post('/UpdateZone', body);
     return toDeliveryZone(data.data);
   } catch (error) {
-    console.error('Error updating delivery zone:', error);
     throw error;
   }
 };

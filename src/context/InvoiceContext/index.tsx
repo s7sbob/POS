@@ -27,8 +27,7 @@ export const InvoiceProvider: React.FC<{ children: React.ReactNode }> = ({ child
                 setInvoices(response.data);
                 setLoading(false);
             } catch (error) {
-                // setError(error);
-                setLoading(false);
+                //                setLoading(false);
             }
         };
 
@@ -42,9 +41,7 @@ export const InvoiceProvider: React.FC<{ children: React.ReactNode }> = ({ child
             await axios.delete('/api/data/invoicedata/deleteinvoice', { data: { invoiceId: id } });
             setInvoices((prevInvoices) => prevInvoices.filter((invoice) => invoice.id !== id));
         } catch (error) {
-            console.error('Error deleting invoice:', error);
-
-        }
+            }
     };
 
     const addInvoice = async (newInvoice: InvoiceList) => {
@@ -53,8 +50,7 @@ export const InvoiceProvider: React.FC<{ children: React.ReactNode }> = ({ child
             const addedInvoice = response.data;
             setInvoices((prevInvoices) => [...prevInvoices, addedInvoice]);
         } catch (error) {
-            console.error('Error adding invoice:', error);
-        }
+            }
     };
 
     //  Function to update an invoice
@@ -66,8 +62,7 @@ export const InvoiceProvider: React.FC<{ children: React.ReactNode }> = ({ child
                 prevInvoices.map((invoice) => (invoice.id === updated.id ? updated : invoice))
             );
         } catch (error) {
-            console.error('Error updating invoice:', error);
-        }
+            }
     };
 
     return (

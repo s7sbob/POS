@@ -1,16 +1,14 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import React from 'react';
-import {
-  CardContent,
+import { CardContent,
   Button,
   Dialog,
   DialogActions,
   DialogContent,
   Fab,
   TextField,
-  Typography,
-} from '@mui/material';
+  Typography } from '@mui/material';
 import { Calendar, momentLocalizer } from 'react-big-calendar';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -73,13 +71,12 @@ const BigCalendar = () => {
       value: "warning",
     },
   ];
-  const addNewEventAlert = (slotInfo: EvType) => {
+  const addNewEvent= (slotInfo: EvType) => {
     setOpen(true);
     setSlot(slotInfo);
     setStart(dayjs(slotInfo.start));
     setEnd(dayjs(slotInfo.end));
   };
-
 
   const editEvent = (event: any) => {
     const newEditEvent = calevents.find(
@@ -189,7 +186,7 @@ const BigCalendar = () => {
             localizer={localizer}
             style={{ height: "calc(100vh - 350px" }}
             onSelectEvent={(event: any) => editEvent(event)}
-            onSelectSlot={(slotInfo: any) => addNewEventAlert(slotInfo)}
+            onSelectSlot={(slotInfo: any) => addNewEvent(slotInfo)}
             eventPropGetter={(event: any) => eventColors(event)}
           />
         </CardContent>

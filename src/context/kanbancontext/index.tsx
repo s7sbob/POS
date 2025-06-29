@@ -35,16 +35,12 @@ export const KanbanDataContextProvider: React.FC<KanbanDataContextProps> = ({ ch
         const fetchData = async () => {
             try {
                 const response = await axios.get<TodoCategory[]>('/api/TodoData');
-                setTodoCategories(response.data);
-                setError(null);
-            } catch (error: any) {
+                setTodoCategories(response.data);            } catch (error: any) {
                 handleError(error.message);
             }
         };
         fetchData();
     }, []);
-
-
 
     const moveTask = (_taskId: any, sourceCategoryId: any, destinationCategoryId: any, sourceIndex: number, destinationIndex: number) => {
 
@@ -75,16 +71,12 @@ export const KanbanDataContextProvider: React.FC<KanbanDataContextProps> = ({ ch
         });
     };
 
-    const handleError = (errorMessage: string) => {
-        setError(errorMessage);
-    };
+    const handleError = (errorMessage: string) => {    };
 
     const deleteCategory = async (categoryId: string) => {
         try {
             const response = await axios.delete<TodoCategory[]>(`/api/TodoData?id=${categoryId}`);
-            setTodoCategories(response.data);
-            setError(null);
-        } catch (error: any) {
+            setTodoCategories(response.data);        } catch (error: any) {
             handleError(error.message);
         }
     };
@@ -92,9 +84,7 @@ export const KanbanDataContextProvider: React.FC<KanbanDataContextProps> = ({ ch
     const clearAllTasks = async (categoryId: string) => {
         try {
             const response = await axios.delete<TodoCategory[]>(`/api/TodoData/clearTasks?id=${categoryId}`);
-            setTodoCategories(response.data);
-            setError(null);
-        } catch (error: any) {
+            setTodoCategories(response.data);        } catch (error: any) {
             handleError(error.message);
         }
     };
@@ -102,9 +92,7 @@ export const KanbanDataContextProvider: React.FC<KanbanDataContextProps> = ({ ch
     const addCategory = async (categoryName: string) => {
         try {
             const response = await axios.post<TodoCategory>('/api/TodoData/addCategory', { categoryName });
-            setTodoCategories((prevCategories) => [...prevCategories, response.data]);
-            setError(null);
-        } catch (error: any) {
+            setTodoCategories((prevCategories) => [...prevCategories, response.data]);        } catch (error: any) {
             handleError(error.message);
         }
     };
@@ -124,7 +112,4 @@ export const KanbanDataContextProvider: React.FC<KanbanDataContextProps> = ({ ch
         </KanbanDataContext.Provider>
     );
 };
-
-
-
 

@@ -109,8 +109,7 @@ const ProductPriceSearchDialog: React.FC<Props> = ({ open, onClose, onSelect }) 
       setCurrentPage(1);
       setSelectedIndex(0);
     } catch (err) {
-      console.error('Error loading initial products:', err);
-    } finally {
+      } finally {
       setLoading(false);
     }
   };
@@ -125,8 +124,7 @@ const ProductPriceSearchDialog: React.FC<Props> = ({ open, onClose, onSelect }) 
       setHasMore(result.pageNumber < result.pageCount);
       setCurrentPage(result.pageNumber);
     } catch (err) {
-      console.error('Error loading more products:', err);
-    } finally {
+      } finally {
       setLoadingMore(false);
     }
   }, [currentPage, hasMore, isSearchMode, loadingMore]);
@@ -139,7 +137,6 @@ const ProductPriceSearchDialog: React.FC<Props> = ({ open, onClose, onSelect }) 
       setDisplayItems(result.data);
       setSelectedIndex(0);
     } catch (err) {
-      console.error('Search error:', err);
       setDisplayItems([]);
     } finally {
       setLoading(false);
@@ -220,7 +217,6 @@ const ProductPriceSearchDialog: React.FC<Props> = ({ open, onClose, onSelect }) 
 
   const handleSelect = (item: ProductPrice) => {
     if (!item.productId) {
-      console.error('ProductPrice missing productId:', item);
       return;
     }
     onSelect(item);

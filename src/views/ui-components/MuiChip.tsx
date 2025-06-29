@@ -32,8 +32,7 @@ const BCrumb = [
 
 const MuiChip = () => {
   const handleDelete = () => {
-    console.info('You clicked the delete icon.');
-  };
+    };
 
   return (
     (<PageContainer title="Chip" description="this is Chip page">

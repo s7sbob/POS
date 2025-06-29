@@ -6,7 +6,6 @@ export const getUserBranchesFromStorage = (): Branch[] => {
     const branches = localStorage.getItem('user_branches');
     return branches ? JSON.parse(branches) : [];
   } catch (error) {
-    console.error('Error getting branches from storage:', error);
     return [];
   }
 };
@@ -21,7 +20,6 @@ export const getCurrentBranch = (): Branch | null => {
     const currentBranch = localStorage.getItem('selected_branch');
     return currentBranch ? JSON.parse(currentBranch) : getDefaultBranch();
   } catch (error) {
-    console.error('Error getting current branch:', error);
     return getDefaultBranch();
   }
 };

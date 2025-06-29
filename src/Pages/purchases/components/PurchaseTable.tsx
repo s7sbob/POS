@@ -15,10 +15,7 @@ const PurchaseTable: React.FC<Props> = ({ rows, onEdit, onView }) => {
   const { t } = useTranslation();
 
   const handleAction = (row: Purchase) => {
-    console.log('Action button clicked for row:', row);
-
     if (!row.id) {
-      console.error('Purchase missing ID:', row);
       alert(t('purchases.errors.missingId'));
       return;
     }
@@ -146,7 +143,6 @@ const PurchaseTable: React.FC<Props> = ({ rows, onEdit, onView }) => {
       columns={cols}
       getRowId={(row) => {
         if (!row.id) {
-          console.error('Row missing ID:', row);
           return `temp-${Math.random()}`;
         }
         return row.id;

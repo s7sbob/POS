@@ -1,8 +1,7 @@
 // File: src/pages/delivery/zones/DeliveryZonesPage.tsx
 import React from 'react';
 import {
-  Container, useMediaQuery, useTheme, Box, Button, Fab, Badge,
-  Snackbar, Alert, Typography, Pagination, Stack, TextField, 
+  Container, useMediaQuery, useTheme, Box, Button, Fab, Badge, Typography, Stack, TextField, 
   InputAdornment, IconButton, Chip
 } from '@mui/material';
 import { IconSearch, IconX, IconFilter, IconPlus } from '@tabler/icons-react';
@@ -15,7 +14,6 @@ import ZoneForm from './components/ZoneForm';
 import MobileZonesFilter, { ZonesFilterState } from './components/mobile/MobileZonesFilter';
 import * as apiSrv from 'src/utils/api/pagesApi/deliveryZonesApi';
 import { DeliveryZone } from 'src/utils/api/pagesApi/deliveryZonesApi';
-import { getUserBranchesFromStorage, getDefaultBranch } from 'src/utils/branchUtils';
 
 interface PermissionProps {
   canAdd?: boolean;
@@ -29,7 +27,7 @@ interface PermissionProps {
 interface Props extends PermissionProps {}
 
 const DeliveryZonesPage: React.FC<Props> = (props) => {
-  const { canAdd = true, canImport = true, canExport = true } = props;
+  const { canAdd = true } = props;
   const { t } = useTranslation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -37,9 +35,7 @@ const DeliveryZonesPage: React.FC<Props> = (props) => {
 
   const [zones, setZones] = React.useState<DeliveryZone[]>([]);
   const [selectedZone, setSelectedZone] = React.useState<DeliveryZone | null>(null);
-  const [searchQuery, setSearchQuery] = React.useState('');
-  const [error, setErr] = React.useState('');
-  const [loading, setLoad] = React.useState(true);
+  const [searchQuery, setSearchQuery] = React.useState('');  const [loading, setLoad] = React.useState(true);
   const [filterOpen, setFilterOpen] = React.useState(false);
   const [dialog, setDialog] = React.useState<{
     open: boolean;
@@ -136,10 +132,7 @@ const DeliveryZonesPage: React.FC<Props> = (props) => {
     try {
       await apiSrv.add(data);
       await fetchZones();
-    } catch (e: any) {
-      const msg = e?.message || t('deliveryZones.errors.addFailed');
-      setErr(msg);
-      throw e;
+    } catch (e: any) {      throw e;
     }
   };
 
@@ -153,11 +146,7 @@ const DeliveryZonesPage: React.FC<Props> = (props) => {
       }
       
       return updatedZone;
-    } catch (e: any) {
-      console.error('Update error:', e);
-      const msg = e?.message || t('deliveryZones.errors.updateFailed');
-      setErr(msg);
-      throw e;
+    } catch (e: any) {      throw e;
     }
   };
 
@@ -189,13 +178,11 @@ const DeliveryZonesPage: React.FC<Props> = (props) => {
 
   return (
     <Container maxWidth="xl">
-      <PageHeader 
-        title={t('deliveryZones.title')}
-        exportData={displayedData} 
-        loading={loading}
-        showImport={canImport}
-        showExport={canExport}
-      />
+<PageHeader 
+  exportData={zones} 
+  loading={loading}
+  onDataChange={fetchZones} // ⭐ إضافة callback
+/>
       
       {!isMobile && (
         <Box mb={3}>
@@ -334,15 +321,12 @@ const DeliveryZonesPage: React.FC<Props> = (props) => {
         initialValues={dialog.current}
         onClose={() => setDialog({ open: false, mode: 'add', current: undefined })}
         onSubmit={handleSubmit}
-      />
-
-      <Snackbar open={!!error} autoHideDuration={6000} onClose={() => setErr('')}>
-        <Alert severity="error" onClose={() => setErr('')}>
-          {error}
-        </Alert>
-      </Snackbar>
-    </Container>
+      /></Container>
   );
 };
 
 export default DeliveryZonesPage;
+function setErr(_arg0: any) {
+  throw new Error('Function not implemented.');
+}
+

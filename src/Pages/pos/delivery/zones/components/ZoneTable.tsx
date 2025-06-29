@@ -1,9 +1,6 @@
 // File: src/pages/delivery/zones/components/ZoneTable.tsx
-import React from 'react';
-import {
-  Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  Paper, IconButton, Chip, Typography, Box, Tooltip
-} from '@mui/material';
+import { DataGrid, GridColDef } from '@mui/x-data-grid';
+import { IconButton, Stack, Chip, Box } from '@mui/material';
 import { IconEdit } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
 import { DeliveryZone } from 'src/utils/api/pagesApi/deliveryZonesApi';
@@ -11,86 +8,92 @@ import { DeliveryZone } from 'src/utils/api/pagesApi/deliveryZonesApi';
 interface Props {
   rows: DeliveryZone[];
   onEdit: (zone: DeliveryZone) => void;
-  selectedZoneId?: string;
+    selectedZoneId?: string;
+
 }
 
-const ZoneTable: React.FC<Props> = ({ rows, onEdit, selectedZoneId }) => {
+const ZoneTable: React.FC<Props> = ({ rows, onEdit }) => {
   const { t } = useTranslation();
 
+  const cols: GridColDef<DeliveryZone>[] = [
+    { 
+      field: 'name', 
+      headerName: t('deliveryZones.form.name'), 
+      flex: 1, 
+      minWidth: 200 
+    },
+    { 
+      field: 'deliveryCharge', 
+      headerName: t('deliveryZones.form.deliveryCharge'), 
+      width: 150,
+      renderCell: ({ value }) => (
+        <Box sx={{ color: 'primary.main', fontWeight: 600 }}>
+          {value?.toFixed(2)} {t('common.currency')}
+        </Box>
+      )
+    },
+    { 
+      field: 'defaultBonus', 
+      headerName: t('deliveryZones.form.defaultBonus'), 
+      width: 150,
+      renderCell: ({ value }) => (
+        <Box sx={{ color: 'success.main', fontWeight: 600 }}>
+          {value?.toFixed(2)} {t('common.currency')}
+        </Box>
+      )
+    },
+    { 
+      field: 'branchName', 
+      headerName: t('deliveryZones.form.branch'), 
+      width: 200,
+      renderCell: ({ value }) => value || t('deliveryZones.form.allBranches')
+    },
+    { 
+      field: 'isActive', 
+      headerName: t('common.status'), 
+      width: 120,
+      renderCell: ({ value }) => (
+        <Chip 
+          label={value ? t('common.active') : t('common.inactive')} 
+          color={value ? 'success' : 'error'} 
+          size="small"
+          variant={value ? 'filled' : 'outlined'}
+        />
+      )
+    },
+    {
+      field: 'actions', 
+      headerName: t('common.actions'), 
+      width: 120, 
+      sortable: false, 
+      filterable: false,
+      renderCell: ({ row }) => (
+        <Stack direction="row" spacing={0.5}>
+          <IconButton size="small" onClick={() => onEdit(row)}>
+            <IconEdit size={18} />
+          </IconButton>
+        </Stack>
+      )
+    }
+  ];
+
   return (
-    <TableContainer component={Paper} variant="outlined">
-      <Table>
-        <TableHead>
-          <TableRow>
-            <TableCell>{t('deliveryZones.form.name')}</TableCell>
-            <TableCell>{t('deliveryZones.form.deliveryCharge')}</TableCell>
-            <TableCell>{t('deliveryZones.form.defaultBonus')}</TableCell>
-            <TableCell>{t('deliveryZones.form.branch')}</TableCell>
-            <TableCell>{t('deliveryZones.form.status')}</TableCell>
-            <TableCell width={120}>{t('common.actions')}</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {rows.map((zone) => (
-            <TableRow
-              key={zone.id}
-              selected={selectedZoneId === zone.id}
-              sx={{
-                '&:hover': { backgroundColor: 'action.hover' },
-                ...(selectedZoneId === zone.id && {
-                  backgroundColor: 'action.selected',
-                }),
-              }}
-            >
-              <TableCell>
-                <Typography variant="body2" fontWeight={500}>
-                  {zone.name}
-                </Typography>
-              </TableCell>
-              
-              <TableCell>
-                <Typography variant="body2" color="primary.main" fontWeight={600}>
-                  {zone.deliveryCharge.toFixed(2)} {t('common.currency')}
-                </Typography>
-              </TableCell>
-              
-              <TableCell>
-                <Typography variant="body2" color="success.main" fontWeight={600}>
-                  {zone.defaultBonus.toFixed(2)} {t('common.currency')}
-                </Typography>
-              </TableCell>
-              
-              <TableCell>
-                <Typography variant="body2">
-                  {zone.branchName || t('deliveryZones.form.allBranches')}
-                </Typography>
-              </TableCell>
-              
-              <TableCell>
-                <Chip
-                  label={zone.isActive ? t('common.active') : t('common.inactive')}
-                  color={zone.isActive ? 'success' : 'error'}
-                  size="small"
-                  variant={zone.isActive ? 'filled' : 'outlined'}
-                />
-              </TableCell>
-              
-              <TableCell>
-                <Tooltip title={t('common.edit')}>
-                  <IconButton
-                    size="small"
-                    onClick={() => onEdit(zone)}
-                    color="primary"
-                  >
-                    <IconEdit size={18} />
-                  </IconButton>
-                </Tooltip>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </TableContainer>
+    <DataGrid
+      rows={rows}
+      columns={cols}
+      autoHeight
+      disableRowSelectionOnClick
+      pageSizeOptions={[10, 25, 50]}
+      initialState={{ pagination: { paginationModel: { pageSize: 25 } } }}
+      sx={{
+        '& .MuiDataGrid-cell:focus': {
+          outline: 'none'
+        },
+        '& .MuiDataGrid-row:hover': {
+          backgroundColor: 'action.hover'
+        }
+      }}
+    />
   );
 };
 

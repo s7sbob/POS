@@ -1,16 +1,14 @@
 import { useState, useContext } from 'react';
 import { KanbanDataContext } from 'src/context/kanbancontext/index';
 import axios from 'src/utils/axios';
-import {
-  Dialog,
+import { Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
   Button,
   Typography,
   Box,
-  Grid2 as Grid,
-} from '@mui/material';
+  Grid2 as Grid } from '@mui/material';
 import CustomFormLabel from '../../forms/theme-elements/CustomFormLabel';
 import CustomTextField from '../../forms/theme-elements/CustomTextField';
 
@@ -33,9 +31,7 @@ function KanbanHeader() {
       addCategory(response.data.name);
       setListName('');
       setShow(false);
-    } catch (error: any) {
-      setError(error.message);
-    }
+    } catch (error: any) {    }
   };
 
   const isAddButtonDisabled = listName.trim().length === 0;

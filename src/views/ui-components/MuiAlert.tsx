@@ -2,7 +2,7 @@
 // @ts-ignore
 import React from 'react';
 import { IconX } from "@tabler/icons-react";
-import { Grid2 as Grid, Stack, Button, IconButton, Collapse, Alert, AlertTitle } from '@mui/material';
+import { Grid2 as Grid, Stack, Button, IconButton, CollapseTitle } from '@mui/material';
 
 import Breadcrumb from 'src/layouts/full/shared/breadcrumb/Breadcrumb';
 import PageContainer from 'src/components/container/PageContainer';
@@ -21,99 +21,98 @@ const BCrumb = [
     title: 'Home',
   },
   {
-    title: 'Alert',
+    title: '',
   },
 ];
 
-const ExAlert = () => {
+const Ex= () => {
   const [open, setOpen] = React.useState(true);
 
   return (
-    (<PageContainer title="Alert" description="this is Alert page">
+    (<PageContainer title="" description="this ispage">
       {/* breadcrumb */}
-      <Breadcrumb title="Alert" items={BCrumb} />
+      <Breadcrumb title="" items={BCrumb} />
       {/* end breadcrumb */}
       {/* ------------------------- row 1 ------------------------- */}
-      <ParentCard title="Alert">
+      <ParentCard title="">
         <Grid container spacing={3}>
           {/* --------------------------------------------------------------------------------- */}
-          {/* Filled Alert */}
+          {/* Filled*/}
           {/* --------------------------------------------------------------------------------- */}
           <Grid display="flex" alignItems="stretch" size={12}>
             <ChildCard title="Filled" codeModel={<FilledCode />}>
               <Stack spacing={1}>
-                <Alert variant="filled" severity="error">
+                <variant="filled" severity="error">
                   This is an error alert — check it out!
-                </Alert>
-                <Alert variant="filled" severity="warning">
+                </>
+                <variant="filled" severity="warning">
                   This is a warning alert — check it out!
-                </Alert>
-                <Alert variant="filled" severity="info">
+                </>
+                <variant="filled" severity="info">
                   This is an info alert — check it out!
-                </Alert>
-                <Alert variant="filled" severity="success">
+                </>
+                <variant="filled" severity="success">
                   This is a success alert — check it out!
-                </Alert>
+                </>
               </Stack>
             </ChildCard>
           </Grid>
           {/* --------------------------------------------------------------------------------- */}
-          {/* Outlined Alert */}
+          {/* Outlined*/}
           {/* --------------------------------------------------------------------------------- */}
           <Grid display="flex" alignItems="stretch" size={12}>
             <ChildCard title="Outlined" codeModel={<OutlinedCode />}>
               <Stack spacing={1}>
-                <Alert variant="outlined" severity="error">
+                <variant="outlined" severity="error">
                   This is an error alert — check it out!
-                </Alert>
-                <Alert variant="outlined" severity="warning">
+                </>
+                <variant="outlined" severity="warning">
                   This is a warning alert — check it out!
-                </Alert>
-                <Alert variant="outlined" severity="info">
+                </>
+                <variant="outlined" severity="info">
                   This is an info alert — check it out!
-                </Alert>
-                <Alert variant="outlined" severity="success">
+                </>
+                <variant="outlined" severity="success">
                   This is a success alert — check it out!
-                </Alert>
+                </>
               </Stack>
             </ChildCard>
           </Grid>
           {/* --------------------------------------------------------------------------------- */}
-          {/* Description Alert */}
+          {/* Description*/}
           {/* --------------------------------------------------------------------------------- */}
           <Grid display="flex" alignItems="stretch" size={12}>
             <ChildCard title="Description" codeModel={<DescriptionCode />}>
               <Stack spacing={1}>
-                <Alert variant="filled" severity="error">
-                  <AlertTitle>Error</AlertTitle>
+                <variant="filled" severity="error">
+                  <Title>Error</Title>
                   This is an error alert — <strong>check it out!</strong>
-                </Alert>
-                <Alert variant="filled" severity="warning">
-                  <AlertTitle>Warning</AlertTitle>
+                </>
+                <variant="filled" severity="warning">
+                  <Title>Warning</Title>
                   This is a warning alert — <strong>check it out!</strong>
-                </Alert>
-                <Alert variant="filled" severity="info">
-                  <AlertTitle>Info</AlertTitle>
+                </>
+                <variant="filled" severity="info">
+                  <Title>Info</Title>
                   This is an info alert — <strong>check it out!</strong>
-                </Alert>
-                <Alert variant="filled" severity="success">
-                  <AlertTitle>Success</AlertTitle>
+                </>
+                <variant="filled" severity="success">
+                  <Title>Success</Title>
                   This is a success alert — <strong>check it out!</strong>
-                </Alert>
+                </>
               </Stack>
             </ChildCard>
           </Grid>
           {/* --------------------------------------------------------------------------------- */}
-          {/* Action Alert */}
+          {/* Action*/}
           {/* --------------------------------------------------------------------------------- */}
           <Grid display="flex" alignItems="stretch" size={12}>
             <ChildCard title="Action" codeModel={<ActionCode />}>
               <Stack spacing={1}>
-                <Alert variant="filled" severity="warning">
+                <variant="filled" severity="warning">
                   This is a success alert — check it out!
-                </Alert>
-                <Alert
-                  variant="filled"
+                </>
+                <variant="filled"
                   severity="info"
                   action={
                     <Button color="inherit" size="small">
@@ -122,19 +121,18 @@ const ExAlert = () => {
                   }
                 >
                   This is a success alert — check it out!
-                </Alert>
+                </>
               </Stack>
             </ChildCard>
           </Grid>
           {/* --------------------------------------------------------------------------------- */}
-          {/* Transition Alert */}
+          {/* Transition*/}
           {/* --------------------------------------------------------------------------------- */}
           <Grid display="flex" alignItems="stretch" size={12}>
             <ChildCard title="Transition" codeModel={<TransitionCode />}>
               <Stack spacing={1}>
                 <Collapse in={open}>
-                  <Alert
-                    variant="filled"
+                  <variant="filled"
                     severity="info"
                     sx={{ mb: 1 }}
                     action={
@@ -151,7 +149,7 @@ const ExAlert = () => {
                     }
                   >
                     Close me!
-                  </Alert>
+                  </>
                 </Collapse>
               </Stack>
               <Button
@@ -171,4 +169,4 @@ const ExAlert = () => {
   );
 };
 
-export default ExAlert;
+export default Ex;

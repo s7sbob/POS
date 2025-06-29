@@ -61,13 +61,10 @@ function updatePageFile(filePath: string) {
     }
     
     fs.writeFileSync(filePath, content);
-    console.log(`✅ Updated: ${filePath}`);
-  } catch (error) {
-    console.error(`❌ Error updating ${filePath}:`, error);
-  }
+    } catch (error) {
+    }
 }
 
 // تطبيق التحديثات على كل الصفحات
 PAGES_TO_UPDATE.forEach(updatePageFile);
 
-console.log('🎉 All pages updated with permission props!');

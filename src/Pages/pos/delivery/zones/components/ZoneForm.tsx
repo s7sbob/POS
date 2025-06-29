@@ -2,7 +2,7 @@
 import React from 'react';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
-  Grid, TextField, Button, Box, Typography, Switch,
+  Grid, TextField, Button, Switch,
   FormControlLabel, FormControl, InputLabel, Select, MenuItem
 } from '@mui/material';
 import { IconDeviceFloppy, IconPlus as IconPlusNew } from '@tabler/icons-react';
@@ -39,7 +39,7 @@ const ZoneForm: React.FC<Props> = ({
     name: '',
     deliveryCharge: 0,
     defaultBonus: 0,
-    branchId: defaultBranch?.id || '',
+  branchId: defaultBranch?.id || '', // ⭐ إضافة الفرع الافتراضي
     isActive: true
   };
 
@@ -102,8 +102,7 @@ const ZoneForm: React.FC<Props> = ({
         }, 100);
       }
     } catch (error) {
-      console.error('Submit error:', error);
-    } finally {
+      } finally {
       setIsSubmitting(false);
     }
   };
@@ -177,6 +176,31 @@ const ZoneForm: React.FC<Props> = ({
                 )}
               />
             </Grid>
+
+<Grid item xs={12}>
+  <Controller
+    name="branchId"
+    control={control}
+    render={({ field }) => (
+      <FormControl fullWidth>
+        <InputLabel>{t('deliveryZones.form.branch')}</InputLabel>
+        <Select
+          {...field}
+          label={t('deliveryZones.form.branch')}
+        >
+          <MenuItem value="">
+            <em>{t('deliveryZones.form.allBranches')}</em>
+          </MenuItem>
+          {branches.map((branch) => (
+            <MenuItem key={branch.id} value={branch.id}>
+              {branch.name}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+    )}
+  />
+</Grid>
 
             {mode === 'edit' && branches.length > 1 && (
               <Grid item xs={12}>

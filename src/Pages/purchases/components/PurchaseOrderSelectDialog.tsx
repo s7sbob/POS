@@ -63,8 +63,7 @@ const PurchaseOrderSelectDialog: React.FC<Props> = ({ open, onClose, onSelect })
       setPurchaseOrders(submittedOrders);
       setFilteredOrders(submittedOrders);
     } catch (error) {
-      console.error('Error loading purchase orders:', error);
-    } finally {
+      } finally {
       setLoading(false);
     }
   };
@@ -75,7 +74,6 @@ const PurchaseOrderSelectDialog: React.FC<Props> = ({ open, onClose, onSelect })
       onSelect(fullPurchaseOrder);
       onClose();
     } catch (error) {
-      console.error('Error loading purchase order details:', error);
       onSelect(purchaseOrder);
       onClose();
     }

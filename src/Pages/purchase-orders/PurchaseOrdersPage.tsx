@@ -1,8 +1,7 @@
 // File: src/pages/purchases/purchase-orders/PurchaseOrdersPage.tsx
 import React from 'react';
 import {
-  Container, useMediaQuery,
-  Snackbar, Alert, Box, Typography, Fab, Badge
+  Container, useMediaQuery, Box, Typography, Fab, Badge
 } from '@mui/material';
 import { IconFilter } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
@@ -17,16 +16,12 @@ import * as warehousesApi from 'src/utils/api/pagesApi/warehousesApi';
 import { PurchaseOrder } from 'src/utils/api/pagesApi/purchaseOrdersApi';
 import { t } from 'i18next';
 
-
-
 const PurchaseOrdersPage: React.FC = () => {
   const navigate = useNavigate();
   const [purchaseOrders, setPurchaseOrders] = React.useState<PurchaseOrder[]>([]);
   const [suppliers, setSuppliers] = React.useState<Array<{ id: string; name: string }>>([]);
   const [warehouses, setWarehouses] = React.useState<Array<{ id: string; name: string }>>([]);
-  const [query, setQuery] = React.useState('');
-  const [error, setErr] = React.useState('');
-  const [loading, setLoad] = React.useState(true);
+  const [query, setQuery] = React.useState('');  const [loading, setLoad] = React.useState(true);
   const [filterOpen, setFilterOpen] = React.useState(false);
 
   const isDownSm = useMediaQuery((th: any) => th.breakpoints.down('sm'));
@@ -49,9 +44,7 @@ const PurchaseOrdersPage: React.FC = () => {
     try {
       const purchaseOrdersData = await apiSrv.getAll();
       setPurchaseOrders(purchaseOrdersData);
-    } catch (e: any) {
-      setErr(e?.message || 'Failed to load purchase orders');
-    }
+    } catch (e: any) {    }
   };
 
   const fetchSuppliers = async () => {
@@ -59,8 +52,7 @@ const PurchaseOrdersPage: React.FC = () => {
       const suppliersData = await suppliersApi.getAll();
       setSuppliers(suppliersData.map((s: { id: any; name: any; }) => ({ id: s.id, name: s.name })));
     } catch (e: any) {
-      console.error('Failed to load suppliers:', e);
-    }
+      }
   };
 
   const fetchWarehouses = async () => {
@@ -68,8 +60,7 @@ const PurchaseOrdersPage: React.FC = () => {
       const warehousesData = await warehousesApi.getAll();
       setWarehouses(warehousesData.map((w: { id: any; name: any; }) => ({ id: w.id, name: w.name })));
     } catch (e: any) {
-      console.error('Failed to load warehouses:', e);
-    }
+      }
   };
 
   React.useEffect(() => {
@@ -81,9 +72,7 @@ const PurchaseOrdersPage: React.FC = () => {
           fetchWarehouses()
         ]);
       }
-      catch (e: any) { 
-        setErr(e?.message || 'Load failed'); 
-      }
+      catch (e: any) {      }
       finally { 
         setLoad(false); 
       }
@@ -287,14 +276,7 @@ const PurchaseOrdersPage: React.FC = () => {
           totalResults={purchaseOrders.length}
           filteredResults={filtered.length}
         />
-      )}
-
-      <Snackbar open={!!error} autoHideDuration={6000} onClose={() => setErr('')}>
-        <Alert severity="error" onClose={() => setErr('')}>
-          {error}
-        </Alert>
-      </Snackbar>
-    </Container>
+      )}</Container>
   );
 };
 

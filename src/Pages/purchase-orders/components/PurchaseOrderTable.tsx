@@ -13,11 +13,10 @@ const PurchaseOrderTable: React.FC<Props> = ({ rows, onEdit }) => {
   const { t } = useTranslation();
 
   const handleEdit = (row: PurchaseOrder) => {
-    console.log('Edit button clicked for row:', row); // ✅ للتأكد من البيانات
+    // ✅ للتأكد من البيانات
 
     // ✅ تأكد من وجود id
     if (!row.id) {
-      console.error('Purchase order missing ID:', row);
       alert('خطأ: معرف أمر الشراء غير موجود');
       return;
     }
@@ -136,7 +135,6 @@ const PurchaseOrderTable: React.FC<Props> = ({ rows, onEdit }) => {
       getRowId={(row) => {
         // ✅ إصلاح: تأكد من وجود id وإلا اطبع خطأ
         if (!row.id) {
-          console.error('Row missing ID:', row);
           return `temp-${Math.random()}`; // استخدم prefix للتمييز
         }
         return row.id;

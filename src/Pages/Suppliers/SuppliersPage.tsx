@@ -1,8 +1,7 @@
 // File: src/pages/suppliers/SuppliersPage.tsx
 import React from 'react';
 import {
-  Container, useMediaQuery,
-  Snackbar, Alert, Box, Fab, Badge, Button
+  Container, useMediaQuery, Box, Fab, Badge, Button
 } from '@mui/material';
 import { IconFilter, IconPlus } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
@@ -15,15 +14,11 @@ import MobileSuppliersFilter, { SuppliersFilterState } from './components/mobile
 import * as apiSrv from 'src/utils/api/pagesApi/suppliersApi';
 import { Supplier } from 'src/utils/api/pagesApi/suppliersApi';
 
-
-
 const SuppliersPage: React.FC = () => {
   const { t } = useTranslation();
   const [suppliers, setSuppliers] = React.useState<Supplier[]>([]);
   const canAdd = true; // Set to true or fetch from permissions/props as needed
-  const [query, setQuery] = React.useState('');
-  const [error, setErr] = React.useState('');
-  const [loading, setLoad] = React.useState(true);
+  const [query, setQuery] = React.useState('');  const [loading, setLoad] = React.useState(true);
   const [filterOpen, setFilterOpen] = React.useState(false);
   const [dialog, setDialog] = React.useState<{
     open: boolean;
@@ -47,9 +42,7 @@ const SuppliersPage: React.FC = () => {
     try {
       const suppliersData = await apiSrv.getAll();
       setSuppliers(suppliersData);
-    } catch (e: any) {
-      setErr(e?.message || 'Failed to load suppliers');
-    }
+    } catch (e: any) {    }
   };
 
   React.useEffect(() => {
@@ -57,9 +50,7 @@ const SuppliersPage: React.FC = () => {
       try { 
         await fetchSuppliers();
       }
-      catch (e: any) { 
-        setErr(e?.message || 'Load failed'); 
-      }
+      catch (e: any) {      }
       finally { 
         setLoad(false); 
       }
@@ -138,26 +129,18 @@ const SuppliersPage: React.FC = () => {
   /* ───── CRUD ───── */
   const handleAdd = async (data: any) => {
     try {
-      console.log('Adding supplier:', data);
       await apiSrv.add(data);
       await fetchSuppliers();
     } catch (e: any) {
-      console.error('Add error:', e);
-      const msg = e?.errors?.SupplierName?.[0] || e?.message || 'Add failed';
-      setErr(msg);
       throw e;
     }
   };
 
   const handleUpdate = async (data: any) => {
     try {
-      console.log('Updating supplier:', data);
       await apiSrv.update(data);
       await fetchSuppliers();
     } catch (e: any) {
-      console.error('Update error:', e);
-      const msg = e?.errors?.SupplierName?.[0] || e?.message || 'Update failed';
-      setErr(msg);
       throw e;
     }
   };
@@ -268,15 +251,7 @@ const SuppliersPage: React.FC = () => {
         initialValues={dialog.current}
         onClose={() => setDialog({ open: false, mode: 'add', current: undefined })}
         onSubmit={handleSubmit}
-      />
-
-      <Snackbar open={!!error} autoHideDuration={6000} onClose={() => setErr('')}>
-        <Alert severity="error" onClose={() => setErr('')}>
-          {error}
-        </Alert>
-      </Snackbar>
-
-      {loading && <div>Loading…</div>}
+      />{loading && <div>Loading…</div>}
     </Container>
   );
 };

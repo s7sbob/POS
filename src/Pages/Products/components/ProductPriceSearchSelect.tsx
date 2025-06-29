@@ -101,14 +101,11 @@ const loadInitialResults = React.useCallback(async () => {
 
     setOptions(filteredData);
   } catch (error) {
-    console.error('Error loading initial results:', error);
     setOptions([]);
   } finally {
     setLoading(false);
   }
 }, [excludeProductId]);
-
-
 
   // دالة البحث مع debounce
 const debouncedSearch = React.useMemo(
@@ -158,7 +155,6 @@ const debouncedSearch = React.useMemo(
       setOptions(filteredData);
     } catch (error) {
       if (typeof error === 'object' && error !== null && 'name' in error && (error as any).name !== 'AbortError') {
-        console.error('Error searching products:', error);
         setOptions([]);
       }
     } finally {
