@@ -12,6 +12,8 @@ import TableSectionsPage from 'src/Pages/pos/table-sections/TableSectionsPage';
 import PrinterSettingsPage from 'src/Pages/settings/components/PrinterSettings';
 import HallCaptainsPage from 'src/Pages/pos/hall-captains/HallCaptainsPage';
 import CustomersPage from 'src/Pages/pos/customers/CustomersPage';
+import OffersPage from 'src/Pages/pos/offers/OffersPage';
+import DeliveryCompaniesPage from 'src/Pages/pos/delivery/companies/DeliveryCompaniesPage';
 
 /* ***Layouts**** */
 const FullLayout = Loadable(lazy(() => import('../layouts/full/FullLayout')));
@@ -110,13 +112,16 @@ const Router = [
       // POS System Routes
       { path: '/pos/screens', element: <PosScreensPage /> },
       { path: '/pos/payment-methods', element: <PosPaymentMethodsPage /> },
-      {path: '/pos/products', element: <PosProductsPage /> },
-      {path: '/addition/products', element: <AdditionProducts />},
-      {path: '/pos/delivery/agents', element: <DeliveryAgentsPage/>},
-      {path: '/pos/delivery/zones', element: <DeliveryZonesPage/>},
-      {path: '/pos/table-sections', element: <TableSectionsPage />},
-      {path: '/pos/hall-captains', element: <HallCaptainsPage />},
-      {path: '/pos/customers',element: <CustomersPage />},
+      { path: '/pos/products', element: <PosProductsPage /> },
+      { path: '/addition/products', element: <AdditionProducts /> },
+      { path: '/pos/delivery/agents', element: <DeliveryAgentsPage /> },
+      { path: '/pos/delivery/zones', element: <DeliveryZonesPage /> },
+      { path: '/pos/table-sections', element: <TableSectionsPage /> },
+      { path: '/pos/hall-captains', element: <HallCaptainsPage /> },
+      { path: '/pos/customers', element: <CustomersPage /> },
+      // Offers and Delivery Companies
+      { path: '/pos/offers', element: <OffersPage /> },
+      { path: '/pos/delivery/companies', element: <DeliveryCompaniesPage /> },
 
       // Business Entities Routes
       { path: '/suppliers', element: <SuppliersPage /> },

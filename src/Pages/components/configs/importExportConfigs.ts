@@ -1539,3 +1539,232 @@ export const customersImportExportConfig: ImportExportConfig = {
   },
   maxRows: 1000
 };
+
+/* ───── Offers Configuration ───── */
+export const offersImportExportConfig: ImportExportConfig = {
+  moduleName: 'offers.title',
+  moduleNameEn: 'Offers',
+  fileName: 'offers',
+  title: 'offers.title',
+  titleEn: 'Offers',
+  columns: [
+    {
+      field: 'name',
+      headerName: 'offers.form.name',
+      headerNameEn: 'Offer Name',
+      type: 'string',
+      required: true,
+      example: 'وجبة فاميلي',
+      exampleEn: 'Family Meal',
+      validate: (value) => {
+        if (!value || value.length < 2) return 'اسم العرض يجب أن يكون أكثر من حرفين';
+        if (value.length > 100) return 'اسم العرض طويل جداً';
+        return null;
+      }
+    },
+    {
+      field: 'priceType',
+      headerName: 'offers.form.priceType',
+      headerNameEn: 'Price Type',
+      type: 'string',
+      required: true,
+      example: 'Fixed',
+      exampleEn: 'Fixed',
+      validate: (value) => {
+        if (!['Fixed', 'Dynamic'].includes(value)) return 'نوع السعر يجب أن يكون Fixed أو Dynamic';
+        return null;
+      }
+    },
+    {
+      field: 'fixedPrice',
+      headerName: 'offers.form.fixedPrice',
+      headerNameEn: 'Fixed Price',
+      type: 'number',
+      required: false,
+      example: '99.00',
+      exampleEn: '99.00',
+      validate: (value) => {
+        if (value && value < 0) return 'السعر الثابت لا يمكن أن يكون سالب';
+        return null;
+      }
+    },
+    {
+      field: 'startDate',
+      headerName: 'offers.form.startDate',
+      headerNameEn: 'Start Date',
+      type: 'date',
+      required: true,
+      example: '2025-07-01',
+      exampleEn: '2025-07-01'
+    },
+    {
+      field: 'endDate',
+      headerName: 'offers.form.endDate',
+      headerNameEn: 'End Date',
+      type: 'date',
+      required: true,
+      example: '2025-07-31',
+      exampleEn: '2025-07-31'
+    },
+    {
+      field: 'isActive',
+      headerName: 'common.status',
+      headerNameEn: 'Status',
+      type: 'boolean',
+      required: false,
+      example: 'نعم',
+      exampleEn: 'Yes'
+    }
+  ],
+  onImport: async (data) => {
+    const results = { success: 0, errors: [] as string[] };
+    
+    for (let i = 0; i < data.length; i++) {
+      try {
+        
+        // يمكن إضافة API call هنا لاحقاً
+        // await offersApi.add({
+        //   name: item.name,
+        //   priceType: item.priceType,
+        //   fixedPrice: Number(item.fixedPrice) || 0,
+        //   startDate: new Date(item.startDate).toISOString(),
+        //   endDate: new Date(item.endDate).toISOString(),
+        //   orderTypeId: '1',
+        //   isActive: Boolean(item.isActive),
+        //   offerGroups: [],
+        //   offerItems: []
+        // });
+        
+        results.success++;
+      } catch (error: any) {
+        results.errors.push(`الصف ${i + 1}: ${error.message || 'خطأ في الإضافة'}`);
+      }
+    }
+    
+    return results;
+  },
+  maxRows: 500
+};
+/* ───── Delivery Companies Configuration ───── */
+export const deliveryCompaniesImportExportConfig: ImportExportConfig = {
+  moduleName: 'deliveryCompanies.title',
+  moduleNameEn: 'Delivery Companies',
+  fileName: 'delivery_companies',
+  title: 'deliveryCompanies.title',
+  titleEn: 'Delivery Companies',
+  columns: [
+    {
+      field: 'name',
+      headerName: 'deliveryCompanies.form.name',
+      headerNameEn: 'Company Name',
+      type: 'string',
+      required: true,
+      example: 'شركة توصيل المستقبل',
+      exampleEn: 'Future Delivery Company',
+      validate: (value) => {
+        if (!value || value.length < 2) return 'اسم الشركة يجب أن يكون أكثر من حرفين';
+        if (value.length > 100) return 'اسم الشركة طويل جداً';
+        return null;
+      }
+    },
+    {
+      field: 'paymentType',
+      headerName: 'deliveryCompanies.form.paymentType',
+      headerNameEn: 'Payment Type',
+      type: 'string',
+      required: true,
+      example: 'Cash',
+      exampleEn: 'Cash',
+      validate: (value) => {
+        if (!['Cash', 'Visa'].includes(value)) return 'نوع الدفع يجب أن يكون Cash أو Visa';
+        return null;
+      }
+    },
+    {
+      field: 'companySharePercentage',
+      headerName: 'deliveryCompanies.form.companySharePercentage',
+      headerNameEn: 'Company Share %',
+      type: 'number',
+      required: true,
+      example: '20.00',
+      exampleEn: '20.00',
+      validate: (value) => {
+        if (value < 0 || value > 100) return 'نسبة الشركة يجب أن تكون بين 0 و 100';
+        return null;
+      }
+    },
+    {
+      field: 'phone',
+      headerName: 'deliveryCompanies.form.phone',
+      headerNameEn: 'Phone Number',
+      type: 'string',
+      required: true,
+      example: '01012345678',
+      exampleEn: '01012345678',
+      validate: (value) => {
+        if (!value || !/^01[0-9]{9}$/.test(value)) return 'رقم هاتف غير صحيح';
+        return null;
+      }
+    },
+    {
+      field: 'email',
+      headerName: 'deliveryCompanies.form.email',
+      headerNameEn: 'Email',
+      type: 'string',
+      required: true,
+      example: 'info@company.com',
+      exampleEn: 'info@company.com',
+      validate: (value) => {
+        if (!value || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'بريد إلكتروني غير صحيح';
+        return null;
+      }
+    },
+    {
+      field: 'contactPerson',
+      headerName: 'deliveryCompanies.form.contactPerson',
+      headerNameEn: 'Contact Person',
+      type: 'string',
+      required: true,
+      example: 'أحمد علي',
+      exampleEn: 'Ahmed Ali'
+    },
+    {
+      field: 'isActive',
+      headerName: 'common.status',
+      headerNameEn: 'Status',
+      type: 'boolean',
+      required: false,
+      example: 'نعم',
+      exampleEn: 'Yes'
+    }
+  ],
+  onImport: async (data) => {
+    const results = { success: 0, errors: [] as string[] };
+    
+    for (let i = 0; i < data.length; i++) {
+      try {
+        
+        // يمكن إضافة API call هنا لاحقاً
+        // await deliveryCompaniesApi.add({
+        //   name: item.name,
+        //   paymentType: item.paymentType,
+        //   companySharePercentage: Number(item.companySharePercentage),
+        //   visaCollectionCommissionPercentage: 0,
+        //   taxPercentage: 0,
+        //   phone: item.phone,
+        //   email: item.email,
+        //   contactPerson: item.contactPerson,
+        //   notes: '',
+        //   isActive: Boolean(item.isActive)
+        // });
+        
+        results.success++;
+      } catch (error: any) {
+        results.errors.push(`الصف ${i + 1}: ${error.message || 'خطأ في الإضافة'}`);
+      }
+    }
+    
+    return results;
+  },
+  maxRows: 500
+};

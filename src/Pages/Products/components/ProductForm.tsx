@@ -289,7 +289,7 @@ const OptionGroupComponent: React.FC<{ groupIndex: number }> = ({ groupIndex }) 
     // إضافة المنتجات الجديدة فقط
     newProducts.forEach(product => {
       appendItem({
-        name: product.priceName,
+        name: `${product.productName} - ${product.priceName}`,
         productPriceId: product.productPriceId,
         useOriginalPrice: true,
         extraPrice: 0,

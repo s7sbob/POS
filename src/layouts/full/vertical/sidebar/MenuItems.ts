@@ -318,7 +318,19 @@ const SidebarConfig: MenuItem[] = [
   title: 'sidebar.customers',
   icon: IconUsers,
   href: '/pos/customers'
-}
+},
+{
+  id: uniqueId(),
+  title: 'sidebar.offers',
+  icon: IconTags,
+  href: '/pos/offers'
+},
+{
+  id: uniqueId(),
+  title: 'sidebar.deliveryCompanies',
+  icon: IconTruck,
+  href: '/pos/delivery/companies'
+},
 
         ]
       },
