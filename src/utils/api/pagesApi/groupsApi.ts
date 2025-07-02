@@ -86,9 +86,9 @@ export const add = async (body: {
       params: { 
         GroupName: body.name,
         parentid: body.parentId || '',
-        backcolor: body.backgroundColor || '123',
-        FontColor: body.fontColor || '123',
-        isActive: body.isActive ?? true // تمرير الحالة للـ API
+        backcolor: body.backgroundColor || 'ffffff', // أبيض افتراضي
+        FontColor: body.fontColor || '000000',       // أسود افتراضي
+        isActive: body.isActive ?? true
       } 
     }
   );
@@ -104,9 +104,9 @@ export const update = async (group: Group) => {
         GroupID: group.id,
         GroupName: group.name,
         parentid: group.parentId || '',
-        backcolor: group.backgroundColor,
-        FontColor: group.fontColor,
-        isActive: group.isActive // تمرير الحالة للـ API
+        backcolor: group.backgroundColor || 'ffffff',
+        FontColor: group.fontColor || '000000',
+        isActive: group.isActive
       },
     }
   );

@@ -33,23 +33,23 @@ const GroupForm: React.FC<Props> = ({
   open, mode, initialValues, parentGroup, allGroups, onClose, onSubmit
 }) => {
   const { t } = useTranslation();
-  const defaults: FormValues = { 
-    name: '', 
-    parentId: parentGroup?.id || '',
-    backgroundColor: '123',
-    fontColor: '123',
-    isActive: true // القيمة الافتراضية للمجموعات الجديدة
-  };
+const defaults: FormValues = { 
+  name: '', 
+  parentId: parentGroup?.id || '',
+  backgroundColor: 'ffffff', // أبيض
+  fontColor: '000000',       // أسود
+  isActive: true
+};
 
-  const { control, handleSubmit, reset, watch } = useForm<FormValues>({
-    defaultValues: mode === 'add' ? defaults : {
-      name: initialValues?.name ?? '',
-      parentId: initialValues?.parentId ?? '',
-      backgroundColor: initialValues?.backgroundColor ?? '123',
-      fontColor: initialValues?.fontColor ?? '123',
-      isActive: initialValues?.isActive ?? true, // تأكد من تمرير القيمة الصحيحة
-    },
-  });
+const { control, handleSubmit, reset, watch } = useForm<FormValues>({
+  defaultValues: mode === 'add' ? defaults : {
+    name: initialValues?.name ?? '',
+    parentId: initialValues?.parentId ?? '',
+    backgroundColor: initialValues?.backgroundColor ?? 'ffffff',
+    fontColor: initialValues?.fontColor ?? '000000',
+    isActive: initialValues?.isActive ?? true,
+  },
+});
 
   const backgroundColor = watch('backgroundColor');
   const fontColor = watch('fontColor');
@@ -157,39 +157,40 @@ const GroupForm: React.FC<Props> = ({
             </Grid>
 
             {/* ---------- Colors ---------- */}
-            <Grid item xs={6}>
-              <Controller
-                name="backgroundColor"
-                control={control}
-                render={({ field }) => (
-                  <TextField
-                    {...field}
-                    label={t('groups.backgroundColor')}
-                    type="color"
-                    fullWidth
-                    value={field.value === '123' ? '#ffffff' : `#${field.value}`}
-                    onChange={(e) => field.onChange(e.target.value.replace('#', ''))}
-                  />
-                )}
-              />
-            </Grid>
+<Grid item xs={6}>
+  <Controller
+    name="backgroundColor"
+    control={control}
+    render={({ field }) => (
+      <TextField
+        {...field}
+        label={t('groups.backgroundColor')}
+        type="color"
+        fullWidth
+        value={`#${field.value || 'ffffff'}`}
+        onChange={(e) => field.onChange(e.target.value.replace('#', ''))}
+      />
+    )}
+  />
+</Grid>
 
-            <Grid item xs={6}>
-              <Controller
-                name="fontColor"
-                control={control}
-                render={({ field }) => (
-                  <TextField
-                    {...field}
-                    label={t('groups.fontColor')}
-                    type="color"
-                    fullWidth
-                    value={field.value === '123' ? '#000000' : `#${field.value}`}
-                    onChange={(e) => field.onChange(e.target.value.replace('#', ''))}
-                  />
-                )}
-              />
-            </Grid>
+<Grid item xs={6}>
+  <Controller
+    name="fontColor"
+    control={control}
+    render={({ field }) => (
+      <TextField
+        {...field}
+        label={t('groups.fontColor')}
+        type="color"
+        fullWidth
+        value={`#${field.value || '000000'}`}
+        onChange={(e) => field.onChange(e.target.value.replace('#', ''))}
+      />
+    )}
+  />
+</Grid>
+
 
             {/* ---------- Preview ---------- */}
             <Grid item xs={12}>
@@ -199,9 +200,9 @@ const GroupForm: React.FC<Props> = ({
                   border: 1,
                   borderColor: 'divider',
                   borderRadius: 1,
-                  backgroundColor: backgroundColor !== '123' ? `#${backgroundColor}` : 'background.paper',
-                  color: fontColor !== '123' ? `#${fontColor}` : 'text.primary',
-                  opacity: isActive ? 1 : 0.5 // تأثير بصري للحالة غير النشطة
+    backgroundColor: `#${backgroundColor || 'ffffff'}`,
+    color: `#${fontColor || '000000'}`,
+    opacity: isActive ? 1 : 0.5
                 }}
               >
                 <Typography variant="body2" gutterBottom>
