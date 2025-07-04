@@ -22,6 +22,7 @@ import { useTranslation } from 'react-i18next';
 import { Product, searchProductPricesByNameOrBarcode } from 'src/utils/api/pagesApi/productsApi';
 import { Group } from 'src/utils/api/pagesApi/groupsApi';
 import { Unit } from 'src/utils/api/pagesApi/unitsApi';
+import { getUserBranchesFromStorage } from 'src/utils/branchUtils';
 import GroupTreeSelect from './GroupTreeSelect';
 import ProductPriceSearchSelect from './ProductPriceSearchSelect';
 import { useCopyPaste } from 'src/hooks/useCopyPaste';
@@ -38,7 +39,7 @@ type FormValues = {
   cost?: number;
   lastPurePrice: number;
   expirationDays: number;
-  isActive: boolean; // ⭐ إضافة isActive
+  isActive: boolean;
   posScreenId?: string;
   productPrices: Array<{
     productPriceId?: string;
@@ -46,12 +47,18 @@ type FormValues = {
     unitFactor: number;
     barcode: string;
     Price: number;
-    posPriceName?: string; // ⭐ إضافة posPriceName للـ POS/Addition
+    posPriceName?: string;
     productComponents: Array<{
       componentId?: string;
       rawProductPriceId: string;
       quantity: number;
       notes: string;
+    }>;
+    branchPrices: Array<{
+      id?: string;
+      rawBranchId: string;
+      price: number;
+      isActive: boolean;
     }>;
   }>;
   productOptionGroups: Array<{
@@ -93,16 +100,21 @@ interface ProductCopyData {
   description: string;
   reorderLevel: number;
   expirationDays: number;
-  isActive: boolean; // ⭐ إضافة isActive
+  isActive: boolean;
   posScreenId?: string;
   priceTemplates: Array<{
     unitId: string;
     unitFactor: number;
-    posPriceName?: string; // ⭐ إضافة posPriceName
+    posPriceName?: string;
     productComponents: Array<{
       rawProductPriceId: string;
       quantity: number;
       notes: string;
+    }>;
+    branchPrices: Array<{
+      rawBranchId: string;
+      price: number;
+      isActive: boolean;
     }>;
   }>;
   optionGroupTemplates: Array<{
@@ -134,6 +146,9 @@ const ProductForm: React.FC<Props> = ({
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [expandedPriceIndex, setExpandedPriceIndex] = React.useState<number | null>(null);
   const [currentTab, setCurrentTab] = React.useState(0);
+  
+  // الحصول على فروع المستخدم
+  const userBranches = getUserBranchesFromStorage();
   
   // إضافةstate
   const [, set] = React.useState<{
@@ -180,7 +195,7 @@ const ProductForm: React.FC<Props> = ({
     cost: 0,
     lastPurePrice: 0,
     expirationDays: 180,
-    isActive: true, // ⭐ إضافة isActive
+    isActive: true,
     posScreenId: '',
     productPrices: [],
     productOptionGroups: []
@@ -206,8 +221,8 @@ const ProductForm: React.FC<Props> = ({
       name: '',
       isRequired: false,
       allowMultiple: false,
-      minSelection: 1, // ⭐ الحد الأدنى 1
-      maxSelection: 1, // ⭐ الحد الأقصى 1
+      minSelection: 1,
+      maxSelection: 1,
       sortOrder: optionGroupFields.length,
       optionItems: []
     });
@@ -215,14 +230,13 @@ const ProductForm: React.FC<Props> = ({
 
 const OptionGroupComponent: React.FC<{ groupIndex: number }> = ({ groupIndex }) => {
   const [productSelectionOpen, setProductSelectionOpen] = React.useState(false);
-    const [groupName, setGroupName] = React.useState(''); // ⭐ state منفصل للاسم
+    const [groupName, setGroupName] = React.useState('');
 
   const { fields: itemFields, append: appendItem, remove: removeItem } = useFieldArray({
     control,
     name: `productOptionGroups.${groupIndex}.optionItems`
   });
 
-    // ⭐ تحديث الاسم عند تغيير القيمة بدون watch
   React.useEffect(() => {
     const subscription = watch((value) => {
       const currentName = value.productOptionGroups?.[groupIndex]?.name;
@@ -233,7 +247,6 @@ const OptionGroupComponent: React.FC<{ groupIndex: number }> = ({ groupIndex }) 
     return () => subscription.unsubscribe();
   }, [watch, groupIndex, groupName]);
 
-  // ⭐ الحصول على المنتجات المختارة حالياً
   const getCurrentlySelectedProducts = React.useCallback(() => {
     return itemFields
       .filter(item => item.productPriceId && !item.isCommentOnly)
@@ -252,26 +265,22 @@ const OptionGroupComponent: React.FC<{ groupIndex: number }> = ({ groupIndex }) 
     });
   };
 
-  // ⭐ تحديث handleAddMultipleProducts لمنع التكرار
   const handleAddMultipleProducts = (selectedProducts: Array<{
     productPriceId: string;
     productName: string;
     priceName: string;
     price: number;
   }>) => {
-    // الحصول على المنتجات الموجودة حالياً
     const existingProductPriceIds = new Set(
       itemFields
         .filter(item => item.productPriceId && !item.isCommentOnly)
         .map(item => item.productPriceId)
     );
 
-    // إزالة المنتجات المكررة من القائمة الجديدة
     const newProducts = selectedProducts.filter(
       product => !existingProductPriceIds.has(product.productPriceId)
     );
 
-    // إزالة المنتجات التي لم تعد مختارة
     const selectedProductPriceIds = new Set(selectedProducts.map(p => p.productPriceId));
     const itemsToRemove: number[] = [];
     
@@ -281,12 +290,10 @@ const OptionGroupComponent: React.FC<{ groupIndex: number }> = ({ groupIndex }) 
       }
     });
 
-    // إزالة المنتجات غير المختارة (من الآخر للأول لتجنب تغيير الفهارس)
     itemsToRemove.reverse().forEach(index => {
       removeItem(index);
     });
 
-    // إضافة المنتجات الجديدة فقط
     newProducts.forEach(product => {
       appendItem({
         name: `${product.productName} - ${product.priceName}`,
@@ -306,7 +313,6 @@ const OptionGroupComponent: React.FC<{ groupIndex: number }> = ({ groupIndex }) 
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%' }}>
             <IconGripVertical size={16} />
             <Typography variant="h6" sx={{ flex: 1 }}>
-              {/* ⭐ استخدام state بدلاً من watch */}
               {groupName || `${t('products.form.optionGroup')} ${groupIndex + 1}`}
             </Typography>
             
@@ -515,7 +521,6 @@ const OptionGroupComponent: React.FC<{ groupIndex: number }> = ({ groupIndex }) 
         </AccordionDetails>
       </Accordion>
 
-      {/* ⭐ تمرير المنتجات المختارة حالياً */}
       <ProductMultiSelectDialog
         open={productSelectionOpen}
         onClose={() => setProductSelectionOpen(false)}
@@ -530,7 +535,6 @@ const OptionGroupComponent: React.FC<{ groupIndex: number }> = ({ groupIndex }) 
 
   const watchedProductId = initialValues?.id;
 
-  // إعادة تعيين النموذج بعد النجاح في الحفظ
   React.useEffect(() => {
     if (isSubmitSuccessful && mode === 'add') {
       const timer = setTimeout(() => {
@@ -546,7 +550,6 @@ const OptionGroupComponent: React.FC<{ groupIndex: number }> = ({ groupIndex }) 
     }
   }, [isSubmitSuccessful, mode, reset]);
 
-  // Focus على اسم المنتج عند فتح المودال
   React.useEffect(() => {
     if (open) {
       const timer = setTimeout(() => {
@@ -560,7 +563,6 @@ const OptionGroupComponent: React.FC<{ groupIndex: number }> = ({ groupIndex }) 
     }
   }, [open]);
 
-  // إعادة تعيين النموذج عند تغيير البيانات
   React.useEffect(() => {
     if (open) {
       if (mode === 'add') {
@@ -574,7 +576,7 @@ const OptionGroupComponent: React.FC<{ groupIndex: number }> = ({ groupIndex }) 
           cost: initialValues.cost,
           lastPurePrice: initialValues.lastPurePrice,
           expirationDays: initialValues.expirationDays,
-          isActive: initialValues.isActive, // ⭐ إضافة isActive
+          isActive: initialValues.isActive,
           posScreenId: initialValues.posScreenId || '',
           productPrices: initialValues.productPrices?.map(p => ({
             productPriceId: p.id,
@@ -582,12 +584,18 @@ const OptionGroupComponent: React.FC<{ groupIndex: number }> = ({ groupIndex }) 
             unitFactor: p.unitFactor,
             barcode: p.barcode,
             Price: p.price,
-            posPriceName: p.posPriceName || '', // ⭐ إضافة posPriceName
+            posPriceName: p.posPriceName || '',
             productComponents: p.productComponents?.map(c => ({
               componentId: c.componentId,
               rawProductPriceId: c.rawProductPriceId,
               quantity: c.quantity,
               notes: c.notes || ''
+            })) || [],
+            branchPrices: p.branchPrices?.map(bp => ({
+              id: bp.id,
+              rawBranchId: bp.rawBranchId,
+              price: bp.price,
+              isActive: bp.isActive
             })) || []
           })) ?? [],
           productOptionGroups: initialValues.productOptionGroups?.map(g => ({
@@ -595,8 +603,8 @@ const OptionGroupComponent: React.FC<{ groupIndex: number }> = ({ groupIndex }) 
             name: g.name,
             isRequired: g.isRequired,
             allowMultiple: g.allowMultiple,
-            minSelection: Math.max(g.minSelection, 1), // ⭐ ضمان الحد الأدنى 1
-            maxSelection: Math.max(g.maxSelection, 1), // ⭐ ضمان الحد الأدنى 1
+            minSelection: Math.max(g.minSelection, 1),
+            maxSelection: Math.max(g.maxSelection, 1),
             sortOrder: g.sortOrder,
             optionItems: g.optionItems?.map(i => ({
               id: i.id,
@@ -631,7 +639,6 @@ const OptionGroupComponent: React.FC<{ groupIndex: number }> = ({ groupIndex }) 
 
   const flatPosScreens = React.useMemo(() => flattenPosScreens(posScreens), [posScreens]);
 
-  // دالة نسخ المنتج
   const handleCopyProduct = () => {
     const currentValues = getValues();
     
@@ -650,16 +657,21 @@ const OptionGroupComponent: React.FC<{ groupIndex: number }> = ({ groupIndex }) 
       description: currentValues.description,
       reorderLevel: currentValues.reorderLevel,
       expirationDays: currentValues.expirationDays,
-      isActive: currentValues.isActive, // ⭐ إضافة isActive
+      isActive: currentValues.isActive,
       posScreenId: currentValues.posScreenId,
       priceTemplates: currentValues.productPrices.map(price => ({
         unitId: price.unitId,
         unitFactor: price.unitFactor,
-        posPriceName: price.posPriceName, // ⭐ إضافة posPriceName
+        posPriceName: price.posPriceName,
         productComponents: price.productComponents.map(component => ({
           rawProductPriceId: component.rawProductPriceId,
           quantity: component.quantity,
           notes: component.notes
+        })),
+        branchPrices: price.branchPrices.map(bp => ({
+          rawBranchId: bp.rawBranchId,
+          price: bp.price,
+          isActive: bp.isActive
         }))
       })),
       optionGroupTemplates: currentValues.productOptionGroups.map(group => ({
@@ -683,7 +695,6 @@ const OptionGroupComponent: React.FC<{ groupIndex: number }> = ({ groupIndex }) 
     productCopyPaste.copyData(copyData);
   };
 
-  // دالة لصق المنتج
   const handlePasteProduct = () => {
     const pastedData = productCopyPaste.pasteData();
     
@@ -694,7 +705,7 @@ const OptionGroupComponent: React.FC<{ groupIndex: number }> = ({ groupIndex }) 
     setValue('description', pastedData.description);
     setValue('reorderLevel', pastedData.reorderLevel);
     setValue('expirationDays', pastedData.expirationDays);
-    setValue('isActive', pastedData.isActive); // ⭐ إضافة isActive
+    setValue('isActive', pastedData.isActive);
     setValue('posScreenId', pastedData.posScreenId || '');
     
     setValue('productPrices', pastedData.priceTemplates.map(template => ({
@@ -703,8 +714,9 @@ const OptionGroupComponent: React.FC<{ groupIndex: number }> = ({ groupIndex }) 
       unitFactor: template.unitFactor,
       barcode: '',
       Price: 0,
-      posPriceName: template.posPriceName || '', // ⭐ إضافة posPriceName
-      productComponents: template.productComponents
+      posPriceName: template.posPriceName || '',
+      productComponents: template.productComponents,
+      branchPrices: template.branchPrices
     })));
 
     setValue('productOptionGroups', pastedData.optionGroupTemplates.map(template => ({
@@ -718,17 +730,24 @@ const OptionGroupComponent: React.FC<{ groupIndex: number }> = ({ groupIndex }) 
     })));
   };
 
-  const addPrice = () => {
+ const addPrice = () => {
     const newIndex = fields.length;
     append({
       unitId: '',
       unitFactor: 1,
       barcode: '',
       Price: 0,
-      posPriceName: '', // ⭐ إضافة posPriceName
-      productComponents: []
+      posPriceName: '',
+      productComponents: [],
+      branchPrices: userBranches.map(branch => ({
+        rawBranchId: branch.id,
+        price: 0,
+        isActive: true
+      }))
     });
     setLastAddedPriceIndex(newIndex);
+    // العودة لتاب الأسعار الافتراضية عند إضافة سعر جديد
+    setExpandedPriceIndex(0);
   };
 
 const submit = async (data: FormValues, saveAction: 'save' | 'saveAndNew') => {
@@ -758,16 +777,15 @@ const submit = async (data: FormValues, saveAction: 'save' | 'saveAndNew') => {
               rawProductPriceId: component.rawProductPriceId,
               quantity: Number(component.quantity),
               notes: component.notes || ""
-            })) || []
+            })) || [],
+            branchPrices: price.branchPrices?.filter(bp => bp.price > 0) || []
           };
 
-          // ⭐ إضافة unitId و unitFactor فقط للـ Materials (type 2)
           if (productType === 2) {
             priceData.unitId = price.unitId;
             priceData.unitFactor = Number(price.unitFactor);
           }
 
-          // ⭐ إضافة posPriceName فقط للـ POS (1) أو Addition (3)
           if (productType === 1 || productType === 3) {
             priceData.posPriceName = price.posPriceName || '';
           }
@@ -816,16 +834,15 @@ const submit = async (data: FormValues, saveAction: 'save' | 'saveAndNew') => {
               rawProductPriceId: component.rawProductPriceId,
               quantity: Number(component.quantity),
               notes: component.notes || ""
-            })) || []
+            })) || [],
+            branchPrices: price.branchPrices?.filter(bp => bp.price > 0) || []
           };
 
-          // ⭐ إضافة unitId و unitFactor فقط للـ Materials (type 2)
           if (productType === 2) {
             priceData.unitId = price.unitId;
             priceData.unitFactor = Number(price.unitFactor);
           }
 
-          // ⭐ إضافة posPriceName فقط للـ POS (1) أو Addition (3)
           if (productType === 1 || productType === 3) {
             priceData.posPriceName = price.posPriceName || '';
           }
@@ -871,8 +888,6 @@ const submit = async (data: FormValues, saveAction: 'save' | 'saveAndNew') => {
     setIsSubmitting(false);
   }
 };
-
-// ⭐ دالة لتحويل أسماء الحقول للعربية
 
   // مكون إدارة المكونات لكل سعر
   const ProductComponentsManager: React.FC<{ priceIndex: number }> = React.memo(({ priceIndex }) => {
@@ -1144,21 +1159,45 @@ const submit = async (data: FormValues, saveAction: 'save' | 'saveAndNew') => {
             </IconButton>
           </Box>
 
-          <Controller
-            name={`productPrices.${index}.barcode`}
-            control={control}
-            render={({ field }) => (
-              <TextField
-                {...field}
-                label={t('products.barcode')}
-                placeholder={t('products.barcodeOptional')}
-                fullWidth
-                size="small"
-              />
-            )}
-          />
+<Controller
+  name={`productPrices.${index}.Price`}
+  control={control}
+  render={({ field }) => (
+    <TextField
+      {...field}
+      type="number"
+      size="small"
+      inputProps={{ 
+        min: 0, 
+        step: 0.01,
+        onBlur: (e) => {
+          // التأكد من حفظ القيمة عند فقدان التركيز
+          const value = parseFloat(e.target.value) || 0;
+          field.onChange(value);
+        }
+      }}
+      onFocus={(e) => {
+        e.target.select();
+        // منع re-render أثناء التركيز
+        e.preventDefault();
+      }}
+      onChange={(e) => {
+        // تأخير التحديث لتجنب re-render المستمر
+        const value = e.target.value;
+        setTimeout(() => {
+          field.onChange(parseFloat(value) || 0);
+        }, 100);
+      }}
+      onKeyDown={(e) => {
+        // منع فقدان التركيز عند الضغط على مفاتيح معينة
+        if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+          e.preventDefault();
+        }
+      }}
+    />
+  )}
+/>
 
-          {/* ⭐ إضافة posPriceName للـ POS/Addition */}
           {(productType === 1 || productType === 3) && (
             <Controller
               name={`productPrices.${index}.posPriceName`}
@@ -1174,7 +1213,6 @@ const submit = async (data: FormValues, saveAction: 'save' | 'saveAndNew') => {
             />
           )}
 
-          {/* ⭐ إخفاء الوحدة ومعامل التحويل للـ POS/Addition */}
           {productType === 2 && (
             <>
               <Controller
@@ -1249,7 +1287,7 @@ const submit = async (data: FormValues, saveAction: 'save' | 'saveAndNew') => {
     </Card>
   );
 
-  // مكون الجدول للشاشات الكبيرة
+// مكون الجدول للشاشات الكبيرة
 const DesktopPriceTable = () => (
   <TableContainer component={Paper} variant="outlined">
     <Table size="small">
@@ -1293,7 +1331,6 @@ const DesktopPriceTable = () => (
                         size="small"
                         placeholder={t('products.barcodeOptional')}
                         fullWidth
-                        // ⭐ إضافة keyboard navigation
                         onKeyDown={(e) => {
                           if (e.key === 'ArrowDown') {
                             e.preventDefault();
@@ -1317,7 +1354,6 @@ const DesktopPriceTable = () => (
                             nextField?.focus();
                           }
                         }}
-                        // ⭐ تحديد النص عند Focus
                         onFocus={(e) => e.target.select()}
                       />
                     )}
@@ -1527,14 +1563,23 @@ const DesktopPriceTable = () => (
 
   return (
     <>
-      <Dialog 
-        open={open} 
-        onClose={onClose} 
-        maxWidth="lg" 
-        fullWidth
-        disableEscapeKeyDown={false}
-        fullScreen={isMobile}
-      >
+<Dialog 
+  open={open} 
+  onClose={onClose} 
+  maxWidth="lg" 
+  fullWidth
+  fullScreen={isMobile}
+  scroll="body" // تغيير من paper إلى body
+  sx={{
+    '& .MuiDialog-paper': {
+      maxHeight: isMobile ? '100vh' : '90vh',
+      height: isMobile ? '100vh' : 'auto',
+      margin: isMobile ? 0 : 2,
+      overflowY: 'auto',
+      overflowX: 'hidden'
+    }
+  }}
+>
         <DialogTitle>
           <Box sx={{ 
             display: 'flex', 
@@ -1580,7 +1625,7 @@ const DesktopPriceTable = () => (
                   color="error"
                   sx={{ minWidth: { xs: 'auto', sm: 100 } }}
                 >
-                  {isMobile ? '' : t('common.clear')}
+                  {isMobile ? '' : t('common.clearCopy')}
                 </Button>
               )}
             </Stack>
@@ -1588,321 +1633,480 @@ const DesktopPriceTable = () => (
         </DialogTitle>
 
         <form>
-          <DialogContent sx={{ maxHeight: isMobile ? 'none' : '70vh', overflowY: 'auto' }}>
-            
-            {/* Tabs للتنقل */}
+<DialogContent 
+  sx={{ 
+    maxHeight: 'none', // إزالة maxHeight
+    height: 'auto',
+    overflowY: 'visible', // تغيير من auto إلى visible
+    overflowX: 'hidden',
+    p: isMobile ? 1.5 : 2,
+    '&::-webkit-scrollbar': {
+      display: 'none' // إخفاء scrollbar في webkit browsers
+    },
+    scrollbarWidth: 'none', // إخفاء scrollbar في Firefox
+    msOverflowStyle: 'none' // إخفاء scrollbar في IE/Edge
+  }}
+>            {/* Tabs للتنقل */}
             <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-<Tabs value={currentTab} onChange={(_, newValue) => setCurrentTab(newValue)}>
-  <Tab label={t('products.tabs.basicInfoAndPrices')} /> {/* ⭐ تاب مدمج */}
-  {(productType === 1 || productType === 3) && <Tab label={t('products.tabs.options')} />}
-</Tabs>
+              <Tabs value={currentTab} onChange={(_, newValue) => setCurrentTab(newValue)}>
+                <Tab label={t('products.basicInfo')} />
+                {(productType === 1 || productType === 3) && <Tab label={t('products.optionGroups')} />}
+              </Tabs>
             </Box>
 
-{/* Tab 0: المعلومات الأساسية والأسعار */}
-{currentTab === 0 && (
-  <Box>
-    {/* المعلومات الأساسية */}
-    <Typography variant="h6" sx={{ mb: 3, color: 'primary.main' }}>
-      {t('products.tabs.basicInfo')}
-    </Typography>
-    
-    <Grid container spacing={3} sx={{ mb: 4 }}>
-      <Grid item xs={12} md={6}>
-        <Controller
-          name="productName"
-          control={control}
-          rules={{ required: t('products.nameRequired') }}
-          render={({ field, fieldState }) => (
-            <TextField
-              {...field}
-              inputRef={nameFieldRef}
-              label={t('products.name')}
-              fullWidth
-              error={!!fieldState.error}
-              helperText={fieldState.error?.message}
-              autoFocus
-              onFocus={(e) => e.target.select()}
-            />
-          )}
-        />
-      </Grid>
+            {/* Tab 0: المعلومات الأساسية والأسعار */}
+            {currentTab === 0 && (
+              <Grid container spacing={3}>
+                {/* Basic Info Section */}
+                <Grid item xs={12}>
+                  <Typography variant="h6" sx={{ mb: 2, color: 'primary.main' }}>
+                    {t('products.basicInfo')}
+                  </Typography>
+                </Grid>
 
-      <Grid item xs={12} md={6}>
-        <Controller
-          name="groupId"
-          control={control}
-          rules={{ required: t('products.groupRequired') }}
-          render={({ field, fieldState }) => (
-            <Box>
-              <GroupTreeSelect
-                groups={groups}
-                value={field.value}
-                onChange={field.onChange}
-                label={t('products.group')}
-              />
-              {fieldState.error && (
-                <Typography variant="caption" color="error" sx={{ mt: 1, ml: 2 }}>
-                  {fieldState.error.message}
-                </Typography>
-              )}
-            </Box>
-          )}
-        />
-      </Grid>
+                <Grid item xs={12} md={6}>
+                  <Controller
+                    name="productName"
+                    control={control}
+                    rules={{ required: t('products.nameRequired') }}
+                    render={({ field, fieldState }) => (
+                      <TextField
+                        {...field}
+                        inputRef={nameFieldRef}
+                        label={t('products.name')}
+                        fullWidth
+                        error={!!fieldState.error}
+                        helperText={fieldState.error?.message}
+                        autoFocus
+                        onFocus={(e) => e.target.select()}
+                      />
+                    )}
+                  />
+                </Grid>
 
-      {productType === 1 && (
-        <Grid item xs={12} md={6}>
-          <Controller
-            name="posScreenId"
-            control={control}
-            render={({ field }) => (
-              <FormControl fullWidth>
-                <InputLabel>{t('products.form.posScreen')}</InputLabel>
-                <Select
-                  {...field}
-                  label={t('products.form.posScreen')}
-                >
-                  <MenuItem value="">
-                    <em>{t('products.form.noPosScreen')}</em>
-                  </MenuItem>
-                  {flatPosScreens.map((screen) => (
-                    <MenuItem key={screen.id} value={screen.id}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <span style={{ marginLeft: screen.displayOrder * 20 }}>
-                          {'└'.repeat(screen.displayOrder)} {screen.displayOrder > 0 && ' '}
-                        </span>
-                        <span>{screen.icon}</span>
-                        <span>{screen.name}</span>
+                <Grid item xs={12} md={6}>
+                  <Controller
+                    name="groupId"
+                    control={control}
+                    rules={{ required: t('products.groupRequired') }}
+                    render={({ field, fieldState }) => (
+                      <Box>
+                        <GroupTreeSelect
+                          groups={groups}
+                          value={field.value}
+                          onChange={field.onChange}
+                          label={t('products.group')}
+                        />
+                        {fieldState.error && (
+                          <Typography variant="caption" color="error" sx={{ mt: 1, ml: 2 }}>
+                            {fieldState.error.message}
+                          </Typography>
+                        )}
                       </Box>
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+                    )}
+                  />
+                </Grid>
+
+                {productType === 1 && flatPosScreens.length > 0 && (
+                  <Grid item xs={12} md={6}>
+                    <Controller
+                      name="posScreenId"
+                      control={control}
+                      render={({ field }) => (
+                        <FormControl fullWidth>
+                          <InputLabel>{t('products.posScreen')}</InputLabel>
+                          <Select
+                            {...field}
+                            label={t('products.posScreen')}
+                          >
+                            <MenuItem value="">
+                              <em>{t('products.selectPosScreen')}</em>
+                            </MenuItem>
+                            {flatPosScreens.map((screen) => (
+                              <MenuItem key={screen.id} value={screen.id}>
+                                {'  '.repeat(screen.displayOrder || 0) + screen.name}
+                              </MenuItem>
+                            ))}
+                          </Select>
+                        </FormControl>
+                      )}
+                    />
+                  </Grid>
+                )}
+
+                <Grid item xs={12}>
+                  <Controller
+                    name="description"
+                    control={control}
+                    render={({ field }) => (
+                      <TextField
+                        {...field}
+                        label={t('products.description')}
+                        fullWidth
+                        multiline
+                        rows={3}
+                        onFocus={(e) => e.target.select()}
+                      />
+                    )}
+                  />
+                </Grid>
+
+                <Grid item xs={12} md={4}>
+                  <Controller
+                    name="reorderLevel"
+                    control={control}
+                    render={({ field }) => (
+                      <TextField
+                        {...field}
+                        label={t('products.reorderLevel')}
+                        type="number"
+                        fullWidth
+                        inputProps={{ min: 0 }}
+                        onFocus={(e) => e.target.select()}
+                      />
+                    )}
+                  />
+                </Grid>
+
+                {productType === 2 && (
+                  <Grid item xs={12} md={4}>
+                    <Controller
+                      name="cost"
+                      control={control}
+                      render={({ field }) => (
+                        <TextField
+                          {...field}
+                          label={t('products.cost')}
+                          type="number"
+                          fullWidth
+                          inputProps={{ min: 0, step: 0.01 }}
+                          onFocus={(e) => e.target.select()}
+                        />
+                      )}
+                    />
+                  </Grid>
+                )}
+
+                <Grid item xs={12} md={4}>
+                  <Controller
+                    name="lastPurePrice"
+                    control={control}
+                    render={({ field }) => (
+                      <TextField
+                        {...field}
+                        label={t('products.lastPurePrice')}
+                        type="number"
+                        fullWidth
+                        inputProps={{ min: 0, step: 0.01 }}
+                        onFocus={(e) => e.target.select()}
+                      />
+                    )}
+                  />
+                </Grid>
+
+                <Grid item xs={12} md={4}>
+                  <Controller
+                    name="expirationDays"
+                    control={control}
+                    render={({ field }) => (
+                      <TextField
+                        {...field}
+                        label={t('products.expirationDays')}
+                        type="number"
+                        fullWidth
+                        inputProps={{ min: 0 }}
+                        onFocus={(e) => e.target.select()}
+                      />
+                    )}
+                  />
+                </Grid>
+
+                <Grid item xs={12}>
+                  <FormControlLabel
+                    control={
+                      <Controller
+                        name="isActive"
+                        control={control}
+                        render={({ field }) => (
+                          <Switch
+                            checked={field.value}
+                            onChange={field.onChange}
+                          />
+                        )}
+                      />
+                    }
+                    label={t('products.form.isActive')}
+                  />
+                </Grid>
+
+                {/* Pricing Section */}
+   {/* Pricing Section */}
+                <Grid item xs={12}>
+                  <Divider sx={{ my: 2 }} />
+                  
+                  {/* عنوان قسم الأسعار */}
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                    <Typography variant="h6" sx={{ color: 'primary.main' }}>
+                      {t('products.pricing')}
+                    </Typography>
+                    <Button
+                      variant="contained"
+                      startIcon={<IconPlus size={20} />}
+                      onClick={addPrice}
+                      size={isMobile ? "small" : "medium"}
+                    >
+                      {t('products.addPrice')}
+                    </Button>
+                  </Box>
+
+                  {/* نظام التابات للأسعار */}
+                  {userBranches.length === 0 ? (
+                    // إذا لم توجد فروع، عرض الأسعار الافتراضية فقط
+                    <Box>
+                      <Typography variant="subtitle1" sx={{ mb: 2, color: 'primary.main' }}>
+                        {t('products.defaultPrices')} ({fields.length})
+                      </Typography>
+                      
+                      {fields.length === 0 ? (
+                        <Card variant="outlined">
+                          <CardContent>
+                            <Typography color="text.secondary" align="center">
+                              {t('products.noPrices')}
+                            </Typography>
+                          </CardContent>
+                        </Card>
+                      ) : isMobile ? (
+                        <Stack spacing={2}>
+                          {fields.map((field, index) => (
+                            <MobilePriceCard 
+                              key={field.id} 
+                              index={index} 
+                              onRemove={() => remove(index)} 
+                            />
+                          ))}
+                        </Stack>
+                      ) : (
+                        <DesktopPriceTable />
+                      )}
+                    </Box>
+                  ) : (
+                    // إذا وجدت فروع، عرض نظام التابات
+                    <Box>
+                      {/* التابات */}
+                      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
+                        <Tabs 
+                          value={expandedPriceIndex || 0} 
+                          onChange={(_, newValue) => setExpandedPriceIndex(newValue)}
+                          variant={isMobile ? "scrollable" : "standard"}
+                          scrollButtons="auto"
+                        >
+                          <Tab 
+                            label={`${t('products.defaultPrices')} (${fields.length})`}
+                            id="prices-tab-0"
+                            aria-controls="prices-tabpanel-0"
+                          />
+                          {userBranches.map((branch, index) => (
+                            <Tab
+                              key={branch.id}
+                              label={branch.name}
+                              id={`prices-tab-${index + 1}`}
+                              aria-controls={`prices-tabpanel-${index + 1}`}
+                            />
+                          ))}
+                        </Tabs>
+                      </Box>
+
+                      {/* محتوى التابات */}
+                      
+                      {/* تاب الأسعار الافتراضية */}
+                      {(expandedPriceIndex || 0) === 0 && (
+                        <Box>
+                          {fields.length === 0 ? (
+                            <Card variant="outlined">
+                              <CardContent>
+                                <Typography color="text.secondary" align="center">
+                                  {t('products.noPrices')}
+                                </Typography>
+                              </CardContent>
+                            </Card>
+                          ) : isMobile ? (
+                            <Stack spacing={2}>
+                              {fields.map((field, index) => (
+                                <MobilePriceCard 
+                                  key={field.id} 
+                                  index={index} 
+                                  onRemove={() => remove(index)} 
+                                />
+                              ))}
+                            </Stack>
+                          ) : (
+                            <DesktopPriceTable />
+                          )}
+                        </Box>
+                      )}
+
+                      {/* تابات أسعار الفروع */}
+                      {userBranches.map((branch, branchIndex) => (
+                        (expandedPriceIndex || 0) === branchIndex + 1 && (
+                          <Box key={branch.id}>
+                            <Typography variant="subtitle1" sx={{ mb: 2, color: 'secondary.main' }}>
+                              {t('products.branchPrices')} - {branch.name}
+                            </Typography>
+                            
+                            {fields.length === 0 ? (
+                              <Card variant="outlined">
+                                <CardContent>
+                                  <Typography color="text.secondary" align="center">
+                                    {t('products.noPricesForBranchPricing')}
+                                  </Typography>
+                                </CardContent>
+                              </Card>
+                            ) : (
+                              <TableContainer component={Paper} variant="outlined">
+                                <Table size="small">
+                                  <TableHead>
+                                    <TableRow>
+                                      <TableCell>{t('products.productPrice')}</TableCell>
+                                      <TableCell>{t('products.defaultPrice')}</TableCell>
+                                      <TableCell>{t('products.branchPrice')}</TableCell>
+                                      <TableCell>{t('products.difference')}</TableCell>
+                                    </TableRow>
+                                  </TableHead>
+                                  <TableBody>
+                                    {fields.map((field, priceIndex) => {
+                                      const defaultPrice = watch(`productPrices.${priceIndex}.Price`) || 0;
+                                      const branchPrices = watch(`productPrices.${priceIndex}.branchPrices`) || [];
+                                      const branchPriceIndex = branchPrices.findIndex(
+                                        (bp: any) => bp.rawBranchId === branch.id
+                                      );
+                                      const branchPrice = branchPriceIndex >= 0 
+                                        ? branchPrices[branchPriceIndex]?.price || 0
+                                        : 0;
+                                      const difference = branchPrice - defaultPrice;
+                                      const priceName = productType === 1 || productType === 3 
+                                        ? watch(`productPrices.${priceIndex}.posPriceName`) || `${t('products.price')} ${priceIndex + 1}`
+                                        : `${t('products.price')} ${priceIndex + 1}`;
+
+                                      return (
+                                        <TableRow key={field.id}>
+                                          <TableCell>
+                                            <Typography variant="body2" fontWeight={500}>
+                                              {priceName}
+                                            </Typography>
+                                            {watch(`productPrices.${priceIndex}.barcode`) && (
+                                              <Typography variant="caption" color="text.secondary">
+                                                {watch(`productPrices.${priceIndex}.barcode`)}
+                                              </Typography>
+                                            )}
+                                          </TableCell>
+                                          <TableCell>
+                                            <Typography variant="body2" color="text.secondary">
+                                              {defaultPrice.toFixed(2)} {t('common.currency')}
+                                            </Typography>
+                                          </TableCell>
+                                          <TableCell>
+                                            <TextField
+                                              type="number"
+                                              size="small"
+                                              value={branchPrice}
+                                              onChange={(e) => {
+                                                const newPrice = Number(e.target.value);
+                                                const currentBranchPrices = [...branchPrices];
+                                                
+                                                if (branchPriceIndex >= 0) {
+                                                  currentBranchPrices[branchPriceIndex] = {
+                                                    ...currentBranchPrices[branchPriceIndex],
+                                                    price: newPrice
+                                                  };
+                                                } else {
+                                                  currentBranchPrices.push({
+                                                    rawBranchId: branch.id,
+                                                    price: newPrice,
+                                                    isActive: true
+                                                  });
+                                                }
+                                                
+                                                setValue(`productPrices.${priceIndex}.branchPrices`, currentBranchPrices);
+                                              }}
+                                              inputProps={{ min: 0, step: 0.01 }}
+                                              sx={{ width: 120 }}
+                                              onFocus={(e) => e.target.select()}
+                                            />
+                                          </TableCell>
+                                          <TableCell>
+                                            <Typography 
+                                              variant="body2" 
+                                              color={difference > 0 ? 'success.main' : difference < 0 ? 'error.main' : 'text.secondary'}
+                                              fontWeight={difference !== 0 ? 600 : 400}
+                                            >
+                                              {difference > 0 ? '+' : ''}{difference.toFixed(2)}
+                                            </Typography>
+                                          </TableCell>
+                                        </TableRow>
+                                      );
+                                    })}
+                                  </TableBody>
+                                </Table>
+                              </TableContainer>
+                            )}
+                          </Box>
+                        )
+                      ))}
+                    </Box>
+                  )}
+                </Grid>
+              </Grid>
             )}
-          />
-        </Grid>
-      )}
 
-      <Grid item xs={12} md={6}>
-        <Controller
-          name="description"
-          control={control}
-          render={({ field }) => (
-            <TextField
-              {...field}
-              label={t('products.description')}
-              fullWidth
-              multiline
-              rows={2}
-              onFocus={(e) => e.target.select()}
-            />
-          )}
-        />
-      </Grid>
+            {/* Tab 1: Option Groups */}
+            {currentTab === 1 && (productType === 1 || productType === 3) && (
+              <Grid container spacing={3}>
+                <Grid item xs={12}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                    <Typography variant="h6" color="primary.main">
+                      {t('products.optionGroups')} ({optionGroupFields.length})
+                    </Typography>
+                    <Button
+                      variant="contained"
+                      startIcon={<IconPlus />}
+                      onClick={addOptionGroup}
+                    >
+                      {t('products.addOptionGroup')}
+                    </Button>
+                  </Box>
 
-      <Grid item xs={12} md={6}>
-        <Controller
-          name="reorderLevel"
-          control={control}
-          render={({ field }) => (
-            <TextField
-              {...field}
-              label={t('products.reorderLevel')}
-              type="number"
-              fullWidth
-              inputProps={{ min: 0, step: 0.01 }}
-              onFocus={(e) => e.target.select()}
-            />
-          )}
-        />
-      </Grid>
-
-      <Grid item xs={12} md={6}>
-        <Controller
-          name="expirationDays"
-          control={control}
-          render={({ field }) => (
-            <TextField
-              {...field}
-              label={t('products.expirationDays')}
-              type="number"
-              fullWidth
-              inputProps={{ min: 1, step: 1 }}
-              onFocus={(e) => e.target.select()}
-            />
-          )}
-        />
-      </Grid>
-
-      <Grid item xs={12} md={6}>
-        <FormControlLabel
-          control={
-            <Controller
-              name="isActive"
-              control={control}
-              render={({ field }) => (
-                <Switch
-                  checked={field.value}
-                  onChange={field.onChange}
-                />
-              )}
-            />
-          }
-          label={t('products.form.isActive')}
-        />
-      </Grid>
-
-      {mode === 'add' && (
-        <Grid item xs={12} md={6}>
-          <Controller
-            name="cost"
-            control={control}
-            render={({ field }) => (
-              <TextField
-                {...field}
-                label={t('products.cost')}
-                type="number"
-                fullWidth
-                inputProps={{ min: 0, step: 0.01 }}
-                onFocus={(e) => e.target.select()}
-              />
+                  {optionGroupFields.length === 0 ? (
+                    <Card variant="outlined">
+                      <CardContent>
+                        <Typography color="text.secondary" align="center">
+                          {t('products.noOptionGroups')}
+                        </Typography>
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    <Stack spacing={2}>
+                      {optionGroupFields.map((field, index) => (
+                        <OptionGroupComponent key={field.id} groupIndex={index} />
+                      ))}
+                    </Stack>
+                  )}
+                </Grid>
+              </Grid>
             )}
-          />
-        </Grid>
-      )}
-
-      {mode === 'edit' && initialValues && (
-        <Grid item xs={12} md={6}>
-          <TextField
-            label={t('products.cost')}
-            value={Number(initialValues.cost).toFixed(2)}
-            fullWidth
-            InputProps={{
-              readOnly: true,
-            }}
-            variant="filled"
-          />
-        </Grid>
-      )}
-
-      <Grid item xs={12} md={6}>
-        <Controller
-          name="lastPurePrice"
-          control={control}
-          render={({ field }) => (
-            <TextField
-              {...field}
-              label={t('products.lastPurePrice')}
-              type="number"
-              fullWidth
-              InputProps={{
-                readOnly: true,
-              }}
-              variant="filled"
-              inputProps={{ min: 0, step: 0.01 }}
-            />
-          )}
-        />
-      </Grid>
-    </Grid>
-
-    <Divider sx={{ my: 4 }} />
-
-    {/* الأسعار */}
-    <Typography variant="h6" sx={{ mb: 3, color: 'primary.main' }}>
-      {t('products.tabs.prices')}
-    </Typography>
-    
-    <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-      <Typography variant="subtitle1">
-        {t('products.prices')} ({fields.length})
-      </Typography>
-      <Button
-        variant="outlined"
-        startIcon={<IconPlus size={20} />}
-        onClick={addPrice}
-        type="button"
-        size={isMobile ? "small" : "medium"}
-      >
-        {t('products.addPrice')}
-      </Button>
-    </Box>
-
-    {isMobile ? (
-      <Box>
-        {fields.length === 0 ? (
-          <Card variant="outlined">
-            <CardContent>
-              <Typography color="text.secondary" align="center">
-                {t('products.noPrices')}
-              </Typography>
-            </CardContent>
-          </Card>
-        ) : (
-          fields.map((field, index) => (
-            <MobilePriceCard
-              key={field.id}
-              index={index}
-              onRemove={() => remove(index)}
-            />
-          ))
-        )}
-      </Box>
-    ) : (
-      <DesktopPriceTable />
-    )}
-  </Box>
-)}
-
-{/* Tab 1: خيارات المنتج (POS و Addition) */}
-{currentTab === 1 && (productType === 1 || productType === 3) && (
-  <Box>
-    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-      <Typography variant="h6">
-        {t('products.form.productOptions')} ({optionGroupFields.length})
-      </Typography>
-      <Button
-        variant="contained"
-        startIcon={<IconPlusNew />}
-        onClick={addOptionGroup}
-      >
-        {t('products.form.addOptionGroup')}
-      </Button>
-    </Box>
-
-    {optionGroupFields.length === 0 ? (
-      <Box sx={{ textAlign: 'center', py: 4, backgroundColor: 'grey.50', borderRadius: 1 }}>
-        <Typography color="text.secondary">
-          {t('products.form.noOptionGroups')}
-        </Typography>
-      </Box>
-    ) : (
-      <Box>
-        {optionGroupFields.map((group, index) => (
-          <OptionGroupComponent key={group.id} groupIndex={index} />
-        ))}
-      </Box>
-    )}
-  </Box>
-)}
-
           </DialogContent>
 
-          <DialogActions 
-            sx={{ 
-              position: 'sticky', 
-              bottom: 0, 
-              backgroundColor: 'background.paper',
-              borderTop: 1,
-              borderColor: 'divider',
-              p: 2,
-              flexDirection: isMobile ? 'column' : 'row',
-              gap: isMobile ? 1 : 0
-            }}
-          >
+          <DialogActions sx={{ 
+            position: 'sticky', 
+            bottom: 0, 
+            backgroundColor: 'background.paper',
+            borderTop: 1,
+            borderColor: 'divider',
+            p: 2,
+            flexDirection: isMobile ? 'column' : 'row',
+            gap: isMobile ? 1 : 0
+          }}>
             <Button 
               onClick={onClose} 
-              type="button" 
               disabled={isSubmitting}
               fullWidth={isMobile}
             >
@@ -1932,8 +2136,10 @@ const DesktopPriceTable = () => (
             </Stack>
           </DialogActions>
         </form>
-      </Dialog></>
+      </Dialog>
+    </>
   );
 };
 
 export default ProductForm;
+

@@ -24,7 +24,7 @@ interface Props {
   onClose: () => void;
   onSubmit: (products: SelectedProduct[]) => void;
   title?: string;
-  preSelectedItems?: string[];
+  preSelectedItems?: string[]; // المنتجات المختارة مسبقاً
 }
 
 const ProductMultiSelectDialog: React.FC<Props> = ({
@@ -42,9 +42,19 @@ const ProductMultiSelectDialog: React.FC<Props> = ({
     if (open) {
       loadGroups();
       loadProducts();
+      // ⭐ تحميل المنتجات المختارة مسبقاً عند فتح الـ dialog
+      console.log('Pre-selected items:', preSelectedItems);
       setSelectedProducts(new Set(preSelectedItems));
     }
   }, [open, preSelectedItems]);
+
+  // ⭐ تحديث المنتجات المختارة عند تغيير preSelectedItems
+  React.useEffect(() => {
+    if (open) {
+      console.log('Updating selected products with:', preSelectedItems);
+      setSelectedProducts(new Set(preSelectedItems));
+    }
+  }, [preSelectedItems, open]);
 
   const loadGroups = async () => {
     try {
@@ -93,56 +103,74 @@ const ProductMultiSelectDialog: React.FC<Props> = ({
     }
   };
 
-  const filteredProducts = React.useMemo(() => {
-    let result = [...products];
+const filteredProducts = React.useMemo(() => {
+  let result = [...products];
 
-    if (searchQuery.trim()) {
-      const searchLower = searchQuery.toLowerCase();
-      result = result.filter(product => {
-        const productNameMatch = product.name.toLowerCase().includes(searchLower);
-        const priceNameMatch = product.productPrices.some((price: any) => 
-          price.posPriceName && price.posPriceName.toLowerCase().includes(searchLower)
-        );
-        const barcodeMatch = product.productPrices.some((price: any) => 
-          price.barcode && price.barcode.toLowerCase().includes(searchLower)
-        );
+  if (searchQuery.trim()) {
+    const searchLower = searchQuery.toLowerCase();
+    result = result.filter(product => {
+      // البحث في اسم المنتج
+      const productNameMatch = product.name.toLowerCase().includes(searchLower);
+      
+      // البحث في أسماء الأسعار والاسم المدمج
+      const priceNameMatch = product.productPrices.some((price: any) => {
+        const priceName = price.posPriceName;
+        const combinedName = priceName  && priceName !== product.name
+          ? `${product.name} - ${priceName}`
+          : product.name;
         
-        return productNameMatch || priceNameMatch || barcodeMatch;
+        return priceName.toLowerCase().includes(searchLower) ||
+               combinedName.toLowerCase().includes(searchLower);
       });
-    }
+      
+      // البحث في الباركود
+      const barcodeMatch = product.productPrices.some((price: any) => 
+        price.barcode && price.barcode.toLowerCase().includes(searchLower)
+      );
+      
+      return productNameMatch || priceNameMatch || barcodeMatch;
+    });
+  }
 
-    if (selectedGroupId) {
-      result = result.filter(product => product.groupId === selectedGroupId);
-    }
+  if (selectedGroupId) {
+    result = result.filter(product => product.groupId === selectedGroupId);
+  }
 
-    return result;
-  }, [products, searchQuery, selectedGroupId]);
+  return result;
+}, [products, searchQuery, selectedGroupId]);
 
-  const allProductPrices = React.useMemo(() => {
-    const prices: Array<{
-      productPriceId: string;
-      productId: string;
-      productName: string;
-      priceName: string;
-      price: number;
-      barcode: string;
-    }> = [];
+const allProductPrices = React.useMemo(() => {
+  const prices: Array<{
+    productPriceId: string;
+    productId: string;
+    productName: string;
+    priceName: string;
+    price: number;
+    barcode: string;
+    displayName: string; // ⭐ إضافة displayName محسن
+  }> = [];
 
-    filteredProducts.forEach(product => {
-      product.productPrices.forEach((price: any) => {
-        prices.push({
-          productPriceId: price.id,
-          productId: product.id,
-          productName: product.name,
-          priceName: price.posPriceName || 'الحجم الافتراضي',
-          price: price.price,
-          barcode: price.barcode || ''
-        });
+  filteredProducts.forEach(product => {
+    product.productPrices.forEach((price: any) => {
+      const priceName = price.posPriceName;
+      
+      prices.push({
+        productPriceId: price.id,
+        productId: product.id,
+        productName: product.name,
+        priceName: priceName,
+        price: price.price,
+        barcode: price.barcode || '',
+        // ⭐ إنشاء displayName محسن
+        displayName: priceName  && priceName !== product.name
+          ? `${product.name} - ${priceName}`
+          : product.name
       });
     });
+  });
 
-    return prices;
-  }, [filteredProducts]);
+  return prices;
+}, [filteredProducts]);
 
   const handleSelectAll = () => {
     if (selectedProducts.size === allProductPrices.length) {
@@ -156,13 +184,16 @@ const ProductMultiSelectDialog: React.FC<Props> = ({
     const newSelected = new Set(selectedProducts);
     if (newSelected.has(productPriceId)) {
       newSelected.delete(productPriceId);
+      console.log('Removed product:', productPriceId);
     } else {
       newSelected.add(productPriceId);
+      console.log('Added product:', productPriceId);
     }
     setSelectedProducts(newSelected);
   };
 
   const handleConfirm = () => {
+    // ⭐ إرجاع كل المنتجات المختارة (الجديدة والقديمة)
     const selectedProductsData = allProductPrices
       .filter(p => selectedProducts.has(p.productPriceId))
       .map(p => ({
@@ -172,6 +203,9 @@ const ProductMultiSelectDialog: React.FC<Props> = ({
         price: p.price
       }));
     
+    console.log('Final selected products:', selectedProductsData);
+    console.log('Selected product IDs:', Array.from(selectedProducts));
+    
     onSubmit(selectedProductsData);
     handleCancel();
   };
@@ -180,6 +214,7 @@ const ProductMultiSelectDialog: React.FC<Props> = ({
     onClose();
     setSearchQuery('');
     setSelectedGroupId('');
+    // ⭐ إعادة تعيين للمنتجات المختارة مسبقاً عند الإلغاء
     setSelectedProducts(new Set(preSelectedItems));
   };
 
@@ -248,79 +283,83 @@ const ProductMultiSelectDialog: React.FC<Props> = ({
           </Stack>
         </Box>
 
-        <TableContainer component={Paper} variant="outlined" sx={{ maxHeight: 400 }}>
-          <Table stickyHeader size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell padding="checkbox">
-                  <Checkbox
-                    checked={selectedProducts.size === allProductPrices.length && allProductPrices.length > 0}
-                    indeterminate={selectedProducts.size > 0 && selectedProducts.size < allProductPrices.length}
-                    onChange={handleSelectAll}
-                  />
-                </TableCell>
-                <TableCell>{t('offers.form.productName')}</TableCell>
-                <TableCell>{t('offers.form.priceName')}</TableCell>
-                <TableCell>{t('offers.form.price')}</TableCell>
-                <TableCell>{t('offers.form.barcode')}</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {loading ? (
-                <TableRow>
-                  <TableCell colSpan={5} align="center">
-                    {t('common.loading')}
-                  </TableCell>
-                </TableRow>
-              ) : allProductPrices.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} align="center">
-                    {t('offers.form.noProductsFound')}
-                  </TableCell>
-                </TableRow>
-              ) : (
-                allProductPrices.map((productPrice) => (
-                  <TableRow 
-                    key={productPrice.productPriceId}
-                    hover
-                    sx={{ cursor: 'pointer' }}
-                    onClick={() => handleProductToggle(productPrice.productPriceId)}
-                  >
-                    <TableCell padding="checkbox">
-                      <Checkbox
-                        checked={selectedProducts.has(productPrice.productPriceId)}
-                        onChange={() => handleProductToggle(productPrice.productPriceId)}
-                      />
-                    </TableCell>
-                    <TableCell>{productPrice.productName}</TableCell>
-                    <TableCell>
-                      <Box>
-                        <Typography variant="body2" fontWeight={500}>
-                          {productPrice.priceName}
-                        </Typography>
-                        {productPrice.priceName !== productPrice.productName && (
-                          <Typography variant="caption" color="text.secondary">
-                            ({productPrice.productName})
-                          </Typography>
-                        )}
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" sx={{ fontWeight: 600, color: 'primary.main' }}>
-                        {productPrice.price.toFixed(2)} {t('common.currency')}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" color="text.secondary" fontFamily="monospace">
-                        {productPrice.barcode || '-'}
-                      </Typography>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
+<TableContainer component={Paper} variant="outlined" sx={{ maxHeight: 400 }}>
+  <Table stickyHeader size="small">
+    <TableHead>
+      <TableRow>
+        <TableCell padding="checkbox">
+          <Checkbox
+            checked={selectedProducts.size === allProductPrices.length && allProductPrices.length > 0}
+            indeterminate={selectedProducts.size > 0 && selectedProducts.size < allProductPrices.length}
+            onChange={handleSelectAll}
+          />
+        </TableCell>
+        <TableCell>{t('offers.form.productName')}</TableCell>
+        {/* ⭐ حذف عمود اسم السعر */}
+        <TableCell>{t('offers.form.price')}</TableCell>
+        <TableCell>{t('offers.form.barcode')}</TableCell>
+      </TableRow>
+    </TableHead>
+    <TableBody>
+      {loading ? (
+        <TableRow>
+          <TableCell colSpan={4} align="center">
+            {t('common.loading')}
+          </TableCell>
+        </TableRow>
+      ) : allProductPrices.length === 0 ? (
+        <TableRow>
+          <TableCell colSpan={4} align="center">
+            {t('offers.form.noProductsFound')}
+          </TableCell>
+        </TableRow>
+      ) : (
+        allProductPrices.map((productPrice) => (
+          <TableRow 
+            key={productPrice.productPriceId}
+            hover
+            sx={{ cursor: 'pointer' }}
+            onClick={() => handleProductToggle(productPrice.productPriceId)}
+          >
+            <TableCell padding="checkbox">
+              <Checkbox
+                checked={selectedProducts.has(productPrice.productPriceId)}
+                onChange={() => handleProductToggle(productPrice.productPriceId)}
+              />
+            </TableCell>
+            <TableCell>
+              {/* ⭐ دمج اسم المنتج مع اسم السعر */}
+              <Box>
+                <Typography variant="body2" fontWeight={500}>
+                  {productPrice.displayName
+                    ? productPrice.displayName
+                    : productPrice.productName
+                  }
+                </Typography>
+                {/* يمكن إضافة معلومات إضافية كـ subtitle إذا لزم الأمر */}
+                {productPrice.priceName  && productPrice.priceName !== productPrice.productName && (
+                  <Typography variant="caption" color="text.secondary">
+                    {productPrice.productName}
+                  </Typography>
+                )}
+              </Box>
+            </TableCell>
+            <TableCell>
+              <Typography variant="body2" sx={{ fontWeight: 600, color: 'primary.main' }}>
+                {productPrice.price.toFixed(2)} {t('common.currency')}
+              </Typography>
+            </TableCell>
+            <TableCell>
+              <Typography variant="body2" color="text.secondary" fontFamily="monospace">
+                {productPrice.barcode || '-'}
+              </Typography>
+            </TableCell>
+          </TableRow>
+        ))
+      )}
+    </TableBody>
+  </Table>
+</TableContainer>
       </DialogContent>
       
       <DialogActions>

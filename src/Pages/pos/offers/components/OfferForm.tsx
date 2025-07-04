@@ -3,12 +3,12 @@ import React from 'react';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   Grid, TextField, Button, Typography, FormControl, InputLabel, Select, MenuItem,
-  Switch, FormControlLabel, Card, CardContent, IconButton, Divider, Box,
-  Collapse, Checkbox, useMediaQuery, useTheme
+  Switch, FormControlLabel, Card, CardContent, IconButton, Box,
+  Checkbox, useMediaQuery, useTheme, Tabs, Tab
 } from '@mui/material';
 import { 
   IconDeviceFloppy, IconPlus as IconPlusNew, IconTrash, IconPlus, 
-  IconChevronDown, IconUsers, IconShoppingCart 
+  IconUsers, IconShoppingCart 
 } from '@tabler/icons-react';
 import { useForm, Controller, useFieldArray } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
@@ -37,6 +37,32 @@ interface Props {
   onSubmit: (data: any, saveAction: 'save' | 'saveAndNew') => Promise<void>;
 }
 
+interface TabPanelProps {
+  children?: React.ReactNode;
+  index: number;
+  value: number;
+}
+
+function TabPanel(props: TabPanelProps) {
+  const { children, value, index, ...other } = props;
+
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`offer-tabpanel-${index}`}
+      aria-labelledby={`offer-tab-${index}`}
+      {...other}
+    >
+      {value === index && (
+        <Box sx={{ py: 2 }}>
+          {children}
+        </Box>
+      )}
+    </div>
+  );
+}
+
 const OfferForm: React.FC<Props> = ({
   open, mode, initialValues, onClose, onSubmit
 }) => {
@@ -49,14 +75,7 @@ const OfferForm: React.FC<Props> = ({
   const [productPrices, setProductPrices] = React.useState<any[]>([]);
   const [multiSelectOpen, setMultiSelectOpen] = React.useState(false);
   const [currentGroupIndex, setCurrentGroupIndex] = React.useState<number | null>(null);
-  
-  // Toggle states
-  const [showGroups, setShowGroups] = React.useState(true);
-  const [showItems, setShowItems] = React.useState(true);
-
-  // Refs للـ scroll
-  const groupsSectionRef = React.useRef<HTMLDivElement>(null) as React.RefObject<HTMLDivElement>;
-  const itemsSectionRef = React.useRef<HTMLDivElement>(null) as React.RefObject<HTMLDivElement>;
+  const [tabValue, setTabValue] = React.useState(0);
 
   const defaults: FormValues = {
     name: '',
@@ -101,8 +120,8 @@ const OfferForm: React.FC<Props> = ({
           product.productPrices.map(price => ({
             ...price,
             productName: product.name,
-            displayName: `${product.name} - ${price.posPriceName || 'الحجم الافتراضي'}`,
-            fullDisplayName: `${product.name} - ${price.posPriceName || 'الحجم الافتراضي'} (${price.price} ${t('common.currency')})`
+            displayName: `${product.name} - ${price.posPriceName}`,
+            fullDisplayName: `${product.name} - ${price.posPriceName} (${price.price} ${t('common.currency')})`
           }))
         );
         setProductPrices(allProductPrices);
@@ -165,19 +184,6 @@ const OfferForm: React.FC<Props> = ({
     }
   }, [isSubmitSuccessful, mode, reset]);
 
-  // دالة للـ scroll إلى العنصر
-  const scrollToElement = (ref: React.RefObject<HTMLDivElement>) => {
-    setTimeout(() => {
-      if (ref.current) {
-        ref.current.scrollIntoView({ 
-          behavior: 'smooth', 
-          block: 'center',
-          inline: 'nearest'
-        });
-      }
-    }, 300); // انتظار انتهاء الـ animation
-  };
-
   const addOfferGroup = () => {
     appendGroup({
       title: '',
@@ -186,12 +192,7 @@ const OfferForm: React.FC<Props> = ({
       isMandatory: true,
       isActive: true
     });
-    
-    // فتح قسم المجموعات والـ scroll إليه
-    if (!showGroups) {
-      setShowGroups(true);
-    }
-    scrollToElement(groupsSectionRef);
+    setTabValue(0);
   };
 
   const addOfferItem = () => {
@@ -204,54 +205,85 @@ const OfferForm: React.FC<Props> = ({
     setMultiSelectOpen(true);
   };
 
-  const handleMultiSelectSubmit = (selectedProducts: Array<{
-    productPriceId: string;
-    productName: string;
-    priceName: string;
-    price: number;
-  }>) => {
-    if (currentGroupIndex !== null) {
-      // إضافة العناصر المختارة للمجموعة
-      selectedProducts.forEach(product => {
-        appendItem({
-          productPriceId: product.productPriceId,
-          offerGroupId: groupFields[currentGroupIndex].id || `group_${currentGroupIndex}`,
-          quantity: 1,
-          isDefaultSelected: false,
-          useOriginalPrice: true,
-          customPrice: 0,
-          isActive: true
-        });
-      });
-      
-      // فتح قسم المجموعات والـ scroll إليه
-      if (!showGroups) {
-        setShowGroups(true);
-      }
-      scrollToElement(groupsSectionRef);
-    } else {
-      // إضافة العناصر خارج المجموعات
-      selectedProducts.forEach(product => {
-        appendItem({
-          productPriceId: product.productPriceId,
-          quantity: 1,
-          isDefaultSelected: false,
-          useOriginalPrice: true,
-          customPrice: 0,
-          isActive: true
-        });
-      });
-      
-      // فتح قسم العناصر العامة والـ scroll إليه
-      if (!showItems) {
-        setShowItems(true);
-      }
-      scrollToElement(itemsSectionRef);
-    }
+const handleMultiSelectSubmit = (selectedProducts: Array<{
+  productPriceId: string;
+  productName: string;
+  priceName: string;
+  price: number;
+}>) => {
+  console.log('Received selected products:', selectedProducts);
+  
+  if (currentGroupIndex !== null) {
+    // للمجموعات: استبدال كامل للعناصر
+    const groupId = groupFields[currentGroupIndex].id || `group_${currentGroupIndex}`;
     
-    setMultiSelectOpen(false);
-    setCurrentGroupIndex(null);
-  };
+    // إزالة كل العناصر الموجودة في هذه المجموعة
+    const itemsToRemove: number[] = [];
+    itemFields.forEach((_item, index) => {
+      const itemGroupId = watch(`offerItems.${index}.offerGroupId`);
+      if (itemGroupId === groupId) {
+        itemsToRemove.push(index);
+      }
+    });
+    
+    // إزالة من الآخر للأول لتجنب تغيير الفهارس
+    itemsToRemove.reverse().forEach(index => {
+      console.log('Removing item at index:', index);
+      removeItem(index);
+    });
+    
+    // إضافة كل المنتجات المختارة الجديدة
+    selectedProducts.forEach(product => {
+      console.log('Adding product to group:', product);
+      appendItem({
+        productPriceId: product.productPriceId,
+        offerGroupId: groupId,
+        quantity: 1,
+        isDefaultSelected: true,
+        useOriginalPrice: true,
+        customPrice: 0,
+        isActive: true
+      });
+    });
+    
+    setTabValue(0);
+  } else {
+    // للعناصر الثابتة: استبدال كامل للعناصر
+    
+    // إزالة كل العناصر الثابتة الموجودة
+    const itemsToRemove: number[] = [];
+    itemFields.forEach((_item, index) => {
+      const itemGroupId = watch(`offerItems.${index}.offerGroupId`);
+      if (!itemGroupId) {
+        itemsToRemove.push(index);
+      }
+    });
+    
+    // إزالة من الآخر للأول لتجنب تغيير الفهارس
+    itemsToRemove.reverse().forEach(index => {
+      console.log('Removing fixed item at index:', index);
+      removeItem(index);
+    });
+    
+    // إضافة كل المنتجات المختارة الجديدة
+    selectedProducts.forEach(product => {
+      console.log('Adding fixed product:', product);
+      appendItem({
+        productPriceId: product.productPriceId,
+        quantity: 1,
+        isDefaultSelected: true,
+        useOriginalPrice: true,
+        customPrice: 0,
+        isActive: true
+      });
+    });
+    
+    setTabValue(1);
+  }
+  
+  setMultiSelectOpen(false);
+  setCurrentGroupIndex(null);
+};
 
   const getGroupItems = (groupIndex: number) => {
     const groupId = groupFields[groupIndex].id || `group_${groupIndex}`;
@@ -311,7 +343,7 @@ const OfferForm: React.FC<Props> = ({
             productPriceId: item.productPriceId,
             offerGroupId: item.offerGroupId || null,
             quantity: Number(item.quantity),
-            isDefaultSelected: item.isDefaultSelected,
+            isDefaultSelected: true,
             useOriginalPrice: item.useOriginalPrice,
             customPrice: item.useOriginalPrice ? null : Number(item.customPrice),
             isActive: item.isActive
@@ -338,7 +370,7 @@ const OfferForm: React.FC<Props> = ({
             productPriceId: item.productPriceId,
             offerGroupId: item.offerGroupId || null,
             quantity: Number(item.quantity),
-            isDefaultSelected: item.isDefaultSelected,
+            isDefaultSelected: true,
             useOriginalPrice: item.useOriginalPrice,
             customPrice: item.useOriginalPrice ? null : Number(item.customPrice),
             isActive: item.isActive
@@ -359,6 +391,131 @@ const OfferForm: React.FC<Props> = ({
     }
   };
 
+  // مكون لعرض العناصر في 3 أعمدة مع تمييز المجموعات والعناصر الثابتة
+  const ItemsGrid: React.FC<{ items: any[], groupIndex?: number }> = ({ items, groupIndex }) => {
+    const isGroupItems = groupIndex !== undefined;
+    
+    return (
+      <Grid container spacing={1}>
+        {items.map((item, itemIndex) => {
+          const actualIndex = itemFields.findIndex(field => field.id === item.id);
+          
+          if (actualIndex === -1) return null;
+          
+          const productPrice = productPrices.find(p => p.id === watch(`offerItems.${actualIndex}.productPriceId`));
+          const useOriginalPrice = watch(`offerItems.${actualIndex}.useOriginalPrice`);
+          
+          return (
+            <Grid item xs={12} md={4} key={item.id}>
+              <Box sx={{ 
+                p: 1,
+                border: 2, // زيادة سمك البوردر للتمييز
+                borderColor: isGroupItems ? 'primary.main' : 'secondary.main', // ألوان مختلفة للتمييز
+                borderRadius: 1,
+                backgroundColor: itemIndex % 2 === 0 ? 
+                  (isGroupItems ? 'primary.50' : 'secondary.50') : 
+                  'background.paper',
+                minHeight: 80,
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                position: 'relative'
+              }}>
+                {/* شارة للتمييز */}
+                <Box sx={{
+                  position: 'absolute',
+                  top: -1,
+                  right: -1,
+                  backgroundColor: isGroupItems ? 'primary.main' : 'secondary.main',
+                  color: 'white',
+                  px: 0.5,
+                  py: 0.25,
+                  borderRadius: '0 0 0 4px',
+                  fontSize: '0.6rem',
+                  fontWeight: 'bold'
+                }}>
+                  {isGroupItems ? t('offers.form.group') : t('offers.form.fixed')}
+                </Box>
+                
+                {/* اسم المنتج */}
+                <Typography variant="body2" sx={{ 
+                  fontSize: '0.8rem',
+                  fontWeight: 500,
+                  mb: 0.5,
+                  minHeight: 20,
+                  display: '-webkit-box',
+                  WebkitLineClamp: 1,
+                  WebkitBoxOrient: 'vertical',
+                  overflow: 'hidden',
+                  mt: 1 // مساحة للشارة
+                }}>
+                  {productPrice?.displayName || t('offers.form.selectProduct')}
+                </Typography>
+                
+                <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center', flexWrap: 'wrap' }}>
+                  {/* الكمية */}
+                  <TextField
+                    label={t('offers.form.quantity')}
+                    type="number"
+                    size="small"
+                    sx={{ width: 60 }}
+                    value={watch(`offerItems.${actualIndex}.quantity`)}
+                    onChange={(e) => setValue(`offerItems.${actualIndex}.quantity`, Number(e.target.value))}
+                    inputProps={{ min: 1 }}
+                  />
+                  
+                  {/* استخدام السعر الأصلي */}
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={useOriginalPrice}
+                        onChange={(e) => {
+                          setValue(`offerItems.${actualIndex}.useOriginalPrice`, e.target.checked);
+                          if (e.target.checked) {
+                            setValue(`offerItems.${actualIndex}.customPrice`, 0);
+                          }
+                        }}
+                        size="small"
+                      />
+                    }
+                    label={<Typography variant="caption" sx={{ fontSize: '0.7rem' }}>{t('offers.form.original')}</Typography>}
+                  />
+                  
+                  {/* السعر المخصص */}
+                  {!useOriginalPrice && (
+                    <TextField
+                      label={t('offers.form.price')}
+                      type="number"
+                      size="small"
+                      sx={{ width: 70 }}
+                      value={watch(`offerItems.${actualIndex}.customPrice`)}
+                      onChange={(e) => setValue(`offerItems.${actualIndex}.customPrice`, Number(e.target.value))}
+                      inputProps={{ min: 0, step: 0.01 }}
+                    />
+                  )}
+                  
+                  {/* زرار الحذف */}
+                  <IconButton
+                    size="small"
+                    color="error"
+                    onClick={() => removeItem(actualIndex)}
+                    sx={{ ml: 'auto' }}
+                  >
+                    <IconTrash size={12} />
+                  </IconButton>
+                </Box>
+              </Box>
+            </Grid>
+          );
+        })}
+      </Grid>
+    );
+  };
+
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
+    setTabValue(newValue);
+  };
+
   return (
     <>
       <Dialog 
@@ -366,7 +523,7 @@ const OfferForm: React.FC<Props> = ({
         onClose={onClose} 
         maxWidth="xl" 
         fullWidth
-        fullScreen={isMobile} // فل سكرين في الموبايل
+        fullScreen={isMobile}
       >
         <DialogTitle sx={{ 
           position: 'sticky', 
@@ -386,7 +543,7 @@ const OfferForm: React.FC<Props> = ({
             p: isMobile ? 1.5 : 2 
           }}>
             <Grid container spacing={isMobile ? 1.5 : 2}>
-              {/* Basic Info - مضغوط أكتر للموبايل */}
+              {/* Basic Info */}
               <Grid item xs={12}>
                 <Typography variant="h6" sx={{ 
                   mb: isMobile ? 1 : 1.5, 
@@ -533,409 +690,272 @@ const OfferForm: React.FC<Props> = ({
                 />
               </Grid>
 
-{/* الزرارين فوق التوجل - حجم صغير */}
-<Grid item xs={12}>
-  <Box sx={{ 
-    display: 'flex', 
-    justifyContent: 'flex-end', // في الجانب الأيمن
-    gap: 1,
-    mb: 1 // مساحة أقل
-  }}>
-    <Button
-      variant="outlined"
-      startIcon={<IconPlus />}
-      onClick={addOfferGroup}
-      size="small" // حجم صغير
-    >
-      {t('offers.form.addGroup')}
-    </Button>
-    <Button
-      variant="outlined"
-      startIcon={<IconShoppingCart />}
-      onClick={addOfferItem}
-      size="small" // حجم صغير
-    >
-      {t('offers.form.addItem')}
-    </Button>
-  </Box>
-</Grid>
-
-              {/* Offer Groups Section مع Toggle */}
-              <Grid item xs={12} ref={groupsSectionRef}>
-                <Divider sx={{ my: 1 }} />
-                
+              {/* الزرارين فوق التابات */}
+              <Grid item xs={12}>
                 <Box sx={{ 
                   display: 'flex', 
-                  justifyContent: 'space-between', 
-                  alignItems: 'center', 
-                  mb: 1,
-                  cursor: 'pointer'
-                }} onClick={() => setShowGroups(!showGroups)}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <IconUsers size={20} />
-                    <Typography variant="h6" sx={{ 
-                      fontSize: isMobile ? '1rem' : '1.1rem' 
-                    }}>
-                      {t('offers.form.offerGroups')} ({groupFields.length})
-                    </Typography>
-                    <IconChevronDown 
-                      size={16} 
-                      style={{ 
-                        transform: showGroups ? 'rotate(0deg)' : 'rotate(-90deg)',
-                        transition: 'transform 0.2s'
-                      }} 
+                  justifyContent: 'flex-end',
+                  gap: 1,
+                  mb: 1
+                }}>
+                  <Button
+                    variant="outlined"
+                    startIcon={<IconPlus />}
+                    onClick={addOfferGroup}
+                    size="small"
+                  >
+                    {t('offers.form.addGroup')}
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    startIcon={<IconShoppingCart />}
+                    onClick={addOfferItem}
+                    size="small"
+                  >
+                    {t('offers.form.addItem')}
+                  </Button>
+                </Box>
+              </Grid>
+
+              {/* التابات */}
+              <Grid item xs={12}>
+                <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+                  <Tabs value={tabValue} onChange={handleTabChange} aria-label="offer tabs">
+                    <Tab 
+                      icon={<IconUsers size={18} />}
+                      label={`${t('offers.form.offerGroups')} (${groupFields.length})`}
+                      id="offer-tab-0"
+                      aria-controls="offer-tabpanel-0"
+                      sx={{ 
+                        color: 'primary.main',
+                        '&.Mui-selected': { 
+                          color: 'primary.main',
+                          fontWeight: 'bold'
+                        }
+                      }}
                     />
-                  </Box>
+                    <Tab 
+                      icon={<IconShoppingCart size={18} />}
+                      label={`${t('offers.form.fixedItems')} (${getNonGroupItems().length})`}
+                      id="offer-tab-1"
+                      aria-controls="offer-tabpanel-1"
+                      sx={{ 
+                        color: 'secondary.main',
+                        '&.Mui-selected': { 
+                          color: 'secondary.main',
+                          fontWeight: 'bold'
+                        }
+                      }}
+                    />
+                  </Tabs>
                 </Box>
 
-                <Collapse in={showGroups}>
-                  <Box sx={{ mb: 2 }}>
-                    {groupFields.length === 0 ? (
-                      <Box sx={{ 
-                        textAlign: 'center', 
-                        py: isMobile ? 3 : 2, 
-                        backgroundColor: 'grey.50', 
-                        borderRadius: 1 
-                      }}>
-                        <Typography color="text.secondary" variant="body2">
-                          {t('offers.form.noGroups')}
-                        </Typography>
-                      </Box>
-                    ) : (
-                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 2 : 1.5 }}>
-                        {groupFields.map((group, index) => (
-                          <Card key={group.id} variant="outlined" sx={{ p: isMobile ? 1.5 : 1 }}>
-                            <CardContent sx={{ p: isMobile ? '16px !important' : '12px !important' }}>
-                              <Box sx={{ 
-                                display: 'flex', 
-                                justifyContent: 'space-between', 
-                                alignItems: 'center', 
-                                mb: isMobile ? 2 : 1.5,
-                                flexDirection: isMobile ? 'column' : 'row',
-                                gap: isMobile ? 1 : 0
-                              }}>
+                {/* تاب المجموعات */}
+                <TabPanel value={tabValue} index={0}>
+                  {groupFields.length === 0 ? (
+                    <Box sx={{ 
+                      textAlign: 'center', 
+                      py: 4, 
+                      backgroundColor: 'primary.50', 
+                      borderRadius: 1,
+                      border: 1,
+                      borderColor: 'primary.main'
+                    }}>
+                      <Typography color="primary.main" variant="body2" fontWeight={500}>
+                        {t('offers.form.noGroups')}
+                      </Typography>
+                    </Box>
+                  ) : (
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                      {groupFields.map((group, index) => (
+                        <Card key={group.id} variant="outlined" sx={{ 
+                          borderColor: 'primary.main',
+                          borderWidth: 2
+                        }}>
+                          <CardContent sx={{ p: '16px !important' }}>
+                            <Box sx={{ 
+                              display: 'flex', 
+                              justifyContent: 'space-between', 
+                              alignItems: 'center', 
+                              mb: 2,
+                              flexDirection: isMobile ? 'column' : 'row',
+                              gap: isMobile ? 1 : 0
+                            }}>
+                              <Controller
+                                name={`offerGroups.${index}.title`}
+                                control={control}
+                                rules={{ required: t('offers.groupTitleRequired') }}
+                                render={({ field, fieldState }) => (
+                                  <TextField
+                                    {...field}
+                                    label={t('offers.form.groupTitle')}
+                                    required
+                                    error={!!fieldState.error}
+                                    helperText={fieldState.error?.message}
+                                    size="small"
+                                    sx={{ 
+                                      flex: 1, 
+                                      mr: isMobile ? 0 : 2,
+                                      width: isMobile ? '100%' : 'auto'
+                                    }}
+                                  />
+                                )}
+                              />
+                              <Box sx={{ display: 'flex', gap: 1 }}>
+                                <Button
+                                  variant="outlined"
+                                  startIcon={<IconPlus />}
+                                  onClick={() => addItemToGroup(index)}
+                                  size="small"
+                                  color="primary"
+                                >
+                                  {t('offers.form.addItem')}
+                                </Button>
+                                <IconButton
+                                  size="small"
+                                  color="error"
+                                  onClick={() => removeGroup(index)}
+                                >
+                                  <IconTrash size={16} />
+                                </IconButton>
+                              </Box>
+                            </Box>
+
+                            <Grid container spacing={1.5} sx={{ mb: 2 }}>
+                              <Grid item xs={6} md={2}>
                                 <Controller
-                                  name={`offerGroups.${index}.title`}
+                                  name={`offerGroups.${index}.minSelection`}
                                   control={control}
-                                  rules={{ required: t('offers.groupTitleRequired') }}
-                                  render={({ field, fieldState }) => (
+                                  render={({ field }) => (
                                     <TextField
                                       {...field}
-                                      label={t('offers.form.groupTitle')}
-                                      required
-                                      error={!!fieldState.error}
-                                      helperText={fieldState.error?.message}
-                                      size={isMobile ? "medium" : "small"}
-                                      sx={{ 
-                                        flex: 1, 
-                                        mr: isMobile ? 0 : 2,
-                                        width: isMobile ? '100%' : 'auto'
-                                      }}
+                                      label={t('offers.form.minSelection')}
+                                      type="number"
+                                      fullWidth
+                                      size="small"
+                                      inputProps={{ min: 0 }}
                                     />
                                   )}
                                 />
-                                <Box sx={{ display: 'flex', gap: 1 }}>
-                                  <Button
-                                    variant="outlined"
-                                    startIcon={<IconPlus />}
-                                    onClick={() => addItemToGroup(index)}
-                                    size="small"
-                                  >
-                                    {t('offers.form.addItem')}
-                                  </Button>
-                                  <IconButton
-                                    size="small"
-                                    color="error"
-                                    onClick={() => removeGroup(index)}
-                                  >
-                                    <IconTrash size={16} />
-                                  </IconButton>
-                                </Box>
-                              </Box>
-
-                              <Grid container spacing={isMobile ? 2 : 1.5} sx={{ mb: isMobile ? 2 : 1.5 }}>
-                                <Grid item xs={6} md={2}>
-                                  <Controller
-                                    name={`offerGroups.${index}.minSelection`}
-                                    control={control}
-                                    render={({ field }) => (
-                                      <TextField
-                                        {...field}
-                                        label={t('offers.form.minSelection')}
-                                        type="number"
-                                        fullWidth
-                                        size={isMobile ? "medium" : "small"}
-                                        inputProps={{ min: 0 }}
-                                      />
-                                    )}
-                                  />
-                                </Grid>
-
-                                <Grid item xs={6} md={2}>
-                                  <Controller
-                                    name={`offerGroups.${index}.maxSelection`}
-                                    control={control}
-                                    render={({ field }) => (
-                                      <TextField
-                                        {...field}
-                                        label={t('offers.form.maxSelection')}
-                                        type="number"
-                                        fullWidth
-                                        size={isMobile ? "medium" : "small"}
-                                        inputProps={{ min: 1 }}
-                                      />
-                                    )}
-                                  />
-                                </Grid>
-
-                                <Grid item xs={6} md={4}>
-                                  <Controller
-                                    name={`offerGroups.${index}.isMandatory`}
-                                    control={control}
-                                    render={({ field }) => (
-                                      <FormControlLabel
-                                        control={
-                                          <Switch
-                                            checked={field.value}
-                                            onChange={field.onChange}
-                                            size={isMobile ? "medium" : "small"}
-                                          />
-                                        }
-                                        label={t('offers.form.mandatory')}
-                                      />
-                                    )}
-                                  />
-                                </Grid>
-
-                                <Grid item xs={6} md={4}>
-                                  <Controller
-                                    name={`offerGroups.${index}.isActive`}
-                                    control={control}
-                                    render={({ field }) => (
-                                      <FormControlLabel
-                                        control={
-                                          <Switch
-                                            checked={field.value}
-                                            onChange={field.onChange}
-                                            size={isMobile ? "medium" : "small"}
-                                          />
-                                        }
-                                        label={t('offers.form.active')}
-                                      />
-                                    )}
-                                  />
-                                </Grid>
                               </Grid>
 
-                              {/* عناصر المجموعة */}
-                              <Box>
-                                <Typography variant="subtitle2" sx={{ 
-                                  mb: 1, 
-                                  fontSize: isMobile ? '0.95rem' : '0.9rem' 
-                                }}>
-                                  {t('offers.form.groupItems')} ({getGroupItems(index).length})
-                                </Typography>
-                                {getGroupItems(index).length === 0 ? (
-                                  <Box sx={{ 
-                                    textAlign: 'center', 
-                                    py: isMobile ? 2 : 1.5, 
-                                    backgroundColor: 'grey.50', 
-                                    borderRadius: 1 
-                                  }}>
-                                    <Typography variant="body2" color="text.secondary">
-                                      {t('offers.form.noItemsInGroup')}
-                                    </Typography>
-                                  </Box>
-                                ) : (
-                                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                                    {itemFields.map((item, itemIndex) => {
-                                      const groupId = groupFields[index].id || `group_${index}`;
-                                      if (watch(`offerItems.${itemIndex}.offerGroupId`) !== groupId) return null;
-                                      
-                                      const productPrice = productPrices.find(p => p.id === watch(`offerItems.${itemIndex}.productPriceId`));
-                                      
-                                      return (
-                                        <Box key={item.id} sx={{ 
-                                          display: 'flex', 
-                                          alignItems: 'center', 
-                                          gap: 1, 
-                                          p: isMobile ? 1.5 : 1, 
-                                          border: 1, 
-                                          borderColor: 'grey.300', 
-                                          borderRadius: 1,
-                                          flexDirection: isMobile ? 'column' : 'row'
-                                        }}>
-                                          <Typography variant="body2" sx={{ 
-                                            flex: 1, 
-                                            fontSize: isMobile ? '0.9rem' : '0.85rem',
-                                            textAlign: isMobile ? 'center' : 'left',
-                                            mb: isMobile ? 1 : 0
-                                          }}>
-                                            {productPrice?.displayName || t('offers.form.selectProduct')}
-                                          </Typography>
-                                          <Box sx={{ 
-                                            display: 'flex', 
-                                            alignItems: 'center', 
-                                            gap: 1,
-                                            width: isMobile ? '100%' : 'auto',
-                                            justifyContent: isMobile ? 'space-between' : 'flex-end'
-                                          }}>
-                                            <TextField
-                                              label={t('offers.form.quantity')}
-                                              type="number"
-                                              size="small"
-                                              sx={{ width: isMobile ? 80 : 70 }}
-                                              value={watch(`offerItems.${itemIndex}.quantity`)}
-                                              onChange={(e) => setValue(`offerItems.${itemIndex}.quantity`, Number(e.target.value))}
-                                            />
-                                            <FormControlLabel
-                                              control={
-                                                <Checkbox
-                                                  checked={watch(`offerItems.${itemIndex}.isDefaultSelected`)}
-                                                  onChange={(e) => setValue(`offerItems.${itemIndex}.isDefaultSelected`, e.target.checked)}
-                                                  size="small"
-                                                />
-                                              }
-                                              label={<Typography variant="caption">{t('offers.form.defaultSelected')}</Typography>}
-                                            />
-                                            <IconButton
-                                              size="small"
-                                              color="error"
-                                              onClick={() => removeItem(itemIndex)}
-                                            >
-                                              <IconTrash size={14} />
-                                            </IconButton>
-                                          </Box>
-                                        </Box>
-                                      );
-                                    })}
-                                  </Box>
-                                )}
-                              </Box>
-                            </CardContent>
-                          </Card>
-                        ))}
-                      </Box>
-                    )}
-                  </Box>
-                </Collapse>
-              </Grid>
-
-              {/* Offer Items Section مع Toggle */}
-              <Grid item xs={12} ref={itemsSectionRef}>
-                <Box sx={{ 
-                  display: 'flex', 
-                  justifyContent: 'space-between', 
-                  alignItems: 'center', 
-                  mb: 1,
-                  cursor: 'pointer'
-                }} onClick={() => setShowItems(!showItems)}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <IconShoppingCart size={20} />
-                    <Typography variant="h6" sx={{ 
-                      fontSize: isMobile ? '1rem' : '1.1rem' 
-                    }}>
-                      {t('offers.form.generalItems')} ({getNonGroupItems().length})
-                    </Typography>
-                    <IconChevronDown 
-                      size={16} 
-                      style={{ 
-                        transform: showItems ? 'rotate(0deg)' : 'rotate(-90deg)',
-                        transition: 'transform 0.2s'
-                      }} 
-                    />
-                  </Box>
-                </Box>
-
-                <Collapse in={showItems}>
-                  <Box sx={{ mb: 2 }}>
-                    {getNonGroupItems().length === 0 ? (
-                      <Box sx={{ 
-                        textAlign: 'center', 
-                        py: isMobile ? 3 : 2, 
-                        backgroundColor: 'grey.50', 
-                        borderRadius: 1 
-                      }}>
-                        <Typography color="text.secondary" variant="body2">
-                          {t('offers.form.noItems')}
-                        </Typography>
-                      </Box>
-                    ) : (
-                      <Card variant="outlined" sx={{ p: isMobile ? 1.5 : 1 }}>
-                        <CardContent sx={{ p: isMobile ? '16px !important' : '12px !important' }}>
-                          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                            {itemFields.map((item, index) => {
-                              if (watch(`offerItems.${index}.offerGroupId`)) return null;
-                              
-                              const productPrice = productPrices.find(p => p.id === watch(`offerItems.${index}.productPriceId`));
-                              
-                              return (
-                                <Box key={item.id} sx={{ 
-                                  display: 'flex', 
-                                  alignItems: 'center', 
-                                  gap: 1, 
-                                  p: isMobile ? 1.5 : 1, 
-                                  border: 1, 
-                                  borderColor: 'grey.300', 
-                                  borderRadius: 1,
-                                  flexDirection: isMobile ? 'column' : 'row'
-                                }}>
-                                  <Typography variant="body2" sx={{ 
-                                    flex: 1, 
-                                    fontSize: isMobile ? '0.9rem' : '0.85rem',
-                                    textAlign: isMobile ? 'center' : 'left',
-                                    mb: isMobile ? 1 : 0
-                                  }}>
-                                    {productPrice?.displayName || t('offers.form.selectProduct')}
-                                  </Typography>
-                                  <Box sx={{ 
-                                    display: 'flex', 
-                                    alignItems: 'center', 
-                                    gap: 1,
-                                    width: isMobile ? '100%' : 'auto',
-                                    justifyContent: isMobile ? 'space-between' : 'flex-end'
-                                  }}>
+                              <Grid item xs={6} md={2}>
+                                <Controller
+                                  name={`offerGroups.${index}.maxSelection`}
+                                  control={control}
+                                  render={({ field }) => (
                                     <TextField
-                                      label={t('offers.form.quantity')}
+                                      {...field}
+                                      label={t('offers.form.maxSelection')}
                                       type="number"
+                                      fullWidth
                                       size="small"
-                                      sx={{ width: isMobile ? 80 : 70 }}
-                                      value={watch(`offerItems.${index}.quantity`)}
-                                      onChange={(e) => setValue(`offerItems.${index}.quantity`, Number(e.target.value))}
+                                      inputProps={{ min: 1 }}
                                     />
+                                  )}
+                                />
+                              </Grid>
+
+                              <Grid item xs={6} md={4}>
+                                <Controller
+                                  name={`offerGroups.${index}.isMandatory`}
+                                  control={control}
+                                  render={({ field }) => (
                                     <FormControlLabel
                                       control={
-                                        <Checkbox
-                                          checked={watch(`offerItems.${index}.isDefaultSelected`)}
-                                          onChange={(e) => setValue(`offerItems.${index}.isDefaultSelected`, e.target.checked)}
+                                        <Switch
+                                          checked={field.value}
+                                          onChange={field.onChange}
                                           size="small"
                                         />
                                       }
-                                      label={<Typography variant="caption">{t('offers.form.defaultSelected')}</Typography>}
+                                      label={t('offers.form.mandatory')}
                                     />
-                                    <IconButton
-                                      size="small"
-                                      color="error"
-                                      onClick={() => removeItem(index)}
-                                    >
-                                      <IconTrash size={14} />
-                                    </IconButton>
-                                  </Box>
+                                  )}
+                                />
+                              </Grid>
+
+                              <Grid item xs={6} md={4}>
+                                <Controller
+                                  name={`offerGroups.${index}.isActive`}
+                                  control={control}
+                                  render={({ field }) => (
+                                    <FormControlLabel
+                                      control={
+                                        <Switch
+                                          checked={field.value}
+                                          onChange={field.onChange}
+                                          size="small"
+                                        />
+                                      }
+                                      label={t('offers.form.active')}
+                                    />
+                                  )}
+                                />
+                              </Grid>
+                            </Grid>
+
+                            {/* عناصر المجموعة */}
+                            <Box>
+                              <Typography variant="subtitle2" sx={{ mb: 1, fontSize: '0.9rem', color: 'primary.main' }}>
+                                {t('offers.form.groupItems')} ({getGroupItems(index).length})
+                              </Typography>
+                              {getGroupItems(index).length === 0 ? (
+                                <Box sx={{ 
+                                  textAlign: 'center', 
+                                  py: 2, 
+                                  backgroundColor: 'primary.50', 
+                                  borderRadius: 1,
+                                  border: 1,
+                                  borderColor: 'primary.main'
+                                }}>
+                                  <Typography variant="body2" color="primary.main">
+                                    {t('offers.form.noItemsInGroup')}
+                                  </Typography>
                                 </Box>
-                              );
-                            })}
-                          </Box>
-                        </CardContent>
-                      </Card>
-                    )}
-                  </Box>
-                </Collapse>
+                              ) : (
+                                <ItemsGrid items={getGroupItems(index)} groupIndex={index} />
+                              )}
+                            </Box>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </Box>
+                  )}
+                </TabPanel>
+
+                {/* تاب العناصر الثابتة */}
+                <TabPanel value={tabValue} index={1}>
+                  {getNonGroupItems().length === 0 ? (
+                    <Box sx={{ 
+                      textAlign: 'center', 
+                      py: 4, 
+                      backgroundColor: 'secondary.50', 
+                      borderRadius: 1,
+                      border: 1,
+                      borderColor: 'secondary.main'
+                    }}>
+                      <Typography color="secondary.main" variant="body2" fontWeight={500}>
+                        {t('offers.form.noFixedItems')}
+                      </Typography>
+                    </Box>
+                  ) : (
+                    <Card variant="outlined" sx={{ 
+                      borderColor: 'secondary.main',
+                      borderWidth: 2
+                    }}>
+                      <CardContent sx={{ p: '16px !important' }}>
+                        <ItemsGrid items={getNonGroupItems()} />
+                      </CardContent>
+                    </Card>
+                  )}
+                </TabPanel>
               </Grid>
             </Grid>
           </DialogContent>
 
           <DialogActions sx={{ 
-            p: isMobile ? 2 : 2, 
+            p: 2, 
             gap: 1,
             position: 'sticky',
             bottom: 0,
@@ -987,7 +1007,7 @@ const OfferForm: React.FC<Props> = ({
         onSubmit={handleMultiSelectSubmit}
         title={currentGroupIndex !== null ? 
           t('offers.form.selectItemsForGroup') : 
-          t('offers.form.selectGeneralItems')
+          t('offers.form.selectFixedItems')
         }
         preSelectedItems={getPreSelectedItems()}
       />

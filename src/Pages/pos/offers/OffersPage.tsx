@@ -365,5 +365,3 @@ const OffersPage: React.FC<Props> = (props) => {
 };
 
 export default OffersPage;
-
-

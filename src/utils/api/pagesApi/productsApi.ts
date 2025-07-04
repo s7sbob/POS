@@ -11,6 +11,18 @@ export interface ProductOptionItem {
   sortOrder: number;
 }
 
+
+export interface BranchPrice {
+  id?: string;
+  productPriceId: string;
+  rawBranchId: string;
+  price: number;
+  branchId?: string | null;
+  companyID?: string | null;
+  isActive: boolean;
+}
+
+
 export interface ProductOptionGroup {
   id?: string;
   productId?: string;
@@ -48,7 +60,22 @@ export interface ProductPrice {
   price: number;
   unitFactor: number;
   productComponents: ProductComponent[];
+    branchPrices: BranchPrice[]; // ⭐ إضافة branchPrices
+
 }
+
+
+// إضافة دالة تحويل BranchPrice
+const toBranchPrice = (raw: any): BranchPrice => ({
+  id: raw.id,
+  productPriceId: String(raw.productPriceId || ''),
+  rawBranchId: String(raw.rawBranchId || ''),
+  price: Number(raw.price) || 0,
+  branchId: raw.branchId || null,
+  companyID: raw.companyID || null,
+  isActive: Boolean(raw.isActive)
+});
+
 
 export interface Product {
   id: string;
@@ -143,7 +170,8 @@ const toProductPrice = (raw: any): ProductPrice => ({
   posPriceName: String(raw.posPriceName || ''), // ⭐ إضافة posPriceName
   price: Number(raw.price) || 0,
   unitFactor: Number(raw.unitFactor) || 1,
-  productComponents: raw.productComponents?.map(toProductComponent) || []
+  productComponents: raw.productComponents?.map(toProductComponent) || [],
+  branchPrices: raw.branchPrices?.map(toBranchPrice) || [] // ⭐ إضافة branchPrices
 });
 
 const toProduct = (raw: any): Product => ({

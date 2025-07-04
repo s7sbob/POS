@@ -157,3 +157,42 @@ button:focus-visible {
   line-height: 1.2 !important;
   max-width: 300px !important;
 }
+
+
+/* منع double scrollbar */
+.MuiDialog-paper {
+  overflow-y: auto !important;
+}
+
+.MuiDialogContent-root {
+  overflow-y: visible !important;
+  overflow-x: hidden !important;
+}
+
+/* إخفاء scrollbar مع الاحتفاظ بالوظيفة */
+.MuiDialog-paper::-webkit-scrollbar {
+  width: 8px;
+}
+
+.MuiDialog-paper::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.MuiDialog-paper::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.2);
+  border-radius: 4px;
+}
+
+.MuiDialog-paper::-webkit-scrollbar-thumb:hover {
+  background: rgba(0,0,0,0.3);
+}
+
+/* للموبايل */
+@media (max-width: 768px) {
+  .MuiDialog-paper {
+    margin: 0 !important;
+    max-height: 100vh !important;
+    height: 100vh !important;
+    border-radius: 0 !important;
+  }
+}

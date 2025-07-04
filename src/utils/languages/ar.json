@@ -179,6 +179,22 @@
   },
  "products": {
     "title": "المنتجات",
+     "pricing": "التسعير",
+    "defaultPrices": "الأسعار الافتراضية", 
+    "branchPrices": "أسعار الفرع",
+    "branchPrice": "سعر الفرع",
+    "difference": "الفرق",
+    "defaultPrice": "السعر الافتراضي",
+    "productPrice": "سعر المنتج",
+    "noPricesForBranchPricing": "لا توجد أسعار افتراضية لتسعير الفروع",
+    "noBranchesAccess": "لا توجد فروع متاحة للمستخدم",
+    "manageBranchPrices": "إدارة أسعار الفروع",
+    "selectGroup": "اختر مجموعة",
+    "selectPosScreen": "اختر شاشة نقطة البيع",
+    "optionGroups": "مجموعات الخيارات",
+    "noOptionGroups": "لا توجد مجموعات خيارات",
+    "addOptionGroup": "إضافة مجموعة خيارات",
+    "basicInfo": "المعلومات الأساسية",
     "tabs": {
       "basicInfoAndPrices": "المعلومات الأساسية والأسعار",
       "basicInfo": "المعلومات الأساسية",
@@ -350,7 +366,13 @@
       "clear": "مسح الكل",
       "results": "النتائج",
       "activeFilters": "فلاتر نشطة"
-    }
+    },
+      "common": {
+    "copy": "نسخ",
+    "paste": "لصق",
+    "clearCopy": "مسح المنسوخ",
+    "currency": "ج.م"
+  }
   },
 
 
@@ -1721,8 +1743,12 @@
     "form": {
       "name": "اسم العرض",
        "basicInfo": "المعلومات الأساسية",
-      "offerGroups": "مجموعات العرض",
+      "offerGroups": "عدد المجموعات",
       "offerItems": "عناصر العرض",
+         "fixedItems": "العناصر الثابتة",
+      "noFixedItems": "لا توجد عناصر ثابتة",
+      "selectFixedItems": "اختيار عناصر ثابتة",
+      "original": "أصلي",
       "addGroup": "إضافة مجموعة",
       "addItem": "إضافة عنصر",
         "generalItems": "العناصر العامة",
