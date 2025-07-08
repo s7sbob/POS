@@ -14,6 +14,7 @@ import HallCaptainsPage from 'src/Pages/pos/hall-captains/HallCaptainsPage';
 import CustomersPage from 'src/Pages/pos/customers/CustomersPage';
 import OffersPage from 'src/Pages/pos/offers/OffersPage';
 import DeliveryCompaniesPage from 'src/Pages/pos/delivery/companies/DeliveryCompaniesPage';
+// import SalesPage from 'src/Pages/pos/sales/SalesPage';
 
 /* ***Layouts**** */
 const FullLayout = Loadable(lazy(() => import('../layouts/full/FullLayout')));
@@ -58,6 +59,7 @@ const ViewPurchasePageOriginal = Loadable(lazy(() => import('../Pages/purchases/
 const ProductBalanceReportPageOriginal = Loadable(lazy(() => import('../Pages/reports/ProductBalanceReportPage')));
 const PosProductsPageOriginal = Loadable(lazy(() => import('../Pages/pos/products/PosProductsPage')));
 const AdditionProductsPage = Loadable(lazy(() => import('../Pages/pos/additions/AdditionProductsPage')))
+const SalesPage2 = Loadable(lazy(() => import('../Pages/pos/newSales/index')));
 /* ****إنشاء الصفحات المحمية***** */
 const UsersManagement = createProtectedPage(UsersManagementOriginal, 'USERS');
 const CompanySettings = createProtectedPage(CompanySettingsOriginal, 'COMPANY');
@@ -122,7 +124,6 @@ const Router = [
       // Offers and Delivery Companies
       { path: '/pos/offers', element: <OffersPage /> },
       { path: '/pos/delivery/companies', element: <DeliveryCompaniesPage /> },
-
       // Business Entities Routes
       { path: '/suppliers', element: <SuppliersPage /> },
       { path: '/purchases/suppliers', element: <SuppliersPage /> },
@@ -167,12 +168,12 @@ const Router = [
       { path: '/auth/login', element: <Login /> },
       { path: '/auth/branch-selection', element: <BranchSelection /> },
       { path: '/auth/register', element: <Register /> },
-
+      // { path: '/pos/sales', element: <SalesPage /> },
       // Error Routes
       { path: '/auth/404', element: <Error /> },
       { path: '/unauthorized', element: <Unauthorized /> },
       { path: '/auth/no-branches', element: <NoBranches /> },
-
+      { path: '/pos/sales', element: <SalesPage2 /> },
       // Fallback for public routes
       { path: '*', element: <Navigate to="/auth/login" /> },
     ],

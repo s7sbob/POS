@@ -12,16 +12,17 @@ import {
   Stack,
   Theme,
 } from '@mui/material';
+import { Link } from 'react-router-dom'; // ⭐ إضافة Link
 
 import { useSelector, useDispatch } from 'src/store/Store';
 import { toggleMobileSidebar, setDarkMode } from 'src/store/customizer/CustomizerSlice';
-import { IconMenu2, IconMoon, IconSun } from '@tabler/icons-react';
+import { IconMenu2, IconMoon, IconSun, IconHttpPost } from '@tabler/icons-react'; // ⭐ إضافة IconShoppingCart
 import Notifications from 'src/layouts/full/vertical/header/Notification';
 import Cart from 'src/layouts/full/vertical/header/Cart';
 import Profile from 'src/layouts/full/vertical/header/Profile';
 import Search from 'src/layouts/full/vertical/header/Search';
 import Language from 'src/layouts/full/vertical/header/Language';
-import PrintButton from 'src/layouts/full/vertical/header/PrintButton'; // ⭐ إضافة import
+import PrintButton from 'src/layouts/full/vertical/header/PrintButton';
 // import Logo from 'src/layouts/full/shared/logo/Logo';
 import BranchSelector from 'src/components/BranchSelector';
 import { useAuth } from 'src/contexts/AuthContext';
@@ -99,6 +100,23 @@ const Header = () => {
           {selectedBranch && lgDown && (
             <BranchSelector />
           )}
+          
+          {/* ⭐ إضافة أيقونة المبيعات */}
+          <IconButton
+            color="inherit"
+            component={Link}
+            to="/pos/sales"
+            aria-label="Sales"
+            title="المبيعات"
+            size="large"
+            sx={{
+              '&:hover': {
+                backgroundColor: 'action.hover'
+              }
+            }}
+          >
+            <IconHttpPost size="30" stroke="1.5" />
+          </IconButton>
           
           {/* ⭐ إضافة زرار الطباعة */}
           <PrintButton />

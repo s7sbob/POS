@@ -1,0 +1,2666 @@
+
+===== src/Pages/pos/newSales/CategorySidebar.tsx =====
+import React from 'react';
+import { CategoryItem } from './types/PosSystem';
+
+interface CategorySidebarProps {
+  categories: CategoryItem[];
+  selectedCategory: string;
+  onCategorySelect: (categoryId: string) => void;
+  className?: string;
+  style?: React.CSSProperties;
+}
+
+const CategorySidebar: React.FC<CategorySidebarProps> = ({
+  categories,
+  selectedCategory,
+  onCategorySelect,
+  className = '',
+  style
+}) => {
+  return (
+    <div className={`flex flex-col gap-4 overflow-y-auto hidden-scroll ${className}`} style={style}>
+      {categories.map((category) => (
+        <button
+          key={category.id}
+          onClick={() => onCategorySelect(category.id)}
+          className="transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-blue flex-shrink-0 flex flex-col items-center justify-center"
+          style={{ 
+            width: '100%',
+            background: 'white',
+            borderRadius: 16,
+            border: category.id === selectedCategory ? '2px #0373ED solid' : '2px transparent solid',
+            minHeight: 'min(12vh, 120px)',
+            padding: 'min(1vh, 12px)'
+          }}
+        >
+          <div style={{ 
+            width: 'min(3vw, 48px)', 
+            height: 'min(3vw, 48px)',
+            marginBottom: 'min(0.5vh, 8px)'
+          }}>
+            <img
+              src={category.image}
+              alt={category.name}
+              className="w-full h-full object-contain"
+            />
+          </div>
+          <span 
+            className="font-cairo font-normal text-primary text-center"
+            style={{ fontSize: 'min(0.8vw, 12px)' }}
+          >
+            {category.nameArabic}
+          </span>
+        </button>
+      ))}
+    </div>
+  );
+};
+
+export default CategorySidebar;
+
+===== src/Pages/pos/newSales/components/common/Header.tsx =====
+import React, { useState } from 'react';
+import Dropdown from '../ui/Dropdown';
+
+const Header: React.FC = () => {
+  const [selectedOrderType, setSelectedOrderType] = useState('Takeaway');
+
+  const orderTypes = ['Takeaway', 'Dine In', 'Delivery'];
+
+  return (
+    <header className="w-full bg-card shadow-sm h-full">
+      <div className="w-full h-full flex items-center" style={{ padding: '0 min(1.5vw, 24px)' }}>
+        <div className="flex items-center justify-between w-full">
+          {/* Logo */}
+          <div className="flex items-center">
+            <img
+              src="/images/img_foodify_logo_2_78x166.png"
+              alt="Foodify Logo"
+              className="object-contain"
+              style={{ 
+                width: 'min(10vw, 120px)', 
+                height: 'min(5vh, 56px)' 
+              }}
+            />
+          </div>
+
+
+
+          {/* Right Section */}
+          <div className="flex items-center" style={{ gap: 'min(1vw, 16px)' }}>
+            <button 
+              className="flex items-center gap-2 text-blue font-nunito font-medium hover:opacity-80 transition-opacity"
+              style={{ fontSize: 'min(1.2vw, 14px)' }}
+            >
+              <img 
+                src="/images/img_sending_order.svg" 
+                alt="" 
+                style={{ width: 'min(1.2vw, 20px)', height: 'min(1.2vw, 20px)' }}
+              />
+              Today Orders
+            </button>
+            <button 
+              className="flex items-center gap-2 text-primary font-nunito font-medium hover:opacity-80 transition-opacity"
+              style={{ fontSize: 'min(1.2vw, 14px)' }}
+            >
+              <img 
+                src="/images/img_table_02.svg" 
+                alt="" 
+                style={{ width: 'min(1.2vw, 20px)', height: 'min(1.2vw, 20px)' }}
+              />
+              Table
+            </button>
+            <button 
+              className="flex items-center gap-2 text-primary font-nunito font-medium hover:opacity-80 transition-opacity"
+              style={{ fontSize: 'min(1.2vw, 14px)' }}
+            >
+              <img 
+                src="/images/img_discount_tag_01.svg" 
+                alt="" 
+                style={{ width: 'min(1.2vw, 20px)', height: 'min(1.2vw, 20px)' }}
+              />
+              Discount
+            </button>
+            <button 
+              className="flex items-center gap-2 text-primary font-nunito font-medium hover:opacity-80 transition-opacity"
+              style={{ fontSize: 'min(1.2vw, 14px)' }}
+            >
+              <img 
+                src="/images/img_delete_01.svg" 
+                alt="" 
+                style={{ width: 'min(1.2vw, 20px)', height: 'min(1.2vw, 20px)' }}
+              />
+              Void
+            </button>
+            <div style={{ width: 'min(10vw, 160px)' }}>
+              <div style={{ fontSize: 'min(1vw, 16px)' }}>
+                <Dropdown
+                  placeholder="Takeaway"
+                  options={orderTypes}
+                  value={selectedOrderType}
+                  onChange={setSelectedOrderType}
+                  rightImage={{
+                    src: "/images/img_arrowdown.svg",
+                    width: 24,
+                    height: 24
+                  }}
+                />
+              </div>
+            </div>
+            <button 
+              className="hover:bg-gray-100 rounded-lg transition-colors"
+              style={{ padding: 'min(0.5vh, 8px)' }}
+            >
+              <img 
+                src="/images/img_menu_01.svg" 
+                alt="Menu" 
+                style={{ width: 'min(1.8vw, 28px)', height: 'min(1.8vw, 28px)' }}
+              />
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+  );
+};
+
+export default Header;
+
+===== src/Pages/pos/newSales/components/ui/Button.tsx =====
+import React from 'react';
+
+interface ButtonProps {
+  children: React.ReactNode;
+  onClick?: () => void;
+  variant?: 'primary' | 'secondary' | 'outline';
+  size?: 'small' | 'medium' | 'large';
+  disabled?: boolean;
+  type?: 'button' | 'submit' | 'reset';
+  fullWidth?: boolean;
+  className?: string;
+}
+
+const Button: React.FC<ButtonProps> = ({ 
+  children, 
+  onClick, 
+  variant = 'primary', 
+  size = 'medium', 
+  disabled = false, 
+  type = 'button',
+  fullWidth = false,
+  className = '',
+  ...props 
+}) => {
+  const baseClasses = 'font-nunito font-medium rounded transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2';
+  
+  const variants = {
+    primary: 'bg-primary-blue text-white hover:bg-blue-700 disabled:bg-gray-400',
+    secondary: 'bg-gray-200 text-gray-800 hover:bg-gray-300 disabled:bg-gray-100',
+    outline: 'border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:border-gray-200 disabled:text-gray-400',
+  };
+  
+  const sizes = {
+    small: 'px-2 py-1 text-xs sm:px-3 sm:py-1.5 sm:text-sm',
+    medium: 'px-3 py-1.5 text-sm sm:px-4 sm:py-2 sm:text-base',
+    large: 'px-4 py-2 text-base sm:px-6 sm:py-3 sm:text-lg',
+  };
+  
+  const buttonClasses = `
+    ${baseClasses} 
+    ${variants[variant]} 
+    ${sizes[size]} 
+    ${fullWidth ? 'w-full' : ''} 
+    ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}
+    ${className}
+  `.trim().replace(/\s+/g, ' ');
+  
+  return (
+    <button
+      type={type}
+      onClick={onClick}
+      disabled={disabled}
+      className={buttonClasses}
+      {...props}
+    >
+      {children}
+    </button>
+  );
+};
+
+export default Button;
+===== src/Pages/pos/newSales/components/ui/ChipView.tsx =====
+import React, { useState } from 'react';
+
+interface ChipItemProps {
+  children: React.ReactNode;
+  leftImage?: {
+    src: string;
+    width: number;
+    height: number;
+  };
+  selected?: boolean;
+  onClick?: () => void;
+  variant?: 'extra' | 'without' | 'offer';
+  className?: string;
+}
+
+interface ChipViewProps {
+  children: React.ReactNode;
+  className?: string;
+}
+
+const ChipItem: React.FC<ChipItemProps> = ({
+  children,
+  leftImage,
+  selected = false,
+  onClick,
+  variant = 'extra',
+  className = ''
+}) => {
+  const variants = {
+    extra: 'bg-primary-green text-white',
+    without: 'bg-primary-red text-white',
+    offer: 'bg-primary-orange text-white'
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`
+        inline-flex items-center gap-2 px-4 py-2 sm:px-6 sm:py-3 rounded-lg font-nunito text-sm sm:text-base font-medium
+        transition-all duration-200 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-current
+        ${variants[variant]}
+        ${selected ? 'ring-2 ring-offset-2 ring-current' : ''}
+        ${className}
+      `.trim().replace(/\s+/g, ' ')}
+    >
+      {leftImage && (
+        <img
+          src={leftImage.src}
+          alt=""
+          className="w-4 h-4 sm:w-6 sm:h-6"
+        />
+      )}
+      {children}
+    </button>
+  );
+};
+
+const ChipView: React.FC<ChipViewProps> = ({ children, className = '' }) => {
+  return (
+    <div className={`flex flex-wrap gap-2 sm:gap-4 ${className}`}>
+      {children}
+    </div>
+  );
+};
+
+export { ChipView, ChipItem };
+export default ChipView;
+===== src/Pages/pos/newSales/components/ui/Dropdown.tsx =====
+import React, { useState } from 'react';
+
+interface DropdownProps {
+  placeholder?: string;
+  options?: string[];
+  value?: string;
+  onChange?: (value: string) => void;
+  rightImage?: {
+    src: string;
+    width: number;
+    height: number;
+  };
+  className?: string;
+}
+
+const Dropdown: React.FC<DropdownProps> = ({
+  placeholder = 'Select option',
+  options = ['Option 1', 'Option 2', 'Option 3'],
+  value,
+  onChange,
+  rightImage,
+  className = ''
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [selectedValue, setSelectedValue] = useState(value || placeholder);
+
+  const handleSelect = (option: string) => {
+    setSelectedValue(option);
+    setIsOpen(false);
+    if (onChange) {
+      onChange(option);
+    }
+  };
+
+  return (
+    <div className={`relative ${className}`}>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full flex items-center justify-between gap-2 px-3 py-1 text-left rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-blue focus:border-primary-blue transition-colors duration-200"
+      >
+        <span className="font-nunito text-sm sm:text-base text-primary truncate">
+          {selectedValue}
+        </span>
+        {rightImage && (
+          <img
+            src={rightImage.src}
+            alt="dropdown arrow"
+            className={`w-4 h-4 sm:w-6 sm:h-6 transition-transform duration-200 ${
+              isOpen ? 'rotate-180' : ''
+            }`}
+          />
+        )}
+      </button>
+
+      {isOpen && (
+        <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-gray-300 rounded-md shadow-lg z-50 max-h-60 overflow-auto">
+          {options.map((option, index) => (
+            <button
+              key={index}
+              type="button"
+              onClick={() => handleSelect(option)}
+              className="w-full px-3 py-2 text-left font-nunito text-sm sm:text-base text-primary hover:bg-gray-50 focus:outline-none focus:bg-gray-50 transition-colors duration-200"
+            >
+              {option}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default Dropdown;
+===== src/Pages/pos/newSales/components/ui/EditText.tsx =====
+import React, { useState } from 'react';
+
+interface EditTextProps {
+  placeholder?: string;
+  value?: string;
+  onChange?: (value: string) => void;
+  type?: 'text' | 'number' | 'email' | 'password';
+  disabled?: boolean;
+  required?: boolean;
+  className?: string;
+  variant?: 'primary' | 'secondary';
+}
+
+const EditText: React.FC<EditTextProps> = ({
+  placeholder = '',
+  value,
+  onChange,
+  type = 'text',
+  disabled = false,
+  required = false,
+  className = '',
+  variant = 'primary'
+}) => {
+  const [inputValue, setInputValue] = useState(value || '');
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    setInputValue(newValue);
+    if (onChange) {
+      onChange(newValue);
+    }
+  };
+
+  const variants = {
+    primary: 'bg-primary-blue text-white placeholder-white/70 border-primary-blue focus:ring-primary-blue',
+    secondary: 'bg-card text-primary placeholder-secondary border-gray-300 focus:ring-primary-blue focus:border-primary-blue'
+  };
+
+  return (
+    <input
+      type={type}
+      value={inputValue}
+      onChange={handleChange}
+      placeholder={placeholder}
+      disabled={disabled}
+      required={required}
+      className={`
+        w-full px-3 py-2 sm:px-4 sm:py-3 font-nunito text-sm sm:text-base font-bold
+        border rounded-lg transition-colors duration-200
+        focus:outline-none focus:ring-2 focus:ring-offset-2
+        disabled:opacity-50 disabled:cursor-not-allowed
+        ${variants[variant]}
+        ${className}
+      `.trim().replace(/\s+/g, ' ')}
+    />
+  );
+};
+
+export default EditText;
+===== src/Pages/pos/newSales/components/ui/SearchView.tsx =====
+import React, { useState } from 'react';
+
+interface SearchViewProps {
+  placeholder?: string;
+  value?: string;
+  onChange?: (value: string) => void;
+  onSearch?: (value: string) => void;
+  leftImage?: {
+    src: string;
+    width: number;
+    height: number;
+  };
+  className?: string;
+}
+
+const SearchView: React.FC<SearchViewProps> = ({
+  placeholder = 'Search...',
+  value,
+  onChange,
+  onSearch,
+  leftImage,
+  className = ''
+}) => {
+  const [searchValue, setSearchValue] = useState(value || '');
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    setSearchValue(newValue);
+    if (onChange) {
+      onChange(newValue);
+    }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (onSearch) {
+      onSearch(searchValue);
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && onSearch) {
+      onSearch(searchValue);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className={`relative ${className}`}>
+      <div className="relative">
+        {leftImage && (
+          <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
+            <img
+              src={leftImage.src}
+              alt="search"
+              className="w-4 h-4 sm:w-5 sm:h-5 text-secondary"
+            />
+          </div>
+        )}
+        <input
+          type="text"
+          value={searchValue}
+          onChange={handleChange}
+          onKeyPress={handleKeyPress}
+          placeholder={placeholder}
+          className={`
+            w-full px-3 py-2 sm:px-4 sm:py-3 font-nunito text-sm sm:text-base
+            bg-card border border-gray-300 rounded-lg
+            text-primary placeholder-secondary
+            focus:outline-none focus:ring-2 focus:ring-primary-blue focus:border-primary-blue
+            transition-colors duration-200
+            ${leftImage ? 'pl-10 sm:pl-12' : ''}
+          `.trim().replace(/\s+/g, ' ')}
+        />
+      </div>
+    </form>
+  );
+};
+
+export default SearchView;
+===== src/Pages/pos/newSales/hooks/useResponsiveScale.ts =====
+// File: src/hooks/useResponsiveScale.ts
+import { useState, useEffect } from 'react';
+
+export const useResponsiveScale = (baseWidth = 1920, baseHeight = 1080) => {
+  const [scale, setScale] = useState(1);
+
+  useEffect(() => {
+    const updateScale = () => {
+      const widthScale = window.innerWidth / baseWidth;
+      const heightScale = window.innerHeight / baseHeight;
+      const newScale = Math.min(widthScale, heightScale);
+      setScale(Math.max(0.6, Math.min(1.2, newScale))); // حد أدنى 60% وحد أقصى 120%
+    };
+
+    updateScale();
+    window.addEventListener('resize', updateScale);
+    return () => window.removeEventListener('resize', updateScale);
+  }, [baseWidth, baseHeight]);
+
+  return scale;
+};
+
+===== src/Pages/pos/newSales/index.tsx =====
+import React, { useState } from 'react';
+import Header from './components/common/Header';
+import { ChipView, ChipItem } from './components/ui/ChipView';
+import SearchView from './components/ui/SearchView';
+import NumericKeypad from './NumericKeypad';
+import MenuGrid from './MenuGrid';
+import CategorySidebar from './CategorySidebar';
+import OrderSummaryPanel from './OrderSummaryPanel';
+import { MenuItem, CategoryItem, OrderSummary } from './types/PosSystem';
+import './styles/index.css';
+
+const PosSystem: React.FC = () => {
+  const [keypadValue, setKeypadValue] = useState('0');
+  const [selectedCategory, setSelectedCategory] = useState('crepe');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [customerName, setCustomerName] = useState('');
+  const [selectedChips, setSelectedChips] = useState<string[]>([]);
+
+  // Mock data
+  const categories: CategoryItem[] = [
+    { id: 'crepe', name: 'Crepe', nameArabic: 'كريب', image: '/images/img_crepes_1.png', selected: true },
+    { id: 'burger', name: 'Burger', nameArabic: 'برجر', image: '/images/img_burger_1.png' },
+    { id: 'fries', name: 'Fries', nameArabic: 'بطاطس', image: '/images/img_french_fries_1.png' },
+    { id: 'pasta', name: 'Pasta', nameArabic: 'باستا', image: '/images/img_pasta_1.png' },
+    { id: 'pizza', name: 'Pizza', nameArabic: 'بيتزا', image: '/images/img_pizza_1.png' },
+    { id: 'drinks', name: 'Drinks', nameArabic: 'مشروبات', image: '/images/img_drinks_1.png' },
+    { id: 'desserts', name: 'Desserts', nameArabic: 'حلويات', image: '/images/img_desserts_1.png' },
+  ];
+
+  const menuItems: MenuItem[] = [
+    { id: '1', name: 'Crepe', nameArabic: 'كريب فراخ', price: 100, image: '/images/img_rectangle_34624462.png', category: 'crepe' },
+    { id: '2', name: 'Crepe', nameArabic: 'كريب فراخ', price: 100, image: '/images/img_rectangle_34624462_186x194.png', category: 'crepe' },
+    { id: '3', name: 'Crepe', nameArabic: 'كريب فراخ', price: 100, image: '/images/img_rectangle_34624462_1.png', category: 'crepe' },
+    { id: '4', name: 'Crepe', nameArabic: 'كريب فراخ', price: 100, image: '/images/img_rectangle_34624462_2.png', category: 'crepe' },
+    { id: '5', name: 'Crepe', nameArabic: 'كريب فراخ', price: 100, image: '/images/img_rectangle_34624462_3.png', category: 'crepe' },
+    { id: '6', name: 'Crepe', nameArabic: 'كريب فراخ', price: 100, image: '/images/img_rectangle_34624462_4.png', category: 'crepe' },
+    { id: '7', name: 'Crepe', nameArabic: 'كريب فراخ', price: 100, image: '/images/img_rectangle_34624462_5.png', category: 'crepe' },
+    { id: '8', name: 'Crepe', nameArabic: 'كريب فراخ', price: 100, image: '/images/img_rectangle_34624462_6.png', category: 'crepe' },
+    { id: '9', name: 'Crepe', nameArabic: 'كريب فراخ', price: 100, image: '/images/img_rectangle_34624462_7.png', category: 'crepe' },
+    { id: '10', name: 'Crepe', nameArabic: 'كريب فراخ', price: 100, image: '/images/img_rectangle_34624462_8.png', category: 'crepe' },
+    { id: '11', name: 'Crepe', nameArabic: 'كريب فراخ', price: 100, image: '/images/img_rectangle_34624462_9.png', category: 'crepe' },
+    { id: '12', name: 'Crepe', nameArabic: 'كريب فراخ', price: 100, image: '/images/img_rectangle_34624462_10.png', category: 'crepe' },
+    { id: '13', name: 'Crepe', nameArabic: 'كريب فراخ', price: 100, image: '/images/img_rectangle_34624462_11.png', category: 'crepe' },
+    { id: '14', name: 'Crepe', nameArabic: 'كريب فراخ', price: 100, image: '/images/img_rectangle_34624462_12.png', category: 'crepe' },
+    { id: '15', name: 'Crepe', nameArabic: 'كريب فراخ', price: 100, image: '/images/img_rectangle_34624462_13.png', category: 'crepe' },
+    { id: '16', name: 'Crepe', nameArabic: 'كريب فراخ', price: 100, image: '/images/img_rectangle_34624462_6.png', category: 'crepe' },
+    { id: '17', name: 'Crepe', nameArabic: 'كريب فراخ', price: 100, image: '/images/img_rectangle_34624462_14.png', category: 'crepe' },
+    { id: '18', name: 'Crepe', nameArabic: 'كريب فراخ', price: 100, image: '/images/img_rectangle_34624462_15.png', category: 'crepe' },
+  ];
+
+  const orderSummary: OrderSummary = {
+    items: [
+      {
+        id: '1',
+        menuItem: menuItems[0],
+        quantity: 2,
+        extras: [{ name: 'Extra cheese', nameArabic: 'جبنة إضافية', price: 20, quantity: 2 }],
+        totalPrice: 100
+      },
+      {
+        id: '2',
+        menuItem: menuItems[0],
+        quantity: 2,
+        extras: [{ name: 'Extra cheese', nameArabic: 'جبنة إضافية', price: 20, quantity: 2 }],
+        totalPrice: 100
+      },
+      {
+        id: '3',
+        menuItem: menuItems[0],
+        quantity: 2,
+        extras: [{ name: 'Extra cheese', nameArabic: 'جبنة إضافية', price: 20, quantity: 2 }],
+        totalPrice: 100
+      },
+      {
+        id: '4',
+        menuItem: menuItems[0],
+        quantity: 2,
+        extras: [{ name: 'Extra cheese', nameArabic: 'جبنة إضافية', price: 20, quantity: 2 }],
+        totalPrice: 100
+      }
+    ],
+    subtotal: 250,
+    discount: 20,
+    tax: 50,
+    service: 70,
+    total: 320
+  };
+
+  const handleNumberClick = (number: string) => {
+    if (keypadValue === '0' && number !== '.') {
+      setKeypadValue(number);
+    } else {
+      setKeypadValue(prev => prev + number);
+    }
+  };
+
+  const handleClearClick = () => {
+    setKeypadValue('5');
+  };
+
+  const handleMenuItemClick = (item: MenuItem) => {
+    console.log('Menu item clicked:', item);
+  };
+
+  const handleCategorySelect = (categoryId: string) => {
+    setSelectedCategory(categoryId);
+  };
+
+  const handleChipClick = (chipType: string) => {
+    setSelectedChips(prev => 
+      prev.includes(chipType) 
+        ? prev.filter(chip => chip !== chipType)
+        : [...prev, chipType]
+    );
+  };
+
+  const handleRemoveItem = (itemId: string) => {
+    console.log('Remove item:', itemId);
+  };
+
+  const handleSendOrder = () => {
+    console.log('Send order');
+  };
+
+  const handlePrintOrder = () => {
+    console.log('Print order');
+  };
+
+  const handlePayOrder = () => {
+    console.log('Pay order');
+  };
+
+  const filteredMenuItems = menuItems.filter(item => 
+    item.category === selectedCategory &&
+    (item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+     item.nameArabic.includes(searchQuery))
+  );
+
+  return (
+    <div className="h-screen w-screen overflow-hidden bg-main flex flex-col" style={{ minWidth: '1024px' }}>
+      {/* Header - ثابت في الأعلى */}
+      <div className="flex-shrink-0" style={{ height: '6vh' }}>
+        <Header />
+      </div>
+      
+      {/* Main Content - يأخذ باقي المساحة */}
+      <div className="flex-1 flex overflow-hidden" style={{ height: '92vh' }}>
+        {/* Left Section - Main Content - 70% */}
+        <div className="flex flex-col overflow-hidden" style={{ width: '70vw' }}>
+          {/* Numeric Keypad - ثابت الشكل والحجم */}
+          <div className="flex-shrink-0" style={{ height: '15%', padding: 'min(1vw, 16px)' }}>
+            <NumericKeypad
+              onNumberClick={handleNumberClick}
+              onClearClick={handleClearClick}
+              currentValue={keypadValue}
+            />
+          </div>
+
+          {/* Filter Chips and Search - ثابت */}
+          <div className="flex-shrink-0" style={{ height: '10%', padding: '0 min(1vw, 16px)' }}>
+            <div className="flex items-center justify-between gap-4 h-full">
+              <ChipView className="flex-1">
+                <ChipItem
+                  variant="extra"
+                  leftImage={{ src: '/images/img_addcircle.svg', width: 24, height: 24 }}
+                  selected={selectedChips.includes('extra')}
+                  onClick={() => handleChipClick('extra')}
+                >
+                  Extra
+                </ChipItem>
+                <ChipItem
+                  variant="without"
+                  leftImage={{ src: '/images/img_removecircle.svg', width: 24, height: 24 }}
+                  selected={selectedChips.includes('without')}
+                  onClick={() => handleChipClick('without')}
+                >
+                  Without
+                </ChipItem>
+                <ChipItem
+                  variant="offer"
+                  leftImage={{ src: '/images/img_tags.svg', width: 24, height: 24 }}
+                  selected={selectedChips.includes('offer')}
+                  onClick={() => handleChipClick('offer')}
+                >
+                  Offer
+                </ChipItem>
+              </ChipView>
+
+              <div className="flex items-center gap-2">
+                <SearchView
+                  placeholder="Search"
+                  value={searchQuery}
+                  onChange={setSearchQuery}
+                  leftImage={{ src: '/images/img_search01.svg', width: 20, height: 20 }}
+                  className="w-80"
+                />
+                <button className="p-4 bg-primary-blue rounded-lg hover:opacity-90 transition-opacity focus:outline-none focus:ring-2 focus:ring-primary-blue">
+                  <img src="/images/img_group_7.svg" alt="Filter" className="w-6 h-6" />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Menu Grid - يأخذ باقي المساحة مع scroll */}
+          <div className="flex-1 overflow-hidden" style={{ height: '75%', padding: '0 min(1vw, 16px) min(1vw, 16px)' }}>
+            <MenuGrid
+              items={filteredMenuItems}
+              onItemClick={handleMenuItemClick}
+              className="h-full overflow-auto hidden-scroll"
+            />
+          </div>
+        </div>
+
+        {/* Category Sidebar - 10% */}
+        <div className="flex-shrink-0 overflow-hidden border-l border-r border-gray-200" style={{ width: '10vw' }}>
+          <CategorySidebar
+            categories={categories}
+            selectedCategory={selectedCategory}
+            onCategorySelect={handleCategorySelect}
+            className="h-full overflow-auto hidden-scroll"
+            style={{ padding: 'min(1vw, 16px)' }}
+          />
+        </div>
+
+        {/* Right Section - Order Summary - 20% */}
+        <div className="flex-shrink-0 overflow-hidden" style={{ width: '20vw', padding: 'min(1vw, 16px)' }}>
+          <OrderSummaryPanel
+            orderNumber="#123"
+            totalAmount="1250 EGP"
+            orderSummary={orderSummary}
+            customerName={customerName}
+            onCustomerNameChange={setCustomerName}
+            onRemoveItem={handleRemoveItem}
+            onSendOrder={handleSendOrder}
+            onPrintOrder={handlePrintOrder}
+            onPayOrder={handlePayOrder}
+            className="h-full"
+          />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default PosSystem;
+
+===== src/Pages/pos/newSales/MenuGrid.tsx =====
+import React from 'react';
+import { MenuItem } from './types/PosSystem';
+
+interface MenuGridProps {
+  items: MenuItem[];
+  onItemClick: (item: MenuItem) => void;
+  className?: string;
+}
+
+const MenuGrid: React.FC<MenuGridProps> = ({
+  items,
+  onItemClick,
+  className = ''
+}) => {
+  // حساب scale factor بناءً على عرض الشاشة
+  const getScaleFactor = () => {
+    const baseWidth = 1920; // العرض المرجعي
+    const currentWidth = window.innerWidth;
+    return Math.max(0.6, Math.min(1.2, currentWidth / baseWidth)); // حد أدنى 60% وحد أقصى 120%
+  };
+
+  const scaleFactor = getScaleFactor();
+  const cardWidth = 195 * scaleFactor;
+  const cardHeight = 269 * scaleFactor;
+  const imageHeight = 187 * scaleFactor;
+
+  return (
+    <div className={`h-full overflow-auto hidden-scroll ${className}`}>
+      <div 
+        className="grid gap-4 auto-rows-max justify-items-center"
+        style={{ 
+          gridTemplateColumns: `repeat(auto-fit, ${cardWidth}px)`,
+          padding: '8px'
+        }}
+      >
+        {items.map((item) => (
+          <button
+            key={item.id}
+            onClick={() => onItemClick(item)}
+            className="transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-blue flex-shrink-0 relative"
+            style={{ 
+              width: cardWidth,
+              height: cardHeight,
+              borderRadius: 16 * scaleFactor
+            }}
+          >
+            {/* الخلفية البيضاء */}
+            <div 
+              style={{
+                width: cardWidth,
+                height: cardHeight,
+                position: 'absolute',
+                left: 0,
+                top: 0,
+                background: 'white',
+                borderRadius: 16 * scaleFactor,
+                boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+              }}
+            />
+            
+            {/* الصورة */}
+            <img
+              src={item.image}
+              alt={item.name}
+              style={{
+                width: cardWidth,
+                height: imageHeight,
+                position: 'absolute',
+                left: 0,
+                top: 0,
+                borderRadius: 16 * scaleFactor,
+                objectFit: 'cover'
+              }}
+            />
+            
+            {/* اسم المنتج */}
+            <div
+              style={{
+                position: 'absolute',
+                right: 8 * scaleFactor,
+                top: (202 * scaleFactor),
+                color: 'black',
+                fontSize: 16 * scaleFactor,
+                fontFamily: 'Cairo',
+                fontWeight: '600',
+                textAlign: 'right'
+              }}
+            >
+              {item.nameArabic}
+            </div>
+            
+            {/* السعر */}
+            <div
+              style={{
+                position: 'absolute',
+                left: 8 * scaleFactor,
+                top: (198 * scaleFactor)
+              }}
+            >
+              <span
+                style={{
+                  color: 'black',
+                  fontSize: 20 * scaleFactor,
+                  fontFamily: 'Cairo',
+                  fontWeight: '600'
+                }}
+              >
+                {item.price}{' '}
+              </span>
+              <span
+                style={{
+                  color: 'black',
+                  fontSize: 12 * scaleFactor,
+                  fontFamily: 'Cairo',
+                  fontWeight: '600'
+                }}
+              >
+                EGP
+              </span>
+            </div>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export default MenuGrid;
+
+===== src/Pages/pos/newSales/NumericKeypad.tsx =====
+import React from 'react';
+import Button from './components/ui/Button';
+
+interface NumericKeypadProps {
+  onNumberClick: (number: string) => void;
+  onClearClick: () => void;
+  currentValue: string;
+  className?: string;
+}
+
+const NumericKeypad: React.FC<NumericKeypadProps> = ({
+  onNumberClick,
+  onClearClick,
+  currentValue,
+  className = ''
+}) => {
+  const numbers = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '.', 'C'];
+
+  return (
+    <section className={`numpad-section ${className}`}>
+      <div className="numpad-grid ">
+        {numbers.map((key) => (
+          <button 
+            key={key}
+            className="numpad-key"
+            onClick={() => key === 'C' ? onClearClick() : onNumberClick(key)}
+          >
+            {key}
+          </button>
+        ))}
+      </div>
+      <div className="numpad-display">{currentValue}</div>
+    </section>
+  );
+};
+
+export default NumericKeypad;
+
+===== src/Pages/pos/newSales/OrderSummaryPanel.tsx =====
+import React from 'react';
+import { OrderSummary } from './types/PosSystem';
+import EditText from './components/ui/EditText';
+
+interface OrderSummaryPanelProps {
+  orderNumber: string;
+  totalAmount: string;
+  orderSummary: OrderSummary;
+  customerName: string;
+  onCustomerNameChange: (name: string) => void;
+  onRemoveItem: (itemId: string) => void;
+  onSendOrder: () => void;
+  onPrintOrder: () => void;
+  onPayOrder: () => void;
+  className?: string;
+}
+
+const OrderSummaryPanel: React.FC<OrderSummaryPanelProps> = ({
+  orderNumber,
+  totalAmount,
+  orderSummary,
+  customerName,
+  onCustomerNameChange,
+  onRemoveItem,
+  onSendOrder,
+  onPrintOrder,
+  onPayOrder,
+  className = ''
+}) => {
+  return (
+    <div className={`bg-card rounded-2xl shadow-sm flex flex-col h-full ${className}`}>
+      {/* Header */}
+      <div className="flex-shrink-0 flex items-center">
+        <EditText
+          placeholder={orderNumber}
+          value={orderNumber}
+          variant="primary"
+          className="flex-1 rounded-none rounded-tl-2xl border-r-0 font-nunito font-bold"
+        />
+        <div 
+          className="bg-card  rounded-r-2xl"
+          style={{ padding: 'min(1vh, 16px) min(1.5vw, 24px)' }}
+        >
+          <span 
+            className="font-nunito font-bold text-primary-blue"
+            style={{ fontSize: 'min(1.2vw, 20px)' }}
+          >
+            {totalAmount.split(' ')[0]}{' '}
+          </span>
+          <span 
+            className="font-nunito font-bold text-primary-blue"
+            style={{ fontSize: 'min(0.8vw, 10px)' }}
+          >
+            EGP
+          </span>
+        </div>
+      </div>
+
+      {/* Scrollable Middle: Order Details & Items */}
+      <div className="flex-1 overflow-auto hidden-scroll min-h-0 p-3">
+        <h3 
+          className="font-nunito font-bold text-primary mb-4"
+          style={{ fontSize: 'min(1.2vw, 20px)' }}
+        >
+          Order Details
+        </h3>
+
+        <div className="flex items-center gap-2 mb-2">
+          <div className="flex-1">
+            <input
+              type="text"
+              placeholder="Walk in Customer"
+              value={customerName}
+              onChange={(e) => onCustomerNameChange(e.target.value)}
+              className="w-full border border-gray-300 rounded font-nunito text-primary placeholder-secondary focus:outline-none focus:ring-2 focus:ring-primary-blue focus:border-primary-blue"
+              style={{ 
+                padding: 'min(0.8vh, 12px) min(0.8vw, 12px)',
+                fontSize: 'min(0.9vw, 14px)'
+              }}
+            />
+          </div>
+          <button 
+            className="bg-primary-blue rounded focus:outline-none focus:ring-2 focus:ring-primary-blue"
+            style={{ padding: 'min(0.5vh, 8px)' }}
+          >
+            <img 
+              src="/images/img_group_1000004320.svg" 
+              alt="Add customer" 
+              style={{ width: 'min(1.5vw, 24px)', height: 'min(1.5vw, 24px)' }}
+            />
+          </button>
+        </div>
+
+        <div className="space-y-1 mb-8">
+          {orderSummary.items.map((item) => (
+            <div key={item.id}>
+              <div className="flex items-start justify-between py-1">
+                <div className="flex items-start gap-4 flex-1">
+                  <button
+                    onClick={() => onRemoveItem(item.id)}
+                    className="mt-1 p-1 hover:bg-gray-100 rounded transition-colors"
+                  >
+                    <img 
+                      src="/images/img_delete_02.svg" 
+                      alt="Remove" 
+                      style={{ width: 'min(1vw, 12px)', height: 'min(1vw, 12px)' }}
+                    />
+                  </button>
+                  <div className="flex-1">
+                    <p 
+                      className="font-nunito font-semibold text-primary"
+                      style={{ fontSize: 'min(0.9vw, 12px)' }}
+                    >
+                      {item.quantity} X {item.menuItem.name}
+                    </p>
+                    {item.extras.map((extra, index) => (
+                      <div 
+                        key={index} 
+                        className="text-secondary mt-1" 
+                        style={{ fontSize: 'min(0.75vw, 10px)' }}
+                      >
+                        <span>{extra.quantity} X {extra.name} ({extra.price})</span>
+                        <span className="ml-8">{extra.price * extra.quantity}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p 
+                    className="font-nunito font-semibold text-primary"
+                    style={{ fontSize: 'min(0.9vw, 12px)' }}
+                  >
+                    {item.menuItem.price * item.quantity}
+                  </p>
+                  <p 
+                    className="font-nunito font-semibold text-primary-blue"
+                    style={{ fontSize: 'min(0.9vw, 12px)' }}
+                  >
+                    {item.totalPrice}
+                  </p>
+                </div>
+              </div>
+              <div className="h-px bg-gray-200"></div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Fixed Summary at Bottom */}
+      <div className="flex-shrink-0 p-4 border-t">
+        <div className="space-y-2">
+          {[
+            { label: 'Sub Total', value: orderSummary.subtotal },
+            { label: 'Discount',  value: orderSummary.discount },
+            { label: 'Tax',       value: orderSummary.tax },
+            { label: 'Service',   value: orderSummary.service }
+          ].map(item => (
+            <div key={item.label} className="flex justify-between items-center">
+              <span 
+                className="font-nunito font-medium text-primary"
+                style={{ fontSize: 'min(0.9vw, 12px)' }}
+              >
+                {item.label}
+              </span>
+              <span 
+                className="font-nunito font-bold text-primary"
+                style={{ fontSize: 'min(0.9vw, 12px)' }}
+              >
+                {item.value} <span style={{ fontSize: 'min(0.7vw, 12px)' }}>EGP</span>
+              </span>
+            </div>
+          ))}
+        </div>
+
+        <div className="h-px bg-gray-400 my-4"></div>
+
+        <div className="flex justify-between items-center">
+          <span 
+            className="font-nunito font-bold text-primary"
+            style={{ fontSize: 'min(1vw, 16px)' }}
+          >
+            Total
+          </span>
+          <span 
+            className="font-nunito font-bold text-primary"
+            style={{ fontSize: 'min(1vw, 16px)' }}
+          >
+            {orderSummary.total} <span style={{ fontSize: 'min(0.8vw, 14px)' }}>EGP</span>
+          </span>
+        </div>
+      </div>
+
+      {/* Fixed Action Buttons */}
+      <div className="flex-shrink-0 p-4">
+        <div className="grid grid-cols-3 gap-4">
+          {[
+            { onClick: onSendOrder,  bg: 'bg-primary-red',   icon: '/images/img_tabler_send.svg',    label: 'Send' },
+            { onClick: onPrintOrder, bg: 'bg-primary-blue',  icon: '/images/img_printer.svg',       label: 'Print' },
+            { onClick: onPayOrder,   bg: 'bg-primary-green', icon: '/images/img_payment_02.svg',    label: 'Pay' }
+          ].map(btn => (
+            <button
+              key={btn.label}
+              onClick={btn.onClick}
+              className={`flex flex-col items-center justify-center ${btn.bg} rounded text-white focus:outline-none`}
+              style={{ padding: 'min(1vh, 16px)' }}
+            >
+              <img 
+                src={btn.icon} 
+                alt={btn.label} 
+                className="mb-1"
+                style={{ width: 'min(1.2vw, 20px)', height: 'min(1.2vw, 20px)' }}
+              />
+              <span 
+                className="font-nunito font-bold"
+                style={{ fontSize: 'min(1.2vw, 18px)' }}
+              >
+                {btn.label}
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default OrderSummaryPanel;
+
+===== src/Pages/pos/newSales/srcdhiwise/component-tagger.tsx =====
+import React, { useMemo } from 'react';
+
+export interface TaggedComponentProps {
+  tag?: string;
+  id?: string;
+  className?: string;
+  'data-testid'?: string;
+  children?: React.ReactNode;
+}
+
+export interface TaggerOptions {
+  tag?: string;
+  id?: string;
+  className?: string;
+  testId?: string;
+  debug?: boolean;
+}
+
+/**
+ * Component tagger utility for adding metadata and testing attributes to React components
+ * @param Component - The React component to wrap
+ * @param options - Tagging options including tag, id, className, testId, and debug
+ * @returns Tagged React component with additional props
+ */
+export function tagger<T extends React.ComponentType<any>>(
+  Component: T,
+  options: TaggerOptions = {}
+): React.ComponentType<React.ComponentProps<T> & TaggedComponentProps> {
+  const { tag, id, className, testId, debug = false } = options;
+
+  const TaggedComponent = React.forwardRef<any, React.ComponentProps<T> & TaggedComponentProps>(
+    (props, ref) => {
+      const enhancedProps = {
+        ...props,
+        ...(tag && { 'data-tag': tag }),
+        ...(id && { id }),
+        ...(className && { className: `${props.className || ''} ${className}`.trim() }),
+        ...(testId && { 'data-testid': testId }),
+        ref,
+      };
+
+      if (debug) {
+        console.log('Tagged component props:', enhancedProps);
+      }
+
+      return React.createElement(Component, enhancedProps);
+    }
+  );
+
+  TaggedComponent.displayName = `Tagged(${Component.displayName || Component.name || 'Component'})`;
+
+  return TaggedComponent as React.ComponentType<React.ComponentProps<T> & TaggedComponentProps>;
+}
+
+/**
+ * Higher-order component for tagging components with metadata
+ * @param options - Tagging options
+ * @returns HOC function that wraps components with tagging functionality
+ */
+export const withTagger = (options: TaggerOptions = {}) => {
+  return <T extends React.ComponentType<any>>(Component: T) => {
+    return tagger(Component, options);
+  };
+};
+
+/**
+ * Hook for creating tagged element props
+ * @param options - Tagging options
+ * @returns Object with tagged props
+ */
+export const useTaggedProps = (options: TaggerOptions = {}) => {
+  const { tag, id, className, testId } = options;
+  
+  return React.useMemo(() => ({
+    ...(tag && { 'data-tag': tag }),
+    ...(id && { id }),
+    ...(className && { className }),
+    ...(testId && { 'data-testid': testId }),
+  }), [tag, id, className, testId]);
+};
+
+export default tagger;
+===== src/Pages/pos/newSales/srcvitejs/plugin-react.tsx =====
+import React, { useCallback } from 'react';
+
+export interface ReactPluginOptions {
+  enableHMR?: boolean;
+  enableDevTools?: boolean;
+  strictMode?: boolean;
+  debug?: boolean;
+}
+
+export interface ReactComponentOptions {
+  displayName?: string;
+  propTypes?: any;
+  defaultProps?: any;
+}
+
+/**
+ * React plugin utility for enhancing React components with additional functionality
+ * @param Component - The React component to enhance
+ * @param options - Plugin options for React-specific enhancements
+ * @returns Enhanced React component with plugin functionality
+ */
+export function react<T extends React.ComponentType<any>>(
+  Component: T,
+  options: ReactPluginOptions & ReactComponentOptions = {}
+): React.ComponentType<React.ComponentProps<T>> {
+  const {
+    enableHMR = true,
+    enableDevTools = process.env.NODE_ENV === 'development',
+    strictMode = false,
+    debug = false,
+    displayName,
+    propTypes,
+    defaultProps,
+  } = options;
+
+  const EnhancedComponent = React.forwardRef<any, React.ComponentProps<T>>(
+    (props, ref) => {
+      // Debug logging in development
+      if (debug && enableDevTools) {
+        console.log(`[React Plugin] Rendering ${displayName || Component.name}:`, props);
+      }
+
+      // Error boundary for development
+      if (enableDevTools) {
+        try {
+          const element = React.createElement(Component, { ...props, ref });
+          return strictMode ? React.createElement(React.StrictMode, {}, element) : element;
+        } catch (error) {
+          console.error(`[React Plugin] Error in ${displayName || Component.name}:`, error);
+          return React.createElement(
+            'div',
+            { style: { color: 'red', padding: '10px', border: '1px solid red' } },
+            `Error: ${error instanceof Error ? error.message : 'Unknown error'}`
+          );
+        }
+      }
+
+      const element = React.createElement(Component, { ...props, ref });
+      return strictMode ? React.createElement(React.StrictMode, {}, element) : element;
+    }
+  );
+
+  // Set component metadata
+  EnhancedComponent.displayName = displayName || `ReactPlugin(${Component.displayName || Component.name || 'Component'})`;
+  
+  if (propTypes) {
+    (EnhancedComponent as any).propTypes = propTypes;
+  }
+  
+  if (defaultProps) {
+    (EnhancedComponent as any).defaultProps = defaultProps;
+  }
+
+  // Hot module replacement support
+  if (enableHMR && enableDevTools && (module as any).hot) {
+    (module as any).hot.accept();
+  }
+
+  return EnhancedComponent;
+}
+
+/**
+ * Higher-order component for React plugin enhancements
+ * @param options - Plugin options
+ * @returns HOC function that wraps components with React plugin functionality
+ */
+export const withReactPlugin = (options: ReactPluginOptions & ReactComponentOptions = {}) => {
+  return <T extends React.ComponentType<any>>(Component: T) => {
+    return react(Component, options);
+  };
+};
+
+/**
+ * Hook for React plugin utilities
+ * @param options - Plugin options
+ * @returns Object with React plugin utilities
+ */
+export const useReactPlugin = (options: ReactPluginOptions = {}) => {
+  const { enableDevTools = process.env.NODE_ENV === 'development', debug = false } = options;
+  
+  const logRender = React.useCallback((componentName: string, props?: any) => {
+    if (debug && enableDevTools) {
+      console.log(`[React Plugin] ${componentName} rendered:`, props);
+    }
+  }, [debug, enableDevTools]);
+
+  const measurePerformance = React.useCallback((name: string, fn: () => void) => {
+    if (enableDevTools) {
+      const start = performance.now();
+      fn();
+      const end = performance.now();
+      console.log(`[React Plugin] ${name} took ${end - start} milliseconds`);
+    } else {
+      fn();
+    }
+  }, [enableDevTools]);
+
+  return {
+    logRender,
+    measurePerformance,
+    isDevMode: enableDevTools,
+  };
+};
+
+export default react;
+===== src/Pages/pos/newSales/styles/index.css =====
+@import './tailwind.css';
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;700&display=swap');
+
+body {
+  font-family: 'Nunito', 'Inter', sans-serif;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+*, *::before, *::after {
+  box-sizing: inherit;
+}
+
+.hidden-scroll {
+  /* إخفاء scrollbar في webkit browsers (Chrome, Safari, Edge) */
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.hidden-scroll::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+  width: 0px;
+  background: transparent;
+}
+
+/* أو استخدام هذا للتحكم أكثر */
+.custom-hidden-scroll {
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.custom-hidden-scroll::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  background: transparent;
+}
+
+
+/* NumericKeypad Styles */
+.numpad-section {
+  display: flex;
+  gap: 5px;
+  background-color: var(--bg-light);
+  border: 1px solid var(--border-color-medium);
+  border-radius: 8px;
+  height: 95px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.numpad-grid {
+  flex-grow: 1;
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  height: 100%;
+}
+
+.numpad-key {
+  font-family: Cairo;
+  font-size: 32px;
+  border-right: 1px solid var(--border-color-light);
+  color: var(--text-dark);
+  background: var(--bg-light);
+  transition: background-color 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: none;
+  border-radius: 0;
+}
+
+.numpad-key:hover {
+  background-color: #f8f9fa;
+}
+
+.numpad-key:active {
+  background-color: #e9ecef;
+}
+
+.numpad-key:last-child {
+  font-family: var(--font-primary);
+  border-right: none;
+}
+
+.numpad-display {
+  background-color: var(--primary-color);
+  color: var(--text-light);
+  font-family: var(--font-primary);
+  font-size: 40px;
+  font-weight: 400;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 247px;
+  flex-shrink: 0;
+}
+
+/* CSS Variables (إضافة هذه المتغيرات إذا لم تكن موجودة) */
+:root {
+  --primary-color: #0373ed;
+  --bg-light: #ffffff;
+  --text-dark: #000000;
+  --text-light: #ffffff;
+  --border-color-light: rgba(0, 0, 0, 0.2);
+  --border-color-medium: rgba(0, 0, 0, 0.3);
+  --font-primary: 'Nunito', sans-serif;
+  --font-display: 'Aleo', serif;
+}
+
+/* Responsive Design للـ NumericKeypad */
+@media (max-width: 768px) {
+  .numpad-section {
+    height: 80px;
+  }
+  
+  .numpad-key {
+    font-size: 24px;
+  }
+  
+  .numpad-display {
+    font-size: 32px;
+    width: 200px;
+  }
+}
+
+@media (max-width: 480px) {
+  .numpad-section {
+    height: 60px;
+    gap: 4px;
+  }
+  
+  .numpad-key {
+    font-size: 18px;
+  }
+  
+  .numpad-display {
+    font-size: 24px;
+    width: 150px;
+  }
+}
+
+
+/* CategorySidebar Styles */
+.category-sidebar {
+  width: calc(148px * var(--scale-factor, 1));
+  flex-shrink: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+.category-nav {
+  display: flex;
+  flex-direction: column;
+  gap: calc(16px * var(--scale-factor, 1));
+  height: 100%;
+  overflow-y: auto;
+  padding-right: calc(8px * var(--scale-factor, 1));
+  
+  /* إخفاء الـ scrollbar تماماً */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* Internet Explorer 10+ */
+}
+
+/* إخفاء الـ scrollbar في WebKit browsers */
+.category-nav::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.category-item {
+  background-color: white;
+  border-radius: calc(16px * var(--scale-factor, 1));
+  padding: calc(16px * var(--scale-factor, 1));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: calc(8px * var(--scale-factor, 1));
+  text-align: center;
+  width: calc(148px * var(--scale-factor, 1));
+  height: calc(120px * var(--scale-factor, 1));
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border: calc(2px * var(--scale-factor, 1)) solid transparent;
+  flex-shrink: 0;
+  position: relative;
+  color: black;
+}
+
+.category-item:hover {
+  background-color: #f8f9fa;
+  transform: translateY(calc(-2px * var(--scale-factor, 1)));
+  box-shadow: 0 calc(4px * var(--scale-factor, 1)) calc(12px * var(--scale-factor, 1)) rgba(0, 0, 0, 0.15);
+}
+
+.category-item.active {
+  border: calc(2px * var(--scale-factor, 1)) solid #0373ED;
+}
+
+.category-item:focus {
+  outline: none;
+  box-shadow: 0 0 0 calc(2px * var(--scale-factor, 1)) rgba(3, 115, 237, 0.3);
+}
+
+.category-icon {
+  width: calc(56.47px * var(--scale-factor, 1));
+  height: calc(56.47px * var(--scale-factor, 1));
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.category-name {
+  font-family: 'Cairo', sans-serif;
+  font-size: calc(24px * var(--scale-factor, 1));
+  font-weight: 400;
+  line-height: calc(32px * var(--scale-factor, 1));
+  color: black;
+  text-align: center;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+  max-width: 100%;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  
+  /* تأكد من أن النص يتكيف مع الحجم */
+  white-space: normal;
+  text-overflow: ellipsis;
+}
+
+/* Responsive Design */
+@media (max-width: 1600px) {
+  .category-sidebar {
+    width: 100%;
+    height: auto;
+  }
+  
+  .category-nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+    height: auto;
+    overflow: visible;
+    justify-content: center;
+    gap: calc(12px * var(--scale-factor, 1));
+    padding-right: 0;
+  }
+  
+  .category-item {
+    flex-grow: 1;
+    min-width: calc(120px * var(--scale-factor, 1));
+    max-width: calc(148px * var(--scale-factor, 1));
+  }
+}
+
+@media (max-width: 768px) {
+  .category-nav {
+    gap: calc(8px * var(--scale-factor, 1));
+  }
+  
+  .category-item {
+    min-width: calc(100px * var(--scale-factor, 1));
+    height: calc(100px * var(--scale-factor, 1));
+    padding: calc(12px * var(--scale-factor, 1));
+  }
+  
+  .category-icon {
+    width: calc(40px * var(--scale-factor, 1));
+    height: calc(40px * var(--scale-factor, 1));
+  }
+  
+  .category-name {
+    font-size: calc(18px * var(--scale-factor, 1));
+    line-height: calc(24px * var(--scale-factor, 1));
+  }
+}
+
+@media (max-width: 480px) {
+  .category-item {
+    min-width: calc(80px * var(--scale-factor, 1));
+    height: calc(80px * var(--scale-factor, 1));
+    padding: calc(8px * var(--scale-factor, 1));
+  }
+  
+  .category-icon {
+    width: calc(32px * var(--scale-factor, 1));
+    height: calc(32px * var(--scale-factor, 1));
+  }
+  
+  .category-name {
+    font-size: calc(14px * var(--scale-factor, 1));
+    line-height: calc(18px * var(--scale-factor, 1));
+  }
+}
+
+/* تحسينات إضافية للنص الطويل */
+@media (max-width: 320px) {
+  .category-name {
+    font-size: calc(12px * var(--scale-factor, 1));
+    line-height: calc(16px * var(--scale-factor, 1));
+  }
+}
+
+/* CSS Variables */
+:root {
+  --scale-factor: 1;
+}
+===== src/Pages/pos/newSales/styles/index2.css =====
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Aleo:wght@400;700&display=swap');
+
+:root {
+  --primary-color: #0373ed;
+  --success-color: #23a929;
+  --danger-color: #e53935;
+  --warning-color: #ffb74d;
+  --bg-main: #f5f5f5;
+  --bg-light: #ffffff;
+  --text-dark: #000000;
+  --text-light: #ffffff;
+  --text-muted: rgba(0, 0, 0, 0.5);
+  --border-color-light: rgba(0, 0, 0, 0.2);
+  --border-color-medium: rgba(0, 0, 0, 0.3);
+  --font-primary: 'Nunito', sans-serif;
+  --font-secondary: 'Cairo', sans-serif;
+  --font-display: 'Aleo', serif;
+  --scale-factor: 1;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-primary);
+  background-color: var(--bg-main);
+  color: var(--text-dark);
+  overflow: hidden;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* Responsive scaling system */
+.pos-system-container {
+  transform: scale(var(--scale-factor));
+  transform-origin: top left;
+  width: calc(100% / var(--scale-factor));
+  height: calc(100% / var(--scale-factor));
+}
+
+/* Header */
+.site-header {
+  background-color: var(--bg-light);
+  height: 96px;
+  display: flex;
+  align-items: center;
+  padding: 0 40px;
+  flex-shrink: 0;
+}
+
+.header-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  max-width: 1920px;
+  margin: 0 auto;
+}
+
+.logo img {
+  width: 167px;
+  height: 78px;
+  object-fit: contain;
+}
+
+.main-nav {
+  display: flex;
+  align-items: center;
+  gap: 181px;
+}
+
+.nav-links, .user-actions {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--text-dark);
+  transition: color 0.2s ease;
+}
+
+.nav-link:first-child {
+  color: var(--primary-color);
+}
+
+.nav-link img {
+  width: 20px;
+  height: 20px;
+}
+
+.takeaway-link img {
+  width: 24px;
+  height: 24px;
+}
+
+.menu-button {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.menu-button img {
+  width: 100%;
+  height: 100%;
+}
+
+/* Main Interface */
+.pos-interface {
+  display: flex;
+  gap: 24px;
+  padding: 48px 40px;
+  max-width: 1920px;
+  margin: 0 auto;
+  align-items: flex-start;
+  height: calc(100vh - 96px);
+  overflow: hidden;
+}
+
+/* Left Panel */
+.left-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  height: 100%;
+  overflow: hidden;
+}
+
+.numpad-section {
+  display: flex;
+  gap: 8px;
+  background-color: var(--bg-light);
+  border: 1px solid var(--border-color-medium);
+  border-radius: 8px;
+  height: 105px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.numpad-grid {
+  flex-grow: 1;
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  height: 100%;
+}
+
+.numpad-key {
+  font-family: var(--font-display);
+  font-size: 32px;
+  border-right: 1px solid var(--border-color-light);
+  color: var(--text-dark);
+  background: var(--bg-light);
+  transition: background-color 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.numpad-key:hover {
+  background-color: #f8f9fa;
+}
+
+.numpad-key:last-child {
+  font-family: var(--font-primary);
+  border-right: none;
+}
+
+.numpad-display {
+  background-color: var(--primary-color);
+  color: var(--text-light);
+  font-family: var(--font-primary);
+  font-size: 40px;
+  font-weight: 400;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 247px;
+  flex-shrink: 0;
+}
+
+.menu-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-shrink: 0;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 16px;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border-radius: 8px;
+  color: var(--text-light);
+  font-size: 24px;
+  font-weight: 500;
+  transition: opacity 0.2s ease;
+}
+
+.action-btn:hover {
+  opacity: 0.9;
+}
+
+.action-btn.active {
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5);
+}
+
+.action-btn img { 
+  width: 24px; 
+  height: 24px; 
+}
+
+.extra-btn { 
+  background-color: var(--success-color); 
+}
+
+.without-btn { 
+  background-color: var(--danger-color); 
+}
+
+.offer-btn { 
+  background-color: var(--warning-color); 
+}
+
+.search-bar {
+  display: flex;
+  align-items: center;
+  background-color: var(--bg-light);
+  border-radius: 8px;
+  position: relative;
+  box-shadow: 0px 10px 32px 0px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+}
+
+.search-bar .search-icon {
+  position: absolute;
+  left: 20px;
+  width: 20px;
+  height: 20px;
+  z-index: 1;
+}
+
+.search-bar input {
+  border: none;
+  background: transparent;
+  height: 56px;
+  padding-left: 50px;
+  padding-right: 16px;
+  font-size: 20px;
+  width: 278px;
+  outline: none;
+  font-family: var(--font-primary);
+}
+
+.search-bar input::placeholder {
+  color: var(--text-muted);
+}
+
+.filter-btn {
+  background-color: var(--primary-color);
+  height: 56px;
+  width: 66px;
+  border-radius: 0 8px 8px 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: background-color 0.2s ease;
+  flex-shrink: 0;
+}
+
+.filter-btn:hover {
+  background-color: #025bb5;
+}
+
+.filter-btn img { 
+  width: 24px; 
+  height: 24px; 
+}
+
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(195px, 1fr));
+  gap: 8px;
+  overflow-y: auto;
+  flex: 1;
+  padding-right: 8px;
+}
+
+.product-grid::-webkit-scrollbar {
+  width: 6px;
+}
+
+.product-grid::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.product-grid::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.product-grid::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+.product-card {
+  border-radius: 16px;
+  overflow: hidden;
+  position: relative;
+  background-color: var(--bg-light);
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  height: 269px;
+}
+
+.product-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.product-image-container {
+  position: relative;
+  width: 100%;
+  height: 187px;
+  overflow: hidden;
+}
+
+.product-image-container .product-bg,
+.product-image-container .product-img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.product-info {
+  padding: 12px 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 82px;
+}
+
+.product-price {
+  font-family: var(--font-secondary);
+  font-weight: 600;
+  font-size: 20px;
+  color: var(--text-dark);
+}
+
+.product-price span {
+  font-size: 12px;
+}
+
+.product-name {
+  font-family: var(--font-secondary);
+  font-weight: 600;
+  font-size: 16px;
+  color: var(--text-dark);
+}
+
+/* Category Sidebar */
+.category-sidebar {
+  width: 148px;
+  flex-shrink: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+.category-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  height: 100%;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+.category-nav::-webkit-scrollbar {
+  width: 6px;
+}
+
+.category-nav::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.category-nav::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.category-nav::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+.category-item {
+  background-color: var(--bg-light);
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-align: center;
+  font-family: var(--font-secondary);
+  font-size: 24px;
+  height: 120px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border: 2px solid transparent;
+  flex-shrink: 0;
+}
+
+.category-item:hover {
+  background-color: #f8f9fa;
+}
+
+.category-item.active {
+  border: 2px solid var(--primary-color);
+}
+
+.category-item img {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+}
+
+/* Order Sidebar */
+.order-sidebar {
+  width: 477px;
+  flex-shrink: 0;
+  height: 100%;
+}
+
+.order-container {
+  background-color: var(--bg-light);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.order-header {
+  display: flex;
+  height: 65px;
+  flex-shrink: 0;
+}
+
+.order-id {
+  background-color: var(--primary-color);
+  color: var(--text-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  border-radius: 16px 0 0 0;
+  font-size: 24px;
+  font-weight: 700;
+  font-family: var(--font-primary);
+}
+
+.order-total-price {
+  border: 1px solid var(--primary-color);
+  color: var(--primary-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 155px;
+  border-radius: 0 16px 0 0;
+  font-size: 28px;
+  font-weight: 700;
+  font-family: var(--font-primary);
+}
+
+.order-total-price span {
+  font-size: 14px;
+  margin-left: 4px;
+}
+
+.order-body {
+  padding: 24px 16px;
+  flex-grow: 1;
+  overflow-y: auto;
+}
+
+.order-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.order-body::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.order-body::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.order-body::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+.order-title {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  font-family: var(--font-primary);
+}
+
+.customer-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 1px solid var(--border-color-medium);
+  border-radius: 4px;
+  margin-bottom: 24px;
+  overflow: hidden;
+}
+
+.customer-info input {
+  flex: 1;
+  padding: 10px 13px;
+  font-size: 14px;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: var(--font-primary);
+}
+
+.customer-info input::placeholder {
+  color: var(--text-muted);
+}
+
+.customer-info button {
+  background-color: var(--primary-color);
+  width: 44px;
+  height: 39px;
+  border-radius: 0 4px 4px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease;
+  flex-shrink: 0;
+}
+
+.customer-info button:hover {
+  background-color: #025bb5;
+}
+
+.customer-info button img {
+  width: 20px;
+  height: 20px;
+}
+
+.order-items-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.order-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-bottom: 8px;
+  border-bottom: 0.5px solid var(--border-color-light);
+}
+
+.item-details {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  flex: 1;
+}
+
+.delete-item-btn {
+  margin-top: 2px;
+  padding: 2px;
+  transition: opacity 0.2s ease;
+}
+
+.delete-item-btn:hover {
+  opacity: 0.7;
+}
+
+.delete-item-btn img {
+  width: 16px;
+  height: 16px;
+}
+
+.item-name-group {
+  flex: 1;
+}
+
+.item-name {
+  font-size: 14px;
+  font-weight: 600;
+  font-family: var(--font-primary);
+  margin-bottom: 4px;
+}
+
+.item-addon {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-family: var(--font-primary);
+}
+
+.item-price-group {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.item-price {
+  font-size: 16px;
+  font-weight: 600;
+  font-family: var(--font-primary);
+  margin-bottom: 4px;
+}
+
+.item-total-price {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--primary-color);
+  font-family: var(--font-primary);
+}
+
+.order-footer {
+  padding: 24px 16px;
+  flex-shrink: 0;
+}
+
+.summary-details {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 16px;
+  font-weight: 500;
+  font-family: var(--font-primary);
+}
+
+.summary-row span:last-child {
+  font-weight: 700;
+}
+
+.summary-row small {
+  font-size: 12px;
+}
+
+.summary-total {
+  display: flex;
+  justify-content: space-between;
+  font-size: 20px;
+  font-weight: 700;
+  padding-top: 24px;
+  border-top: 1px solid var(--border-color-medium);
+  margin-bottom: 24px;
+  font-family: var(--font-primary);
+}
+
+.summary-total small {
+  font-size: 14px;
+}
+
+.payment-actions {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.payment-btn {
+  height: 62px;
+  border-radius: 4px;
+  color: var(--text-light);
+  font-size: 20px;
+  font-weight: 700;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  transition: opacity 0.2s ease;
+  font-family: var(--font-primary);
+}
+
+.payment-btn:hover {
+  opacity: 0.9;
+}
+
+.payment-btn img {
+  width: 20px;
+  height: 20px;
+}
+
+.send-btn { 
+  background-color: var(--danger-color); 
+}
+
+.print-btn { 
+  background-color: var(--primary-color); 
+}
+
+.pay-btn { 
+  background-color: var(--success-color); 
+}
+
+/* Responsive Design */
+@media (max-width: 1600px) {
+  .pos-interface {
+    flex-direction: column;
+    align-items: stretch;
+    height: auto;
+    overflow: visible;
+  }
+  
+  .left-panel, .category-sidebar, .order-sidebar {
+    width: 100%;
+    height: auto;
+  }
+  
+  .category-nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+    height: auto;
+    overflow: visible;
+  }
+  
+  .category-item {
+    flex-grow: 1;
+    min-width: 120px;
+  }
+  
+  .product-grid {
+    height: 400px;
+  }
+  
+  .order-body {
+    height: 300px;
+  }
+}
+
+@media (max-width: 1200px) {
+  .main-nav {
+    gap: 60px;
+  }
+  
+  .nav-links {
+    gap: 16px;
+  }
+  
+  .nav-link {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 768px) {
+  .site-header {
+    height: auto;
+    padding: 16px;
+  }
+  
+  .header-container {
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .main-nav {
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .pos-interface {
+    padding: 16px;
+  }
+  
+  .menu-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .search-bar {
+    width: 100%;
+  }
+  
+  .search-bar input {
+    width: calc(100% - 66px);
+  }
+  
+  .action-buttons {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  
+  .action-btn {
+    font-size: 18px;
+    padding: 8px 16px;
+  }
+}
+
+===== src/Pages/pos/newSales/styles/tailwind.css =====
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Primary Colors */
+    --primary-blue: #0373ed;
+    --primary-green: #22a928;
+    --primary-red: #e53935;
+    --primary-orange: #ffb74d;
+
+    /* Background Colors */
+    --bg-main: #f5f5f5;
+    --bg-card: #ffffff;
+    --bg-overlay-light: #00000033;
+    --bg-overlay-dark: #0000004c;
+
+    /* Text Colors */
+    --text-primary: #000000;
+    --text-secondary: #0000007f;
+    --text-white: #ffffff;
+    --text-blue: #0373ed;
+  }
+}
+
+@layer utilities {
+  /* Primary Colors */
+  .bg-primary-blue {
+    background-color: var(--primary-blue);
+  }
+  .bg-primary-green {
+    background-color: var(--primary-green);
+  }
+  .bg-primary-red {
+    background-color: var(--primary-red);
+  }
+  .bg-primary-orange {
+    background-color: var(--primary-orange);
+  }
+
+  /* Background Colors */
+  .bg-main {
+    background-color: var(--bg-main);
+  }
+  .bg-card {
+    background-color: var(--bg-card);
+  }
+  .bg-overlay-light {
+    background-color: var(--bg-overlay-light);
+  }
+  .bg-overlay-dark {
+    background-color: var(--bg-overlay-dark);
+  }
+
+  /* Text Colors */
+  .text-primary {
+    color: var(--text-primary);
+  }
+  .text-secondary {
+    color: var(--text-secondary);
+  }
+  .text-white {
+    color: var(--text-white);
+  }
+  .text-blue {
+    color: var(--text-blue);
+  }
+}
+===== src/Pages/pos/newSales/types/PosSystem.tsx =====
+export interface MenuItem {
+  id: string;
+  name: string;
+  nameArabic: string;
+  price: number;
+  image: string;
+  category: string;
+}
+
+export interface OrderItem {
+  id: string;
+  menuItem: MenuItem;
+  quantity: number;
+  extras: OrderExtra[];
+  totalPrice: number;
+}
+
+export interface OrderExtra {
+  name: string;
+  nameArabic: string;
+  price: number;
+  quantity: number;
+}
+
+export interface CategoryItem {
+  id: string;
+  name: string;
+  nameArabic: string;
+  image: string;
+  selected?: boolean;
+}
+
+export interface OrderSummary {
+  items: OrderItem[];
+  subtotal: number;
+  discount: number;
+  tax: number;
+  service: number;
+  total: number;
+}

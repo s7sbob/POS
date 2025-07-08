@@ -1856,6 +1856,26 @@
       "addFailed": "فشل في إضافة الشركة",
       "updateFailed": "فشل في تحديث الشركة"
     }
+  },
+   "pos": {
+    "todayOrders": "طلبات اليوم",
+    "table": "طاولة", 
+    "discount": "خصم",
+    "void": "إلغاء",
+    "takeaway": "تيك أواي",
+    "search": "بحث",
+    "extra": "إضافي",
+    "without": "بدون", 
+    "offer": "عرض",
+    "orderDetails": "تفاصيل الطلب",
+    "walkInCustomer": "عميل مباشر",
+    "subTotal": "المجموع الفرعي",
+    "tax": "ضريبة",
+    "service": "خدمة", 
+    "total": "الإجمالي",
+    "send": "إرسال",
+    "print": "طباعة",
+    "pay": "دفع"
   }
 
 

@@ -1734,77 +1734,78 @@ const DesktopPriceTable = () => (
                   </Grid>
                 )}
 
-                <Grid item xs={12}>
-                  <Controller
-                    name="description"
-                    control={control}
-                    render={({ field }) => (
-                      <TextField
-                        {...field}
-                        label={t('products.description')}
-                        fullWidth
-                        multiline
-                        rows={3}
-                        onFocus={(e) => e.target.select()}
-                      />
-                    )}
-                  />
-                </Grid>
+<Grid item xs={12} md={6}>
+  <Controller
+    name="description"
+    control={control}
+    render={({ field }) => (
+      <TextField
+        {...field}
+        label={t('products.description')}
+        fullWidth
+        onFocus={(e) => e.target.select()}
+      />
+    )}
+  />
+</Grid>
 
-                <Grid item xs={12} md={4}>
-                  <Controller
-                    name="reorderLevel"
-                    control={control}
-                    render={({ field }) => (
-                      <TextField
-                        {...field}
-                        label={t('products.reorderLevel')}
-                        type="number"
-                        fullWidth
-                        inputProps={{ min: 0 }}
-                        onFocus={(e) => e.target.select()}
-                      />
-                    )}
-                  />
-                </Grid>
+{/* إظهار الحقول فقط للمواد الخام (productType === 2) */}
+{productType === 2 && (
+  <>
+    <Grid item xs={12} md={4}>
+      <Controller
+        name="reorderLevel"
+        control={control}
+        render={({ field }) => (
+          <TextField
+            {...field}
+            label={t('products.reorderLevel')}
+            type="number"
+            fullWidth
+            inputProps={{ min: 0 }}
+            onFocus={(e) => e.target.select()}
+          />
+        )}
+      />
+    </Grid>
 
-                {productType === 2 && (
-                  <Grid item xs={12} md={4}>
-                    <Controller
-                      name="cost"
-                      control={control}
-                      render={({ field }) => (
-                        <TextField
-                          {...field}
-                          label={t('products.cost')}
-                          type="number"
-                          fullWidth
-                          inputProps={{ min: 0, step: 0.01 }}
-                          onFocus={(e) => e.target.select()}
-                        />
-                      )}
-                    />
-                  </Grid>
-                )}
+    <Grid item xs={12} md={4}>
+      <Controller
+        name="cost"
+        control={control}
+        render={({ field }) => (
+          <TextField
+            {...field}
+            label={t('products.cost')}
+            type="number"
+            fullWidth
+            inputProps={{ min: 0, step: 0.01 }}
+            onFocus={(e) => e.target.select()}
+          />
+        )}
+      />
+    </Grid>
 
-                <Grid item xs={12} md={4}>
-                  <Controller
-                    name="lastPurePrice"
-                    control={control}
-                    render={({ field }) => (
-                      <TextField
-                        {...field}
-                        label={t('products.lastPurePrice')}
-                        type="number"
-                        fullWidth
-                        inputProps={{ min: 0, step: 0.01 }}
-                        onFocus={(e) => e.target.select()}
-                      />
-                    )}
-                  />
-                </Grid>
+    <Grid item xs={12} md={4}>
+      <Controller
+        name="lastPurePrice"
+        control={control}
+        render={({ field }) => (
+          <TextField
+            {...field}
+            label={t('products.lastPurePrice')}
+            type="number"
+            fullWidth
+            inputProps={{ min: 0, step: 0.01 }}
+            onFocus={(e) => e.target.select()}
+          />
+        )}
+      />
+    </Grid>
+  </>
+)}
 
-                <Grid item xs={12} md={4}>
+                {/* <Grid item xs={12} md={4}>
                   <Controller
                     name="expirationDays"
                     control={control}
@@ -1819,7 +1820,7 @@ const DesktopPriceTable = () => (
                       />
                     )}
                   />
-                </Grid>
+                </Grid> */}
 
                 <Grid item xs={12}>
                   <FormControlLabel

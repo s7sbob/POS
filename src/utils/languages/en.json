@@ -1820,5 +1820,26 @@
       "addFailed": "Failed to add company",
       "updateFailed": "Failed to update company"
     }
+  },
+
+  "pos": {
+    "todayOrders": "Today Orders",
+    "table": "Table",
+    "discount": "Discount", 
+    "void": "Void",
+    "takeaway": "Takeaway",
+    "search": "Search",
+    "extra": "Extra",
+    "without": "Without",
+    "offer": "Offer", 
+    "orderDetails": "Order Details",
+    "walkInCustomer": "Walk in Customer",
+    "subTotal": "Sub Total",
+    "tax": "Tax",
+    "service": "Service",
+    "total": "Total", 
+    "send": "Send",
+    "print": "Print", 
+    "pay": "Pay"
   }
 }
