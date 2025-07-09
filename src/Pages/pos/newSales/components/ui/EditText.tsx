@@ -9,6 +9,7 @@ interface EditTextProps {
   required?: boolean;
   className?: string;
   variant?: 'primary' | 'secondary';
+  style?: React.CSSProperties;
 }
 
 const EditText: React.FC<EditTextProps> = ({
@@ -47,7 +48,7 @@ const EditText: React.FC<EditTextProps> = ({
       className={`
         w-full px-3 py-2 sm:px-4 sm:py-3 font-nunito text-sm sm:text-base font-bold
         border rounded-lg transition-colors duration-200
-        focus:outline-none focus:ring-2 focus:ring-offset-2
+        focus:outline-none  focus:ring-offset-2
         disabled:opacity-50 disabled:cursor-not-allowed
         ${variants[variant]}
         ${className}

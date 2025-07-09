@@ -1,313 +1,925 @@
 @import './tailwind.css';
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Aleo:wght@400;700&display=swap');
+
+/* إعداد النظام الأساسي للـ REM مع الأبعاد الصحيحة 2000×1200 */
+html {
+  font-size: 62.5%; /* 1rem = 10px */
+  direction: ltr !important;
+  text-align: left !important;
+  color-scheme: light only !important;
+}
+
+/* Responsive breakpoints */
+@media (max-width: 768px) {
+  html { font-size: 50%; }
+}
+
+@media (min-width: 769px) and (max-width: 1200px) {
+  html { font-size: 56.25%; }
+}
+
+@media (min-width: 1201px) and (max-width: 1600px) {
+  html { font-size: 62.5%; }
+}
+
+@media (min-width: 1601px) and (max-width: 2000px) {
+  html { font-size: 68.75%; }
+}
+
+@media (min-width: 2001px) {
+  html { font-size: 75%; }
+}
+
+/* إعدادات عامة */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  direction: ltr !important;
+  text-align: left !important;
+  color-scheme: light only !important;
+}
 
 body {
   font-family: 'Nunito', 'Inter', sans-serif;
+  background-color: #f5f5f5;
+  color: #000;
+  font-size: 1.6rem;
+  line-height: 1.5;
   margin: 0;
   padding: 0;
-  box-sizing: border-box;
-}
-
-*, *::before, *::after {
-  box-sizing: inherit;
-}
-
-.hidden-scroll {
-  /* إخفاء scrollbar في webkit browsers (Chrome, Safari, Edge) */
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE and Edge */
-}
-
-.hidden-scroll::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, Opera */
-  width: 0px;
-  background: transparent;
-}
-
-/* أو استخدام هذا للتحكم أكثر */
-.custom-hidden-scroll {
-  overflow-y: auto;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-
-.custom-hidden-scroll::-webkit-scrollbar {
-  width: 0;
-  height: 0;
-  background: transparent;
-}
-
-
-/* NumericKeypad Styles */
-.numpad-section {
-  display: flex;
-  gap: 5px;
-  background-color: var(--bg-light);
-  border: 1px solid var(--border-color-medium);
-  border-radius: 8px;
-  height: 95px;
-  overflow: hidden;
-  flex-shrink: 0;
-}
-
-.numpad-grid {
-  flex-grow: 1;
-  display: grid;
-  grid-template-columns: repeat(12, 1fr);
+  overflow-x: hidden;
+  direction: ltr !important;
+  width: 100%;
   height: 100%;
 }
 
-.numpad-key {
-  font-family: Cairo;
-  font-size: 32px;
-  border-right: 1px solid var(--border-color-light);
-  color: var(--text-dark);
-  background: var(--bg-light);
+/* Container رئيسي يملأ الشاشة بالكامل */
+.pos-system-container {
+  width: 100vw;
+  height: 100vh;
+  min-width: 100vw;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: #f5f5f5;
+  overflow: hidden;
+  direction: ltr !important;
+}
+
+/* Header يملأ العرض بالكامل */
+.site-header {
+  height: 7.2rem; /* 72px */
+  background-color: #ffffff;
+  display: flex;
+  align-items: center;
+  padding: 0 4rem;
+  flex-shrink: 0;
+  width: 100%;
+  box-shadow: 0 0.2rem 0.8rem rgba(0, 0, 0, 0.1);
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.logo {
+  width: 14rem;
+  height: 6rem;
+  object-fit: contain;
+}
+
+.nav-items {
+  display: flex;
+  align-items: center;
+  gap: 2.4rem;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 1.6rem;
+  font-weight: 500;
+  color: #000;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.nav-item:first-child {
+  color: #0373ed;
+}
+
+.nav-item img {
+  width: 1.8rem;
+  height: 1.8rem;
+}
+
+/* Main Content يملأ المساحة المتبقية */
+.main-content {
+  flex: 1;
+  display: flex;
+  gap: 1.5rem;
+  padding: 2rem;
+  height: calc(100vh - 7.2rem);
+  overflow: hidden;
+  width: 100%;
+    flex-direction: row; /* التأكد من الترتيب الأفقي */
+  align-items: stretch; /* جعل جميع العناصر بنفس الارتفاع */
+    justify-content: space-between;
+
+}
+
+/* Left Panel - 62% من الشاشة الكاملة */
+.left-panel {
+  width: 62%;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  overflow: hidden;
+  order: 1;
+}
+
+/* Numeric Keypad */
+.numeric-keypad {
+  height: 8.5rem;
+  display: flex;
+  background-color: #ffffff;
+  border: 0.1rem solid rgba(0, 0, 0, 0.3);
+  border-radius: 0.8rem;
+  overflow: hidden;
+  flex-shrink: 0;
+  direction: ltr !important;
+}
+
+.keypad-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  height: 100%;
+  direction: ltr !important;
+}
+
+.keypad-key {
+  font-family: 'Aleo', serif;
+  font-size: 2.8rem;
+  border-right: 0.1rem solid rgba(0, 0, 0, 0.2);
+  color: #000;
+  background: #ffffff;
   transition: background-color 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   border: none;
-  border-radius: 0;
+  direction: ltr !important;
+  text-align: center !important;
 }
 
-.numpad-key:hover {
+.keypad-key:hover {
   background-color: #f8f9fa;
 }
 
-.numpad-key:active {
-  background-color: #e9ecef;
-}
-
-.numpad-key:last-child {
-  font-family: var(--font-primary);
+.keypad-key:last-child {
+  font-family: 'Nunito', sans-serif;
   border-right: none;
 }
 
-.numpad-display {
-  background-color: var(--primary-color);
-  color: var(--text-light);
-  font-family: var(--font-primary);
-  font-size: 40px;
+.keypad-display {
+  width: 20rem;
+  background-color: #0373ed;
+  color: #ffffff;
+  font-family: 'Nunito', sans-serif;
+  font-size: 3.2rem;
   font-weight: 400;
   display: flex;
   justify-content: center;
   align-items: center;
-  width: 247px;
+  flex-shrink: 0;
+  direction: ltr !important;
+  text-align: center !important;
+}
+
+/* Filter Section */
+.filter-section {
+  height: 4.8rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1.6rem;
   flex-shrink: 0;
 }
 
-/* CSS Variables (إضافة هذه المتغيرات إذا لم تكن موجودة) */
-:root {
-  --primary-color: #0373ed;
-  --bg-light: #ffffff;
-  --text-dark: #000000;
-  --text-light: #ffffff;
-  --border-color-light: rgba(0, 0, 0, 0.2);
-  --border-color-medium: rgba(0, 0, 0, 0.3);
-  --font-primary: 'Nunito', sans-serif;
-  --font-display: 'Aleo', serif;
+.chip-container {
+  display: flex;
+  gap: 1.2rem;
+  flex: 1;
 }
 
-/* Responsive Design للـ NumericKeypad */
-@media (max-width: 768px) {
-  .numpad-section {
-    height: 80px;
-  }
-  
-  .numpad-key {
-    font-size: 24px;
-  }
-  
-  .numpad-display {
-    font-size: 32px;
-    width: 200px;
-  }
+.chip {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.8rem 2rem;
+  border-radius: 0.6rem;
+  font-family: 'Nunito', sans-serif;
+  font-size: 2rem;
+  font-weight: 500;
+  color: #ffffff;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+  height: 4.8rem;
+  direction: ltr !important;
 }
 
-@media (max-width: 480px) {
-  .numpad-section {
-    height: 60px;
-    gap: 4px;
-  }
-  
-  .numpad-key {
-    font-size: 18px;
-  }
-  
-  .numpad-display {
-    font-size: 24px;
-    width: 150px;
-  }
+.chip:hover {
+  opacity: 0.9;
 }
 
+.chip.extra { background-color: #23a929; }
+.chip.without { background-color: #e53935; }
+.chip.offer { background-color: #ffb74d; }
 
-/* CategorySidebar Styles */
-.category-sidebar {
-  width: calc(148px * var(--scale-factor, 1));
-  flex-shrink: 0;
-  height: 100%;
+.chip img {
+  width: 2rem;
+  height: 2rem;
+}
+
+.search-container {
+  display: flex;
+  background-color: #ffffff;
+  border-radius: 0.6rem;
+  box-shadow: 0 0.8rem 2.4rem rgba(0, 0, 0, 0.15);
   overflow: hidden;
+  height: 4.8rem;
 }
 
-.category-nav {
+.search-input {
+  width: 28rem;
+  height: 4.8rem;
+  border: none;
+  background: transparent;
+  padding: 0 1.6rem 0 4.4rem;
+  font-size: 1.6rem;
+  outline: none;
+  font-family: 'Nunito', sans-serif;
+  direction: ltr !important;
+  text-align: left !important;
+}
+
+.search-icon {
+  position: absolute;
+  left: 1.6rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1.8rem;
+  height: 1.8rem;
+}
+
+.filter-button {
+  width: 5.6rem;
+  height: 4.8rem;
+  background-color: #0373ed;
+  border: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.filter-button:hover {
+  background-color: #025bb5;
+}
+
+.filter-button img {
+  width: 2rem;
+  height: 2rem;
+}
+
+/* Products Grid */
+.products-grid {
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding: 0.6rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
+  gap: 0.6rem;
+  align-content: start;
+  direction: ltr !important;
+}
+
+.products-grid::-webkit-scrollbar {
+  display: none;
+}
+
+.product-card {
+  width: 18rem;
+  height: 24rem;
+  background-color: #ffffff;
+  border-radius: 1.2rem;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 0.2rem 0.6rem rgba(0, 0, 0, 0.1);
+  position: relative;
+}
+
+.product-card:hover {
+  transform: translateY(-0.2rem);
+  box-shadow: 0 0.4rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.product-image {
+  width: 100%;
+  height: 16rem;
+  object-fit: cover;
+}
+
+.product-info {
+  padding: 0.6rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 8rem;
+}
+
+.product-name {
+  font-family: 'Cairo', sans-serif;
+  font-weight: 600;
+  font-size: 1.4rem;
+  color: #000;
+  text-align: center;
+  direction: ltr !important;
+}
+
+.product-price {
+  font-family: 'Cairo', sans-serif;
+  font-weight: 600;
+  font-size: 1.8rem;
+  color: #000;
+  direction: ltr !important;
+  text-align: left !important;
+}
+
+.product-price .currency {
+  font-size: 1rem;
+}
+
+/* Category Sidebar - 9% من الشاشة الكاملة */
+.category-sidebar {
+    order: 2;
+  width: 9%;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding: 1.2rem;
   display: flex;
   flex-direction: column;
-  gap: calc(16px * var(--scale-factor, 1));
-  height: 100%;
-  overflow-y: auto;
-  padding-right: calc(8px * var(--scale-factor, 1));
-  
-  /* إخفاء الـ scrollbar تماماً */
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* Internet Explorer 10+ */
+  gap: 1.2rem;
+    flex-shrink: 0; /* منع الانكماش */
 }
 
-/* إخفاء الـ scrollbar في WebKit browsers */
-.category-nav::-webkit-scrollbar {
+.category-sidebar::-webkit-scrollbar {
   display: none;
-  width: 0;
-  height: 0;
 }
 
 .category-item {
-  background-color: white;
-  border-radius: calc(16px * var(--scale-factor, 1));
-  padding: calc(16px * var(--scale-factor, 1));
+  width: 100%;
+  min-width: 12rem;
+  height: 10rem;
+  background-color: #ffffff;
+  border-radius: 1.2rem;
+  padding: 1.2rem;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: calc(8px * var(--scale-factor, 1));
+  gap: 0.6rem;
   text-align: center;
-  width: calc(148px * var(--scale-factor, 1));
-  height: calc(120px * var(--scale-factor, 1));
+  font-family: 'Cairo', sans-serif;
+  font-size: 2rem;
+  font-weight: 400;
   transition: all 0.2s ease;
   cursor: pointer;
-  border: calc(2px * var(--scale-factor, 1)) solid transparent;
+  border: 0.2rem solid transparent;
   flex-shrink: 0;
-  position: relative;
-  color: black;
+  color: #000;
+  direction: ltr !important;
 }
 
 .category-item:hover {
   background-color: #f8f9fa;
-  transform: translateY(calc(-2px * var(--scale-factor, 1)));
-  box-shadow: 0 calc(4px * var(--scale-factor, 1)) calc(12px * var(--scale-factor, 1)) rgba(0, 0, 0, 0.15);
+  transform: translateY(-0.2rem);
+  box-shadow: 0 0.4rem 1rem rgba(0, 0, 0, 0.15);
 }
 
 .category-item.active {
-  border: calc(2px * var(--scale-factor, 1)) solid #0373ED;
+  border: 0.2rem solid #0373ed;
 }
 
-.category-item:focus {
-  outline: none;
-  box-shadow: 0 0 0 calc(2px * var(--scale-factor, 1)) rgba(3, 115, 237, 0.3);
-}
-
-.category-icon {
-  width: calc(56.47px * var(--scale-factor, 1));
-  height: calc(56.47px * var(--scale-factor, 1));
+.category-item img {
+  width: 4.8rem;
+  height: 4.8rem;
   object-fit: contain;
+}
+
+/* Order Panel - 29% من الشاشة الكاملة */
+.order-panel {
+    order: 3;
+  width: 29%;
+  background-color: #ffffff;
+  border-radius: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 0.2rem 0.6rem rgba(0, 0, 0, 0.1);
+    flex-shrink: 0; /* منع الانكماش */
+
+}
+
+.order-header {
+  height: 5.6rem;
+  display: flex;
   flex-shrink: 0;
 }
 
-.category-name {
-  font-family: 'Cairo', sans-serif;
-  font-size: calc(24px * var(--scale-factor, 1));
-  font-weight: 400;
-  line-height: calc(32px * var(--scale-factor, 1));
-  color: black;
-  text-align: center;
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-  hyphens: auto;
-  max-width: 100%;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+.order-number {
+  flex: 1;
+  background-color: #0373ed;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 1.2rem 0 0 0;
+  font-size: 2rem;
+  font-weight: 700;
+  font-family: 'Nunito', sans-serif;
+  direction: ltr !important;
+  text-align: center !important;
+}
+
+.order-total {
+  width: 13rem;
+  border: 0.1rem solid #0373ed;
+  color: #0373ed;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0 1.2rem 0 0;
+  font-size: 2.4rem;
+  font-weight: 700;
+  font-family: 'Nunito', sans-serif;
+  direction: ltr !important;
+  text-align: center !important;
+}
+
+.order-body {
+  flex: 1;
+  padding: 2rem 1.4rem;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  display: flex;
+  flex-direction: column;
+}
+
+.order-body::-webkit-scrollbar {
+  display: none;
+}
+
+.order-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 1.4rem;
+  font-family: 'Nunito', sans-serif;
+  direction: ltr !important;
+  text-align: left !important;
+}
+
+.customer-input-container {
+  display: flex;
+  margin-bottom: 2rem;
+  border: 0.1rem solid rgba(0, 0, 0, 0.3);
+  border-radius: 0.4rem;
   overflow: hidden;
-  
-  /* تأكد من أن النص يتكيف مع الحجم */
-  white-space: normal;
-  text-overflow: ellipsis;
+}
+
+.customer-input {
+  flex: 1;
+  padding: 0.8rem 1.2rem;
+  font-size: 1.2rem;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: 'Nunito', sans-serif;
+  direction: ltr !important;
+  text-align: left !important;
+}
+
+.customer-button {
+  width: 3.6rem;
+  height: 3.2rem;
+  background-color: #0373ed;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.customer-button img {
+  width: 1.6rem;
+  height: 1.6rem;
+}
+
+/* Order Items */
+.order-items {
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  margin-bottom: 2rem;
+  direction: ltr !important;
+}
+
+.order-items::-webkit-scrollbar {
+  display: none;
+}
+
+.order-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-bottom: 0.6rem;
+  margin-bottom: 0.6rem;
+  border-bottom: 0.05rem solid rgba(0, 0, 0, 0.2);
+}
+
+.item-details {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+  flex: 1;
+}
+
+.delete-button {
+  margin-top: 0.2rem;
+  padding: 0.2rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.delete-button img {
+  width: 1.4rem;
+  height: 1.4rem;
+}
+
+.item-info {
+  flex: 1;
+}
+
+.item-name {
+  font-size: 1.4rem;
+  font-weight: 600;
+  font-family: 'Nunito', sans-serif;
+  margin-bottom: 0.3rem;
+  direction: ltr !important;
+  text-align: left !important;
+}
+
+.item-extras {
+  font-size: 1rem;
+  color: rgba(0, 0, 0, 0.5);
+  font-family: 'Nunito', sans-serif;
+  direction: ltr !important;
+  text-align: left !important;
+}
+
+.item-prices {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.item-price {
+  font-size: 1.4rem;
+  font-weight: 600;
+  font-family: 'Nunito', sans-serif;
+  margin-bottom: 0.3rem;
+  direction: ltr !important;
+  text-align: right !important;
+}
+
+.item-total {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: #0373ed;
+  font-family: 'Nunito', sans-serif;
+  direction: ltr !important;
+  text-align: right !important;
+}
+
+/* Order Summary */
+.order-summary {
+  padding: 2rem 1.4rem;
+  flex-shrink: 0;
+}
+
+.summary-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  margin-bottom: 2rem;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 1.4rem;
+  font-weight: 500;
+  font-family: 'Nunito', sans-serif;
+}
+
+.summary-row .value {
+  font-weight: 700;
+}
+
+.summary-total {
+  display: flex;
+  justify-content: space-between;
+  font-size: 1.8rem;
+  font-weight: 700;
+  padding-top: 2rem;
+  border-top: 0.1rem solid rgba(0, 0, 0, 0.3);
+  margin-bottom: 2rem;
+  font-family: 'Nunito', sans-serif;
+}
+
+/* Action Buttons */
+.action-buttons {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.2rem;
+}
+
+.action-button {
+  height: 5.2rem;
+  border-radius: 0.4rem;
+  color: #ffffff;
+  font-size: 1.6rem;
+  font-weight: 700;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 0.3rem;
+  transition: opacity 0.2s ease;
+  font-family: 'Nunito', sans-serif;
+  border: none;
+  cursor: pointer;
+  direction: ltr !important;
+}
+
+.action-button img {
+  width: 1.6rem;
+  height: 1.6rem;
+}
+
+.action-button:hover {
+  opacity: 0.9;
+}
+
+.send-button { background-color: #e53935; }
+.print-button { background-color: #0373ed; }
+.pay-button { background-color: #23a929; }
+
+/* إخفاء الـ scrollbar تماماً */
+.invisible-scroll {
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  direction: ltr !important;
+}
+
+.invisible-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* تحسين scroll للمنتجات فقط في Order Details */
+.order-products-list {
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  direction: ltr !important;
+  max-height: 30rem;
+  margin-bottom: 1.6rem;
+}
+
+.order-products-list::-webkit-scrollbar {
+  display: none;
+}
+
+/* Utility Classes */
+.hidden-scroll {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.hidden-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* فرض LTR على جميع العناصر */
+[dir="rtl"], .rtl {
+  direction: ltr !important;
+  text-align: left !important;
+}
+
+.flex {
+  direction: ltr !important;
+}
+
+.grid {
+  direction: ltr !important;
+}
+
+html[dir="rtl"], 
+body[dir="rtl"], 
+*[dir="rtl"] {
+  direction: ltr !important;
+  text-align: left !important;
+}
+
+.pos-system-container,
+.pos-system-container * {
+  direction: ltr !important;
+}
+
+/* استثناءات للنصوص العربية */
+.category-name,
+.product-name-arabic,
+.order-item-arabic {
+  text-align: center !important;
+  direction: ltr !important;
 }
 
 /* Responsive Design */
-@media (max-width: 1600px) {
-  .category-sidebar {
+@media (max-width: 768px) {
+  .main-content {
+    flex-direction: column;
+    padding: 1.2rem;
+  }
+  
+  .left-panel, .category-sidebar, .order-panel {
     width: 100%;
     height: auto;
   }
   
-  .category-nav {
+  .category-sidebar {
     flex-direction: row;
     flex-wrap: wrap;
     height: auto;
     overflow: visible;
-    justify-content: center;
-    gap: calc(12px * var(--scale-factor, 1));
-    padding-right: 0;
   }
   
   .category-item {
     flex-grow: 1;
-    min-width: calc(120px * var(--scale-factor, 1));
-    max-width: calc(148px * var(--scale-factor, 1));
+    min-width: 8rem;
   }
 }
 
-@media (max-width: 768px) {
-  .category-nav {
-    gap: calc(8px * var(--scale-factor, 1));
+@media (min-width: 1920px) {
+  .left-panel {
+    width: 68%;
   }
   
-  .category-item {
-    min-width: calc(100px * var(--scale-factor, 1));
-    height: calc(100px * var(--scale-factor, 1));
-    padding: calc(12px * var(--scale-factor, 1));
+  .category-sidebar {
+    width: 7%;
   }
   
-  .category-icon {
-    width: calc(40px * var(--scale-factor, 1));
-    height: calc(40px * var(--scale-factor, 1));
-  }
-  
-  .category-name {
-    font-size: calc(18px * var(--scale-factor, 1));
-    line-height: calc(24px * var(--scale-factor, 1));
+  .order-panel {
+    width: 25%;
   }
 }
 
-@media (max-width: 480px) {
-  .category-item {
-    min-width: calc(80px * var(--scale-factor, 1));
-    height: calc(80px * var(--scale-factor, 1));
-    padding: calc(8px * var(--scale-factor, 1));
-  }
-  
-  .category-icon {
-    width: calc(32px * var(--scale-factor, 1));
-    height: calc(32px * var(--scale-factor, 1));
-  }
-  
-  .category-name {
-    font-size: calc(14px * var(--scale-factor, 1));
-    line-height: calc(18px * var(--scale-factor, 1));
+@media (min-width: 2560px) {
+  .pos-system-container {
+    width: 100vw;
   }
 }
 
-/* تحسينات إضافية للنص الطويل */
-@media (max-width: 320px) {
-  .category-name {
-    font-size: calc(12px * var(--scale-factor, 1));
-    line-height: calc(16px * var(--scale-factor, 1));
+/* Print Styles */
+@media print {
+  .pos-system-container {
+    transform: none !important;
+    width: 100% !important;
+    height: auto !important;
+  }
+  
+  * {
+    direction: ltr !important;
   }
 }
 
-/* CSS Variables */
-:root {
-  --scale-factor: 1;
+/* High DPI Screens */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  img {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+  }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* Loading State */
+.loading {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+/* Error State */
+.error {
+  border-color: #e53935 !important;
+  background-color: rgba(229, 57, 53, 0.1) !important;
+}
+
+/* Success State */
+.success {
+  border-color: #23a929 !important;
+  background-color: rgba(35, 169, 41, 0.1) !important;
+}
+
+
+/* منع التداخل بين العناصر */
+.main-content > * {
+  flex-shrink: 0; /* منع انكماش أي عنصر */
+  min-width: 0; /* السماح بالتقلص عند الحاجة */
+}
+
+/* تأكيد عدم التداخل */
+.category-sidebar {
+  position: relative;
+  z-index: 1;
+}
+
+.order-panel {
+  position: relative;
+  z-index: 1;
+}
+
+/* للشاشات الصغيرة */
+@media (max-width: 1440px) {
+  .left-panel {
+    width: 58%;
+  }
+  
+  .category-sidebar {
+    width: 12%;
+  }
+  
+  .order-panel {
+    width: 29%;
+  }
+  
+  .main-content {
+    gap: 1rem;
+  }
+}
+
+/* للشاشات الكبيرة */
+@media (min-width: 1920px) {
+  .left-panel {
+    width: 64%;
+  }
+  
+  .category-sidebar {
+    width: 8%;
+  }
+  
+  .order-panel {
+    width: 27.5%;
+  }
+  
+  .main-content {
+    gap: 1rem;
+  }
 }

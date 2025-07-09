@@ -17,7 +17,7 @@ const CategorySidebar: React.FC<CategorySidebarProps> = ({
   style
 }) => {
   return (
-    <div className={`flex flex-col gap-4 overflow-y-auto hidden-scroll ${className}`} style={style}>
+    <div className={`flex flex-col gap-4 overflow-y-auto invisible-scroll ${className}`} style={style}>
       {categories.map((category) => (
         <button
           key={category.id}
@@ -45,7 +45,11 @@ const CategorySidebar: React.FC<CategorySidebarProps> = ({
           </div>
           <span 
             className="font-cairo font-normal text-primary text-center"
-            style={{ fontSize: 'min(0.8vw, 12px)' }}
+            style={{ 
+              fontSize: 'clamp(14px, 1.2vw, 18px)', // تكبير الخط من 12px إلى 14-18px
+              lineHeight: 'clamp(18px, 1.5vw, 24px)',
+              fontWeight: '600' // جعل الخط أكثر وضوحاً
+            }}
           >
             {category.nameArabic}
           </span>
