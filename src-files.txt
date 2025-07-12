@@ -65,133 +65,60 @@ export default CategorySidebar;
 
 ===== src/Pages/pos/newSales/components/common/Header.tsx =====
 import React, { useState } from 'react';
-import Dropdown from '../ui/Dropdown';
-import { useResponsiveDimensions } from '../../hooks/useResponsiveScale';
 
 const Header: React.FC = () => {
   const [selectedOrderType, setSelectedOrderType] = useState('Takeaway');
-  const { responsive, responsivePX } = useResponsiveDimensions();
 
   const orderTypes = ['Takeaway', 'Dine In', 'Delivery'];
 
   return (
-    <header className="w-full bg-card shadow-sm h-full">
-      <div 
-        className="w-full h-full flex items-center" 
-        style={{ padding: `0 ${responsivePX(24)}` }}
-      >
-        <div className="flex items-center justify-between w-full">
-          {/* Logo */}
-          <div className="flex items-center">
-            <img
-              src="/images/img_foodify_logo_2_78x166.png"
-              alt="Foodify Logo"
-              className="object-contain"
-              style={{ 
-                width: responsivePX(120), 
-                height: responsivePX(56) 
-              }}
-            />
-          </div>
+    <div className="header-content">
+      {/* Logo */}
+      <img src="/images/img_foodify_logo_2_78x166.png" alt="Foodify Logo" className="logo" />
 
-          {/* Right Section */}
-          <div 
-            className="flex items-center" 
-            style={{ gap: responsivePX(16) }}
-          >
-            <button 
-              className="flex items-center gap-2 text-blue font-nunito font-medium hover:opacity-80 transition-opacity"
-              style={{ fontSize: responsivePX(14) }}
-            >
-              <img 
-                src="/images/img_sending_order.svg" 
-                alt="" 
-                style={{ 
-                  width: responsivePX(20), 
-                  height: responsivePX(20) 
-                }}
-              />
-              Today Orders
-            </button>
-            
-            <button 
-              className="flex items-center gap-2 text-primary font-nunito font-medium hover:opacity-80 transition-opacity"
-              style={{ fontSize: responsivePX(14) }}
-            >
-              <img 
-                src="/images/img_table_02.svg" 
-                alt="" 
-                style={{ 
-                  width: responsivePX(20), 
-                  height: responsivePX(20) 
-                }}
-              />
-              Table
-            </button>
-            
-            <button 
-              className="flex items-center gap-2 text-primary font-nunito font-medium hover:opacity-80 transition-opacity"
-              style={{ fontSize: responsivePX(14) }}
-            >
-              <img 
-                src="/images/img_discount_tag_01.svg" 
-                alt="" 
-                style={{ 
-                  width: responsivePX(20), 
-                  height: responsivePX(20) 
-                }}
-              />
-              Discount
-            </button>
-            
-            <button 
-              className="flex items-center gap-2 text-primary font-nunito font-medium hover:opacity-80 transition-opacity"
-              style={{ fontSize: responsivePX(14) }}
-            >
-              <img 
-                src="/images/img_delete_01.svg" 
-                alt="" 
-                style={{ 
-                  width: responsivePX(20), 
-                  height: responsivePX(20) 
-                }}
-              />
-              Void
-            </button>
-            
-            <div style={{ width: responsivePX(160) }}>
-              <div style={{ fontSize: responsivePX(16) }}>
-                <Dropdown
-                  placeholder="Takeaway"
-                  options={orderTypes}
-                  value={selectedOrderType}
-                  onChange={setSelectedOrderType}
-                  rightImage={{
-                    src: "/images/img_arrowdown.svg",
-                    width: responsive(24),
-                    height: responsive(24)
-                  }}
-                />
-              </div>
-            </div>
-            
-            <button 
-              className="hover:bg-gray-100 rounded-lg transition-colors"
-              style={{ padding: responsivePX(8) }}
-            >
-              <img 
-                src="/images/img_menu_01.svg" 
-                alt="Menu" 
-                style={{ 
-                  width: responsivePX(28), 
-                  height: responsivePX(28) 
-                }}
-              />
-            </button>
-          </div>
-        </div>
-      </div>
-    </header>
+      {/* Navigation */}
+      <nav className="nav-items">
+        <a href="#" className="nav-item">
+          <img src="/images/img_sending_order.svg" alt="" />
+          Today Orders
+        </a>
+        <a href="#" className="nav-item">
+          <img src="/images/img_table_02.svg" alt="" />
+          Table
+        </a>
+        <a href="#" className="nav-item">
+          <img src="/images/img_discount_tag_01.svg" alt="" />
+          Discount
+        </a>
+        <a href="#" className="nav-item">
+          <img src="/images/img_delete_01.svg" alt="" />
+          Void
+        </a>
+        <select 
+          value={selectedOrderType}
+          onChange={(e) => setSelectedOrderType(e.target.value)}
+          style={{ 
+            padding: '0.8rem 1.6rem', 
+            borderRadius: '0.4rem',
+            border: '0.1rem solid #ccc',
+            fontSize: '1.6rem',
+            fontFamily: 'Nunito, sans-serif'
+          }}
+        >
+          {orderTypes.map(type => (
+            <option key={type} value={type}>{type}</option>
+          ))}
+        </select>
+        <button style={{ 
+          padding: '0.8rem',
+          background: 'none',
+          border: 'none',
+          cursor: 'pointer'
+        }}>
+          <img src="/images/img_menu_01.svg" alt="Menu" style={{ width: '2.8rem', height: '2.8rem' }} />
+        </button>
+      </nav>
+    </div>
   );
 };
 
@@ -544,85 +471,8 @@ const SearchView: React.FC<SearchViewProps> = ({
 };
 
 export default SearchView;
-===== src/Pages/pos/newSales/hooks/useResponsiveScale.ts =====
-import { useState, useEffect, useCallback } from 'react';
-
-interface ResponsiveConfig {
-  baseWidth: number;
-  baseHeight: number;
-  minScale: number;
-  maxScale: number;
-}
-
-export const useResponsiveScale = (config: ResponsiveConfig = {
-  baseWidth: 2000,
-  baseHeight: 1400,
-  minScale: 0.4,
-  maxScale: 2.0
-}) => {
-  const [scale, setScale] = useState(1);
-  const [dimensions, setDimensions] = useState({
-    width: window.innerWidth,
-    height: window.innerHeight
-  });
-
-  const updateScale = useCallback(() => {
-    const currentWidth = window.innerWidth;
-    const currentHeight = window.innerHeight;
-    
-    // تجنب التحديث إذا لم تتغير الأبعاد
-    if (currentWidth === dimensions.width && currentHeight === dimensions.height) {
-      return;
-    }
-    
-    const widthScale = currentWidth / config.baseWidth;
-    const heightScale = currentHeight / config.baseHeight;
-    const newScale = Math.min(widthScale, heightScale);
-    const finalScale = Math.max(config.minScale, Math.min(config.maxScale, newScale));
-    
-    setDimensions({ width: currentWidth, height: currentHeight });
-    setScale(finalScale);
-    
-    // تحديث CSS variable
-    document.documentElement.style.setProperty('--responsive-scale', finalScale.toString());
-  }, [config.baseWidth, config.baseHeight, config.minScale, config.maxScale, dimensions.width, dimensions.height]);
-
-  useEffect(() => {
-    updateScale();
-
-    window.addEventListener('resize', updateScale);
-    window.addEventListener('orientationchange', updateScale);
-    
-    return () => {
-      window.removeEventListener('resize', updateScale);
-      window.removeEventListener('orientationchange', updateScale);
-    };
-  }, [updateScale]);
-
-  return { scale, dimensions };
-};
-
-// Hook للحصول على أبعاد متجاوبة
-export const useResponsiveDimensions = () => {
-  const { scale } = useResponsiveScale();
-  
-  const responsive = useCallback((value: number) => value * scale, [scale]);
-  const responsiveVW = useCallback((value: number) => `${value * scale}vw`, [scale]);
-  const responsiveVH = useCallback((value: number) => `${value * scale}vh`, [scale]);
-  const responsivePX = useCallback((value: number) => `${value * scale}px`, [scale]);
-  
-  return { responsive, responsiveVW, responsiveVH, responsivePX, scale };
-};
-
 ===== src/Pages/pos/newSales/index.tsx =====
 import React, { useState, useCallback, useMemo } from 'react';
-import Header from './components/common/Header';
-import { ChipView, ChipItem } from './components/ui/ChipView';
-import SearchView from './components/ui/SearchView';
-import NumericKeypad from './NumericKeypad';
-import MenuGrid from './MenuGrid';
-import CategorySidebar from './CategorySidebar';
-import OrderSummaryPanel from './OrderSummaryPanel';
 import { MenuItem, CategoryItem, OrderSummary } from './types/PosSystem';
 import './styles/index.css';
 
@@ -633,7 +483,7 @@ const PosSystem: React.FC = () => {
   const [customerName, setCustomerName] = useState('');
   const [selectedChips, setSelectedChips] = useState<string[]>([]);
 
-  // Mock data - استخدام useMemo للبيانات الثابتة
+  // Mock data
   const categories: CategoryItem[] = useMemo(() => [
     { id: 'crepe', name: 'Crepe', nameArabic: 'كريب', image: '/images/img_crepes_1.png', selected: true },
     { id: 'burger', name: 'Burger', nameArabic: 'برجر', image: '/images/img_burger_1.png' },
@@ -703,7 +553,7 @@ const PosSystem: React.FC = () => {
     total: 320
   }), [menuItems]);
 
-  // Event handlers - استخدام useCallback لمنع إعادة إنشاء الدوال
+  // Event handlers
   const handleNumberClick = useCallback((number: string) => {
     if (keypadValue === '0' && number !== '.') {
       setKeypadValue(number);
@@ -748,7 +598,6 @@ const PosSystem: React.FC = () => {
     console.log('Pay order');
   }, []);
 
-  // تصفية العناصر باستخدام useMemo
   const filteredMenuItems = useMemo(() => 
     menuItems.filter(item => 
       item.category === selectedCategory &&
@@ -758,133 +607,239 @@ const PosSystem: React.FC = () => {
   );
 
   return (
-    <div className="h-screen w-screen bg-main flex flex-col" style={{ minWidth: '1024px', overflow: 'hidden' }}>
-      {/* Header - ثابت في الأعلى */}
-      <div className="flex-shrink-0" style={{ height: '6vh' }}>
-        <Header />
-      </div>
+    <div className="pos-system-container">
+      {/* Header */}
+      <header className="site-header">
+        <div className="header-content">
+          <img src="/images/img_foodify_logo_2_78x166.png" alt="Foodify Logo" className="logo" />
+          <nav className="nav-items">
+            <a href="#" className="nav-item">
+              <img src="/images/img_sending_order.svg" alt="" />
+              Today Orders
+            </a>
+            <a href="#" className="nav-item">
+              <img src="/images/img_table_02.svg" alt="" />
+              Table
+            </a>
+            <a href="#" className="nav-item">
+              <img src="/images/img_discount_tag_01.svg" alt="" />
+              Discount
+            </a>
+            <a href="#" className="nav-item">
+              <img src="/images/img_delete_01.svg" alt="" />
+              Void
+            </a>
+            <select style={{ 
+              padding: '0.6rem 1.2rem', 
+              borderRadius: '0.4rem',
+              border: '0.1rem solid #ccc',
+              fontSize: '1.4rem'
+            }}>
+              <option>Takeaway</option>
+              <option>Dine In</option>
+              <option>Delivery</option>
+            </select>
+            <button style={{ 
+              padding: '0.6rem',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer'
+            }}>
+              <img src="/images/img_menu_01.svg" alt="Menu" style={{ width: '2.4rem', height: '2.4rem' }} />
+            </button>
+          </nav>
+        </div>
+      </header>
       
-      {/* Main Content - يأخذ باقي المساحة */}
-      <div className="flex-1 flex" style={{ height: '94vh', overflow: 'hidden' }}>
-        {/* Left Section - Main Content - 70% */}
-        <div className="flex flex-col" style={{ width: '70vw', overflow: 'hidden' }}>
-          {/* Numeric Keypad - ثابت الشكل والحجم */}
-{/* Numeric Keypad - مع مسافة معقولة */}
-<div 
-  className="flex-shrink-0 numeric-keypad" 
-  style={{ 
-    height: '15%', 
-    padding: 'min(1vw, 16px)',
-    marginBottom: 'clamp(8px, 1.5vw, 20px)' // مسافة معقولة في جميع الأبعاد
-  }}
->
-  <NumericKeypad
-    onNumberClick={handleNumberClick}
-    onClearClick={handleClearClick}
-    currentValue={keypadValue}
-  />
-</div>
-
-{/* Filter Chips and Search - بدون مسافة علوية إضافية */}
-<div 
-  className="flex-shrink-0" 
-  style={{ 
-    height: '10%', 
-    padding: '0 min(1vw, 16px)',
-    paddingTop: 0 // إزالة أي مسافة علوية
-  }}
->
-  <div className="flex items-center justify-between gap-4 h-full">
-    <ChipView className="flex-1">
-      <ChipItem
-        variant="extra"
-        leftImage={{ src: '/images/img_addcircle.svg', width: 24, height: 24 }}
-        selected={selectedChips.includes('extra')}
-        onClick={() => handleChipClick('extra')}
-      >
-        Extra
-      </ChipItem>
-      <ChipItem
-        variant="without"
-        leftImage={{ src: '/images/img_removecircle.svg', width: 24, height: 24 }}
-        selected={selectedChips.includes('without')}
-        onClick={() => handleChipClick('without')}
-      >
-        Without
-      </ChipItem>
-      <ChipItem
-        variant="offer"
-        leftImage={{ src: '/images/img_tags.svg', width: 24, height: 24 }}
-        selected={selectedChips.includes('offer')}
-        onClick={() => handleChipClick('offer')}
-      >
-        Offer
-      </ChipItem>
-    </ChipView>
-
-    <div className="flex items-center gap-2">
-      <SearchView
-        placeholder="Search"
-        value={searchQuery}
-        onChange={setSearchQuery}
-        leftImage={{ src: '/images/img_search01.svg', width: 20, height: 20 }}
-        className="w-80"
-      />
-      <button className="p-4 bg-primary-blue rounded-lg hover:opacity-90 transition-opacity focus:outline-none focus:ring-2 focus:ring-primary-blue">
-        <img src="/images/img_group_7.svg" alt="Filter" className="w-6 h-6" />
-      </button>
-    </div>
-  </div>
-</div>
-
-          {/* Menu Grid - يأخذ باقي المساحة مع scroll مخفي */}
-          <div className="flex-1" style={{ 
-            height: '75%', 
-            padding: '0 min(1vw, 16px) min(1vw, 16px)',
-            overflow: 'hidden'
-          }}>
-            <MenuGrid
-              items={filteredMenuItems}
-              onItemClick={handleMenuItemClick}
-              className="h-full invisible-scroll"
-            />
+      {/* Main Content */}
+      <main className="main-content">
+        {/* Left Panel */}
+        <section className="left-panel">
+          {/* Numeric Keypad */}
+          <div className="numeric-keypad">
+            <div className="keypad-grid">
+              {['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '.', 'C'].map((key) => (
+                <button 
+                  key={key}
+                  className="keypad-key"
+                  onClick={() => key === 'C' ? handleClearClick() : handleNumberClick(key)}
+                >
+                  {key}
+                </button>
+              ))}
+            </div>
+            <div className="keypad-display">
+              {keypadValue}
+            </div>
           </div>
-        </div>
 
-        {/* Category Sidebar - 10% مع scroll مخفي */}
-        <div className="flex-shrink-0" style={{ 
-          width: '10vw',
-          overflow: 'hidden'
-        }}>
-          <CategorySidebar
-            categories={categories}
-            selectedCategory={selectedCategory}
-            onCategorySelect={handleCategorySelect}
-            className="h-full invisible-scroll"
-            style={{ padding: 'min(1vw, 16px)' }}
-          />
-        </div>
+          {/* Filter Section */}
+          <div className="filter-section">
+            <div className="chip-container">
+              <button 
+                className={`chip extra ${selectedChips.includes('extra') ? 'active' : ''}`}
+                onClick={() => handleChipClick('extra')}
+              >
+                <img src="/images/img_addcircle.svg" alt="" />
+                Extra
+              </button>
+              <button 
+                className={`chip without ${selectedChips.includes('without') ? 'active' : ''}`}
+                onClick={() => handleChipClick('without')}
+              >
+                <img src="/images/img_removecircle.svg" alt="" />
+                Without
+              </button>
+              <button 
+                className={`chip offer ${selectedChips.includes('offer') ? 'active' : ''}`}
+                onClick={() => handleChipClick('offer')}
+              >
+                <img src="/images/img_tags.svg" alt="" />
+                Offer
+              </button>
+            </div>
+            
+            <div className="search-container" style={{ position: 'relative' }}>
+              <img src="/images/img_search01.svg" alt="search" className="search-icon" />
+              <input
+                type="text"
+                placeholder="Search"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="search-input"
+              />
+              <button className="filter-button">
+                <img src="/images/img_group_7.svg" alt="Filter" />
+              </button>
+            </div>
+          </div>
 
-        {/* Right Section - Order Summary - 20% بدون scroll */}
-        <div className="flex-shrink-0" style={{ 
-          width: '20vw', 
-          padding: 'min(1vw, 16px)',
-          overflow: 'hidden'
-        }}>
-          <OrderSummaryPanel
-            orderNumber="#123"
-            totalAmount="1250 EGP"
-            orderSummary={orderSummary}
-            customerName={customerName}
-            onCustomerNameChange={setCustomerName}
-            onRemoveItem={handleRemoveItem}
-            onSendOrder={handleSendOrder}
-            onPrintOrder={handlePrintOrder}
-            onPayOrder={handlePayOrder}
-            className="h-full"
-          />
-        </div>
-      </div>
+          {/* Products Grid */}
+          <div className="products-grid">
+            {filteredMenuItems.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => handleMenuItemClick(item)}
+                className="product-card"
+              >
+                <img src={item.image} alt={item.name} className="product-image" />
+                <div className="product-info">
+                  <div className="product-name">{item.nameArabic}</div>
+                  <div className="product-price">
+                    <span>{item.price}</span>
+                    <span className="currency">EGP</span>
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        {/* Category Sidebar */}
+        <aside className="category-sidebar">
+          {categories.map((category) => (
+            <button
+              key={category.id}
+              onClick={() => handleCategorySelect(category.id)}
+              className={`category-item ${category.id === selectedCategory ? 'active' : ''}`}
+            >
+              <img src={category.image} alt={category.name} />
+              <span>{category.nameArabic}</span>
+            </button>
+          ))}
+        </aside>
+
+        {/* Order Panel */}
+        <aside className="order-panel">
+          <div className="order-header">
+            <div className="order-number">#123</div>
+            <div className="order-total">
+              <span>1250</span>
+              <span style={{ fontSize: '1.2rem', marginLeft: '0.4rem' }}>EGP</span>
+            </div>
+          </div>
+
+          <div className="order-body">
+            <h3 className="order-title">Order Details</h3>
+
+            <div className="customer-input-container">
+              <input
+                type="text"
+                placeholder="Walk in Customer"
+                value={customerName}
+                onChange={(e) => setCustomerName(e.target.value)}
+                className="customer-input"
+              />
+              <button className="customer-button">
+                <img src="/images/img_group_1000004320.svg" alt="Add customer" />
+              </button>
+            </div>
+
+            <div className="order-items">
+              {orderSummary.items.map((item) => (
+                <div key={item.id} className="order-item">
+                  <div className="item-details">
+                    <button onClick={() => handleRemoveItem(item.id)} className="delete-button">
+                      <img src="/images/img_delete_02.svg" alt="Remove" />
+                    </button>
+                    <div className="item-info">
+                      <div className="item-name">
+                        {item.quantity} X {item.menuItem.name}
+                      </div>
+                      {item.extras.map((extra, index) => (
+                        <div key={index} className="item-extras">
+                          {extra.quantity} X {extra.name} ({extra.price})
+                          <span style={{ marginLeft: '2.4rem' }}>{extra.price * extra.quantity}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="item-prices">
+                    <div className="item-price">{item.menuItem.price * item.quantity}</div>
+                    <div className="item-total">{item.totalPrice}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="order-summary">
+            <div className="summary-rows">
+              {[
+                { label: 'Sub Total', value: orderSummary.subtotal },
+                { label: 'Discount', value: orderSummary.discount },
+                { label: 'Tax', value: orderSummary.tax },
+                { label: 'Service', value: orderSummary.service }
+              ].map(item => (
+                <div key={item.label} className="summary-row">
+                  <span>{item.label}</span>
+                  <span className="value">{item.value} <small>EGP</small></span>
+                </div>
+              ))}
+            </div>
+
+            <div className="summary-total">
+              <span>Total</span>
+              <span>{orderSummary.total} <small>EGP</small></span>
+            </div>
+
+            <div className="action-buttons">
+              <button onClick={handleSendOrder} className="action-button send-button">
+                <img src="/images/img_tabler_send.svg" alt="Send" />
+                Send
+              </button>
+              <button onClick={handlePrintOrder} className="action-button print-button">
+                <img src="/images/img_printer.svg" alt="Print" />
+                Print
+              </button>
+              <button onClick={handlePayOrder} className="action-button pay-button">
+                <img src="/images/img_payment_02.svg" alt="Pay" />
+                Pay
+              </button>
+            </div>
+          </div>
+        </aside>
+      </main>
     </div>
   );
 };
@@ -892,9 +847,8 @@ const PosSystem: React.FC = () => {
 export default PosSystem;
 
 ===== src/Pages/pos/newSales/MenuGrid.tsx =====
-import React, { useMemo } from 'react';
+import React from 'react';
 import { MenuItem } from './types/PosSystem';
-import { useResponsiveDimensions } from './hooks/useResponsiveScale';
 
 interface MenuGridProps {
   items: MenuItem[];
@@ -907,112 +861,24 @@ const MenuGrid: React.FC<MenuGridProps> = ({
   onItemClick,
   className = ''
 }) => {
-  const { responsive, responsivePX } = useResponsiveDimensions();
-
-  // استخدام useMemo لحساب الأبعاد مرة واحدة فقط عند تغيير scale
-  const cardDimensions = useMemo(() => ({
-    cardWidth: responsive(195),
-    cardHeight: responsive(269),
-    imageHeight: responsive(187)
-  }), [responsive]);
-
-  const { cardWidth, cardHeight, imageHeight } = cardDimensions;
-
   return (
-    <div className={`h-full overflow-auto hidden-scroll ${className}`}>
-      <div 
-        className="grid gap-4 auto-rows-max justify-items-center"
-        style={{ 
-          gridTemplateColumns: `repeat(auto-fit, ${cardWidth}px)`,
-          padding: responsivePX(8),
-          gap: responsivePX(8)
-        }}
-      >
-        {items.map((item) => (
-          <button
-            key={item.id}
-            onClick={() => onItemClick(item)}
-            className="transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-blue flex-shrink-0 relative hover:transform hover:scale-105"
-            style={{ 
-              width: cardWidth,
-              height: cardHeight,
-              borderRadius: responsive(16)
-            }}
-          >
-            {/* باقي محتوى الكارت */}
-            <div 
-              style={{
-                width: cardWidth,
-                height: cardHeight,
-                position: 'absolute',
-                left: 0,
-                top: 0,
-                background: 'white',
-                borderRadius: responsive(16),
-                boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
-              }}
-            />
-            
-            <img
-              src={item.image}
-              alt={item.name}
-              style={{
-                width: cardWidth,
-                height: imageHeight,
-                position: 'absolute',
-                left: 0,
-                top: 0,
-                borderRadius: responsive(16),
-                objectFit: 'cover'
-              }}
-            />
-            
-            <div
-              style={{
-                position: 'absolute',
-                right: responsive(8),
-                top: responsive(202),
-                color: 'black',
-                fontSize: responsivePX(16),
-                fontFamily: 'Cairo',
-                fontWeight: '600',
-                textAlign: 'right'
-              }}
-            >
-              {item.nameArabic}
+    <div className={`product-grid ${className}`}>
+      {items.map((item) => (
+        <button
+          key={item.id}
+          onClick={() => onItemClick(item)}
+          className="product-card"
+        >
+          <img src={item.image} alt={item.name} className="product-image" />
+          <div className="product-info">
+            <div className="product-name">{item.nameArabic}</div>
+            <div className="product-price">
+              <span>{item.price}</span>
+              <span className="currency">EGP</span>
             </div>
-            
-            <div
-              style={{
-                position: 'absolute',
-                left: responsive(8),
-                top: responsive(198)
-              }}
-            >
-              <span
-                style={{
-                  color: 'black',
-                  fontSize: responsivePX(20),
-                  fontFamily: 'Cairo',
-                  fontWeight: '600'
-                }}
-              >
-                {item.price}{' '}
-              </span>
-              <span
-                style={{
-                  color: 'black',
-                  fontSize: responsivePX(12),
-                  fontFamily: 'Cairo',
-                  fontWeight: '600'
-                }}
-              >
-                EGP
-              </span>
-            </div>
-          </button>
-        ))}
-      </div>
+          </div>
+        </button>
+      ))}
     </div>
   );
 };
@@ -1021,7 +887,6 @@ export default MenuGrid;
 
 ===== src/Pages/pos/newSales/NumericKeypad.tsx =====
 import React from 'react';
-import { useResponsiveDimensions } from './hooks/useResponsiveScale';
 
 interface NumericKeypadProps {
   onNumberClick: (number: string) => void;
@@ -1036,47 +901,25 @@ const NumericKeypad: React.FC<NumericKeypadProps> = ({
   currentValue,
   className = ''
 }) => {
-  const { responsive, responsivePX } = useResponsiveDimensions();
   const numbers = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '.', 'C'];
 
   return (
-    <section 
-      className={`flex gap-2 bg-card border border-gray-300 rounded-lg overflow-hidden ${className}`}
-      style={{ 
-        height: responsivePX(95),
-        gap: responsivePX(5)
-      }}
-    >
-      <div 
-        className="flex-grow grid grid-cols-12 h-full"
-        style={{ gap: 0 }}
-      >
+    <div className={`numeric-keypad ${className}`}>
+      <div className="keypad-grid">
         {numbers.map((key) => (
           <button 
             key={key}
-            className="font-aleo text-primary bg-card hover:bg-gray-50 active:bg-gray-100 transition-colors duration-200 border-r border-gray-200 last:border-r-0 flex items-center justify-center"
-            style={{ 
-              fontSize: responsivePX(32),
-              fontFamily: key === 'C' ? 'Nunito' : 'Aleo'
-            }}
+            className="keypad-key"
             onClick={() => key === 'C' ? onClearClick() : onNumberClick(key)}
           >
             {key}
           </button>
         ))}
       </div>
-      
-      <div 
-        className="bg-primary-blue text-white font-nunito flex items-center justify-center flex-shrink-0"
-        style={{ 
-          width: responsivePX(247),
-          fontSize: responsivePX(40),
-          fontWeight: '400'
-        }}
-      >
+      <div className="keypad-display">
         {currentValue}
       </div>
-    </section>
+    </div>
   );
 };
 
@@ -1085,8 +928,6 @@ export default NumericKeypad;
 ===== src/Pages/pos/newSales/OrderSummaryPanel.tsx =====
 import React from 'react';
 import { OrderSummary } from './types/PosSystem';
-import EditText from './components/ui/EditText';
-import { useResponsiveDimensions } from './hooks/useResponsiveScale';
 
 interface OrderSummaryPanelProps {
   orderNumber: string;
@@ -1113,263 +954,98 @@ const OrderSummaryPanel: React.FC<OrderSummaryPanelProps> = ({
   onPayOrder,
   className = ''
 }) => {
-  const { responsive, responsivePX } = useResponsiveDimensions();
-
   return (
-    <div className={`bg-card rounded-2xl shadow-sm flex flex-col h-full ${className}`}>
+    <div className={`order-container ${className}`}>
       {/* Header */}
-      <div className="flex-shrink-0 flex items-center">
-        <EditText
-          placeholder={orderNumber}
-          value={orderNumber}
-          variant="primary"
-          className="flex-1 rounded-none rounded-tl-2xl border-r-0 font-nunito font-bold"
-          style={{ fontSize: responsivePX(24) }}
-        />
-        <div 
-          className="bg-card rounded-r-2xl"
-          style={{ padding: `${responsivePX(16)} ${responsivePX(24)}` }}
-        >
-          <span 
-            className="font-nunito font-bold text-primary-blue"
-            style={{ fontSize: responsivePX(20) }}
-          >
-            {totalAmount.split(' ')[0]}{' '}
-          </span>
-          <span 
-            className="font-nunito font-bold text-primary-blue"
-            style={{ fontSize: responsivePX(10) }}
-          >
-            EGP
-          </span>
+      <div className="order-header">
+        <div className="order-number">{orderNumber}</div>
+        <div className="order-total">
+          <span>{totalAmount.split(' ')[0]}</span>
+          <span style={{ fontSize: '1.4rem', marginLeft: '0.4rem' }}>EGP</span>
         </div>
       </div>
 
-{/* Scrollable Middle: Order Details & Items - بدون scroll على كامل القسم */}
-<div className="flex-1 flex flex-col min-h-0" style={{ padding: 'min(0.8vw, 12px)' }}>
-  <h3 
-    className="font-nunito font-bold text-primary mb-4"
-    style={{ fontSize: 'min(1.2vw, 20px)' }}
-  >
-    Order Details
-  </h3>
+      {/* Body */}
+      <div className="order-body">
+        <h3 className="order-title">Order Details</h3>
 
-  {/* Customer Info - ثابت بدون scroll */}
-  <div className="flex items-center gap-2 mb-4" style={{ gap: 'min(0.5vw, 8px)' }}>
-    <div className="flex-1">
-      <input
-        type="text"
-        placeholder="Walk in Customer"
-        value={customerName}
-        onChange={(e) => onCustomerNameChange(e.target.value)}
-        className="w-full border border-gray-300 rounded font-nunito text-primary placeholder-secondary focus:outline-none focus:ring-2 focus:ring-primary-blue focus:border-primary-blue"
-        style={{ 
-          padding: 'min(0.8vh, 12px) min(0.8vw, 12px)',
-          fontSize: 'min(0.9vw, 14px)'
-        }}
-      />
-    </div>
-    <button 
-      className="bg-primary-blue rounded focus:outline-none focus:ring-2 focus:ring-primary-blue"
-      style={{ padding: 'min(0.5vh, 8px)' }}
-    >
-      <img 
-        src="/images/img_group_1000004320.svg" 
-        alt="Add customer" 
-        style={{ width: 'min(1.5vw, 24px)', height: 'min(1.5vw, 24px)' }}
-      />
-    </button>
-  </div>
-
-{/* Products List - فقط هذا الجزء له scroll مع خط أكبر */}
-<div 
-  className="order-products-list flex-1 overflow-auto"
-  style={{ 
-    maxHeight: 'min(40vh, 300px)',
-    marginBottom: 'min(1vh, 16px)'
-  }}
->
-  {orderSummary.items.map((item) => (
-    <div key={item.id}>
-      <div 
-        className="flex items-start justify-between py-1"
-        style={{ padding: 'min(0.4vh, 6px) 0' }} // زيادة المسافة قليلاً
-      >
-        <div 
-          className="flex items-start gap-4 flex-1"
-          style={{ gap: 'min(1vw, 16px)' }}
-        >
-          <button
-            onClick={() => onRemoveItem(item.id)}
-            className="mt-1 p-1 hover:bg-gray-100 rounded transition-colors"
-            style={{ padding: 'min(0.3vh, 4px)' }}
-          >
-            <img 
-              src="/images/img_delete_02.svg" 
-              alt="Remove" 
-              style={{ width: 'min(1vw, 14px)', height: 'min(1vw, 14px)' }} // تكبير أيقونة الحذف
-            />
+        {/* Customer Info */}
+        <div className="customer-input-container">
+          <input
+            type="text"
+            placeholder="Walk in Customer"
+            value={customerName}
+            onChange={(e) => onCustomerNameChange(e.target.value)}
+            className="customer-input"
+          />
+          <button className="customer-button">
+            <img src="/images/img_group_1000004320.svg" alt="Add customer" />
           </button>
-          <div className="flex-1">
-            <p 
-              className="font-nunito font-semibold text-primary"
-              style={{ 
-                fontSize: 'clamp(14px, 1.2vw, 18px)', // تكبير من 12px إلى 14-18px
-                lineHeight: 'clamp(18px, 1.5vw, 24px)',
-                marginBottom: 'min(0.5vh, 6px)'
-              }}
-            >
-              {item.quantity} X {item.menuItem.name}
-            </p>
-            {item.extras.map((extra, index) => (
-              <div 
-                key={index} 
-                className="text-secondary mt-1" 
-                style={{ 
-                  fontSize: 'clamp(12px, 1vw, 16px)', // تكبير من 10px إلى 12-16px
-                  lineHeight: 'clamp(16px, 1.3vw, 20px)',
-                  marginTop: 'min(0.4vh, 6px)'
-                }}
-              >
-                <span>{extra.quantity} X {extra.name} ({extra.price})</span>
-                <span 
-                  className="ml-8"
-                  style={{ marginLeft: 'min(2vw, 32px)' }}
-                >
-                  {extra.price * extra.quantity}
-                </span>
-              </div>
-            ))}
-          </div>
         </div>
-        <div className="text-right">
-          <p 
-            className="font-nunito font-semibold text-primary"
-            style={{ 
-              fontSize: 'clamp(14px, 1.2vw, 18px)', // تكبير من 12px إلى 14-18px
-              lineHeight: 'clamp(18px, 1.5vw, 24px)',
-              marginBottom: 'min(0.3vh, 4px)'
-            }}
-          >
-            {item.menuItem.price * item.quantity}
-          </p>
-          <p 
-            className="font-nunito font-semibold text-primary-blue"
-            style={{ 
-              fontSize: 'clamp(14px, 1.2vw, 18px)', // تكبير من 12px إلى 14-18px
-              lineHeight: 'clamp(18px, 1.5vw, 24px)'
-            }}
-          >
-            {item.totalPrice}
-          </p>
+
+        {/* Order Items */}
+        <div className="order-items">
+          {orderSummary.items.map((item) => (
+            <div key={item.id} className="order-item">
+              <div className="item-details">
+                <button onClick={() => onRemoveItem(item.id)} className="delete-button">
+                  <img src="/images/img_delete_02.svg" alt="Remove" />
+                </button>
+                <div className="item-info">
+                  <div className="item-name">
+                    {item.quantity} X {item.menuItem.name}
+                  </div>
+                  {item.extras.map((extra, index) => (
+                    <div key={index} className="item-extras">
+                      {extra.quantity} X {extra.name} ({extra.price})
+                      <span style={{ marginLeft: '3.2rem' }}>{extra.price * extra.quantity}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="item-prices">
+                <div className="item-price">{item.menuItem.price * item.quantity}</div>
+                <div className="item-total">{item.totalPrice}</div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
-      <div 
-        className="h-px bg-gray-200"
-        style={{ height: 'min(0.1vh, 1px)' }}
-      />
-    </div>
-  ))}
-</div>
-</div>
 
-      {/* Fixed Summary at Bottom */}
-      <div 
-        className="flex-shrink-0 border-t"
-        style={{ padding: responsivePX(16) }}
-      >
-        <div 
-          className="space-y-2"
-          style={{ gap: responsivePX(8) }}
-        >
+      {/* Summary */}
+      <div className="order-summary">
+        <div className="summary-rows">
           {[
             { label: 'Sub Total', value: orderSummary.subtotal },
-            { label: 'Discount',  value: orderSummary.discount },
-            { label: 'Tax',       value: orderSummary.tax },
-            { label: 'Service',   value: orderSummary.service }
+            { label: 'Discount', value: orderSummary.discount },
+            { label: 'Tax', value: orderSummary.tax },
+            { label: 'Service', value: orderSummary.service }
           ].map(item => (
-            <div key={item.label} className="flex justify-between items-center">
-              <span 
-                className="font-nunito font-medium text-primary"
-                style={{ fontSize: responsivePX(12) }}
-              >
-                {item.label}
-              </span>
-              <span 
-                className="font-nunito font-bold text-primary"
-                style={{ fontSize: responsivePX(12) }}
-              >
-                {item.value} <span style={{ fontSize: responsivePX(12) }}>EGP</span>
-              </span>
+            <div key={item.label} className="summary-row">
+              <span>{item.label}</span>
+              <span className="value">{item.value} <small>EGP</small></span>
             </div>
           ))}
         </div>
 
-        <div 
-          className="h-px bg-gray-400 my-4"
-          style={{ 
-            height: responsivePX(1),
-            margin: `${responsivePX(16)} 0`
-          }}
-        />
-
-        <div className="flex justify-between items-center">
-          <span 
-            className="font-nunito font-bold text-primary"
-            style={{ fontSize: responsivePX(16) }}
-          >
-            Total
-          </span>
-          <span 
-            className="font-nunito font-bold text-primary"
-            style={{ fontSize: responsivePX(16) }}
-          >
-            {orderSummary.total} <span style={{ fontSize: responsivePX(14) }}>EGP</span>
-          </span>
+        <div className="summary-total">
+          <span>Total</span>
+          <span>{orderSummary.total} <small>EGP</small></span>
         </div>
-      </div>
 
-      {/* Fixed Action Buttons */}
-      <div 
-        className="flex-shrink-0"
-        style={{ padding: responsivePX(16) }}
-      >
-        <div 
-          className="grid grid-cols-3 gap-4"
-          style={{ gap: responsivePX(16) }}
-        >
-          {[
-            { onClick: onSendOrder,  bg: 'bg-primary-red',   icon: '/images/img_tabler_send.svg',    label: 'Send' },
-            { onClick: onPrintOrder, bg: 'bg-primary-blue',  icon: '/images/img_printer.svg',       label: 'Print' },
-            { onClick: onPayOrder,   bg: 'bg-primary-green', icon: '/images/img_payment_02.svg',    label: 'Pay' }
-          ].map(btn => (
-            <button
-              key={btn.label}
-              onClick={btn.onClick}
-              className={`flex flex-col items-center justify-center ${btn.bg} rounded text-white focus:outline-none hover:opacity-90 transition-opacity`}
-              style={{ 
-                padding: responsivePX(16),
-                borderRadius: responsivePX(8)
-              }}
-            >
-              <img 
-                src={btn.icon} 
-                alt={btn.label} 
-                className="mb-1"
-                style={{ 
-                  width: responsivePX(20), 
-                  height: responsivePX(20),
-                  marginBottom: responsivePX(4)
-                }}
-              />
-              <span 
-                className="font-nunito font-bold"
-                style={{ fontSize: responsivePX(18) }}
-              >
-                {btn.label}
-              </span>
-            </button>
-          ))}
+        <div className="action-buttons">
+          <button onClick={onSendOrder} className="action-button send-button">
+            <img src="/images/img_tabler_send.svg" alt="Send" />
+            Send
+          </button>
+          <button onClick={onPrintOrder} className="action-button print-button">
+            <img src="/images/img_printer.svg" alt="Print" />
+            Print
+          </button>
+          <button onClick={onPayOrder} className="action-button pay-button">
+            <img src="/images/img_payment_02.svg" alt="Pay" />
+            Pay
+          </button>
         </div>
       </div>
     </div>
@@ -1593,34 +1269,40 @@ export default react;
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Aleo:wght@400;700&display=swap');
 
-:root {
-  /* فرض Light Mode فقط */
-  color-scheme: light only;
-  
-  /* الألوان الثابتة للـ Light Mode */
-  --primary-blue: #0373ed;
-  --primary-green: #23a929;
-  --primary-red: #e53935;
-  --primary-orange: #ffb74d;
-  --bg-main: #f5f5f5;
-  --bg-card: #ffffff;
-  --text-primary: #000000;
-  --text-secondary: rgba(0, 0, 0, 0.5);
-  --border-color-light: rgba(0, 0, 0, 0.2);
-  --border-color-medium: rgba(0, 0, 0, 0.3);
+/* إعداد النظام الأساسي للـ REM مع الأبعاد الصحيحة 2000×1200 */
+html {
+  font-size: 62.5%; /* 1rem = 10px */
+  direction: ltr !important;
+  text-align: left !important;
+  color-scheme: light only !important;
 }
 
-/* فرض LTR على جميع العناصر */
+/* Responsive breakpoints */
+@media (max-width: 768px) {
+  html { font-size: 50%; }
+}
+
+@media (min-width: 769px) and (max-width: 1200px) {
+  html { font-size: 56.25%; }
+}
+
+@media (min-width: 1201px) and (max-width: 1600px) {
+  html { font-size: 62.5%; }
+}
+
+@media (min-width: 1601px) and (max-width: 2000px) {
+  html { font-size: 68.75%; }
+}
+
+@media (min-width: 2001px) {
+  html { font-size: 75%; }
+}
+
+/* إعدادات عامة */
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  direction: ltr !important;
-  text-align: left !important;
-}
-
-/* فرض LTR على HTML و Body */
-html {
   direction: ltr !important;
   text-align: left !important;
   color-scheme: light only !important;
@@ -1628,360 +1310,817 @@ html {
 
 body {
   font-family: 'Nunito', 'Inter', sans-serif;
+  background-color: #f5f5f5;
+  color: #000;
+  font-size: 1.6rem;
+  line-height: 1.5;
   margin: 0;
   padding: 0;
   overflow-x: hidden;
   direction: ltr !important;
-  text-align: left !important;
-  /* فرض الألوان الثابتة */
-  background-color: var(--bg-main) !important;
-  color: var(--text-primary) !important;
+  width: 100%;
+  height: 100%;
 }
 
-/* منع أي تأثير للـ Dark Mode أو RTL */
-* {
-  color-scheme: light only !important;
-  direction: ltr !important;
-}
-
-/* فرض LTR على جميع عناصر النص */
-p, span, div, h1, h2, h3, h4, h5, h6, input, button, label {
-  direction: ltr !important;
-  text-align: left !important;
-}
-
-/* استثناء للنصوص العربية فقط - محاذاة وسط أو يمين حسب الحاجة */
-.arabic-text {
-  text-align: center !important;
-  direction: ltr !important; /* الاتجاه يبقى LTR */
-}
-
-/* إخفاء الـ scrollbar تماماً مع الاحتفاظ بوظيفة الـ scroll */
-.invisible-scroll {
-  overflow-y: auto;
-  overflow-x: hidden;
-  
-  /* إخفاء scrollbar في Firefox */
-  scrollbar-width: none;
-  
-  /* إخفاء scrollbar في Internet Explorer and Edge */
-  -ms-overflow-style: none;
-  
-  /* تمكين smooth scrolling */
-  scroll-behavior: smooth;
-  
-  /* تحسين الأداء على الأجهزة اللوحية */
-  -webkit-overflow-scrolling: touch;
-  
-  /* فرض LTR */
-  direction: ltr !important;
-}
-
-/* إخفاء scrollbar في WebKit browsers (Chrome, Safari, Opera) */
-.invisible-scroll::-webkit-scrollbar {
-  display: none;
-  width: 0;
-  height: 0;
-  background: transparent;
-}
-
-/* تأكد من عدم ظهور أي scrollbar حتى عند التفاعل */
-.invisible-scroll::-webkit-scrollbar-track {
-  display: none;
-}
-
-.invisible-scroll::-webkit-scrollbar-thumb {
-  display: none;
-}
-
-.invisible-scroll::-webkit-scrollbar-corner {
-  display: none;
-}
-
-/* إزالة أي margin أو padding قد يسبب scroll غير مرغوب فيه */
-.invisible-scroll > * {
-  margin: 0;
-}
-
-/* تحسين الأداء للعناصر الطويلة */
-.invisible-scroll {
-  contain: layout style paint;
-  will-change: scroll-position;
-}
-
-/* ضبط المسافة بين NumericKeypad و Filter Chips */
-.numeric-keypad {
-  margin-bottom: clamp(8px, 1.5vw, 20px) !important;
-}
-
-/* تحسين scroll للمنتجات فقط في Order Details */
-.order-products-list {
-  overflow-y: auto;
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE and Edge */
-  direction: ltr !important;
-}
-
-.order-products-list::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, Opera */
-  width: 0;
-  height: 0;
-  background: transparent;
-}
-
-/* تحسين خطوط الفئات */
-.category-name-enhanced {
-  font-size: clamp(14px, 1.2vw, 18px) !important;
-  line-height: clamp(18px, 1.5vw, 24px) !important;
-  font-weight: 600 !important;
-  text-align: center !important;
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-  direction: ltr !important;
-}
-
-/* تحسين خطوط المنتجات في Order Details */
-.order-item-name-enhanced {
-  font-size: clamp(14px, 1.2vw, 18px) !important;
-  line-height: clamp(18px, 1.5vw, 24px) !important;
-  font-weight: 600 !important;
-  margin-bottom: 6px;
-  direction: ltr !important;
-  text-align: left !important;
-}
-
-.order-item-extras-enhanced {
-  font-size: clamp(12px, 1vw, 16px) !important;
-  line-height: clamp(16px, 1.3vw, 20px) !important;
-  margin-top: 6px;
-  direction: ltr !important;
-  text-align: left !important;
-}
-
-.order-item-price-enhanced {
-  font-size: clamp(14px, 1.2vw, 18px) !important;
-  line-height: clamp(18px, 1.5vw, 24px) !important;
-  font-weight: 600 !important;
-  direction: ltr !important;
-  text-align: left !important;
-}
-
-/* NumericKeypad Styles */
-.numpad-section {
+/* Container رئيسي يملأ الشاشة بالكامل */
+.pos-system-container {
+  width: 100vw;
+  height: 100vh;
+  min-width: 100vw;
+  min-height: 100vh;
   display: flex;
-  gap: 5px;
-  background-color: var(--bg-card);
-  border: 1px solid var(--border-color-medium);
-  border-radius: 8px;
-  height: 95px;
+  flex-direction: column;
+  background-color: #f5f5f5;
+  overflow: hidden;
+  direction: ltr !important;
+}
+
+/* Header يملأ العرض بالكامل */
+.site-header {
+  height: 7.2rem; /* 72px */
+  background-color: #ffffff;
+  display: flex;
+  align-items: center;
+  padding: 0 4rem;
+  flex-shrink: 0;
+  width: 100%;
+  box-shadow: 0 0.2rem 0.8rem rgba(0, 0, 0, 0.1);
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.logo {
+  width: 14rem;
+  height: 6rem;
+  object-fit: contain;
+}
+
+.nav-items {
+  display: flex;
+  align-items: center;
+  gap: 2.4rem;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 1.6rem;
+  font-weight: 500;
+  color: #000;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.nav-item:first-child {
+  color: #0373ed;
+}
+
+.nav-item img {
+  width: 1.8rem;
+  height: 1.8rem;
+}
+
+/* Main Content يملأ المساحة المتبقية */
+.main-content {
+  flex: 1;
+  display: flex;
+  gap: 1.5rem;
+  padding: 2rem;
+  height: calc(100vh - 7.2rem);
+  overflow: hidden;
+  width: 100%;
+    flex-direction: row; /* التأكد من الترتيب الأفقي */
+  align-items: stretch; /* جعل جميع العناصر بنفس الارتفاع */
+    justify-content: space-between;
+
+}
+
+/* Left Panel - 62% من الشاشة الكاملة */
+.left-panel {
+  width: 62%;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  overflow: hidden;
+  order: 1;
+}
+
+/* Numeric Keypad */
+.numeric-keypad {
+  height: 8.5rem;
+  display: flex;
+  background-color: #ffffff;
+  border: 0.1rem solid rgba(0, 0, 0, 0.3);
+  border-radius: 0.8rem;
   overflow: hidden;
   flex-shrink: 0;
   direction: ltr !important;
 }
 
-.numpad-grid {
-  flex-grow: 1;
+.keypad-grid {
+  flex: 1;
   display: grid;
   grid-template-columns: repeat(12, 1fr);
   height: 100%;
   direction: ltr !important;
 }
 
-.numpad-key {
+.keypad-key {
   font-family: 'Aleo', serif;
-  font-size: 32px;
-  border-right: 1px solid var(--border-color-light);
-  color: var(--text-primary);
-  background: var(--bg-card);
+  font-size: 2.8rem;
+  border-right: 0.1rem solid rgba(0, 0, 0, 0.2);
+  color: #000;
+  background: #ffffff;
   transition: background-color 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   border: none;
-  border-radius: 0;
   direction: ltr !important;
   text-align: center !important;
 }
 
-.numpad-key:hover {
+.keypad-key:hover {
   background-color: #f8f9fa;
 }
 
-.numpad-key:active {
-  background-color: #e9ecef;
-}
-
-.numpad-key:last-child {
+.keypad-key:last-child {
   font-family: 'Nunito', sans-serif;
   border-right: none;
 }
 
-.numpad-display {
-  background-color: var(--primary-blue);
-  color: white;
+.keypad-display {
+  width: 20rem;
+  background-color: #0373ed;
+  color: #ffffff;
   font-family: 'Nunito', sans-serif;
-  font-size: 40px;
+  font-size: 3.2rem;
   font-weight: 400;
   display: flex;
   justify-content: center;
   align-items: center;
-  width: 247px;
   flex-shrink: 0;
   direction: ltr !important;
   text-align: center !important;
 }
 
-/* Smooth Transitions */
-* {
-  transition: all 0.2s ease;
+/* Filter Section */
+.filter-section {
+  height: 4.8rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1.6rem;
+  flex-shrink: 0;
 }
 
-/* Responsive Images */
-img {
-  max-width: 100%;
-  height: auto;
-  display: block;
+.chip-container {
+  display: flex;
+  gap: 1.2rem;
+  flex: 1;
 }
 
-/* Button Hover Effects */
-button {
+.chip {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.8rem 2rem;
+  border-radius: 0.6rem;
+  font-family: 'Nunito', sans-serif;
+  font-size: 2rem;
+  font-weight: 500;
+  color: #ffffff;
+  border: none;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: opacity 0.2s ease;
+  height: 4.8rem;
   direction: ltr !important;
 }
 
-button:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+.chip:hover {
+  opacity: 0.9;
 }
 
-button:active {
-  transform: translateY(0);
+.chip.extra { background-color: #23a929; }
+.chip.without { background-color: #e53935; }
+.chip.offer { background-color: #ffb74d; }
+
+.chip img {
+  width: 2rem;
+  height: 2rem;
 }
 
-/* Focus States */
-button:focus,
-input:focus {
+.search-container {
+  display: flex;
+  background-color: #ffffff;
+  border-radius: 0.6rem;
+  box-shadow: 0 0.8rem 2.4rem rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  height: 4.8rem;
+}
+
+.search-input {
+  width: 28rem;
+  height: 4.8rem;
+  border: none;
+  background: transparent;
+  padding: 0 1.6rem 0 4.4rem;
+  font-size: 1.6rem;
   outline: none;
-  box-shadow: 0 0 0 2px rgba(3, 115, 237, 0.3);
-}
-
-/* Input Elements */
-input {
+  font-family: 'Nunito', sans-serif;
   direction: ltr !important;
   text-align: left !important;
 }
 
-/* فرض Light Mode */
-.force-light-mode {
-  color-scheme: light only !important;
-  background-color: var(--bg-main) !important;
-  color: var(--text-primary) !important;
+.search-icon {
+  position: absolute;
+  left: 1.6rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1.8rem;
+  height: 1.8rem;
+}
+
+.filter-button {
+  width: 5.6rem;
+  height: 4.8rem;
+  background-color: #0373ed;
+  border: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.filter-button:hover {
+  background-color: #025bb5;
+}
+
+.filter-button img {
+  width: 2rem;
+  height: 2rem;
+}
+
+/* Products Grid */
+.products-grid {
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding: 0.6rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
+  gap: 0.6rem;
+  align-content: start;
   direction: ltr !important;
 }
 
-/* للشاشات الصغيرة */
+.products-grid::-webkit-scrollbar {
+  display: none;
+}
+
+.product-card {
+  width: 18rem;
+  height: 24rem;
+  background-color: #ffffff;
+  border-radius: 1.2rem;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 0.2rem 0.6rem rgba(0, 0, 0, 0.1);
+  position: relative;
+}
+
+.product-card:hover {
+  transform: translateY(-0.2rem);
+  box-shadow: 0 0.4rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.product-image {
+  width: 100%;
+  height: 16rem;
+  object-fit: cover;
+}
+
+.product-info {
+  padding: 0.6rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 8rem;
+}
+
+.product-name {
+  font-family: 'Cairo', sans-serif;
+  font-weight: 600;
+  font-size: 1.4rem;
+  color: #000;
+  text-align: center;
+  direction: ltr !important;
+}
+
+.product-price {
+  font-family: 'Cairo', sans-serif;
+  font-weight: 600;
+  font-size: 1.8rem;
+  color: #000;
+  direction: ltr !important;
+  text-align: left !important;
+}
+
+.product-price .currency {
+  font-size: 1rem;
+}
+
+/* Category Sidebar - 9% من الشاشة الكاملة */
+.category-sidebar {
+  order: 2;
+  width: 9%;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  flex-shrink: 0; /* منع الانكماش */
+}
+
+.category-sidebar::-webkit-scrollbar {
+  display: none;
+}
+
+.category-item {
+  width: 100%;
+  min-width: 12rem;
+  height: 10rem;
+  background-color: #ffffff;
+  border-radius: 1.2rem;
+  padding: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  text-align: center;
+  font-family: 'Cairo', sans-serif;
+  font-size: 2rem;
+  font-weight: 400;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border: 0.2rem solid transparent;
+  flex-shrink: 0;
+  color: #000;
+  direction: ltr !important;
+}
+
+.category-item:hover {
+  background-color: #f8f9fa;
+  transform: translateY(-0.2rem);
+  box-shadow: 0 0.4rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.category-item.active {
+  border: 0.2rem solid #0373ed;
+}
+
+.category-item img {
+  width: 4.8rem;
+  height: 4.8rem;
+  object-fit: contain;
+}
+
+/* إضافة responsive للشاشات المختلفة */
+@media (max-width: 1366px) {
+  .category-sidebar {
+    padding: 1rem;
+    gap: 1rem;
+  }
+  
+  .category-item {
+    height: 8rem;
+    padding: 1rem;
+    font-size: 1.6rem;
+  }
+  
+  .category-item img {
+    width: 3.6rem;
+    height: 3.6rem;
+  }
+}
+
+@media (max-width: 1024px) {
+  .category-sidebar {
+    padding: 0.8rem;
+    gap: 0.8rem;
+  }
+  
+  .category-item {
+    height: 7rem;
+    padding: 0.8rem;
+    font-size: 1.4rem;
+  }
+  
+  .category-item img {
+    width: 3rem;
+    height: 3rem;
+  }
+}
+
+/* Order Panel - 29% من الشاشة الكاملة */
+.order-panel {
+    order: 3;
+  width: 29%;
+  background-color: #ffffff;
+  border-radius: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 0.2rem 0.6rem rgba(0, 0, 0, 0.1);
+    flex-shrink: 0; /* منع الانكماش */
+
+}
+
+.order-header {
+  height: 5.6rem;
+  display: flex;
+  flex-shrink: 0;
+}
+
+.order-number {
+  flex: 1;
+  background-color: #0373ed;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 1.2rem 0 0 0;
+  font-size: 2rem;
+  font-weight: 700;
+  font-family: 'Nunito', sans-serif;
+  direction: ltr !important;
+  text-align: center !important;
+}
+
+.order-total {
+  width: 13rem;
+  border: 0.1rem solid #0373ed;
+  color: #0373ed;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0 1.2rem 0 0;
+  font-size: 2.4rem;
+  font-weight: 700;
+  font-family: 'Nunito', sans-serif;
+  direction: ltr !important;
+  text-align: center !important;
+}
+
+.order-body {
+  flex: 1;
+  padding: 2rem 1.4rem;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  display: flex;
+  flex-direction: column;
+}
+
+.order-body::-webkit-scrollbar {
+  display: none;
+}
+
+.order-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 1.4rem;
+  font-family: 'Nunito', sans-serif;
+  direction: ltr !important;
+  text-align: left !important;
+}
+
+.customer-input-container {
+  display: flex;
+  margin-bottom: 2rem;
+  border: 0.1rem solid rgba(0, 0, 0, 0.3);
+  border-radius: 0.4rem;
+  overflow: hidden;
+}
+
+.customer-input {
+  flex: 1;
+  padding: 0.8rem 1.2rem;
+  font-size: 1.2rem;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: 'Nunito', sans-serif;
+  direction: ltr !important;
+  text-align: left !important;
+}
+
+.customer-button {
+  width: 3.6rem;
+  height: 3.2rem;
+  background-color: #0373ed;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.customer-button img {
+  width: 1.6rem;
+  height: 1.6rem;
+}
+
+/* Order Items */
+.order-items {
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  margin-bottom: 2rem;
+  direction: ltr !important;
+}
+
+.order-items::-webkit-scrollbar {
+  display: none;
+}
+
+.order-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-bottom: 0.6rem;
+  margin-bottom: 0.6rem;
+  border-bottom: 0.05rem solid rgba(0, 0, 0, 0.2);
+}
+
+.item-details {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+  flex: 1;
+}
+
+.delete-button {
+  margin-top: 0.2rem;
+  padding: 0.2rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.delete-button img {
+  width: 1.4rem;
+  height: 1.4rem;
+}
+
+.item-info {
+  flex: 1;
+}
+
+.item-name {
+  font-size: 1.4rem;
+  font-weight: 600;
+  font-family: 'Nunito', sans-serif;
+  margin-bottom: 0.3rem;
+  direction: ltr !important;
+  text-align: left !important;
+}
+
+.item-extras {
+  font-size: 1rem;
+  color: rgba(0, 0, 0, 0.5);
+  font-family: 'Nunito', sans-serif;
+  direction: ltr !important;
+  text-align: left !important;
+}
+
+.item-prices {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.item-price {
+  font-size: 1.4rem;
+  font-weight: 600;
+  font-family: 'Nunito', sans-serif;
+  margin-bottom: 0.3rem;
+  direction: ltr !important;
+  text-align: right !important;
+}
+
+.item-total {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: #0373ed;
+  font-family: 'Nunito', sans-serif;
+  direction: ltr !important;
+  text-align: right !important;
+}
+
+/* Order Summary */
+.order-summary {
+  padding: 2rem 1.4rem;
+  flex-shrink: 0;
+}
+
+.summary-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  margin-bottom: 2rem;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 1.4rem;
+  font-weight: 500;
+  font-family: 'Nunito', sans-serif;
+}
+
+.summary-row .value {
+  font-weight: 700;
+}
+
+.summary-total {
+  display: flex;
+  justify-content: space-between;
+  font-size: 1.8rem;
+  font-weight: 700;
+  padding-top: 2rem;
+  border-top: 0.1rem solid rgba(0, 0, 0, 0.3);
+  margin-bottom: 2rem;
+  font-family: 'Nunito', sans-serif;
+}
+
+/* Action Buttons */
+.action-buttons {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.2rem;
+}
+
+.action-button {
+  height: 5.2rem;
+  border-radius: 0.4rem;
+  color: #ffffff;
+  font-size: 1.6rem;
+  font-weight: 700;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 0.3rem;
+  transition: opacity 0.2s ease;
+  font-family: 'Nunito', sans-serif;
+  border: none;
+  cursor: pointer;
+  direction: ltr !important;
+}
+
+.action-button img {
+  width: 1.6rem;
+  height: 1.6rem;
+}
+
+.action-button:hover {
+  opacity: 0.9;
+}
+
+.send-button { background-color: #e53935; }
+.print-button { background-color: #0373ed; }
+.pay-button { background-color: #23a929; }
+
+/* إخفاء الـ scrollbar تماماً */
+.invisible-scroll {
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  direction: ltr !important;
+}
+
+.invisible-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* تحسين scroll للمنتجات فقط في Order Details */
+.order-products-list {
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  direction: ltr !important;
+  max-height: 30rem;
+  margin-bottom: 1.6rem;
+}
+
+.order-products-list::-webkit-scrollbar {
+  display: none;
+}
+
+/* Utility Classes */
+.hidden-scroll {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.hidden-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* فرض LTR على جميع العناصر */
+[dir="rtl"], .rtl {
+  direction: ltr !important;
+  text-align: left !important;
+}
+
+.flex {
+  direction: ltr !important;
+}
+
+.grid {
+  direction: ltr !important;
+}
+
+html[dir="rtl"], 
+body[dir="rtl"], 
+*[dir="rtl"] {
+  direction: ltr !important;
+  text-align: left !important;
+}
+
+.pos-system-container,
+.pos-system-container * {
+  direction: ltr !important;
+}
+
+/* استثناءات للنصوص العربية */
+.category-name,
+.product-name-arabic,
+.order-item-arabic {
+  text-align: center !important;
+  direction: ltr !important;
+}
+
+/* Responsive Design */
 @media (max-width: 768px) {
-  .numeric-keypad {
-    margin-bottom: clamp(6px, 1.2vw, 16px) !important;
+  .main-content {
+    flex-direction: column;
+    padding: 1.2rem;
   }
   
-  .order-products-list {
-    max-height: min(35vh, 250px) !important;
+  .left-panel, .category-sidebar, .order-panel {
+    width: 100%;
+    height: auto;
   }
   
-  .category-name-enhanced {
-    font-size: clamp(16px, 2vw, 20px) !important;
-    line-height: clamp(20px, 2.5vw, 26px) !important;
+  .category-sidebar {
+    flex-direction: row;
+    flex-wrap: wrap;
+    height: auto;
+    overflow: visible;
   }
   
-  .order-item-name-enhanced {
-    font-size: clamp(16px, 2vw, 20px) !important;
-    line-height: clamp(20px, 2.5vw, 26px) !important;
-  }
-  
-  .order-item-extras-enhanced {
-    font-size: clamp(14px, 1.8vw, 18px) !important;
-    line-height: clamp(18px, 2.2vw, 22px) !important;
-  }
-  
-  .order-item-price-enhanced {
-    font-size: clamp(16px, 2vw, 20px) !important;
-    line-height: clamp(20px, 2.5vw, 26px) !important;
-  }
-  
-  .numpad-section {
-    height: 80px;
-  }
-  
-  .numpad-key {
-    font-size: 24px;
-  }
-  
-  .numpad-display {
-    font-size: 32px;
-    width: 200px;
+  .category-item {
+    flex-grow: 1;
+    min-width: 8rem;
   }
 }
 
-/* للشاشات الكبيرة جداً */
 @media (min-width: 1920px) {
-  .numeric-keypad {
-    margin-bottom: 20px !important;
+  .left-panel {
+    width: 68%;
   }
   
-  .order-products-list {
-    max-height: min(45vh, 350px) !important;
+  .category-sidebar {
+    width: 7%;
   }
   
-  .category-name-enhanced {
-    font-size: 18px !important;
-    line-height: 24px !important;
-  }
-  
-  .order-item-name-enhanced {
-    font-size: 18px !important;
-    line-height: 24px !important;
-  }
-  
-  .order-item-extras-enhanced {
-    font-size: 16px !important;
-    line-height: 20px !important;
-  }
-  
-  .order-item-price-enhanced {
-    font-size: 18px !important;
-    line-height: 24px !important;
+  .order-panel {
+    width: 25%;
   }
 }
 
-/* Media Queries للشاشات الصغيرة جداً */
-@media (max-width: 480px) {
-  .pos-system-container {
-    min-width: 320px;
-  }
-  
-  .numpad-section {
-    height: 60px;
-    gap: 4px;
-  }
-  
-  .numpad-key {
-    font-size: 18px;
-  }
-  
-  .numpad-display {
-    font-size: 24px;
-    width: 150px;
-  }
-}
-
-/* Media Queries للشاشات الكبيرة */
 @media (min-width: 2560px) {
   .pos-system-container {
-    max-width: 2560px;
-    margin: 0 auto;
+    width: 100vw;
   }
 }
 
@@ -2022,54 +2161,71 @@ input {
 
 /* Error State */
 .error {
-  border-color: var(--primary-red) !important;
+  border-color: #e53935 !important;
   background-color: rgba(229, 57, 53, 0.1) !important;
 }
 
 /* Success State */
 .success {
-  border-color: var(--primary-green) !important;
+  border-color: #23a929 !important;
   background-color: rgba(35, 169, 41, 0.1) !important;
 }
 
-/* منع أي RTL styles */
-[dir="rtl"], .rtl {
-  direction: ltr !important;
-  text-align: left !important;
+
+/* منع التداخل بين العناصر */
+.main-content > * {
+  flex-shrink: 0; /* منع انكماش أي عنصر */
+  min-width: 0; /* السماح بالتقلص عند الحاجة */
 }
 
-/* فرض LTR على Flexbox */
-.flex {
-  direction: ltr !important;
+/* تأكيد عدم التداخل */
+.category-sidebar {
+  position: relative;
+  z-index: 1;
 }
 
-/* فرض LTR على Grid */
-.grid {
-  direction: ltr !important;
+.order-panel {
+  position: relative;
+  z-index: 1;
 }
 
-/* تأكيد إضافي لمنع RTL */
-html[dir="rtl"], 
-body[dir="rtl"], 
-*[dir="rtl"] {
-  direction: ltr !important;
-  text-align: left !important;
+/* للشاشات الصغيرة */
+@media (max-width: 1440px) {
+  .left-panel {
+    width: 58%;
+  }
+  
+  .category-sidebar {
+    width: 12%;
+  }
+  
+  .order-panel {
+    width: 29%;
+  }
+  
+  .main-content {
+    gap: 1rem;
+  }
 }
 
-/* فرض LTR على جميع العناصر المخصصة */
-.pos-system-container,
-.pos-system-container * {
-  direction: ltr !important;
+/* للشاشات الكبيرة */
+@media (min-width: 1920px) {
+  .left-panel {
+    width: 64%;
+  }
+  
+  .category-sidebar {
+    width: 8%;
+  }
+  
+  .order-panel {
+    width: 27.5%;
+  }
+  
+  .main-content {
+    gap: 1rem;
+  }
 }
-
-/* استثناءات للنصوص العربية - محاذاة فقط */
-.category-name,
-.product-name-arabic,
-.order-item-arabic {
-  text-align: center !important;
-  direction: ltr !important; /* الاتجاه يبقى LTR */
-}
-
 ===== src/Pages/pos/newSales/styles/tailwind.css =====
 @tailwind base;
 @tailwind components;

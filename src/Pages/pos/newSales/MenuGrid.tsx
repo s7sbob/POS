@@ -13,7 +13,7 @@ const MenuGrid: React.FC<MenuGridProps> = ({
   className = ''
 }) => {
   return (
-    <div className={`product-grid ${className}`}>
+    <div className={`products-grid ${className}`}>
       {items.map((item) => (
         <button
           key={item.id}
