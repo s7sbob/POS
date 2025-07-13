@@ -8,6 +8,7 @@ import './styles/responsive.css';
 import './styles/popup.css';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ProductCard from './components/ProductCard';
+import Header from './components/common/Header';
 
 const PosSystem: React.FC = () => {
   const [keypadValue, setKeypadValue] = useState('1');
@@ -24,7 +25,7 @@ const PosSystem: React.FC = () => {
   
   // إضافة states جديدة للتحكم في عرض الأطفال
   const [showingChildren, setShowingChildren] = useState<string | null>(null);
-  const [parentCategory, setParentCategory] = useState<CategoryItem | null>(null);
+  const [, setParentCategory] = useState<CategoryItem | null>(null);
   const [allCategories, setAllCategories] = useState<CategoryItem[]>([]);
   
   // Popup States
@@ -36,6 +37,8 @@ const PosSystem: React.FC = () => {
   
   // Order States
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
+
+  const [selectedOrderType, setSelectedOrderType] = useState('Takeaway');
 
   // Load all data on mount
   useEffect(() => {
@@ -227,37 +230,10 @@ const PosSystem: React.FC = () => {
   return (
     <div className="pos-system">
       {/* Top Header Bar */}
-      <header className="top-bar">
-        <div className="top-bar-content">
-          <img src="/images/img_foodify_logo_2_78x166.png" alt="Foodify Logo" className="logo" />
-          <nav className="nav-items">
-            <a href="#" className="nav-item active">
-              <img src="/images/img_sending_order.svg" alt="" />
-              <span>Today Orders</span>
-            </a>
-            <a href="#" className="nav-item">
-              <img src="/images/img_table_02.svg" alt="" />
-              <span>Table</span>
-            </a>
-            <a href="#" className="nav-item">
-              <img src="/images/img_discount_tag_01.svg" alt="" />
-              <span>Discount</span>
-            </a>
-            <a href="#" className="nav-item">
-              <img src="/images/img_delete_01.svg" alt="" />
-              <span>Void</span>
-            </a>
-            <select className="order-type-select">
-              <option>Takeaway</option>
-              <option>Dine In</option>
-              <option>Delivery</option>
-            </select>
-            <button className="menu-button">
-              <img src="/images/img_menu_01.svg" alt="Menu" />
-            </button>
-          </nav>
-        </div>
-      </header>
+<Header
+  selectedOrderType={selectedOrderType}
+  onOrderTypeChange={setSelectedOrderType}
+/>
 
       {/* Main Content */}
       <main className="main-content">

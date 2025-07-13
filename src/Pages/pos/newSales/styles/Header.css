@@ -1,0 +1,439 @@
+/* src/Pages/pos/newSales/components/Header.css */
+
+.pos-header {
+  height: clamp(60px, 8vh, 100px);
+  background: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
+  z-index: 100;
+  position: relative;
+}
+
+.header-content {
+  height: 100%;
+  padding: 0 clamp(16px, 3vw, 32px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.header-logo {
+  height: 70%;
+  width: auto;
+  object-fit: contain;
+}
+
+.header-nav {
+  display: flex;
+  align-items: center;
+  gap: clamp(12px, 2vw, 24px);
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: clamp(4px, 0.8vw, 8px);
+  padding: clamp(6px, 1.2vw, 12px) clamp(8px, 1.6vw, 16px);
+  border-radius: 6px;
+  text-decoration: none;
+  color: #333333;
+  font-size: clamp(11px, 1.4vw, 16px);
+  font-weight: 500;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.nav-item:hover {
+  background: rgba(3, 115, 237, 0.1);
+}
+
+.nav-item.active {
+  color: #0373ed;
+  background: rgba(3, 115, 237, 0.1);
+}
+
+.nav-item img {
+  width: clamp(14px, 1.8vw, 20px);
+  height: clamp(14px, 1.8vw, 20px);
+}
+
+.order-type-display {
+  padding: clamp(6px, 1.2vw, 12px) clamp(12px, 2.4vw, 20px);
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  font-size: clamp(11px, 1.4vw, 16px);
+  font-weight: 600;
+  color: #333333;
+  min-width: clamp(80px, 12vw, 120px);
+  text-align: center;
+}
+
+.menu-dropdown-container {
+  position: relative;
+}
+
+.menu-button {
+  padding: clamp(6px, 1.2vw, 12px);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.menu-button:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.menu-button img {
+  width: clamp(18px, 2.4vw, 28px);
+  height: clamp(18px, 2.4vw, 28px);
+}
+
+/* Figma Dropdown - مع scroll مخفي */
+.figma-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: transparent;
+  z-index: 1000;
+  animation: slideInFromRight 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  gap: clamp(16px, 2.5vw, 20px);
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  /* إخفاء الـ scrollbar */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* Internet Explorer 10+ */
+}
+
+/* إخفاء الـ scrollbar في WebKit browsers */
+.figma-dropdown::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  background: transparent;
+  display: none;
+}
+
+/* Order Types Section */
+.order-types-section {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(6px, 1vw, 8px);
+  flex-shrink: 0;
+}
+
+/* Delivery Partners Section */
+.delivery-partners-section {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(6px, 1vw, 8px);
+  margin-top: clamp(12px, 2vw, 16px);
+  flex-shrink: 0;
+}
+
+/* Section Separator */
+.section-separator {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.1), transparent);
+  margin: clamp(8px, 1.5vw, 12px) 0;
+  flex-shrink: 0;
+}
+
+/* Figma Cards - مُحسنة بدون تأثير على الكروت المجاورة */
+.figma-card {
+  width: clamp(90px, 14vw, 110px);
+  height: clamp(85px, 13vw, 105px);
+  background: white;
+  border-radius: 12px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: clamp(6px, 1.2vw, 8px);
+  backdrop-filter: blur(8px);
+  scroll-snap-align: start;
+  contain: layout style paint;
+  /* إضافة margin للحفاظ على المساحة */
+  margin: 2px;
+}
+
+.figma-card:hover {
+  border-color: #0373ed;
+  /* تقليل الحركة لتجنب التأثير على الكروت المجاورة */
+  transform: translateX(-2px);
+  box-shadow: 0 6px 16px rgba(3, 115, 237, 0.2);
+  /* استخدام brightness كبديل للـ scale */
+  filter: brightness(1.05);
+}
+
+.figma-card.selected {
+  border-color: #0373ed;
+  box-shadow: 0 5px 12px rgba(3, 115, 237, 0.25);
+  background: rgba(3, 115, 237, 0.02);
+}
+
+.delivery-card {
+  border: 1px solid #e9ecef;
+}
+
+.delivery-card:hover {
+  border-color: #0373ed;
+  transform: translateX(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+  filter: brightness(1.05);
+}
+
+/* Card Icon Section */
+.card-icon-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  width: 100%;
+}
+
+/* Card Icons - مُصغرة */
+.card-icon {
+  width: clamp(24px, 3.5vw, 32px);
+  height: clamp(24px, 3.5vw, 32px);
+  object-fit: contain;
+}
+
+.delivery-icon {
+  max-width: clamp(45px, 7vw, 60px);
+  max-height: clamp(15px, 2.5vw, 20px);
+  object-fit: contain;
+}
+
+/* Card Labels - داخل الكارت */
+.card-label {
+  color: black;
+  font-size: clamp(10px, 1.5vw, 14px);
+  font-family: 'Nunito', sans-serif;
+  font-weight: 400;
+  word-wrap: break-word;
+  text-align: center;
+  line-height: 1.1;
+  margin-top: clamp(2px, 0.5vw, 4px);
+  width: 100%;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+.figma-card.selected .card-label {
+  color: #0373ed;
+  font-weight: 500;
+}
+
+/* Animations */
+@keyframes slideInFromRight {
+  from {
+    opacity: 0;
+    transform: translateX(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* تأثيرات إضافية للكروت */
+.figma-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.3));
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  border-radius: 10px;
+}
+
+.figma-card:hover::before {
+  opacity: 1;
+}
+
+/* تأثيرات fade للـ scroll */
+.figma-dropdown::before {
+  content: '';
+  position: sticky;
+  top: 0;
+  height: 6px;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.9), transparent);
+  z-index: 1;
+  pointer-events: none;
+  flex-shrink: 0;
+}
+
+.figma-dropdown::after {
+  content: '';
+  position: sticky;
+  bottom: 0;
+  height: 6px;
+  background: linear-gradient(to top, rgba(255, 255, 255, 0.9), transparent);
+  z-index: 1;
+  pointer-events: none;
+  flex-shrink: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .nav-item span {
+    display: none;
+  }
+  
+  .nav-item {
+    padding: clamp(8px, 1.5vw, 12px);
+  }
+  
+  .figma-dropdown {
+    right: -5px;
+  }
+}
+
+@media (max-width: 768px) {
+  .header-nav {
+    gap: clamp(8px, 1.5vw, 16px);
+  }
+  
+  .order-type-display {
+    min-width: clamp(60px, 10vw, 80px);
+    font-size: clamp(10px, 1.2vw, 14px);
+  }
+  
+  .figma-dropdown {
+    right: -10px;
+    gap: clamp(12px, 2vw, 16px);
+    max-height: calc(100vh - 100px);
+  }
+  
+  .figma-card {
+    width: clamp(75px, 16vw, 95px);
+    height: clamp(70px, 15vw, 90px);
+    padding: clamp(4px, 1vw, 6px);
+    margin: 1px;
+  }
+  
+  .figma-card:hover {
+    transform: translateX(-1px);
+  }
+  
+  .delivery-card:hover {
+    transform: translateX(-1px);
+  }
+  
+  .card-icon {
+    width: clamp(18px, 3vw, 24px);
+    height: clamp(18px, 3vw, 24px);
+  }
+  
+  .delivery-icon {
+    max-width: clamp(35px, 6vw, 45px);
+    max-height: clamp(12px, 2vw, 16px);
+  }
+  
+  .card-label {
+    font-size: clamp(8px, 1.3vw, 12px);
+  }
+}
+
+@media (max-width: 480px) {
+  .header-content {
+    padding: 0 clamp(8px, 2vw, 16px);
+  }
+  
+  .header-nav {
+    gap: clamp(4px, 1vw, 8px);
+  }
+  
+  .figma-dropdown {
+    right: -15px;
+    max-height: calc(100vh - 80px);
+  }
+  
+  .figma-card {
+    width: clamp(65px, 18vw, 85px);
+    height: clamp(60px, 17vw, 80px);
+    padding: clamp(3px, 0.8vw, 5px);
+    margin: 1px;
+  }
+  
+  /* إزالة الحركة نهائياً في الشاشات الصغيرة */
+  .figma-card:hover {
+    transform: none;
+    filter: brightness(1.1);
+  }
+  
+  .delivery-card:hover {
+    transform: none;
+    filter: brightness(1.1);
+  }
+  
+  .card-icon {
+    width: clamp(16px, 2.5vw, 20px);
+    height: clamp(16px, 2.5vw, 20px);
+  }
+  
+  .delivery-icon {
+    max-width: clamp(30px, 5vw, 40px);
+    max-height: clamp(10px, 1.8vw, 14px);
+  }
+  
+  .card-label {
+    font-size: clamp(7px, 1.1vw, 10px);
+  }
+}
+
+/* تحسينات للأجهزة اللمسية */
+@media (hover: none) and (pointer: coarse) {
+  .figma-dropdown {
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: y proximity;
+  }
+  
+  .figma-card {
+    scroll-snap-align: start;
+  }
+}
+
+/* تحسينات الأداء */
+.figma-dropdown {
+  will-change: scroll-position;
+  contain: layout style paint;
+}
+
+.figma-card {
+  will-change: transform, box-shadow;
+  backface-visibility: hidden;
+}
+
+/* تحسينات للشاشات عالية الدقة */
+@media (min-resolution: 150dpi) {
+  .figma-card {
+    border-width: 1.5px;
+  }
+}
+
+@media (min-resolution: 200dpi) {
+  .figma-card {
+    border-width: 1px;
+  }
+}
