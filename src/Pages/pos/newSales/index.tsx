@@ -1,86 +1,187 @@
 // src/Pages/pos/newSales/index.tsx
-import React, { useState, useCallback, useMemo } from 'react';
-import { MenuItem, CategoryItem, OrderSummary } from './types/PosSystem';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import { PosProduct, CategoryItem, OrderSummary, OrderItem, PosPrice } from './types/PosSystem';
+import * as posService from '../../../services/posService';
+import PriceSelectionPopup from './components/PriceSelectionPopup';
 import './styles/responsive.css';
+import './styles/popup.css';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 const PosSystem: React.FC = () => {
-  const [keypadValue, setKeypadValue] = useState('0');
-  const [selectedCategory, setSelectedCategory] = useState('crepe');
+  const [keypadValue, setKeypadValue] = useState('1');
+  const [selectedCategory, setSelectedCategory] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [customerName, setCustomerName] = useState('');
   const [selectedChips, setSelectedChips] = useState<string[]>([]);
+  
+  // API States
+  const [allProducts, setAllProducts] = useState<PosProduct[]>([]);
+  const [categories, setCategories] = useState<CategoryItem[]>([]);
+  const [displayedProducts, setDisplayedProducts] = useState<PosProduct[]>([]);
+  const [loading, setLoading] = useState(false);
+  
+  // إضافة states جديدة للتحكم في عرض الأطفال
+  const [showingChildren, setShowingChildren] = useState<string | null>(null);
+  const [parentCategory, setParentCategory] = useState<CategoryItem | null>(null);
+  const [allCategories, setAllCategories] = useState<CategoryItem[]>([]);
+  
+  // Popup States
+  const [showPricePopup, setShowPricePopup] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<PosProduct | null>(null);
+  
+  // Order States
+  const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
 
-  // Mock data (same as before)
-  const categories: CategoryItem[] = useMemo(() => [
-    { id: 'crepe', name: 'Crepe', nameArabic: 'كريب', image: '/images/img_crepes_1.png', selected: true },
-    { id: 'burger', name: 'Burger', nameArabic: 'برجر', image: '/images/img_burger_1.png' },
-    { id: 'fries', name: 'Fries', nameArabic: 'بطاطس', image: '/images/img_french_fries_1.png' },
-    { id: 'pasta', name: 'Pasta', nameArabic: 'باستا', image: '/images/img_pasta_1.png' },
-    { id: 'pizza', name: 'Pizza', nameArabic: 'بيتزا', image: '/images/img_pizza_1.png' },
-    { id: 'drinks', name: 'Drinks', nameArabic: 'مشروبات', image: '/images/img_drinks_1.png' },
-    { id: 'desserts', name: 'Desserts', nameArabic: 'حلويات', image: '/images/img_desserts_1.png' },
-  ], []);
+  // Load all data on mount
+  useEffect(() => {
+    loadAllData();
+  }, []);
 
-  const menuItems: MenuItem[] = useMemo(() => [
-    // Same menu items as before
-    { id: '1', name: 'Crepe', nameArabic: 'كريب فراخ', price: 100, image: '/images/img_rectangle_34624462.png', category: 'crepe' },
-    { id: '1', name: 'Crepe', nameArabic: 'كريب فراخ', price: 100, image: '/images/img_rectangle_34624462.png', category: 'crepe' },
-    { id: '1', name: 'Crepe', nameArabic: 'كريب فراخ', price: 100, image: '/images/img_rectangle_34624462.png', category: 'crepe' },
-    { id: '1', name: 'Crepe', nameArabic: 'كريب فراخ', price: 100, image: '/images/img_rectangle_34624462.png', category: 'crepe' },
-    { id: '1', name: 'Crepe', nameArabic: 'كريب فراخ', price: 100, image: '/images/img_rectangle_34624462.png', category: 'crepe' },
-    { id: '1', name: 'Crepe', nameArabic: 'كريب فراخ', price: 100, image: '/images/img_rectangle_34624462.png', category: 'crepe' },
-    { id: '1', name: 'Crepe', nameArabic: 'كريب فراخ', price: 100, image: '/images/img_rectangle_34624462.png', category: 'crepe' },
-    { id: '1', name: 'Crepe', nameArabic: 'كريب فراخ', price: 100, image: '/images/img_rectangle_34624462.png', category: 'crepe' },
-    { id: '1', name: 'Crepe', nameArabic: 'كريب فراخ', price: 100, image: '/images/img_rectangle_34624462.png', category: 'crepe' },
-    { id: '1', name: 'Crepe', nameArabic: 'كريب فراخ', price: 100, image: '/images/img_rectangle_34624462.png', category: 'crepe' },
-    { id: '1', name: 'Crepe', nameArabic: 'كريب فراخ', price: 100, image: '/images/img_rectangle_34624462.png', category: 'crepe' },
-    { id: '1', name: 'Crepe', nameArabic: 'كريب فراخ', price: 100, image: '/images/img_rectangle_34624462.png', category: 'crepe' },
-    { id: '1', name: 'Crepe', nameArabic: 'كريب فراخ', price: 100, image: '/images/img_rectangle_34624462.png', category: 'crepe' },
-    { id: '1', name: 'Crepe', nameArabic: 'كريب فراخ', price: 100, image: '/images/img_rectangle_34624462.png', category: 'crepe' },
-    { id: '1', name: 'Crepe', nameArabic: 'كريب فراخ', price: 100, image: '/images/img_rectangle_34624462.png', category: 'crepe' },
-    { id: '1', name: 'Crepe', nameArabic: 'كريب فراخ', price: 100, image: '/images/img_rectangle_34624462.png', category: 'crepe' },
-    { id: '1', name: 'Crepe', nameArabic: 'كريب فراخ', price: 100, image: '/images/img_rectangle_34624462.png', category: 'crepe' },
-    { id: '1', name: 'Crepe', nameArabic: 'كريب فراخ', price: 100, image: '/images/img_rectangle_34624462.png', category: 'crepe' },
-    
-  ], []);
-
-  const orderSummary: OrderSummary = useMemo(() => ({
-    items: [
-      {
-        id: '1',
-        menuItem: menuItems[0],
-        quantity: 2,
-        extras: [{ name: 'Extra cheese', nameArabic: 'جبنة إضافية', price: 20, quantity: 2 }],
-        totalPrice: 100
-      },
-      // ... rest of order items
-    ],
-    subtotal: 250,
-    discount: 20,
-    tax: 50,
-    service: 70,
-    total: 320
-  }), [menuItems]);
-
-  // Event handlers (same as before)
-  const handleNumberClick = useCallback((number: string) => {
-    if (keypadValue === '0' && number !== '.') {
-      setKeypadValue(number);
+  // Update displayed products when category or search changes
+  useEffect(() => {
+    if (searchQuery.trim()) {
+      const searchResults = posService.searchProducts(allProducts, searchQuery);
+      setDisplayedProducts(searchResults);
+    } else if (selectedCategory) {
+      const categoryProducts = posService.getProductsByScreenId(allProducts, selectedCategory);
+      setDisplayedProducts(categoryProducts);
     } else {
+      setDisplayedProducts([]);
+    }
+  }, [selectedCategory, searchQuery, allProducts]);
+
+  const loadAllData = async () => {
+    try {
+      setLoading(true);
+      
+      // جلب كل المنتجات أولاً
+      const products = await posService.getAllPosProducts();
+      setAllProducts(products);
+      
+      // ثم جلب الفئات
+      const apiCategories = await posService.getAllCategories(products);
+      setAllCategories(apiCategories); // حفظ جميع الفئات
+      const rootCategories = apiCategories.filter(cat => !cat.parentId);
+      setCategories(rootCategories);
+      
+      if (rootCategories.length > 0) {
+        setSelectedCategory(rootCategories[0].id);
+      }
+    } catch (error) {
+      console.error('Error loading data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // تحديث handleCategorySelect للمنطق الجديد
+  const handleCategorySelect = useCallback((categoryId: string) => {
+    const category = categories.find(cat => cat.id === categoryId);
+    
+    if (category?.hasChildren && category.children) {
+      // إخفاء كل الفئات وإظهار الأطفال فقط
+      setShowingChildren(categoryId);
+      setParentCategory(category);
+      setCategories(category.children);
+      if (category.children.length > 0) {
+        setSelectedCategory(category.children[0].id);
+      }
+    } else {
+      setSelectedCategory(categoryId);
+    }
+    setSearchQuery('');
+  }, [categories]);
+
+  const handleChildCategorySelect = useCallback((childId: string) => {
+    setSelectedCategory(childId);
+    setSearchQuery('');
+  }, []);
+
+  // دالة الرجوع للفئة الأب
+  const handleBackToParent = useCallback(async () => {
+    setShowingChildren(null);
+    setParentCategory(null);
+    
+    // إعادة تحميل الفئات الأساسية
+    const rootCategories = allCategories.filter(cat => !cat.parentId);
+    setCategories(rootCategories);
+    
+    if (rootCategories.length > 0) {
+      setSelectedCategory(rootCategories[0].id);
+    }
+  }, [allCategories]);
+
+  // التعامل مع ضغط المنتج
+  const handleProductClick = useCallback((product: PosProduct) => {
+    if (product.hasMultiplePrices) {
+      // فتح الـ popup لاختيار السعر
+      setSelectedProduct(product);
+      setShowPricePopup(true);
+    } else if (product.productPrices.length > 0) {
+      // إضافة للفاتورة مباشرة
+      addToOrder(product, product.productPrices[0]);
+    }
+  }, [keypadValue]);
+
+  // إضافة منتج للفاتورة
+  const addToOrder = useCallback((product: PosProduct, price: PosPrice) => {
+    const quantity = parseInt(keypadValue) || 1;
+    const totalPrice = price.price * quantity;
+    
+    const orderItem: OrderItem = {
+      id: `${product.id}_${price.id}_${Date.now()}`,
+      product,
+      selectedPrice: price,
+      quantity,
+      totalPrice,
+    };
+
+    setOrderItems(prev => [...prev, orderItem]);
+    setKeypadValue('1'); // إعادة تعيين الكمية
+  }, [keypadValue]);
+
+  // التعامل مع اختيار السعر من الـ popup
+  const handlePriceSelect = useCallback((price: PosPrice) => {
+    if (selectedProduct) {
+      addToOrder(selectedProduct, price);
+    }
+    setShowPricePopup(false);
+    setSelectedProduct(null);
+  }, [selectedProduct, addToOrder]);
+
+  // حساب ملخص الطلب
+  const orderSummary: OrderSummary = useMemo(() => {
+    const subtotal = orderItems.reduce((sum, item) => sum + item.totalPrice, 0);
+    const discount = 0;
+    const tax = 0;
+    const service = 0;
+    const total = subtotal - discount + tax + service;
+
+    return {
+      items: orderItems,
+      subtotal,
+      discount,
+      tax,
+      service,
+      total
+    };
+  }, [orderItems]);
+
+  // حذف منتج من الطلب
+  const removeOrderItem = useCallback((itemId: string) => {
+    setOrderItems(prev => prev.filter(item => item.id !== itemId));
+  }, []);
+
+  const handleNumberClick = useCallback((number: string) => {
+    if (keypadValue === '1' && number !== '.') {
+      setKeypadValue(number);
+    } else if (keypadValue !== '0') {
       setKeypadValue(prev => prev + number);
     }
   }, [keypadValue]);
 
   const handleClearClick = useCallback(() => {
-    setKeypadValue('0');
-  }, []);
-
-  const handleMenuItemClick = useCallback((item: MenuItem) => {
-    console.log('Menu item clicked:', item);
-  }, []);
-
-  const handleCategorySelect = useCallback((categoryId: string) => {
-    setSelectedCategory(categoryId);
+    setKeypadValue('1');
   }, []);
 
   const handleChipClick = useCallback((chipType: string) => {
@@ -90,14 +191,6 @@ const PosSystem: React.FC = () => {
         : [...prev, chipType]
     );
   }, []);
-
-  const filteredMenuItems = useMemo(() => 
-    menuItems.filter(item => 
-      item.category === selectedCategory &&
-      (item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-       item.nameArabic.includes(searchQuery))
-    ), [menuItems, selectedCategory, searchQuery]
-  );
 
   return (
     <div className="pos-system">
@@ -199,47 +292,65 @@ const PosSystem: React.FC = () => {
 
           {/* Products Grid */}
           <div className="product-grid">
-            {filteredMenuItems.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => handleMenuItemClick(item)}
-                className="product-card"
-              >
-                <img src={item.image} alt={item.name} className="product-image" />
-                <div className="product-info">
-                  <div className="product-name">{item.nameArabic}</div>
-                  <div className="product-price">
-                    <span className="price">{item.price}</span>
-                    <span className="currency">EGP</span>
+            {loading ? (
+              <div className="loading-message">Loading...</div>
+            ) : (
+              displayedProducts.map((product) => (
+                <button
+                  key={product.id}
+                  onClick={() => handleProductClick(product)}
+                  className="product-card"
+                >
+                  <img src={product.image} alt={product.name} className="product-image" />
+                  <div className="product-info">
+                    <div className="product-name">{product.nameArabic}</div>
+                    {!product.hasMultiplePrices && product.displayPrice && (
+                      <div className="product-price">
+                        <span className="price">{product.displayPrice}</span>
+                        <span className="currency">EGP</span>
+                      </div>
+                    )}
                   </div>
-                </div>
-              </button>
-            ))}
+                </button>
+              ))
+            )}
           </div>
         </section>
 
-        {/* Categories Sidebar */}
-        <aside className="categories-sidebar">
-          <div className="categories-list">
-            {categories.map((category) => (
-              <button
-                key={category.id}
-                onClick={() => handleCategorySelect(category.id)}
-                className={`category-item ${category.id === selectedCategory ? 'active' : ''}`}
-              >
-                <img src={category.image} alt={category.name} />
-                <span>{category.nameArabic}</span>
-              </button>
-            ))}
-          </div>
-        </aside>
+ {/* Categories Sidebar */}
+      <aside className="categories-sidebar">
+        <div className="categories-list">
+          {/* زر الرجوع إذا كنا نعرض الأطفال */}
+          {showingChildren && (
+            <button
+              onClick={handleBackToParent}
+              className="category-item back-button"
+            >
+              <ArrowBackIcon />
+              <span>رجوع</span>
+            </button>
+          )}
+          
+          {/* عرض الفئات */}
+          {categories.map((category) => (
+            <button
+              key={category.id}
+              onClick={() => showingChildren ? handleChildCategorySelect(category.id) : handleCategorySelect(category.id)}
+              className={`category-item ${category.id === selectedCategory ? 'active' : ''}`}
+            >
+              <img src={category.image} alt={category.name} />
+              <span>{category.nameArabic}</span>
+            </button>
+          ))}
+        </div>
+      </aside>
 
         {/* Order Summary */}
         <aside className="order-summary">
           <div className="order-header">
             <div className="order-number">#123</div>
             <div className="order-total">
-              <span className="amount">1250</span>
+              <span className="amount">{orderSummary.total.toFixed(2)}</span>
               <span className="currency">EGP</span>
             </div>
           </div>
@@ -264,24 +375,24 @@ const PosSystem: React.FC = () => {
               {orderSummary.items.map((item) => (
                 <div key={item.id} className="order-item">
                   <div className="item-details">
-                    <button className="delete-button">
+                    <button 
+                      className="delete-button"
+                      onClick={() => removeOrderItem(item.id)}
+                    >
                       <img src="/images/img_delete_02.svg" alt="Remove" />
                     </button>
                     <div className="item-info">
                       <div className="item-name">
-                        {item.quantity} X {item.menuItem.name}
+                        {item.quantity} X {item.product.nameArabic}
+                        {/* إضافة اسم الحجم جنب اسم الصنف */}
+                        {item.product.hasMultiplePrices && (
+                          <span className="item-size-inline"> - {item.selectedPrice.nameArabic}</span>
+                        )}
                       </div>
-                      {item.extras.map((extra, index) => (
-                        <div key={index} className="item-extra">
-                          {extra.quantity} X {extra.name}
-                          <span className="extra-price">{extra.price}</span>
-                          <span className="extra-total">{extra.price * extra.quantity}</span>
-                        </div>
-                      ))}
                     </div>
                   </div>
                   <div className="item-prices">
-                    <div className="item-price">{item.menuItem.price * item.quantity}</div>
+                    <div className="item-price">{item.selectedPrice.price}</div>
                     <div className="item-total">{item.totalPrice}</div>
                   </div>
                 </div>
@@ -293,25 +404,25 @@ const PosSystem: React.FC = () => {
             <div className="summary-rows">
               <div className="summary-row">
                 <span>Sub Total</span>
-                <span>{orderSummary.subtotal} <small>EGP</small></span>
+                <span>{orderSummary.subtotal.toFixed(2)} <small>EGP</small></span>
               </div>
               <div className="summary-row">
                 <span>Discount</span>
-                <span>{orderSummary.discount} <small>EGP</small></span>
+                <span>{orderSummary.discount.toFixed(2)} <small>EGP</small></span>
               </div>
               <div className="summary-row">
                 <span>Tax</span>
-                <span>{orderSummary.tax} <small>EGP</small></span>
+                <span>{orderSummary.tax.toFixed(2)} <small>EGP</small></span>
               </div>
               <div className="summary-row">
                 <span>Service</span>
-                <span>{orderSummary.service} <small>EGP</small></span>
+                <span>{orderSummary.service.toFixed(2)} <small>EGP</small></span>
               </div>
             </div>
 
             <div className="total-row">
               <span>Total</span>
-              <span>{orderSummary.total} <small>EGP</small></span>
+              <span>{orderSummary.total.toFixed(2)} <small>EGP</small></span>
             </div>
 
             <div className="action-buttons">
@@ -331,6 +442,15 @@ const PosSystem: React.FC = () => {
           </div>
         </aside>
       </main>
+
+      {/* Price Selection Popup */}
+      <PriceSelectionPopup
+        product={selectedProduct!}
+        quantity={parseInt(keypadValue) || 1}
+        isOpen={showPricePopup}
+        onClose={() => setShowPricePopup(false)}
+        onSelectPrice={handlePriceSelect}
+      />
     </div>
   );
 };
