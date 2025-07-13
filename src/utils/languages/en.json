@@ -420,6 +420,7 @@
       "selected": "Selected: {{count}}",
       "selectAll": "Select All",
       "deselectAll": "Deselect All",
+      "useOriginalPrice": "Use Original Price",
       "priceName": "Price Name",
       "noProductsFound": "No products found",
       "addSelected": "Add Selected ({{count}})",

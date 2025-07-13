@@ -231,6 +231,7 @@ const ProductForm: React.FC<Props> = ({
 const OptionGroupComponent: React.FC<{ groupIndex: number }> = ({ groupIndex }) => {
   const [productSelectionOpen, setProductSelectionOpen] = React.useState(false);
     const [groupName, setGroupName] = React.useState('');
+  const [expanded, setExpanded] = React.useState(true); // ⭐ إضافة state للتحكم في التوسيع
 
   const { fields: itemFields, append: appendItem, remove: removeItem } = useFieldArray({
     control,
@@ -308,9 +309,16 @@ const OptionGroupComponent: React.FC<{ groupIndex: number }> = ({ groupIndex }) 
 
   return (
     <>
-      <Accordion key={groupIndex}>
-       <AccordionSummary expandIcon={<IconChevronDown />}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%' }}>
+ <Accordion 
+        key={groupIndex}
+        expanded={expanded} 
+        onChange={(_, isExpanded) => setExpanded(isExpanded)} // ⭐ التحكم في التوسيع
+      >
+ <AccordionSummary 
+          expandIcon={<IconChevronDown />}
+          // ⭐ إزالة onClick من هنا لتجنب التداخل
+        >
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%' }}>
             <IconGripVertical size={16} />
             <Typography variant="h6" sx={{ flex: 1 }}>
               {groupName || `${t('products.form.optionGroup')} ${groupIndex + 1}`}
@@ -326,6 +334,8 @@ const OptionGroupComponent: React.FC<{ groupIndex: number }> = ({ groupIndex }) 
                       checked={field.value}
                       onChange={field.onChange}
                       size="small"
+                      onClick={(e) => e.stopPropagation()} // ⭐ منع تأثير الضغط على التوسيع
+
                     />
                   )}
                 />
@@ -333,13 +343,15 @@ const OptionGroupComponent: React.FC<{ groupIndex: number }> = ({ groupIndex }) 
               label={t('products.form.required')}
               labelPlacement="start"
               sx={{ mr: 2 }}
+               onClick={(e) => e.stopPropagation()} // ⭐ منع تأثير الضغط على التوسيع
+
             />
             
             <IconButton
               size="small"
               color="error"
               onClick={(e) => {
-                e.stopPropagation();
+                e.stopPropagation(); // ⭐ منع تأثير الضغط على التوسيع
                 removeOptionGroup(groupIndex);
               }}
             >
@@ -449,73 +461,99 @@ const OptionGroupComponent: React.FC<{ groupIndex: number }> = ({ groupIndex }) 
                 </Stack>
               </Box>
 
-              {itemFields.map((item, itemIndex) => {
-                const isComment = watch(`productOptionGroups.${groupIndex}.optionItems.${itemIndex}.isCommentOnly`);
-                const hasProductPrice = watch(`productOptionGroups.${groupIndex}.optionItems.${itemIndex}.productPriceId`);
-                
-                return (
-                  <Box key={item.id} sx={{ mb: 2, p: 2, border: 1, borderColor: 'grey.300', borderRadius: 1 }}>
-                    <Grid container spacing={2} alignItems="center">
-                      <Grid item xs={12} md={6}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Controller
-                            name={`productOptionGroups.${groupIndex}.optionItems.${itemIndex}.name`}
-                            control={control}
-                            rules={{ required: t('products.validation.optionItemNameRequired') }}
-                            render={({ field, fieldState }) => (
-                              <TextField
-                                {...field}
-                                label={t('products.form.optionItemName')}
-                                fullWidth
-                                size="small"
-                                required
-                                error={!!fieldState.error}
-                                helperText={fieldState.error?.message}
-                                disabled={!!hasProductPrice && !isComment}
-                                onFocus={(e) => e.target.select()}
-                              />
-                            )}
-                          />
-                          {isComment && (
-                            <Chip label={t('products.form.comment')} size="small" color="info" />
-                          )}
-                          {hasProductPrice && !isComment && (
-                            <Chip label={t('products.form.product')} size="small" color="success" />
-                          )}
-                        </Box>
-                      </Grid>
+{itemFields.map((item, itemIndex) => {
+  const isComment = watch(`productOptionGroups.${groupIndex}.optionItems.${itemIndex}.isCommentOnly`);
+  const hasProductPrice = watch(`productOptionGroups.${groupIndex}.optionItems.${itemIndex}.productPriceId`);
+  const useOriginalPrice = watch(`productOptionGroups.${groupIndex}.optionItems.${itemIndex}.useOriginalPrice`);
+  
+  return (
+    <Box key={item.id} sx={{ mb: 2, p: 2, border: 1, borderColor: 'grey.300', borderRadius: 1 }}>
+      <Grid container spacing={2} alignItems="center">
+        <Grid item xs={12} md={4}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Controller
+              name={`productOptionGroups.${groupIndex}.optionItems.${itemIndex}.name`}
+              control={control}
+              rules={{ required: t('products.validation.optionItemNameRequired') }}
+              render={({ field, fieldState }) => (
+                <TextField
+                  {...field}
+                  label={t('products.form.optionItemName')}
+                  fullWidth
+                  size="small"
+                  required
+                  error={!!fieldState.error}
+                  helperText={fieldState.error?.message}
+                  disabled={!!hasProductPrice && !isComment}
+                  onFocus={(e) => e.target.select()}
+                />
+              )}
+            />
+            {isComment && (
+              <Chip label={t('products.form.comment')} size="small" color="info" />
+            )}
+            {hasProductPrice && !isComment && (
+              <Chip label={t('products.form.product')} size="small" color="success" />
+            )}
+          </Box>
+        </Grid>
 
-                      <Grid item xs={12} md={3}>
-                        <Controller
-                          name={`productOptionGroups.${groupIndex}.optionItems.${itemIndex}.extraPrice`}
-                          control={control}
-                          render={({ field }) => (
-                            <TextField
-                              {...field}
-                              label={t('products.form.extraPrice')}
-                              type="number"
-                              fullWidth
-                              size="small"
-                              inputProps={{ min: 0, step: 0.01 }}
-                              onFocus={(e) => e.target.select()}
-                            />
-                          )}
-                        />
-                      </Grid>
+        {/* إضافة زر useOriginalPrice للمنتجات فقط */}
+        {hasProductPrice && !isComment && (
+          <Grid item xs={12} md={3}>
+            <FormControlLabel
+              control={
+                <Controller
+                  name={`productOptionGroups.${groupIndex}.optionItems.${itemIndex}.useOriginalPrice`}
+                  control={control}
+                  render={({ field }) => (
+                    <Switch
+                      checked={field.value}
+                      onChange={field.onChange}
+                      color="primary"
+                    />
+                  )}
+                />
+              }
+              label={t('products.form.useOriginalPrice')}
+              labelPlacement="start"
+            />
+          </Grid>
+        )}
 
-                      <Grid item xs={12} md={3}>
-                        <IconButton
-                          size="small"
-                          color="error"
-                          onClick={() => removeItem(itemIndex)}
-                        >
-                          <IconTrash size={16} />
-                        </IconButton>
-                      </Grid>
-                    </Grid>
-                  </Box>
-                );
-              })}
+        <Grid item xs={12} md={useOriginalPrice && hasProductPrice && !isComment ? 2 : 3}>
+          <Controller
+            name={`productOptionGroups.${groupIndex}.optionItems.${itemIndex}.extraPrice`}
+            control={control}
+            render={({ field }) => (
+              <TextField
+                {...field}
+                label={t('products.form.extraPrice')}
+                type="number"
+                fullWidth
+                size="small"
+                inputProps={{ min: 0, step: 0.01 }}
+                onFocus={(e) => e.target.select()}
+                // إزالة التعطيل والتحكم في القيمة - السماح بالتعديل دائماً
+              />
+            )}
+          />
+        </Grid>
+
+        <Grid item xs={12} md={2}>
+          <IconButton
+            size="small"
+            color="error"
+            onClick={() => removeItem(itemIndex)}
+          >
+            <IconTrash size={16} />
+          </IconButton>
+        </Grid>
+      </Grid>
+    </Box>
+  );
+})}
+
             </Grid>
           </Grid>
         </AccordionDetails>
