@@ -320,13 +320,13 @@ body {
 
 /* Product Grid */
 .product-grid {
-  flex: 1;
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: var(--spacing-sm);
-  padding: var(--spacing-xs);
-    overflow-y: auto;
-  scrollbar-width: none; /* Firefox */
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  padding: 20px;
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 
@@ -1087,5 +1087,106 @@ body {
   to {
     transform: translateY(0);
     opacity: 1;
+  }
+}
+
+
+/* ضمان عدد المنتجات في الصف حسب حجم الشاشة */
+
+/* شاشات كبيرة جداً - 7 منتجات */
+@media (min-width: 1920px) {
+  .product-grid {
+    grid-template-columns: repeat(7, 1fr);
+    gap: 20px;
+    padding: 24px;
+  }
+}
+
+/* شاشات كبيرة - 6-7 منتجات */
+@media (max-width: 1600px) {
+  .product-grid {
+    grid-template-columns: repeat(6, 1fr);
+    gap: 18px;
+    padding: 22px;
+  }
+}
+
+/* شاشات متوسطة - 6 منتجات */
+@media (max-width: 1400px) {
+  .product-grid {
+    grid-template-columns: repeat(6, 1fr);
+    gap: 16px;
+    padding: 20px;
+  }
+}
+
+/* شاشات لابتوب - 5-6 منتجات */
+@media (max-width: 1200px) {
+  .product-grid {
+    grid-template-columns: repeat(5, 1fr);
+    gap: 14px;
+    padding: 18px;
+  }
+}
+
+/* شاشات صغيرة - 5 منتجات */
+@media (max-width: 1024px) {
+  .product-grid {
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+    padding: 16px;
+  }
+}
+
+/* تابلت - 5 منتجات */
+@media (max-width: 768px) {
+  .product-grid {
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+    padding: 14px;
+  }
+}
+
+/* موبايل - 5 منتجات */
+@media (max-width: 480px) {
+  .product-grid {
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+    padding: 12px;
+  }
+}
+
+/* تحسينات إضافية للشبكة */
+.product-grid::-webkit-scrollbar {
+  width: 8px;
+}
+
+.product-grid::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.product-grid::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+.product-grid::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* تأثيرات الانتقال للشبكة */
+.product-grid {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

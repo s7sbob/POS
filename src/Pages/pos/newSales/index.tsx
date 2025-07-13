@@ -7,6 +7,7 @@ import ProductOptionsPopup from './components/ProductOptionsPopup';
 import './styles/responsive.css';
 import './styles/popup.css';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import ProductCard from './components/ProductCard';
 
 const PosSystem: React.FC = () => {
   const [keypadValue, setKeypadValue] = useState('1');
@@ -321,37 +322,21 @@ const PosSystem: React.FC = () => {
             </div>
           </div>
 
-          {/* Products Grid */}
-          <div className="product-grid">
-            {loading ? (
-              <div className="loading-message">Loading...</div>
-            ) : (
-              displayedProducts.map((product) => (
-                <button
-                  key={product.id}
-                  onClick={() => handleProductClick(product)}
-                  className="product-card"
-                >
-                  <img src={product.image} alt={product.name} className="product-image" />
-                  <div className="product-info">
-                    <div className="product-name">{product.nameArabic}</div>
-                    {!product.hasMultiplePrices && product.displayPrice && (
-                      <div className="product-price">
-                        <span className="price">{product.displayPrice}</span>
-                        <span className="currency">EGP</span>
-                      </div>
-                    )}
-                    {/* إضافة مؤشر للمنتجات التي لها خيارات */}
-                    {posService.hasProductOptions(product) && (
-                      <div className="product-options-indicator">
-                        <span className="options-badge">خيارات</span>
-                      </div>
-                    )}
-                  </div>
-                </button>
-              ))
-            )}
-          </div>
+{/* Products Grid */}
+{/* Products Grid */}
+<div className="product-grid">
+  {loading ? (
+    <div className="loading-message">Loading...</div>
+  ) : (
+    displayedProducts.map((product) => (
+      <ProductCard
+        key={product.id}
+        product={product}
+        onClick={handleProductClick}
+      />
+    ))
+  )}
+</div>
         </section>
 
         {/* Categories Sidebar */}
