@@ -11,6 +11,7 @@ export interface PosProduct {
   productPrices: PosPrice[];
   hasMultiplePrices: boolean;
   displayPrice?: number; // للعرض عندما يكون سعر واحد فقط
+  productOptionGroups?: ProductOptionGroup[]; // إضافة المجموعات
 }
 
 export interface PosPrice {
@@ -19,6 +20,36 @@ export interface PosPrice {
   nameArabic: string;
   price: number;
   barcode: string;
+}
+
+export interface ProductOptionGroup {
+  id: string;
+  name: string;
+  isRequired: boolean;
+  allowMultiple: boolean;
+  minSelection: number;
+  maxSelection: number;
+  sortOrder: number;
+  optionItems: ProductOptionItem[];
+}
+
+export interface ProductOptionItem {
+  id: string;
+  name: string;
+  productPriceId?: string | null; // تغيير هنا لدعم null
+  useOriginalPrice: boolean;
+  extraPrice: number;
+  isCommentOnly: boolean;
+  sortOrder: number;
+}
+
+export interface SelectedOption {
+  groupId: string;
+  itemId: string;
+  itemName: string;
+  quantity: number;
+  extraPrice: number;
+  isCommentOnly: boolean;
 }
 
 export interface PosCategory {
@@ -85,7 +116,7 @@ export const getAllPosProducts = async (): Promise<PosProduct[]> => {
 // تحويل Product إلى PosProduct
 const convertProductToPosProduct = (product: productsApi.Product): PosProduct => {
   const prices: PosPrice[] = product.productPrices.map(price => ({
-    id: price.id,
+    id: price.productPriceId || price.id,
     name: price.posPriceName || 'السعر الافتراضي',
     nameArabic: price.posPriceName || 'السعر الافتراضي',
     price: price.price,
@@ -95,15 +126,36 @@ const convertProductToPosProduct = (product: productsApi.Product): PosProduct =>
   const hasMultiplePrices = prices.length > 1;
   const displayPrice = !hasMultiplePrices && prices.length > 0 ? prices[0].price : undefined;
 
+  // تحويل productOptionGroups
+  const productOptionGroups: ProductOptionGroup[] = product.productOptionGroups?.map(group => ({
+    id: group.id || '',
+    name: group.name,
+    isRequired: group.isRequired,
+    allowMultiple: group.allowMultiple,
+    minSelection: group.minSelection,
+    maxSelection: group.maxSelection,
+    sortOrder: group.sortOrder,
+    optionItems: group.optionItems?.map(item => ({
+      id: item.id || '',
+      name: item.name,
+      productPriceId: item.productPriceId,
+      useOriginalPrice: item.useOriginalPrice,
+      extraPrice: item.extraPrice,
+      isCommentOnly: item.isCommentOnly,
+      sortOrder: item.sortOrder
+    })).sort((a, b) => a.sortOrder - b.sortOrder) || []
+  })).sort((a, b) => a.sortOrder - b.sortOrder) || [];
+
   return {
-    id: product.id,
-    name: product.name,
-    nameArabic: product.name,
+    id: product.productID || product.id,
+    name: product.productName || product.name,
+    nameArabic: product.productName || product.name,
     image: product.imageUrl || DEFAULT_PRODUCT_IMAGE,
     categoryId: product.posScreenId || 'default',
     productPrices: prices,
     hasMultiplePrices,
-    displayPrice
+    displayPrice,
+    productOptionGroups: productOptionGroups.length > 0 ? productOptionGroups : undefined
   };
 };
 
@@ -158,4 +210,81 @@ export const getAllCategories = async (allProducts: PosProduct[]): Promise<PosCa
     console.error('Error fetching categories:', error);
     return [];
   }
+};
+
+// دالة مساعدة لحساب السعر الإجمالي مع الخيارات
+export const calculateTotalPrice = (
+  basePrice: number, 
+  selectedOptions: SelectedOption[], 
+  quantity: number = 1
+): number => {
+  const optionsPrice = selectedOptions.reduce((total, option) => {
+    return total + (option.extraPrice * option.quantity);
+  }, 0);
+  
+  return (basePrice + optionsPrice) * quantity;
+};
+
+// دالة مساعدة للتحقق من صحة اختيار المجموعة
+export const validateGroupSelection = (
+  group: ProductOptionGroup, 
+  selections: {[itemId: string]: number}
+): boolean => {
+  const totalSelected = Object.values(selections).reduce((sum, count) => sum + count, 0);
+  
+  if (group.isRequired && totalSelected < group.minSelection) {
+    return false;
+  }
+  
+  if (totalSelected > group.maxSelection) {
+    return false;
+  }
+  
+  return totalSelected === 0 || totalSelected >= group.minSelection;
+};
+
+// دالة مساعدة لتنسيق عرض الخيارات
+export const formatSelectedOptions = (selectedOptions: SelectedOption[]): string => {
+  return selectedOptions.map(option => {
+    const quantityText = option.quantity > 1 ? `${option.quantity}x ` : '';
+    const priceText = option.extraPrice > 0 ? ` (+${option.extraPrice})` : '';
+    return `${quantityText}${option.itemName}${priceText}`;
+  }).join(', ');
+};
+
+// دالة مساعدة للحصول على نص ملخص المنتج مع الخيارات
+export const getProductSummary = (
+  product: PosProduct, 
+  selectedPrice: PosPrice, 
+  selectedOptions?: SelectedOption[]
+): string => {
+  let summary = product.nameArabic;
+  
+  if (product.hasMultiplePrices) {
+    summary += ` - ${selectedPrice.nameArabic}`;
+  }
+  
+  if (selectedOptions && selectedOptions.length > 0) {
+    const optionsText = formatSelectedOptions(selectedOptions);
+    summary += ` (${optionsText})`;
+  }
+  
+  return summary;
+};
+
+// دالة للتحقق من وجود خيارات في المنتج
+export const hasProductOptions = (product: PosProduct): boolean => {
+  return !!(product.productOptionGroups && product.productOptionGroups.length > 0);
+};
+
+// دالة للحصول على عدد المجموعات المطلوبة
+export const getRequiredGroupsCount = (product: PosProduct): number => {
+  if (!product.productOptionGroups) return 0;
+  return product.productOptionGroups.filter(group => group.isRequired).length;
+};
+
+// دالة للحصول على عدد المجموعات الاختيارية
+export const getOptionalGroupsCount = (product: PosProduct): number => {
+  if (!product.productOptionGroups) return 0;
+  return product.productOptionGroups.filter(group => !group.isRequired).length;
 };

@@ -8,6 +8,38 @@ export interface PosProduct {
   productPrices: PosPrice[];
   hasMultiplePrices: boolean;
   displayPrice?: number;
+  productOptionGroups?: ProductOptionGroup[]; // إضافة المجموعات
+}
+
+
+export interface ProductOptionGroup {
+  id: string;
+  name: string;
+  isRequired: boolean;
+  allowMultiple: boolean;
+  minSelection: number;
+  maxSelection: number;
+  sortOrder: number;
+  optionItems: ProductOptionItem[];
+}
+
+export interface ProductOptionItem {
+  id: string;
+  name: string;
+  productPriceId?: string | null; // Change this line to support null
+  useOriginalPrice: boolean;
+  extraPrice: number;
+  isCommentOnly: boolean;
+  sortOrder: number;
+}
+
+export interface SelectedOption {
+  groupId: string;
+  itemId: string;
+  itemName: string;
+  quantity: number;
+  extraPrice: number;
+  isCommentOnly: boolean;
 }
 
 export interface PosPrice {
@@ -36,6 +68,7 @@ export interface OrderItem {
   selectedPrice: PosPrice;
   quantity: number;
   totalPrice: number;
+  selectedOptions?: SelectedOption[]; // إضافة الخيارات المختارة
   notes?: string;
 }
 
