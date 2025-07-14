@@ -10,8 +10,8 @@ export interface PosProduct {
   categoryId: string;
   productPrices: PosPrice[];
   hasMultiplePrices: boolean;
-  displayPrice?: number; // للعرض عندما يكون سعر واحد فقط
-  productOptionGroups?: ProductOptionGroup[]; // إضافة المجموعات
+  displayPrice?: number;
+  productOptionGroups?: ProductOptionGroup[];
 }
 
 export interface PosPrice {
@@ -36,7 +36,7 @@ export interface ProductOptionGroup {
 export interface ProductOptionItem {
   id: string;
   name: string;
-  productPriceId?: string | null; // تغيير هنا لدعم null
+  productPriceId?: string | null;
   useOriginalPrice: boolean;
   extraPrice: number;
   isCommentOnly: boolean;
@@ -67,34 +67,16 @@ export interface PosCategory {
 const DEFAULT_PRODUCT_IMAGE = '/images/img_rectangle_34624462.png';
 const DEFAULT_CATEGORY_IMAGE = '/images/img_crepes_1.png';
 
-// جلب كل المنتجات مرة واحدة
-export const getAllPosProducts = async (): Promise<PosProduct[]> => {
+// جلب المنتجات حسب النوع
+export const getProductsByType = async (productType: number): Promise<PosProduct[]> => {
   try {
     const allProducts: PosProduct[] = [];
     let pageNumber = 1;
     const pageSize = 100;
     let hasMoreData = true;
 
-    // جلب منتجات نوع POS (1)
     while (hasMoreData) {
-      const response = await productsApi.getByType(1, pageNumber, pageSize);
-      const products = response.data.filter(product => product.isActive);
-      
-      products.forEach(product => {
-        const posProduct = convertProductToPosProduct(product);
-        allProducts.push(posProduct);
-      });
-
-      hasMoreData = response.pageNumber < response.pageCount;
-      pageNumber++;
-    }
-
-    // جلب منتجات نوع Addition (3) أيضاً
-    pageNumber = 1;
-    hasMoreData = true;
-    
-    while (hasMoreData) {
-      const response = await productsApi.getByType(3, pageNumber, pageSize);
+      const response = await productsApi.getByType(productType, pageNumber, pageSize);
       const products = response.data.filter(product => product.isActive);
       
       products.forEach(product => {
@@ -108,7 +90,40 @@ export const getAllPosProducts = async (): Promise<PosProduct[]> => {
 
     return allProducts;
   } catch (error) {
-    console.error('Error fetching all POS products:', error);
+    console.error(`Error fetching products of type ${productType}:`, error);
+    return [];
+  }
+};
+
+// جلب كل المنتجات العادية (نوع 1)
+export const getAllPosProducts = async (): Promise<PosProduct[]> => {
+  return await getProductsByType(1);
+};
+
+// جلب منتجات الإضافات (نوع 3)
+export const getAdditionProducts = async (): Promise<PosProduct[]> => {
+  return await getProductsByType(3);
+};
+
+// جلب الفئات حسب نوع المنتج
+export const getCategoriesByProductType = async (productType: number): Promise<PosCategory[]> => {
+  try {
+    const products = await getProductsByType(productType);
+    const screens = await posScreensApi.getAll();
+    
+    // فلترة الشاشات التي تحتوي على منتجات من النوع المطلوب
+    const relevantScreenIds = [...new Set(products.map(p => p.categoryId))];
+    const relevantScreens = screens.filter(screen => 
+      relevantScreenIds.includes(screen.id) && screen.isActive && screen.isVisible
+    );
+    
+    const categories = await Promise.all(
+      relevantScreens.map(screen => convertScreenToCategory(screen, products))
+    );
+    
+    return categories;
+  } catch (error) {
+    console.error('Error fetching categories by product type:', error);
     return [];
   }
 };
@@ -126,7 +141,6 @@ const convertProductToPosProduct = (product: productsApi.Product): PosProduct =>
   const hasMultiplePrices = prices.length > 1;
   const displayPrice = !hasMultiplePrices && prices.length > 0 ? prices[0].price : undefined;
 
-  // تحويل productOptionGroups
   const productOptionGroups: ProductOptionGroup[] = product.productOptionGroups?.map(group => ({
     id: group.id || '',
     name: group.name,
@@ -196,7 +210,7 @@ export const convertScreenToCategory = async (screen: posScreensApi.PosScreen, a
   };
 };
 
-// جلب كل الـ categories
+// جلب كل الـ categories العادية
 export const getAllCategories = async (allProducts: PosProduct[]): Promise<PosCategory[]> => {
   try {
     const screens = await posScreensApi.getAll();

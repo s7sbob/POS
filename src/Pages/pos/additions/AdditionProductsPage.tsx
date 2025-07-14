@@ -19,6 +19,9 @@ import * as unitsApi from 'src/utils/api/pagesApi/unitsApi';
 import { Product, ProductsResponse } from 'src/utils/api/pagesApi/productsApi';
 import { Group } from 'src/utils/api/pagesApi/groupsApi';
 import { Unit } from 'src/utils/api/pagesApi/unitsApi';
+import * as posScreensApi from 'src/utils/api/pagesApi/posScreensApi';
+import { PosScreen } from 'src/utils/api/pagesApi/posScreensApi';
+
 
 interface PermissionProps {
   canAdd?: boolean;
@@ -57,6 +60,7 @@ const AdditionProductsPage: React.FC<Props> = (props) => {
     current?: Product;
   }>({ open: false, mode: 'add', current: undefined });
   const [pricesDrawerOpen, setPricesDrawerOpen] = React.useState(false);
+const [posScreens, setPosScreens] = React.useState<PosScreen[]>([]);
 
   const isDownSm = useMediaQuery((th: any) => th.breakpoints.down('sm'));
   const isMobile = useMediaQuery((th: any) => th.breakpoints.down('md'));
@@ -142,12 +146,15 @@ const AdditionProductsPage: React.FC<Props> = (props) => {
   React.useEffect(() => {
     (async () => {
       try { 
-        const [groupsData, unitsData] = await Promise.all([
+        const [groupsData, unitsData, posScreensData] = await Promise.all([
           groupsApi.getAll(),
-          unitsApi.getAll()
+          unitsApi.getAll(),
+          posScreensApi.getAll() // ⭐ إضافة جلب POS Screens
+
         ]);
         setGroups(groupsData);
         setUnits(unitsData);
+        setPosScreens(posScreensData); // ⭐ حفظ POS Screens
         await fetchProducts(1);
       }
       catch (e: any) { 
@@ -492,6 +499,7 @@ const AdditionProductsPage: React.FC<Props> = (props) => {
         initialValues={dialog.current}
         groups={groups}
         units={units}
+        posScreens={posScreens} // ⭐ إضافة هذا السطر
         productType={3} // ⭐ Addition
         onClose={() => setDialog({ open: false, mode: 'add', current: undefined })}
         onSubmit={handleSubmit}

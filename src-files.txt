@@ -1,64 +1,493 @@
 
-===== src/Pages/pos/newSales/components/common/Header.tsx =====
-import React, { useState } from 'react';
+===== src/Pages/pos/newSales/components/ActionButtons.tsx =====
+// src/Pages/pos/newSales/components/ActionButtons.tsx
+import React from 'react';
 
-const Header: React.FC = () => {
-  const [selectedOrderType, setSelectedOrderType] = useState('Takeaway');
+interface ActionButtonsProps {
+  selectedChips: string[];
+  onChipClick: (chipType: string) => void;
+  isExtraMode: boolean;
+  isWithoutMode: boolean;
+  onExtraClick: () => void;
+  onWithoutClick: () => void;
+  searchQuery: string;
+  onSearchChange: (query: string) => void;
+}
 
-  const orderTypes = ['Takeaway', 'Dine In', 'Delivery'];
-
+const ActionButtons: React.FC<ActionButtonsProps> = ({
+  selectedChips,
+  onChipClick,
+  isExtraMode,
+  isWithoutMode,
+  onExtraClick,
+  onWithoutClick,
+  searchQuery,
+  onSearchChange
+}) => {
   return (
-    <div className="header-content">
-      {/* Logo */}
-      <img src="/images/img_foodify_logo_2_78x166.png" alt="Foodify Logo" className="logo" />
-
-      {/* Navigation */}
-      <nav className="nav-items">
-        <a href="#" className="nav-item">
-          <img src="/images/img_sending_order.svg" alt="" />
-          Today Orders
-        </a>
-        <a href="#" className="nav-item">
-          <img src="/images/img_table_02.svg" alt="" />
-          Table
-        </a>
-        <a href="#" className="nav-item">
-          <img src="/images/img_discount_tag_01.svg" alt="" />
-          Discount
-        </a>
-        <a href="#" className="nav-item">
-          <img src="/images/img_delete_01.svg" alt="" />
-          Void
-        </a>
-        <select 
-          value={selectedOrderType}
-          onChange={(e) => setSelectedOrderType(e.target.value)}
-          style={{ 
-            padding: '0.8rem 1.6rem', 
-            borderRadius: '0.4rem',
-            border: '0.1rem solid #ccc',
-            fontSize: '1.6rem',
-            fontFamily: 'Nunito, sans-serif'
-          }}
+    <div className="action-buttons-bar">
+      <div className="action-chips">
+        <button 
+          className={`action-chip extra ${selectedChips.includes('extra') || isExtraMode ? 'active' : ''}`}
+          onClick={onExtraClick}
         >
-          {orderTypes.map(type => (
-            <option key={type} value={type}>{type}</option>
-          ))}
-        </select>
-        <button style={{ 
-          padding: '0.8rem',
-          background: 'none',
-          border: 'none',
-          cursor: 'pointer'
-        }}>
-          <img src="/images/img_menu_01.svg" alt="Menu" style={{ width: '2.8rem', height: '2.8rem' }} />
+          <img src="/images/img_addcircle.svg" alt="" />
+          <span>Extra</span>
         </button>
-      </nav>
+        <button 
+          className={`action-chip without ${selectedChips.includes('without') || isWithoutMode ? 'active' : ''}`}
+          onClick={onWithoutClick}
+        >
+          <img src="/images/img_removecircle.svg" alt="" />
+          <span>Without</span>
+        </button>
+        <button 
+          className={`action-chip offer ${selectedChips.includes('offer') ? 'active' : ''}`}
+          onClick={() => onChipClick('offer')}
+        >
+          <img src="/images/img_tags.svg" alt="" />
+          <span>Offer</span>
+        </button>
+      </div>
+      
+      <div className="search-container">
+        <img src="/images/img_search01.svg" alt="search" className="search-icon" />
+        <input
+          type="text"
+          placeholder="Search"
+          value={searchQuery}
+          onChange={(e) => onSearchChange(e.target.value)}
+          className="search-input"
+        />
+        <button className="filter-button">
+          <img src="/images/img_group_7.svg" alt="Filter" />
+        </button>
+      </div>
     </div>
   );
 };
 
+export default ActionButtons;
+
+===== src/Pages/pos/newSales/components/common/Header.tsx =====
+// src/Pages/pos/newSales/components/Header.tsx
+import React, { useState, useRef, useEffect } from 'react';
+import '../../styles/Header.css';
+
+interface HeaderProps {
+  selectedOrderType: string;
+  onOrderTypeChange: (type: string) => void;
+}
+
+interface OrderType {
+  id: number;
+  name: string;
+  displayName: string;
+  icon: string;
+}
+
+interface DeliveryPartner {
+  id: number;
+  name: string;
+  displayName: string;
+  icon: string;
+}
+
+const Header: React.FC<HeaderProps> = ({ selectedOrderType, onOrderTypeChange }) => {
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const orderTypes: OrderType[] = [
+    {
+      id: 1,
+      name: 'Takeaway',
+      displayName: 'Takeaway',
+      icon: '/images/takeaway.png'
+    },
+    {
+      id: 2,
+      name: 'Dine-in',
+      displayName: 'Dine-in',
+      icon: '/images/dine-in.png'
+    },
+    {
+      id: 3,
+      name: 'Delivery',
+      displayName: 'Delivery',
+      icon: '/images/delivery.png'
+    },
+    {
+      id: 4,
+      name: 'Pickup',
+      displayName: 'Pickup',
+      icon: '/images/pickup.png'
+    }
+  ];
+
+  const deliveryPartners: DeliveryPartner[] = [
+    {
+      id: 1,
+      name: 'talabat',
+      displayName: 'talabat',
+      icon: '/images/talabat.png'
+    },
+    {
+      id: 2,
+      name: 'elmenus',
+      displayName: 'Elmenus',
+      icon: '/images/elmenus.png'
+    },
+    {
+      id: 3,
+      name: 'uber-eats',
+      displayName: 'Uber Eats',
+      icon: '/images/uber-eats.png'
+    }
+  ];
+
+  const handleMenuClick = () => {
+    setIsDropdownOpen(!isDropdownOpen);
+  };
+
+  const handleOrderTypeSelect = (type: string) => {
+    onOrderTypeChange(type);
+    setIsDropdownOpen(false);
+  };
+
+  const handleDeliveryPartnerSelect = (partner: string) => {
+    console.log('Selected delivery partner:', partner);
+    setIsDropdownOpen(false);
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  return (
+    <header className="pos-header">
+      <div className="header-content">
+        <img 
+          src="/images/img_foodify_logo_2_78x166.png" 
+          alt="Foodify Logo" 
+          className="header-logo" 
+        />
+
+        <nav className="header-nav">
+          <a href="#" className="nav-item active">
+            <img src="/images/img_sending_order.svg" alt="" />
+            <span>Today Orders</span>
+          </a>
+          <a href="#" className="nav-item">
+            <img src="/images/img_table_02.svg" alt="" />
+            <span>Table</span>
+          </a>
+          <a href="#" className="nav-item">
+            <img src="/images/img_discount_tag_01.svg" alt="" />
+            <span>Discount</span>
+          </a>
+          <a href="#" className="nav-item">
+            <img src="/images/img_delete_01.svg" alt="" />
+            <span>Void</span>
+          </a>
+          
+          <div className="order-type-display">
+            {selectedOrderType}
+          </div>
+          
+          <div className="menu-dropdown-container" ref={dropdownRef}>
+            <button className="menu-button" onClick={handleMenuClick}>
+              <img src="/images/img_menu_01.svg" alt="Menu" />
+            </button>
+            
+            {isDropdownOpen && (
+              <div className="figma-dropdown">
+                {/* Order Types Section */}
+                <div className="order-types-section">
+                  {orderTypes.map((type) => (
+                    <button
+                      key={type.id}
+                      className={`figma-card ${selectedOrderType === type.name ? 'selected' : ''}`}
+                      onClick={() => handleOrderTypeSelect(type.name)}
+                    >
+                      <div className="card-icon-section">
+                        <img src={type.icon} alt={type.displayName} className="card-icon" />
+                      </div>
+                      <div className="card-label">{type.displayName}</div>
+                    </button>
+                  ))}
+                </div>
+
+                {/* Delivery Partners Section */}
+                <div className="delivery-partners-section">
+                  {deliveryPartners.map((partner) => (
+                    <button
+                      key={partner.id}
+                      className="figma-card delivery-card"
+                      onClick={() => handleDeliveryPartnerSelect(partner.name)}
+                    >
+                      <div className="card-icon-section">
+                        <img src={partner.icon} alt={partner.displayName} className="delivery-icon" />
+                      </div>
+                      <div className="card-label">{partner.displayName}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </nav>
+      </div>
+    </header>
+  );
+};
+
 export default Header;
+
+===== src/Pages/pos/newSales/components/OrderManager.tsx =====
+// src/Pages/pos/newSales/components/OrderManager.tsx
+import React from 'react';
+import { PosProduct, PosPrice, SelectedOption, OrderItem } from '../types/PosSystem';
+import * as posService from '../../../../services/posService';
+
+interface OrderManagerProps {
+  keypadValue: string;
+  isExtraMode: boolean;
+  isWithoutMode: boolean;
+  selectedOrderItemId: string | null;
+  onOrderAdd: (orderItem: OrderItem) => void;
+  onModeReset: () => void;
+  onLoadNormalProducts: () => void;
+}
+
+export const useOrderManager = ({
+  keypadValue,
+  isExtraMode,
+  isWithoutMode,
+  selectedOrderItemId,
+  onOrderAdd,
+  onModeReset,
+  onLoadNormalProducts
+}: OrderManagerProps) => {
+  
+  const addToOrder = React.useCallback((
+    product: PosProduct, 
+    price: PosPrice, 
+    selectedOptions: SelectedOption[]
+  ) => {
+    const quantity = parseInt(keypadValue) || 1;
+    const totalPrice = posService.calculateTotalPrice(price.price, selectedOptions, quantity);
+    
+    let orderItem: OrderItem;
+    
+    if (isExtraMode || isWithoutMode) {
+      if (selectedOrderItemId) {
+        // إضافة كـ Extra/Without لمنتج مختار
+        orderItem = {
+          id: `${product.id}_${price.id}_${Date.now()}`,
+          product,
+          selectedPrice: price,
+          quantity,
+          totalPrice: isWithoutMode ? -Math.abs(totalPrice) : totalPrice,
+          selectedOptions: selectedOptions.length > 0 ? selectedOptions : undefined,
+          isExtra: isExtraMode,
+          isWithout: isWithoutMode,
+          parentItemId: selectedOrderItemId
+        };
+      } else {
+        // إضافة كمنتج عادي
+        orderItem = {
+          id: `${product.id}_${price.id}_${Date.now()}`,
+          product,
+          selectedPrice: price,
+          quantity,
+          totalPrice,
+          selectedOptions: selectedOptions.length > 0 ? selectedOptions : undefined,
+        };
+      }
+    } else {
+      // إضافة عادية
+      orderItem = {
+        id: `${product.id}_${price.id}_${Date.now()}`,
+        product,
+        selectedPrice: price,
+        quantity,
+        totalPrice,
+        selectedOptions: selectedOptions.length > 0 ? selectedOptions : undefined,
+      };
+    }
+
+    onOrderAdd(orderItem);
+    onModeReset();
+    onLoadNormalProducts();
+  }, [
+    keypadValue, 
+    isExtraMode, 
+    isWithoutMode, 
+    selectedOrderItemId, 
+    onOrderAdd, 
+    onModeReset, 
+    onLoadNormalProducts
+  ]);
+
+  return { addToOrder };
+};
+
+===== src/Pages/pos/newSales/components/OrderSummary.tsx =====
+// src/Pages/pos/newSales/components/OrderSummary.tsx
+import React from 'react';
+import { OrderSummary as OrderSummaryType, OrderItem } from '../types/PosSystem';
+
+interface OrderSummaryProps {
+  orderSummary: OrderSummaryType;
+  customerName: string;
+  onCustomerNameChange: (name: string) => void;
+  onRemoveOrderItem: (itemId: string) => void;
+  selectedOrderItemId: string | null;
+  onOrderItemSelect: (itemId: string) => void;
+}
+
+const OrderSummary: React.FC<OrderSummaryProps> = ({
+  orderSummary,
+  customerName,
+  onCustomerNameChange,
+  onRemoveOrderItem,
+  selectedOrderItemId,
+  onOrderItemSelect
+}) => {
+  return (
+    <aside className="order-summary">
+      <div className="order-header">
+        <div className="order-number">#123</div>
+        <div className="order-total">
+          <span className="amount">{orderSummary.total.toFixed(2)}</span>
+          <span className="currency">EGP</span>
+        </div>
+      </div>
+
+      <div className="order-content">
+        <h3 className="order-title">Order Details</h3>
+
+        <div className="customer-input">
+          <input
+            type="text"
+            placeholder="Walk in Customer"
+            value={customerName}
+            onChange={(e) => onCustomerNameChange(e.target.value)}
+            className="customer-field"
+          />
+          <button className="customer-button">
+            <img src="/images/img_group_1000004320.svg" alt="Add customer" />
+          </button>
+        </div>
+
+        <div className="order-items">
+          {orderSummary.items.map((item) => (
+            <div 
+              key={item.id} 
+              className={`order-item ${selectedOrderItemId === item.id ? 'selected' : ''} ${item.isExtra ? 'extra-item' : ''} ${item.isWithout ? 'without-item' : ''}`}
+              onClick={() => onOrderItemSelect(item.id)}
+            >
+              <div className="item-details">
+                <button 
+                  className="delete-button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onRemoveOrderItem(item.id);
+                  }}
+                >
+                  <img src="/images/img_delete_02.svg" alt="Remove" />
+                </button>
+                <div className="item-info">
+                  <div className="item-name">
+                    {item.isExtra && <span className="extra-badge">+</span>}
+                    {item.isWithout && <span className="without-badge">-</span>}
+                    {item.quantity} X {item.product.nameArabic}
+                    {item.product.hasMultiplePrices && (
+                      <span className="item-size-inline"> - {item.selectedPrice.nameArabic}</span>
+                    )}
+                  </div>
+                  
+                  {/* عرض الخيارات المختارة */}
+                  {item.selectedOptions && item.selectedOptions.length > 0 && (
+                    <div className="item-options">
+                      {item.selectedOptions.map((option, index) => (
+                        <div key={index} className="option-detail">
+                          <span className="option-text">
+                            {option.quantity > 1 ? `${option.quantity}x ` : ''}
+                            {option.itemName}
+                            {option.extraPrice > 0 && ` (+${option.extraPrice})`}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="item-prices">
+                <div className="item-price">{item.selectedPrice.price}</div>
+                <div className={`item-total ${item.isWithout ? 'negative' : ''}`}>
+                  {item.totalPrice}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="order-footer">
+        <div className="summary-rows">
+          <div className="summary-row">
+            <span>Sub Total</span>
+            <span>{orderSummary.subtotal.toFixed(2)} <small>EGP</small></span>
+          </div>
+          <div className="summary-row">
+            <span>Discount</span>
+            <span>{orderSummary.discount.toFixed(2)} <small>EGP</small></span>
+          </div>
+          <div className="summary-row">
+            <span>Tax</span>
+            <span>{orderSummary.tax.toFixed(2)} <small>EGP</small></span>
+          </div>
+          <div className="summary-row">
+            <span>Service</span>
+            <span>{orderSummary.service.toFixed(2)} <small>EGP</small></span>
+          </div>
+        </div>
+
+        <div className="total-row">
+          <span>Total</span>
+          <span>{orderSummary.total.toFixed(2)} <small>EGP</small></span>
+        </div>
+
+        <div className="action-buttons">
+          <button className="action-button send">
+            <img src="/images/img_tabler_send.svg" alt="Send" />
+            <span>Send</span>
+          </button>
+          <button className="action-button print">
+            <img src="/images/img_printer.svg" alt="Print" />
+            <span>Print</span>
+          </button>
+          <button className="action-button pay">
+            <img src="/images/img_payment_02.svg" alt="Pay" />
+            <span>Pay</span>
+          </button>
+        </div>
+      </div>
+    </aside>
+  );
+};
+
+export default OrderSummary;
 
 ===== src/Pages/pos/newSales/components/PriceSelectionPopup.tsx =====
 // src/Pages/pos/newSales/components/PriceSelectionPopup.tsx
@@ -156,6 +585,344 @@ const PriceSelectionPopup: React.FC<PriceSelectionPopupProps> = ({
 };
 
 export default PriceSelectionPopup;
+
+===== src/Pages/pos/newSales/components/ProductCard.tsx =====
+// src/Pages/pos/newSales/components/ProductCard.tsx
+import React from 'react';
+import { PosProduct } from '../types/PosSystem';
+import * as posService from '../../../../services/posService';
+import '../Styles/ProductCard.css';
+
+interface ProductCardProps {
+  product: PosProduct;
+  onClick: (product: PosProduct) => void;
+}
+
+const ProductCard: React.FC<ProductCardProps> = ({ product, onClick }) => {
+  const hasOptions = posService.hasProductOptions(product);
+  
+  return (
+    <button
+      className={`product-card ${product.hasMultiplePrices ? 'multiple-prices' : ''}`}
+      onClick={() => onClick(product)}
+    >
+      <div className="product-image-container">
+        <img 
+          src={product.image} 
+          alt={product.nameArabic} 
+          className="product-image" 
+        />
+        {hasOptions && (
+          <div className="product-options-badge">
+            <span>خيارات</span>
+          </div>
+        )}
+      </div>
+      
+      <div className="product-info-section">
+        <div className="product-details">
+          <div className="product-name">
+            {product.nameArabic}
+          </div>
+          
+          {!product.hasMultiplePrices && product.displayPrice && (
+            <div className="product-price-container">
+              <span className="product-price">{product.displayPrice}</span>
+              <span className="product-currency">EGP</span>
+            </div>
+          )}
+        </div>
+      </div>
+    </button>
+  );
+};
+
+export default ProductCard;
+
+===== src/Pages/pos/newSales/components/ProductOptionsPopup.tsx =====
+// src/Pages/pos/newSales/components/ProductOptionsPopup.tsx
+import React, { useState, useEffect } from 'react';
+import { PosProduct, PosPrice, ProductOptionGroup, ProductOptionItem, SelectedOption } from '../types/PosSystem';
+import CloseIcon from '@mui/icons-material/Close';
+import AddIcon from '@mui/icons-material/Add';
+import RemoveIcon from '@mui/icons-material/Remove';
+
+interface ProductOptionsPopupProps {
+  product: PosProduct | null;
+  selectedPrice: PosPrice | null;
+  quantity: number;
+  isOpen: boolean;
+  onClose: () => void;
+  onComplete: (selectedOptions: SelectedOption[]) => void;
+}
+
+const ProductOptionsPopup: React.FC<ProductOptionsPopupProps> = ({
+  product,
+  selectedPrice,
+  quantity,
+  isOpen,
+  onClose,
+  onComplete
+}) => {
+  // ✅ ALL HOOKS MUST BE AT THE TOP - ALWAYS CALLED IN SAME ORDER
+  const [currentGroupIndex, setCurrentGroupIndex] = useState(0);
+  const [selectedOptions, setSelectedOptions] = useState<SelectedOption[]>([]);
+  const [groupSelections, setGroupSelections] = useState<{[groupId: string]: {[itemId: string]: number}}>({});
+
+  // ✅ useEffect is now always called in the same position
+  useEffect(() => {
+    if (isOpen && product) {
+      setCurrentGroupIndex(0);
+      setSelectedOptions([]);
+      setGroupSelections({});
+    }
+  }, [isOpen, product]);
+
+  // ✅ NOW we can do conditional rendering/early returns
+  if (!isOpen || !product || !selectedPrice) {
+    return null;
+  }
+
+  const optionGroups = product.productOptionGroups || [];
+  
+  if (optionGroups.length === 0) {
+    onComplete([]);
+    return null;
+  }
+
+  const currentGroup = optionGroups[currentGroupIndex];
+  
+  if (!currentGroup) {
+    onComplete(selectedOptions);
+    return null;
+  }
+
+  const handleItemSelection = (group: ProductOptionGroup, item: ProductOptionItem, change: number) => {
+    const newSelections = { ...groupSelections };
+    
+    if (!newSelections[group.id]) {
+      newSelections[group.id] = {};
+    }
+    
+    const currentCount = newSelections[group.id][item.id] || 0;
+    const newCount = Math.max(0, currentCount + change);
+    
+    const totalSelected = Object.values(newSelections[group.id]).reduce((sum, count) => sum + count, 0);
+    const otherItemsTotal = totalSelected - currentCount;
+    
+    if (group.allowMultiple) {
+      if (newCount + otherItemsTotal <= group.maxSelection) {
+        newSelections[group.id][item.id] = newCount;
+      }
+    } else {
+      if (newCount > 0) {
+        newSelections[group.id] = { [item.id]: 1 };
+      } else {
+        newSelections[group.id][item.id] = 0;
+      }
+    }
+    
+    setGroupSelections(newSelections);
+  };
+
+  const isGroupValid = (group: ProductOptionGroup): boolean => {
+    const selections = groupSelections[group.id] || {};
+    const totalSelected = Object.values(selections).reduce((sum, count) => sum + count, 0);
+    
+    if (group.isRequired) {
+      return totalSelected >= group.minSelection;
+    }
+    
+    return totalSelected === 0 || totalSelected >= group.minSelection;
+  };
+
+  const canSkipGroup = (group: ProductOptionGroup): boolean => {
+    return !group.isRequired;
+  };
+
+  const handleNext = () => {
+    const selections = groupSelections[currentGroup.id] || {};
+    
+    Object.entries(selections).forEach(([itemId, count]) => {
+      if (count > 0) {
+        const item = currentGroup.optionItems.find(i => i.id === itemId);
+        if (item) {
+          const existingIndex = selectedOptions.findIndex(
+            opt => opt.groupId === currentGroup.id && opt.itemId === itemId
+          );
+          
+          const newOption: SelectedOption = {
+            groupId: currentGroup.id,
+            itemId: itemId,
+            itemName: item.name,
+            quantity: count,
+            extraPrice: item.extraPrice,
+            isCommentOnly: item.isCommentOnly
+          };
+          
+          if (existingIndex >= 0) {
+            selectedOptions[existingIndex] = newOption;
+          } else {
+            selectedOptions.push(newOption);
+          }
+        }
+      }
+    });
+    
+    if (currentGroupIndex < optionGroups.length - 1) {
+      setCurrentGroupIndex(currentGroupIndex + 1);
+    } else {
+      onComplete(selectedOptions);
+    }
+  };
+
+  const handleSkip = () => {
+    if (currentGroupIndex < optionGroups.length - 1) {
+      setCurrentGroupIndex(currentGroupIndex + 1);
+    } else {
+      onComplete(selectedOptions);
+    }
+  };
+
+  const handleBack = () => {
+    if (currentGroupIndex > 0) {
+      setCurrentGroupIndex(currentGroupIndex - 1);
+    }
+  };
+
+  const currentSelections = groupSelections[currentGroup.id] || {};
+  const totalSelected = Object.values(currentSelections).reduce((sum, count) => sum + count, 0);
+
+  return (
+    <div className="popup-overlay">
+      <div className="popup-content options-popup">
+        <div className="popup-header">
+          <div className="popup-title-section">
+            <h3 className="popup-title">{product.nameArabic}</h3>
+            <div className="popup-subtitle">
+              {selectedPrice.nameArabic} - الكمية: {quantity}
+            </div>
+          </div>
+          <button className="popup-close" onClick={onClose}>
+            <CloseIcon />
+          </button>
+        </div>
+        
+        <div className="popup-body">
+          <div className="group-header">
+            <h4 className="group-title">{currentGroup.name}</h4>
+            <div className="group-progress">
+              {currentGroupIndex + 1} من {optionGroups.length}
+            </div>
+          </div>
+          
+          <div className="group-info">
+            <div className="selection-info">
+              {currentGroup.isRequired && (
+                <span className="required-badge">مطلوب</span>
+              )}
+              <span className="selection-count">
+                تم اختيار {totalSelected} من {currentGroup.maxSelection}
+              </span>
+            </div>
+            
+            {currentGroup.minSelection > 0 && (
+              <div className="min-selection">
+                الحد الأدنى: {currentGroup.minSelection}
+              </div>
+            )}
+          </div>
+          
+          <div className="options-list">
+            {currentGroup.optionItems
+              .sort((a, b) => a.sortOrder - b.sortOrder)
+              .map((item) => {
+                const itemCount = currentSelections[item.id] || 0;
+                const canAdd = currentGroup.allowMultiple 
+                  ? totalSelected < currentGroup.maxSelection
+                  : itemCount === 0;
+                
+                return (
+                  <div key={item.id} className="option-item">
+                    <div className="option-info">
+                      <div className="option-name">{item.name}</div>
+                      {item.extraPrice > 0 && (
+                        <div className="option-price">
+                          +{item.extraPrice} EGP
+                        </div>
+                      )}
+                      {item.isCommentOnly && (
+                        <div className="comment-only">تعليق فقط</div>
+                      )}
+                    </div>
+                    
+                    <div className="option-controls">
+                      {currentGroup.allowMultiple ? (
+                        <div className="quantity-controls">
+                          <button
+                            className="quantity-btn minus"
+                            onClick={() => handleItemSelection(currentGroup, item, -1)}
+                            disabled={itemCount === 0}
+                          >
+                            <RemoveIcon />
+                          </button>
+                          <span className="quantity-display">{itemCount}</span>
+                          <button
+                            className="quantity-btn plus"
+                            onClick={() => handleItemSelection(currentGroup, item, 1)}
+                            disabled={!canAdd}
+                          >
+                            <AddIcon />
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          className={`select-btn ${itemCount > 0 ? 'selected' : ''}`}
+                          onClick={() => handleItemSelection(currentGroup, item, itemCount > 0 ? -1 : 1)}
+                        >
+                          {itemCount > 0 ? 'مختار' : 'اختيار'}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+          </div>
+        </div>
+        
+        <div className="popup-footer">
+          <div className="footer-buttons">
+            <button className="btn-cancel" onClick={onClose}>
+              إلغاء
+            </button>
+            
+            {currentGroupIndex > 0 && (
+              <button className="btn-back" onClick={handleBack}>
+                رجوع
+              </button>
+            )}
+            
+            {canSkipGroup(currentGroup) && (
+              <button className="btn-skip" onClick={handleSkip}>
+                تخطي
+              </button>
+            )}
+            
+            <button
+              className="btn-next"
+              onClick={handleNext}
+              disabled={!isGroupValid(currentGroup)}
+            >
+              {currentGroupIndex < optionGroups.length - 1 ? 'التالي' : 'إنهاء'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default ProductOptionsPopup;
 
 ===== src/Pages/pos/newSales/components/ui/Button.tsx =====
 import React from 'react';
@@ -507,9 +1274,15 @@ export default SearchView;
 ===== src/Pages/pos/newSales/index.tsx =====
 // src/Pages/pos/newSales/index.tsx
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
-import { PosProduct, CategoryItem, OrderSummary, OrderItem, PosPrice } from './types/PosSystem';
+import { PosProduct, CategoryItem, OrderSummary as OrderSummaryType, OrderItem, PosPrice, SelectedOption } from './types/PosSystem';
 import * as posService from '../../../services/posService';
 import PriceSelectionPopup from './components/PriceSelectionPopup';
+import ProductOptionsPopup from './components/ProductOptionsPopup';
+import ProductCard from './components/ProductCard';
+import Header from './components/common/Header';
+import ActionButtons from './components/ActionButtons';
+import OrderSummary from './components/OrderSummary';
+import { useOrderManager } from './components/OrderManager';
 import './styles/responsive.css';
 import './styles/popup.css';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -520,6 +1293,7 @@ const PosSystem: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [customerName, setCustomerName] = useState('');
   const [selectedChips, setSelectedChips] = useState<string[]>([]);
+  const [selectedOrderType, setSelectedOrderType] = useState('Takeaway');
   
   // API States
   const [allProducts, setAllProducts] = useState<PosProduct[]>([]);
@@ -527,17 +1301,74 @@ const PosSystem: React.FC = () => {
   const [displayedProducts, setDisplayedProducts] = useState<PosProduct[]>([]);
   const [loading, setLoading] = useState(false);
   
+  // Extra/Without States
+  const [isExtraMode, setIsExtraMode] = useState(false);
+  const [isWithoutMode, setIsWithoutMode] = useState(false);
+  const [selectedOrderItemId, setSelectedOrderItemId] = useState<string | null>(null);
+  const [originalProducts, setOriginalProducts] = useState<PosProduct[]>([]);
+  const [originalCategories, setOriginalCategories] = useState<CategoryItem[]>([]);
+  
   // إضافة states جديدة للتحكم في عرض الأطفال
   const [showingChildren, setShowingChildren] = useState<string | null>(null);
-  const [parentCategory, setParentCategory] = useState<CategoryItem | null>(null);
+  const [, setParentCategory] = useState<CategoryItem | null>(null);
   const [allCategories, setAllCategories] = useState<CategoryItem[]>([]);
   
   // Popup States
   const [showPricePopup, setShowPricePopup] = useState(false);
+  const [showOptionsPopup, setShowOptionsPopup] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<PosProduct | null>(null);
+  const [selectedProductForOptions, setSelectedProductForOptions] = useState<PosProduct | null>(null);
+  const [selectedPriceForOptions, setSelectedPriceForOptions] = useState<PosPrice | null>(null);
   
   // Order States
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
+
+  // دالة تحميل المنتجات العادية
+  const loadAllData = async () => {
+    try {
+      setLoading(true);
+      
+      // جلب كل المنتجات أولاً
+      const products = await posService.getAllPosProducts();
+      setAllProducts(products);
+      setOriginalProducts(products);
+      
+      // ثم جلب الفئات
+      const apiCategories = await posService.getAllCategories(products);
+      setAllCategories(apiCategories); // حفظ جميع الفئات
+      setOriginalCategories(apiCategories);
+      const rootCategories = apiCategories.filter(cat => !cat.parentId);
+      setCategories(rootCategories);
+      
+      if (rootCategories.length > 0) {
+        setSelectedCategory(rootCategories[0].id);
+      }
+    } catch (error) {
+      console.error('Error loading data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // دالة تحميل منتجات الإضافات
+  const loadAdditionProducts = useCallback(async () => {
+    try {
+      setLoading(true);
+      const additionProducts = await posService.getAdditionProducts();
+      const additionCategories = await posService.getCategoriesByProductType(3);
+      
+      setAllProducts(additionProducts);
+      setCategories(additionCategories);
+      
+      if (additionCategories.length > 0) {
+        setSelectedCategory(additionCategories[0].id);
+      }
+    } catch (error) {
+      console.error('Error loading addition products:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   // Load all data on mount
   useEffect(() => {
@@ -557,29 +1388,46 @@ const PosSystem: React.FC = () => {
     }
   }, [selectedCategory, searchQuery, allProducts]);
 
-  const loadAllData = async () => {
-    try {
-      setLoading(true);
-      
-      // جلب كل المنتجات أولاً
-      const products = await posService.getAllPosProducts();
-      setAllProducts(products);
-      
-      // ثم جلب الفئات
-      const apiCategories = await posService.getAllCategories(products);
-      setAllCategories(apiCategories); // حفظ جميع الفئات
-      const rootCategories = apiCategories.filter(cat => !cat.parentId);
-      setCategories(rootCategories);
-      
-      if (rootCategories.length > 0) {
-        setSelectedCategory(rootCategories[0].id);
-      }
-    } catch (error) {
-      console.error('Error loading data:', error);
-    } finally {
-      setLoading(false);
+  // Order Manager Hook
+  const { addToOrder } = useOrderManager({
+    keypadValue,
+    isExtraMode,
+    isWithoutMode,
+    selectedOrderItemId,
+    onOrderAdd: (orderItem) => setOrderItems(prev => [...prev, orderItem]),
+    onModeReset: () => {
+      setIsExtraMode(false);
+      setIsWithoutMode(false);
+      setSelectedOrderItemId(null);
+      setKeypadValue('1');
+    },
+    onLoadNormalProducts: loadAllData
+  });
+
+  // معالج زر Extra
+  const handleExtraClick = useCallback(() => {
+    setIsExtraMode(true);
+    setIsWithoutMode(false);
+    setSelectedChips(prev => prev.includes('extra') ? prev : [...prev.filter(chip => chip !== 'without'), 'extra']);
+    loadAdditionProducts();
+  }, [loadAdditionProducts]);
+
+  // معالج زر Without
+  const handleWithoutClick = useCallback(() => {
+    setIsWithoutMode(true);
+    setIsExtraMode(false);
+    setSelectedChips(prev => prev.includes('without') ? prev : [...prev.filter(chip => chip !== 'extra'), 'without']);
+    loadAdditionProducts();
+  }, [loadAdditionProducts]);
+
+  // معالج اختيار منتج في الفاتورة
+  const handleOrderItemSelect = useCallback((itemId: string) => {
+    if (selectedOrderItemId === itemId) {
+      setSelectedOrderItemId(null);
+    } else {
+      setSelectedOrderItemId(itemId);
     }
-  };
+  }, [selectedOrderItemId]);
 
   // تحديث handleCategorySelect للمنطق الجديد
   const handleCategorySelect = useCallback((categoryId: string) => {
@@ -604,60 +1452,108 @@ const PosSystem: React.FC = () => {
     setSearchQuery('');
   }, []);
 
+
+
+
+  // دالة الرجوع للمنتجات الأساسية
+const handleBackToMainProducts = useCallback(async () => {
+  // إعادة تعيين الـ modes
+  setIsExtraMode(false);
+  setIsWithoutMode(false);
+  setSelectedOrderItemId(null);
+  
+  // إعادة تعيين الـ chips
+  setSelectedChips(prev => prev.filter(chip => chip !== 'extra' && chip !== 'without'));
+  
+  // إعادة تحميل المنتجات الأساسية
+  try {
+    setLoading(true);
+    
+    setAllProducts(originalProducts);
+    setCategories(originalCategories.filter(cat => !cat.parentId));
+    setAllCategories(originalCategories);
+    
+    const rootCategories = originalCategories.filter(cat => !cat.parentId);
+    if (rootCategories.length > 0) {
+      setSelectedCategory(rootCategories[0].id);
+    }
+    
+    // إعادة تعيين الـ children states
+    setShowingChildren(null);
+    setParentCategory(null);
+    
+  } catch (error) {
+    console.error('Error loading main products:', error);
+  } finally {
+    setLoading(false);
+  }
+}, [originalProducts, originalCategories]);
+
+
   // دالة الرجوع للفئة الأب
   const handleBackToParent = useCallback(async () => {
     setShowingChildren(null);
     setParentCategory(null);
     
     // إعادة تحميل الفئات الأساسية
-    const rootCategories = allCategories.filter(cat => !cat.parentId);
+    const rootCategories = (isExtraMode || isWithoutMode) ? 
+      categories : originalCategories.filter(cat => !cat.parentId);
     setCategories(rootCategories);
     
     if (rootCategories.length > 0) {
       setSelectedCategory(rootCategories[0].id);
     }
-  }, [allCategories]);
+  }, [isExtraMode, isWithoutMode, categories, originalCategories]);
 
-  // التعامل مع ضغط المنتج
+  // التعامل مع ضغط المنتج - محدث لدعم المجموعات
   const handleProductClick = useCallback((product: PosProduct) => {
     if (product.hasMultiplePrices) {
       // فتح الـ popup لاختيار السعر
       setSelectedProduct(product);
       setShowPricePopup(true);
     } else if (product.productPrices.length > 0) {
-      // إضافة للفاتورة مباشرة
-      addToOrder(product, product.productPrices[0]);
+      const price = product.productPrices[0];
+      
+      // التحقق من وجود مجموعات خيارات
+      if (posService.hasProductOptions(product)) {
+        setSelectedProductForOptions(product);
+        setSelectedPriceForOptions(price);
+        setShowOptionsPopup(true);
+      } else {
+        // إضافة للفاتورة مباشرة
+        addToOrder(product, price, []);
+      }
     }
-  }, [keypadValue]);
+  }, [addToOrder]);
 
-  // إضافة منتج للفاتورة
-  const addToOrder = useCallback((product: PosProduct, price: PosPrice) => {
-    const quantity = parseInt(keypadValue) || 1;
-    const totalPrice = price.price * quantity;
-    
-    const orderItem: OrderItem = {
-      id: `${product.id}_${price.id}_${Date.now()}`,
-      product,
-      selectedPrice: price,
-      quantity,
-      totalPrice,
-    };
-
-    setOrderItems(prev => [...prev, orderItem]);
-    setKeypadValue('1'); // إعادة تعيين الكمية
-  }, [keypadValue]);
-
-  // التعامل مع اختيار السعر من الـ popup
+  // التعامل مع اختيار السعر من الـ popup - محدث لدعم المجموعات
   const handlePriceSelect = useCallback((price: PosPrice) => {
     if (selectedProduct) {
-      addToOrder(selectedProduct, price);
+      // التحقق من وجود مجموعات خيارات
+      if (posService.hasProductOptions(selectedProduct)) {
+        setSelectedProductForOptions(selectedProduct);
+        setSelectedPriceForOptions(price);
+        setShowPricePopup(false);
+        setShowOptionsPopup(true);
+      } else {
+        addToOrder(selectedProduct, price, []);
+      }
     }
-    setShowPricePopup(false);
     setSelectedProduct(null);
   }, [selectedProduct, addToOrder]);
 
+  // معالج إكمال اختيار المجموعات - جديد
+  const handleOptionsComplete = useCallback((selectedOptions: SelectedOption[]) => {
+    if (selectedProductForOptions && selectedPriceForOptions) {
+      addToOrder(selectedProductForOptions, selectedPriceForOptions, selectedOptions);
+    }
+    setShowOptionsPopup(false);
+    setSelectedProductForOptions(null);
+    setSelectedPriceForOptions(null);
+  }, [selectedProductForOptions, selectedPriceForOptions, addToOrder]);
+
   // حساب ملخص الطلب
-  const orderSummary: OrderSummary = useMemo(() => {
+  const orderSummary: OrderSummaryType = useMemo(() => {
     const subtotal = orderItems.reduce((sum, item) => sum + item.totalPrice, 0);
     const discount = 0;
     const tax = 0;
@@ -702,37 +1598,10 @@ const PosSystem: React.FC = () => {
   return (
     <div className="pos-system">
       {/* Top Header Bar */}
-      <header className="top-bar">
-        <div className="top-bar-content">
-          <img src="/images/img_foodify_logo_2_78x166.png" alt="Foodify Logo" className="logo" />
-          <nav className="nav-items">
-            <a href="#" className="nav-item active">
-              <img src="/images/img_sending_order.svg" alt="" />
-              <span>Today Orders</span>
-            </a>
-            <a href="#" className="nav-item">
-              <img src="/images/img_table_02.svg" alt="" />
-              <span>Table</span>
-            </a>
-            <a href="#" className="nav-item">
-              <img src="/images/img_discount_tag_01.svg" alt="" />
-              <span>Discount</span>
-            </a>
-            <a href="#" className="nav-item">
-              <img src="/images/img_delete_01.svg" alt="" />
-              <span>Void</span>
-            </a>
-            <select className="order-type-select">
-              <option>Takeaway</option>
-              <option>Dine In</option>
-              <option>Delivery</option>
-            </select>
-            <button className="menu-button">
-              <img src="/images/img_menu_01.svg" alt="Menu" />
-            </button>
-          </nav>
-        </div>
-      </header>
+      <Header
+        selectedOrderType={selectedOrderType}
+        onOrderTypeChange={setSelectedOrderType}
+      />
 
       {/* Main Content */}
       <main className="main-content">
@@ -756,46 +1625,17 @@ const PosSystem: React.FC = () => {
             </div>
           </div>
 
-          {/* Action Buttons Bar */}
-          <div className="action-buttons-bar">
-            <div className="action-chips">
-              <button 
-                className={`action-chip extra ${selectedChips.includes('extra') ? 'active' : ''}`}
-                onClick={() => handleChipClick('extra')}
-              >
-                <img src="/images/img_addcircle.svg" alt="" />
-                <span>Extra</span>
-              </button>
-              <button 
-                className={`action-chip without ${selectedChips.includes('without') ? 'active' : ''}`}
-                onClick={() => handleChipClick('without')}
-              >
-                <img src="/images/img_removecircle.svg" alt="" />
-                <span>Without</span>
-              </button>
-              <button 
-                className={`action-chip offer ${selectedChips.includes('offer') ? 'active' : ''}`}
-                onClick={() => handleChipClick('offer')}
-              >
-                <img src="/images/img_tags.svg" alt="" />
-                <span>Offer</span>
-              </button>
-            </div>
-            
-            <div className="search-container">
-              <img src="/images/img_search01.svg" alt="search" className="search-icon" />
-              <input
-                type="text"
-                placeholder="Search"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="search-input"
-              />
-              <button className="filter-button">
-                <img src="/images/img_group_7.svg" alt="Filter" />
-              </button>
-            </div>
-          </div>
+          {/* Action Buttons Component */}
+          <ActionButtons
+            selectedChips={selectedChips}
+            onChipClick={handleChipClick}
+            isExtraMode={isExtraMode}
+            isWithoutMode={isWithoutMode}
+            onExtraClick={handleExtraClick}
+            onWithoutClick={handleWithoutClick}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+          />
 
           {/* Products Grid */}
           <div className="product-grid">
@@ -803,151 +1643,64 @@ const PosSystem: React.FC = () => {
               <div className="loading-message">Loading...</div>
             ) : (
               displayedProducts.map((product) => (
-                <button
+                <ProductCard
                   key={product.id}
-                  onClick={() => handleProductClick(product)}
-                  className="product-card"
-                >
-                  <img src={product.image} alt={product.name} className="product-image" />
-                  <div className="product-info">
-                    <div className="product-name">{product.nameArabic}</div>
-                    {!product.hasMultiplePrices && product.displayPrice && (
-                      <div className="product-price">
-                        <span className="price">{product.displayPrice}</span>
-                        <span className="currency">EGP</span>
-                      </div>
-                    )}
-                  </div>
-                </button>
+                  product={product}
+                  onClick={handleProductClick}
+                />
               ))
             )}
           </div>
         </section>
 
- {/* Categories Sidebar */}
-      <aside className="categories-sidebar">
-        <div className="categories-list">
-          {/* زر الرجوع إذا كنا نعرض الأطفال */}
-          {showingChildren && (
-            <button
-              onClick={handleBackToParent}
-              className="category-item back-button"
-            >
-              <ArrowBackIcon />
-              <span>رجوع</span>
-            </button>
-          )}
-          
-          {/* عرض الفئات */}
-          {categories.map((category) => (
-            <button
-              key={category.id}
-              onClick={() => showingChildren ? handleChildCategorySelect(category.id) : handleCategorySelect(category.id)}
-              className={`category-item ${category.id === selectedCategory ? 'active' : ''}`}
-            >
-              <img src={category.image} alt={category.name} />
-              <span>{category.nameArabic}</span>
-            </button>
-          ))}
-        </div>
-      </aside>
+{/* Categories Sidebar */}
+<aside className="categories-sidebar">
+  <div className="categories-list">
+    {/* زرار الرجوع للمنتجات الأساسية عند كون في Extra/Without mode */}
+    {(isExtraMode || isWithoutMode) && (
+      <button
+        onClick={handleBackToMainProducts}
+        className="category-item back-button main-back"
+      >
+        <ArrowBackIcon />
+        <span>رجوع للمنتجات الأساسية</span>
+      </button>
+    )}
+    
+    {/* زر الرجوع إذا كنا نعرض الأطفال */}
+    {showingChildren && (
+      <button
+        onClick={handleBackToParent}
+        className="category-item back-button"
+      >
+        <ArrowBackIcon />
+        <span>رجوع</span>
+      </button>
+    )}
+    
+    {/* عرض الفئات */}
+    {categories.map((category) => (
+      <button
+        key={category.id}
+        onClick={() => showingChildren ? handleChildCategorySelect(category.id) : handleCategorySelect(category.id)}
+        className={`category-item ${category.id === selectedCategory ? 'active' : ''}`}
+      >
+        <img src={category.image} alt={category.name} />
+        <span>{category.nameArabic}</span>
+      </button>
+    ))}
+  </div>
+</aside>
 
         {/* Order Summary */}
-        <aside className="order-summary">
-          <div className="order-header">
-            <div className="order-number">#123</div>
-            <div className="order-total">
-              <span className="amount">{orderSummary.total.toFixed(2)}</span>
-              <span className="currency">EGP</span>
-            </div>
-          </div>
-
-          <div className="order-content">
-            <h3 className="order-title">Order Details</h3>
-
-            <div className="customer-input">
-              <input
-                type="text"
-                placeholder="Walk in Customer"
-                value={customerName}
-                onChange={(e) => setCustomerName(e.target.value)}
-                className="customer-field"
-              />
-              <button className="customer-button">
-                <img src="/images/img_group_1000004320.svg" alt="Add customer" />
-              </button>
-            </div>
-
-            <div className="order-items">
-              {orderSummary.items.map((item) => (
-                <div key={item.id} className="order-item">
-                  <div className="item-details">
-                    <button 
-                      className="delete-button"
-                      onClick={() => removeOrderItem(item.id)}
-                    >
-                      <img src="/images/img_delete_02.svg" alt="Remove" />
-                    </button>
-                    <div className="item-info">
-                      <div className="item-name">
-                        {item.quantity} X {item.product.nameArabic}
-                        {/* إضافة اسم الحجم جنب اسم الصنف */}
-                        {item.product.hasMultiplePrices && (
-                          <span className="item-size-inline"> - {item.selectedPrice.nameArabic}</span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="item-prices">
-                    <div className="item-price">{item.selectedPrice.price}</div>
-                    <div className="item-total">{item.totalPrice}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="order-footer">
-            <div className="summary-rows">
-              <div className="summary-row">
-                <span>Sub Total</span>
-                <span>{orderSummary.subtotal.toFixed(2)} <small>EGP</small></span>
-              </div>
-              <div className="summary-row">
-                <span>Discount</span>
-                <span>{orderSummary.discount.toFixed(2)} <small>EGP</small></span>
-              </div>
-              <div className="summary-row">
-                <span>Tax</span>
-                <span>{orderSummary.tax.toFixed(2)} <small>EGP</small></span>
-              </div>
-              <div className="summary-row">
-                <span>Service</span>
-                <span>{orderSummary.service.toFixed(2)} <small>EGP</small></span>
-              </div>
-            </div>
-
-            <div className="total-row">
-              <span>Total</span>
-              <span>{orderSummary.total.toFixed(2)} <small>EGP</small></span>
-            </div>
-
-            <div className="action-buttons">
-              <button className="action-button send">
-                <img src="/images/img_tabler_send.svg" alt="Send" />
-                <span>Send</span>
-              </button>
-              <button className="action-button print">
-                <img src="/images/img_printer.svg" alt="Print" />
-                <span>Print</span>
-              </button>
-              <button className="action-button pay">
-                <img src="/images/img_payment_02.svg" alt="Pay" />
-                <span>Pay</span>
-              </button>
-            </div>
-          </div>
-        </aside>
+        <OrderSummary
+          orderSummary={orderSummary}
+          customerName={customerName}
+          onCustomerNameChange={setCustomerName}
+          onRemoveOrderItem={removeOrderItem}
+          selectedOrderItemId={selectedOrderItemId}
+          onOrderItemSelect={handleOrderItemSelect}
+        />
       </main>
 
       {/* Price Selection Popup */}
@@ -957,6 +1710,20 @@ const PosSystem: React.FC = () => {
         isOpen={showPricePopup}
         onClose={() => setShowPricePopup(false)}
         onSelectPrice={handlePriceSelect}
+      />
+
+      {/* Product Options Popup - جديد */}
+      <ProductOptionsPopup
+        product={selectedProductForOptions}
+        selectedPrice={selectedPriceForOptions}
+        quantity={parseInt(keypadValue) || 1}
+        isOpen={showOptionsPopup}
+        onClose={() => {
+          setShowOptionsPopup(false);
+          setSelectedProductForOptions(null);
+          setSelectedPriceForOptions(null);
+        }}
+        onComplete={handleOptionsComplete}
       />
     </div>
   );
@@ -1173,6 +1940,539 @@ export const useReactPlugin = (options: ReactPluginOptions = {}) => {
 };
 
 export default react;
+===== src/Pages/pos/newSales/styles/ActionButtons.css =====
+/* src/Pages/pos/newSales/components/ActionButtons.css */
+
+.action-buttons-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: #ffffff;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.action-chips {
+  display: flex;
+  gap: 12px;
+}
+
+.action-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  background: #ffffff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.action-chip:hover {
+  border-color: #0373ed;
+  background: rgba(3, 115, 237, 0.05);
+}
+
+.action-chip.active {
+  background: #0373ed;
+  color: white;
+  border-color: #0373ed;
+}
+
+.action-chip img {
+  width: 16px;
+  height: 16px;
+}
+
+.search-container {
+  display: flex;
+  align-items: center;
+  position: relative;
+  gap: 8px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  width: 16px;
+  height: 16px;
+  z-index: 1;
+}
+
+.search-input {
+  padding: 8px 12px 8px 36px;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  font-size: 14px;
+  width: 200px;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #0373ed;
+}
+
+.filter-button {
+  padding: 8px;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  background: white;
+  cursor: pointer;
+}
+
+.filter-button:hover {
+  border-color: #0373ed;
+}
+
+.filter-button img {
+  width: 16px;
+  height: 16px;
+}
+
+===== src/Pages/pos/newSales/styles/Header.css =====
+/* src/Pages/pos/newSales/components/Header.css */
+
+.pos-header {
+  height: clamp(60px, 8vh, 100px);
+  background: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
+  z-index: 100;
+  position: relative;
+}
+
+.header-content {
+  height: 100%;
+  padding: 0 clamp(16px, 3vw, 32px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.header-logo {
+  height: 70%;
+  width: auto;
+  object-fit: contain;
+}
+
+.header-nav {
+  display: flex;
+  align-items: center;
+  gap: clamp(12px, 2vw, 24px);
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: clamp(4px, 0.8vw, 8px);
+  padding: clamp(6px, 1.2vw, 12px) clamp(8px, 1.6vw, 16px);
+  border-radius: 6px;
+  text-decoration: none;
+  color: #333333;
+  font-size: clamp(11px, 1.4vw, 16px);
+  font-weight: 500;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.nav-item:hover {
+  background: rgba(3, 115, 237, 0.1);
+}
+
+.nav-item.active {
+  color: #0373ed;
+  background: rgba(3, 115, 237, 0.1);
+}
+
+.nav-item img {
+  width: clamp(14px, 1.8vw, 20px);
+  height: clamp(14px, 1.8vw, 20px);
+}
+
+.order-type-display {
+  padding: clamp(6px, 1.2vw, 12px) clamp(12px, 2.4vw, 20px);
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  font-size: clamp(11px, 1.4vw, 16px);
+  font-weight: 600;
+  color: #333333;
+  min-width: clamp(80px, 12vw, 120px);
+  text-align: center;
+}
+
+.menu-dropdown-container {
+  position: relative;
+}
+
+.menu-button {
+  padding: clamp(6px, 1.2vw, 12px);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.menu-button:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.menu-button img {
+  width: clamp(18px, 2.4vw, 28px);
+  height: clamp(18px, 2.4vw, 28px);
+}
+
+/* Figma Dropdown - مع scroll مخفي */
+.figma-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: transparent;
+  z-index: 1000;
+  animation: slideInFromRight 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  gap: clamp(16px, 2.5vw, 20px);
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  /* إخفاء الـ scrollbar */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* Internet Explorer 10+ */
+}
+
+/* إخفاء الـ scrollbar في WebKit browsers */
+.figma-dropdown::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  background: transparent;
+  display: none;
+}
+
+/* Order Types Section */
+.order-types-section {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(6px, 1vw, 8px);
+  flex-shrink: 0;
+}
+
+/* Delivery Partners Section */
+.delivery-partners-section {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(6px, 1vw, 8px);
+  margin-top: clamp(12px, 2vw, 16px);
+  flex-shrink: 0;
+}
+
+/* Section Separator */
+.section-separator {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.1), transparent);
+  margin: clamp(8px, 1.5vw, 12px) 0;
+  flex-shrink: 0;
+}
+
+/* Figma Cards - مُحسنة بدون تأثير على الكروت المجاورة */
+.figma-card {
+  width: clamp(90px, 14vw, 110px);
+  height: clamp(85px, 13vw, 105px);
+  background: white;
+  border-radius: 12px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: clamp(6px, 1.2vw, 8px);
+  backdrop-filter: blur(8px);
+  scroll-snap-align: start;
+  contain: layout style paint;
+  /* إضافة margin للحفاظ على المساحة */
+  margin: 2px;
+}
+
+.figma-card:hover {
+  border-color: #0373ed;
+  /* تقليل الحركة لتجنب التأثير على الكروت المجاورة */
+  transform: translateX(-2px);
+  box-shadow: 0 6px 16px rgba(3, 115, 237, 0.2);
+  /* استخدام brightness كبديل للـ scale */
+  filter: brightness(1.05);
+}
+
+.figma-card.selected {
+  border-color: #0373ed;
+  box-shadow: 0 5px 12px rgba(3, 115, 237, 0.25);
+  background: rgba(3, 115, 237, 0.02);
+}
+
+.delivery-card {
+  border: 1px solid #e9ecef;
+}
+
+.delivery-card:hover {
+  border-color: #0373ed;
+  transform: translateX(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+  filter: brightness(1.05);
+}
+
+/* Card Icon Section */
+.card-icon-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  width: 100%;
+}
+
+/* Card Icons - مُصغرة */
+.card-icon {
+  width: clamp(24px, 3.5vw, 32px);
+  height: clamp(24px, 3.5vw, 32px);
+  object-fit: contain;
+}
+
+.delivery-icon {
+  max-width: clamp(45px, 7vw, 60px);
+  max-height: clamp(15px, 2.5vw, 20px);
+  object-fit: contain;
+}
+
+/* Card Labels - داخل الكارت */
+.card-label {
+  color: black;
+  font-size: clamp(10px, 1.5vw, 14px);
+  font-family: 'Nunito', sans-serif;
+  font-weight: 400;
+  word-wrap: break-word;
+  text-align: center;
+  line-height: 1.1;
+  margin-top: clamp(2px, 0.5vw, 4px);
+  width: 100%;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+.figma-card.selected .card-label {
+  color: #0373ed;
+  font-weight: 500;
+}
+
+/* Animations */
+@keyframes slideInFromRight {
+  from {
+    opacity: 0;
+    transform: translateX(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* تأثيرات إضافية للكروت */
+.figma-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.3));
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  border-radius: 10px;
+}
+
+.figma-card:hover::before {
+  opacity: 1;
+}
+
+/* تأثيرات fade للـ scroll */
+.figma-dropdown::before {
+  content: '';
+  position: sticky;
+  top: 0;
+  height: 6px;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.9), transparent);
+  z-index: 1;
+  pointer-events: none;
+  flex-shrink: 0;
+}
+
+.figma-dropdown::after {
+  content: '';
+  position: sticky;
+  bottom: 0;
+  height: 6px;
+  background: linear-gradient(to top, rgba(255, 255, 255, 0.9), transparent);
+  z-index: 1;
+  pointer-events: none;
+  flex-shrink: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .nav-item span {
+    display: none;
+  }
+  
+  .nav-item {
+    padding: clamp(8px, 1.5vw, 12px);
+  }
+  
+  .figma-dropdown {
+    right: -5px;
+  }
+}
+
+@media (max-width: 768px) {
+  .header-nav {
+    gap: clamp(8px, 1.5vw, 16px);
+  }
+  
+  .order-type-display {
+    min-width: clamp(60px, 10vw, 80px);
+    font-size: clamp(10px, 1.2vw, 14px);
+  }
+  
+  .figma-dropdown {
+    right: -10px;
+    gap: clamp(12px, 2vw, 16px);
+    max-height: calc(100vh - 100px);
+  }
+  
+  .figma-card {
+    width: clamp(75px, 16vw, 95px);
+    height: clamp(70px, 15vw, 90px);
+    padding: clamp(4px, 1vw, 6px);
+    margin: 1px;
+  }
+  
+  .figma-card:hover {
+    transform: translateX(-1px);
+  }
+  
+  .delivery-card:hover {
+    transform: translateX(-1px);
+  }
+  
+  .card-icon {
+    width: clamp(18px, 3vw, 24px);
+    height: clamp(18px, 3vw, 24px);
+  }
+  
+  .delivery-icon {
+    max-width: clamp(35px, 6vw, 45px);
+    max-height: clamp(12px, 2vw, 16px);
+  }
+  
+  .card-label {
+    font-size: clamp(8px, 1.3vw, 12px);
+  }
+}
+
+@media (max-width: 480px) {
+  .header-content {
+    padding: 0 clamp(8px, 2vw, 16px);
+  }
+  
+  .header-nav {
+    gap: clamp(4px, 1vw, 8px);
+  }
+  
+  .figma-dropdown {
+    right: -15px;
+    max-height: calc(100vh - 80px);
+  }
+  
+  .figma-card {
+    width: clamp(65px, 18vw, 85px);
+    height: clamp(60px, 17vw, 80px);
+    padding: clamp(3px, 0.8vw, 5px);
+    margin: 1px;
+  }
+  
+  /* إزالة الحركة نهائياً في الشاشات الصغيرة */
+  .figma-card:hover {
+    transform: none;
+    filter: brightness(1.1);
+  }
+  
+  .delivery-card:hover {
+    transform: none;
+    filter: brightness(1.1);
+  }
+  
+  .card-icon {
+    width: clamp(16px, 2.5vw, 20px);
+    height: clamp(16px, 2.5vw, 20px);
+  }
+  
+  .delivery-icon {
+    max-width: clamp(30px, 5vw, 40px);
+    max-height: clamp(10px, 1.8vw, 14px);
+  }
+  
+  .card-label {
+    font-size: clamp(7px, 1.1vw, 10px);
+  }
+}
+
+/* تحسينات للأجهزة اللمسية */
+@media (hover: none) and (pointer: coarse) {
+  .figma-dropdown {
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: y proximity;
+  }
+  
+  .figma-card {
+    scroll-snap-align: start;
+  }
+}
+
+/* تحسينات الأداء */
+.figma-dropdown {
+  will-change: scroll-position;
+  contain: layout style paint;
+}
+
+.figma-card {
+  will-change: transform, box-shadow;
+  backface-visibility: hidden;
+}
+
+/* تحسينات للشاشات عالية الدقة */
+@media (min-resolution: 150dpi) {
+  .figma-card {
+    border-width: 1.5px;
+  }
+}
+
+@media (min-resolution: 200dpi) {
+  .figma-card {
+    border-width: 1px;
+  }
+}
+
 ===== src/Pages/pos/newSales/styles/popup.css =====
 /* src/Pages/pos/newSales/styles/popup.css */
 .popup-overlay {
@@ -1345,6 +2645,737 @@ export default react;
     font-size: 18px !important;
   }
 }
+
+
+.options-popup {
+  max-width: 600px;
+  max-height: 85vh;
+}
+
+.popup-title-section {
+  flex: 1;
+}
+
+.popup-subtitle {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+.group-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.group-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.group-progress {
+  font-size: 12px;
+  color: var(--text-secondary);
+  background: #f0f0f0;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.group-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding: 10px;
+  background: #f8f9fa;
+  border-radius: 6px;
+}
+
+.selection-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.required-badge {
+  background: var(--primary-red);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.selection-count {
+  font-size: 14px;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.min-selection {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.options-list {
+  max-height: 300px;
+  overflow-y: auto;
+  margin-bottom: 20px;
+}
+
+.option-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  transition: all 0.2s ease;
+}
+
+.option-item:hover {
+  border-color: var(--primary-blue);
+  background: #f8f9ff;
+}
+
+.option-info {
+  flex: 1;
+}
+
+.option-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.option-price {
+  font-size: 14px;
+  color: var(--primary-green);
+  font-weight: 500;
+}
+
+.comment-only {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.option-controls {
+  display: flex;
+  align-items: center;
+}
+
+.quantity-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.quantity-btn {
+  width: 32px;
+  height: 32px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.quantity-btn:hover:not(:disabled) {
+  border-color: var(--primary-blue);
+  background: #f8f9ff;
+}
+
+.quantity-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.quantity-btn.plus {
+  border-color: var(--primary-green);
+  color: var(--primary-green);
+}
+
+.quantity-btn.minus {
+  border-color: var(--primary-red);
+  color: var(--primary-red);
+}
+
+.quantity-display {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  min-width: 20px;
+  text-align: center;
+}
+
+.select-btn {
+  padding: 8px 16px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: white;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.select-btn:hover {
+  border-color: var(--primary-blue);
+  background: #f8f9ff;
+}
+
+.select-btn.selected {
+  background: var(--primary-blue);
+  color: white;
+  border-color: var(--primary-blue);
+}
+
+.popup-footer {
+  border-top: 1px solid #eee;
+  padding: 15px 20px;
+}
+
+.footer-buttons {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.footer-buttons button {
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-cancel {
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  color: var(--text-primary);
+}
+
+.btn-cancel:hover {
+  background: #e0e0e0;
+}
+
+.btn-back {
+  background: #f8f9fa;
+  border: 1px solid #ddd;
+  color: var(--text-primary);
+}
+
+.btn-back:hover {
+  background: #e9ecef;
+}
+
+.btn-skip {
+  background: var(--primary-orange);
+  border: 1px solid var(--primary-orange);
+  color: white;
+}
+
+.btn-skip:hover {
+  opacity: 0.9;
+}
+
+.btn-skip:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-next {
+  background: var(--primary-blue);
+  border: 1px solid var(--primary-blue);
+  color: white;
+}
+
+.btn-next:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.btn-next:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* عرض الخيارات في الفاتورة */
+.item-options {
+  margin-top: 4px;
+  padding-left: 10px;
+}
+
+.option-detail {
+  margin-bottom: 2px;
+}
+
+.option-text {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-weight: 400;
+  line-height: 1.3;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .options-popup {
+    width: 98%;
+    max-height: 90vh;
+  }
+  
+  .option-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .option-controls {
+    align-self: flex-end;
+  }
+  
+  .footer-buttons {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  
+  .footer-buttons button {
+    flex: 1;
+    min-width: 80px;
+  }
+}
+===== src/Pages/pos/newSales/styles/ProductCard.css =====
+/* src/Pages/pos/newSales/components/ProductCard.css */
+
+.product-card {
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  border: none;
+  padding: 0;
+  width: 100%;
+  aspect-ratio: 0.85;
+  min-height: 200px;
+}
+
+.product-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.product-card:active {
+  transform: translateY(-2px);
+  transition: transform 0.1s ease;
+}
+
+/* حاوية الصورة */
+.product-image-container {
+  width: 100%;
+  height: 70%;
+  overflow: hidden;
+  position: relative;
+  background: #f8f9fa;
+}
+
+.product-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.product-card:hover .product-image {
+  transform: scale(1.05);
+}
+
+/* قسم المعلومات - الجزء الأبيض */
+.product-info-section {
+  display: flex;
+  flex-direction: column;
+  padding: clamp(6px, 1.5vw, 12px);
+  height: 30%;
+  background: #ffffff;
+  justify-content: center;
+}
+
+/* حاوية التفاصيل - الاسم والسعر جنب بعض */
+.product-details {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: clamp(4px, 1vw, 8px);
+  width: 100%;
+}
+
+/* اسم المنتج - يأخذ المساحة المتاحة */
+.product-name {
+  font-size: clamp(10px, 1.6vw, 14px);
+  font-weight: 600;
+  color: #2c3e50;
+  line-height: 1.2;
+  text-align: right;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+  flex: 1;
+  min-width: 0; /* مهم للـ flexbox */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-left: clamp(4px, 0.8vw, 6px);
+}
+
+/* للمنتجات بأسعار متعددة - اسم المنتج في المنتصف */
+.product-card.multiple-prices .product-details {
+  justify-content: center;
+}
+
+.product-card.multiple-prices .product-name {
+  text-align: center;
+  margin-left: 0;
+  flex: none;
+}
+
+/* حاوية السعر - ثابتة على اليسار */
+.product-price-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  flex-shrink: 0;
+  min-width: clamp(35px, 8vw, 50px);
+}
+
+.product-price {
+  font-size: clamp(12px, 2vw, 16px);
+  font-weight: 700;
+  color: #e74c3c;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.product-currency {
+  font-size: clamp(8px, 1.4vw, 11px);
+  font-weight: 500;
+  color: #7f8c8d;
+  line-height: 1;
+  margin-top: 1px;
+}
+
+/* مؤشر الخيارات */
+.product-options-badge {
+  position: absolute;
+  top: clamp(4px, 1vw, 8px);
+  left: clamp(4px, 1vw, 8px);
+  background: linear-gradient(135deg, #3498db, #2980b9);
+  color: white;
+  padding: clamp(2px, 0.5vw, 4px) clamp(4px, 1vw, 8px);
+  border-radius: clamp(6px, 1.5vw, 12px);
+  font-size: clamp(7px, 1.2vw, 10px);
+  font-weight: 500;
+  box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
+  backdrop-filter: blur(4px);
+}
+
+/* Responsive Design مع ضمان القراءة الواضحة */
+
+/* شاشات كبيرة جداً */
+@media (min-width: 1920px) {
+  .product-card {
+    min-height: 240px;
+  }
+  
+  .product-info-section {
+    padding: 14px;
+  }
+  
+  .product-details {
+    gap: 10px;
+  }
+  
+  .product-name {
+    font-size: 14px;
+  }
+  
+  .product-price {
+    font-size: 16px;
+  }
+  
+  .product-currency {
+    font-size: 11px;
+  }
+}
+
+/* شاشات كبيرة */
+@media (max-width: 1600px) {
+  .product-card {
+    min-height: 220px;
+  }
+  
+  .product-info-section {
+    padding: 12px;
+  }
+  
+  .product-details {
+    gap: 8px;
+  }
+  
+  .product-name {
+    font-size: 13px;
+  }
+  
+  .product-price {
+    font-size: 15px;
+  }
+  
+  .product-currency {
+    font-size: 10px;
+  }
+}
+
+/* شاشات متوسطة */
+@media (max-width: 1400px) {
+  .product-card {
+    min-height: 200px;
+  }
+  
+  .product-info-section {
+    padding: 10px;
+  }
+  
+  .product-details {
+    gap: 6px;
+  }
+  
+  .product-name {
+    font-size: 12px;
+  }
+  
+  .product-price {
+    font-size: 14px;
+  }
+  
+  .product-currency {
+    font-size: 9px;
+  }
+}
+
+/* شاشات لابتوب */
+@media (max-width: 1200px) {
+  .product-card {
+    min-height: 180px;
+  }
+  
+  .product-info-section {
+    padding: 8px;
+  }
+  
+  .product-details {
+    gap: 5px;
+  }
+  
+  .product-name {
+    font-size: 11px;
+  }
+  
+  .product-price {
+    font-size: 13px;
+  }
+  
+  .product-currency {
+    font-size: 8px;
+  }
+}
+
+/* شاشات صغيرة */
+@media (max-width: 1024px) {
+  .product-card {
+    min-height: 160px;
+  }
+  
+  .product-info-section {
+    padding: 6px;
+  }
+  
+  .product-details {
+    gap: 4px;
+  }
+  
+  .product-name {
+    font-size: 10px;
+    -webkit-line-clamp: 2;
+  }
+  
+  .product-price {
+    font-size: 12px;
+  }
+  
+  .product-currency {
+    font-size: 7px;
+  }
+  
+  .product-price-container {
+    min-width: 30px;
+  }
+}
+
+/* تابلت */
+@media (max-width: 768px) {
+  .product-card {
+    min-height: 140px;
+  }
+  
+  .product-info-section {
+    padding: 5px;
+  }
+  
+  .product-details {
+    gap: 3px;
+  }
+  
+  .product-name {
+    font-size: 9px;
+    -webkit-line-clamp: 2;
+  }
+  
+  .product-price {
+    font-size: 11px;
+  }
+  
+  .product-currency {
+    font-size: 6px;
+  }
+  
+  .product-price-container {
+    min-width: 25px;
+  }
+}
+
+/* موبايل */
+@media (max-width: 480px) {
+  .product-card {
+    min-height: 120px;
+  }
+  
+  .product-info-section {
+    padding: 4px;
+  }
+  
+  .product-details {
+    gap: 2px;
+  }
+  
+  .product-name {
+    font-size: 8px;
+    -webkit-line-clamp: 2;
+  }
+  
+  .product-price {
+    font-size: 10px;
+  }
+  
+  .product-currency {
+    font-size: 6px;
+  }
+  
+  .product-price-container {
+    min-width: 20px;
+  }
+}
+
+/* تحسينات للزووم العالي */
+@media (min-resolution: 150dpi) {
+  .product-name {
+    font-size: clamp(9px, 1.4vw, 12px);
+  }
+  
+  .product-price {
+    font-size: clamp(11px, 1.8vw, 14px);
+  }
+  
+  .product-currency {
+    font-size: clamp(6px, 1.2vw, 9px);
+  }
+}
+
+@media (min-resolution: 200dpi) {
+  .product-name {
+    font-size: clamp(8px, 1.2vw, 11px);
+  }
+  
+  .product-price {
+    font-size: clamp(10px, 1.6vw, 13px);
+  }
+  
+  .product-currency {
+    font-size: clamp(5px, 1vw, 8px);
+  }
+}
+
+/* تحسينات إضافية للنصوص الطويلة */
+.product-name {
+  text-overflow: ellipsis;
+  word-break: break-word;
+}
+
+/* تأثيرات بصرية */
+.product-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1));
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.product-card:hover::before {
+  opacity: 1;
+}
+
+/* تحسينات الأداء */
+.product-card {
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.product-image {
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* ضمان وضوح النصوص */
+.product-name,
+.product-price,
+.product-currency {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
 ===== src/Pages/pos/newSales/styles/responsive.css =====
 /* src/Pages/pos/newSales/styles/responsive.css */
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700&display=swap');
@@ -1668,13 +3699,13 @@ body {
 
 /* Product Grid */
 .product-grid {
-  flex: 1;
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: var(--spacing-sm);
-  padding: var(--spacing-xs);
-    overflow-y: auto;
-  scrollbar-width: none; /* Firefox */
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  padding: 20px;
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 
@@ -2437,6 +4468,172 @@ body {
     opacity: 1;
   }
 }
+
+
+/* ضمان عدد المنتجات في الصف حسب حجم الشاشة */
+
+/* شاشات كبيرة جداً - 7 منتجات */
+@media (min-width: 1920px) {
+  .product-grid {
+    grid-template-columns: repeat(7, 1fr);
+    gap: 20px;
+    padding: 24px;
+  }
+}
+
+/* شاشات كبيرة - 6-7 منتجات */
+@media (max-width: 1600px) {
+  .product-grid {
+    grid-template-columns: repeat(6, 1fr);
+    gap: 18px;
+    padding: 22px;
+  }
+}
+
+/* شاشات متوسطة - 6 منتجات */
+@media (max-width: 1400px) {
+  .product-grid {
+    grid-template-columns: repeat(6, 1fr);
+    gap: 16px;
+    padding: 20px;
+  }
+}
+
+/* شاشات لابتوب - 5-6 منتجات */
+@media (max-width: 1200px) {
+  .product-grid {
+    grid-template-columns: repeat(5, 1fr);
+    gap: 14px;
+    padding: 18px;
+  }
+}
+
+/* شاشات صغيرة - 5 منتجات */
+@media (max-width: 1024px) {
+  .product-grid {
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+    padding: 16px;
+  }
+}
+
+/* تابلت - 5 منتجات */
+@media (max-width: 768px) {
+  .product-grid {
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+    padding: 14px;
+  }
+}
+
+/* موبايل - 5 منتجات */
+@media (max-width: 480px) {
+  .product-grid {
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+    padding: 12px;
+  }
+}
+
+/* تحسينات إضافية للشبكة */
+.product-grid::-webkit-scrollbar {
+  width: 8px;
+}
+
+.product-grid::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.product-grid::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+.product-grid::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* تأثيرات الانتقال للشبكة */
+.product-grid {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+
+
+/* إضافة هذا للـ CSS الموجود */
+
+/* Order Item Selection */
+.order-item {
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.order-item.selected {
+  background: rgba(3, 115, 237, 0.1);
+  border-left: 4px solid #0373ed;
+}
+
+.order-item:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+/* Extra/Without Items */
+.extra-item {
+  border-left: 3px solid #28a745;
+}
+
+.without-item {
+  border-left: 3px solid #dc3545;
+}
+
+.extra-badge {
+  background: #28a745;
+  color: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  margin-right: 4px;
+  font-weight: 600;
+}
+
+.without-badge {
+  background: #dc3545;
+  color: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  margin-right: 4px;
+  font-weight: 600;
+}
+
+.item-total.negative {
+  color: #dc3545;
+  font-weight: 600;
+}
+
+/* Active Action Chips */
+.action-chip.active {
+  background: #0373ed;
+  color: white;
+  border-color: #0373ed;
+}
+
+.action-chip.active img {
+  filter: brightness(0) invert(1);
+}
+
 ===== src/Pages/pos/newSales/styles/tailwind.css =====
 @tailwind base;
 @tailwind components;
@@ -2518,6 +4715,38 @@ export interface PosProduct {
   productPrices: PosPrice[];
   hasMultiplePrices: boolean;
   displayPrice?: number;
+  productOptionGroups?: ProductOptionGroup[]; // إضافة المجموعات
+}
+
+
+export interface ProductOptionGroup {
+  id: string;
+  name: string;
+  isRequired: boolean;
+  allowMultiple: boolean;
+  minSelection: number;
+  maxSelection: number;
+  sortOrder: number;
+  optionItems: ProductOptionItem[];
+}
+
+export interface ProductOptionItem {
+  id: string;
+  name: string;
+  productPriceId?: string | null; // Change this line to support null
+  useOriginalPrice: boolean;
+  extraPrice: number;
+  isCommentOnly: boolean;
+  sortOrder: number;
+}
+
+export interface SelectedOption {
+  groupId: string;
+  itemId: string;
+  itemName: string;
+  quantity: number;
+  extraPrice: number;
+  isCommentOnly: boolean;
 }
 
 export interface PosPrice {
@@ -2546,7 +4775,11 @@ export interface OrderItem {
   selectedPrice: PosPrice;
   quantity: number;
   totalPrice: number;
+  selectedOptions?: SelectedOption[]; // إضافة الخيارات المختارة
   notes?: string;
+    isExtra?: boolean;        // جديد
+  isWithout?: boolean;      // جديد
+  parentItemId?: string;    // جديد - للربط بالمنتج الأصلي
 }
 
 export interface OrderSummary {

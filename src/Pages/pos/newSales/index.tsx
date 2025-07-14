@@ -1,14 +1,18 @@
-// src/Pages/pos/newSales/index.tsx
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
-import { PosProduct, CategoryItem, OrderSummary, OrderItem, PosPrice, SelectedOption } from './types/PosSystem';
+// src/Pages/pos/newSales/index.tsx - الكود الكامل المُحدث
+import React, { useState, useCallback, useMemo } from 'react';
+import { PosProduct, CategoryItem, OrderSummary as OrderSummaryType, OrderItem, PosPrice, SelectedOption } from './types/PosSystem';
 import * as posService from '../../../services/posService';
 import PriceSelectionPopup from './components/PriceSelectionPopup';
 import ProductOptionsPopup from './components/ProductOptionsPopup';
+import ProductCard from './components/ProductCard';
+import Header from './components/common/Header';
+import ActionButtons from './components/ActionButtons';
+import OrderSummary from './components/OrderSummary';
+import { useOrderManager } from './components/OrderManager';
+import { useDataManager } from './hooks/useDataManager';
 import './styles/responsive.css';
 import './styles/popup.css';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import ProductCard from './components/ProductCard';
-import Header from './components/common/Header';
 
 const PosSystem: React.FC = () => {
   const [keypadValue, setKeypadValue] = useState('1');
@@ -16,17 +20,24 @@ const PosSystem: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [customerName, setCustomerName] = useState('');
   const [selectedChips, setSelectedChips] = useState<string[]>([]);
+  const [selectedOrderType, setSelectedOrderType] = useState('Takeaway');
   
-  // API States
-  const [allProducts, setAllProducts] = useState<PosProduct[]>([]);
-  const [categories, setCategories] = useState<CategoryItem[]>([]);
-  const [displayedProducts, setDisplayedProducts] = useState<PosProduct[]>([]);
-  const [loading, setLoading] = useState(false);
+  // استخدام Data Manager الجديد
+  const {
+    loading,
+    error,
+    getProducts,
+    getCategories
+  } = useDataManager();
   
-  // إضافة states جديدة للتحكم في عرض الأطفال
+  // Extra/Without States
+  const [isExtraMode, setIsExtraMode] = useState(false);
+  const [isWithoutMode, setIsWithoutMode] = useState(false);
+  const [selectedOrderItemId, setSelectedOrderItemId] = useState<string | null>(null);
+  
+  // Categories States
   const [showingChildren, setShowingChildren] = useState<string | null>(null);
   const [, setParentCategory] = useState<CategoryItem | null>(null);
-  const [allCategories, setAllCategories] = useState<CategoryItem[]>([]);
   
   // Popup States
   const [showPricePopup, setShowPricePopup] = useState(false);
@@ -38,59 +49,136 @@ const PosSystem: React.FC = () => {
   // Order States
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
 
-  const [selectedOrderType, setSelectedOrderType] = useState('Takeaway');
+  // الحصول على البيانات الحالية
+  const isAdditionMode = isExtraMode || isWithoutMode;
+  const currentProducts = getProducts(isAdditionMode);
+  const currentCategories = getCategories(isAdditionMode);
+  const rootCategories = currentCategories.filter(cat => !cat.parentId);
+  const categories = showingChildren 
+    ? currentCategories.find(cat => cat.id === showingChildren)?.children || []
+    : rootCategories;
 
-  // Load all data on mount
-  useEffect(() => {
-    loadAllData();
-  }, []);
-
-  // Update displayed products when category or search changes
-  useEffect(() => {
+  // المنتجات المعروضة
+  const displayedProducts = useMemo(() => {
     if (searchQuery.trim()) {
-      const searchResults = posService.searchProducts(allProducts, searchQuery);
-      setDisplayedProducts(searchResults);
-    } else if (selectedCategory) {
-      const categoryProducts = posService.getProductsByScreenId(allProducts, selectedCategory);
-      setDisplayedProducts(categoryProducts);
-    } else {
-      setDisplayedProducts([]);
+      return posService.searchProducts(currentProducts, searchQuery);
     }
-  }, [selectedCategory, searchQuery, allProducts]);
+    
+    if (selectedCategory) {
+      return posService.getProductsByScreenId(currentProducts, selectedCategory);
+    }
+    
+    return [];
+  }, [currentProducts, selectedCategory, searchQuery]);
 
-  const loadAllData = async () => {
-    try {
-      setLoading(true);
-      
-      // جلب كل المنتجات أولاً
-      const products = await posService.getAllPosProducts();
-      setAllProducts(products);
-      
-      // ثم جلب الفئات
-      const apiCategories = await posService.getAllCategories(products);
-      setAllCategories(apiCategories); // حفظ جميع الفئات
-      const rootCategories = apiCategories.filter(cat => !cat.parentId);
-      setCategories(rootCategories);
-      
-      if (rootCategories.length > 0) {
-        setSelectedCategory(rootCategories[0].id);
+  // تحديث دالة updateOrderItem
+
+const updateOrderItem = useCallback((itemId: string, updateType: 'addSubItem' | 'removeSubItem', data: any) => {
+  setOrderItems(prev => prev.map(item => {
+    if (item.id === itemId) {
+      if (updateType === 'addSubItem') {
+        // إضافة sub-item جديد
+        const newSubItems = [...(item.subItems || []), data];
+        const newTotalPrice = item.totalPrice + data.price;
+        return {
+          ...item,
+          subItems: newSubItems,
+          totalPrice: newTotalPrice
+        };
+      } else if (updateType === 'removeSubItem') {
+        // حذف sub-item
+        const removedSubItem = item.subItems?.find(sub => sub.id === data);
+        const newSubItems = item.subItems?.filter(sub => sub.id !== data) || [];
+        const newTotalPrice = item.totalPrice - (removedSubItem?.price || 0);
+        return {
+          ...item,
+          subItems: newSubItems.length > 0 ? newSubItems : undefined,
+          totalPrice: newTotalPrice
+        };
       }
-    } catch (error) {
-      console.error('Error loading data:', error);
-    } finally {
-      setLoading(false);
     }
-  };
+    return item;
+  }));
+}, []);
 
-  // تحديث handleCategorySelect للمنطق الجديد
+  // Order Manager Hook
+const { addToOrder, removeSubItem } = useOrderManager({
+  keypadValue,
+  isExtraMode,
+  isWithoutMode,
+  selectedOrderItemId,
+  onOrderAdd: (orderItem) => setOrderItems(prev => [...prev, orderItem]),
+  onOrderUpdate: updateOrderItem, // استخدام الدالة المُحدثة
+  onModeReset: () => {
+    setIsExtraMode(false);
+    setIsWithoutMode(false);
+    setSelectedOrderItemId(null);
+    setKeypadValue('1');
+  },
+  onLoadNormalProducts: () => {
+    // لا نحتاج لإعادة تحميل البيانات لأنها محملة مسبقاً
+  }
+});
+
+  // معالج زر Extra
+  const handleExtraClick = useCallback(() => {
+    setIsExtraMode(true);
+    setIsWithoutMode(false);
+    setSelectedChips(prev => prev.includes('extra') ? prev : [...prev.filter(chip => chip !== 'without'), 'extra']);
+    
+    // تحديد أول فئة من فئات الإضافات
+    const additionCategories = getCategories(true).filter(cat => !cat.parentId);
+    if (additionCategories.length > 0) {
+      setSelectedCategory(additionCategories[0].id);
+    }
+  }, [getCategories]);
+
+  // معالج زر Without
+  const handleWithoutClick = useCallback(() => {
+    setIsWithoutMode(true);
+    setIsExtraMode(false);
+    setSelectedChips(prev => prev.includes('without') ? prev : [...prev.filter(chip => chip !== 'extra'), 'without']);
+    
+    // تحديد أول فئة من فئات الإضافات
+    const additionCategories = getCategories(true).filter(cat => !cat.parentId);
+    if (additionCategories.length > 0) {
+      setSelectedCategory(additionCategories[0].id);
+    }
+  }, [getCategories]);
+
+  // معالج الرجوع للمنتجات الأساسية
+  const handleBackToMainProducts = useCallback(() => {
+    setIsExtraMode(false);
+    setIsWithoutMode(false);
+    setSelectedOrderItemId(null);
+    setSelectedChips(prev => prev.filter(chip => chip !== 'extra' && chip !== 'without'));
+    
+    // تحديد أول فئة من الفئات الأساسية
+    const mainCategories = getCategories(false).filter(cat => !cat.parentId);
+    if (mainCategories.length > 0) {
+      setSelectedCategory(mainCategories[0].id);
+    }
+    
+    setShowingChildren(null);
+    setParentCategory(null);
+  }, [getCategories]);
+
+  // معالج اختيار منتج في الفاتورة
+  const handleOrderItemSelect = useCallback((itemId: string) => {
+    if (selectedOrderItemId === itemId) {
+      setSelectedOrderItemId(null);
+    } else {
+      setSelectedOrderItemId(itemId);
+    }
+  }, [selectedOrderItemId]);
+
+  // معالج اختيار الفئة
   const handleCategorySelect = useCallback((categoryId: string) => {
     const category = categories.find(cat => cat.id === categoryId);
     
     if (category?.hasChildren && category.children) {
-      // إخفاء كل الفئات وإظهار الأطفال فقط
       setShowingChildren(categoryId);
       setParentCategory(category);
-      setCategories(category.children);
       if (category.children.length > 0) {
         setSelectedCategory(category.children[0].id);
       }
@@ -106,62 +194,36 @@ const PosSystem: React.FC = () => {
   }, []);
 
   // دالة الرجوع للفئة الأب
-  const handleBackToParent = useCallback(async () => {
+  const handleBackToParent = useCallback(() => {
     setShowingChildren(null);
     setParentCategory(null);
-    
-    // إعادة تحميل الفئات الأساسية
-    const rootCategories = allCategories.filter(cat => !cat.parentId);
-    setCategories(rootCategories);
     
     if (rootCategories.length > 0) {
       setSelectedCategory(rootCategories[0].id);
     }
-  }, [allCategories]);
+  }, [rootCategories]);
 
-  // التعامل مع ضغط المنتج - محدث لدعم المجموعات
+  // معالج ضغط المنتج
   const handleProductClick = useCallback((product: PosProduct) => {
     if (product.hasMultiplePrices) {
-      // فتح الـ popup لاختيار السعر
       setSelectedProduct(product);
       setShowPricePopup(true);
     } else if (product.productPrices.length > 0) {
       const price = product.productPrices[0];
       
-      // التحقق من وجود مجموعات خيارات
       if (posService.hasProductOptions(product)) {
         setSelectedProductForOptions(product);
         setSelectedPriceForOptions(price);
         setShowOptionsPopup(true);
       } else {
-        // إضافة للفاتورة مباشرة
         addToOrder(product, price, []);
       }
     }
-  }, [keypadValue]);
+  }, [addToOrder]);
 
-  // إضافة منتج للفاتورة - محدث لدعم المجموعات
-  const addToOrder = useCallback((product: PosProduct, price: PosPrice, selectedOptions: SelectedOption[]) => {
-    const quantity = parseInt(keypadValue) || 1;
-    const totalPrice = posService.calculateTotalPrice(price.price, selectedOptions, quantity);
-    
-    const orderItem: OrderItem = {
-      id: `${product.id}_${price.id}_${Date.now()}`,
-      product,
-      selectedPrice: price,
-      quantity,
-      totalPrice,
-      selectedOptions: selectedOptions.length > 0 ? selectedOptions : undefined,
-    };
-
-    setOrderItems(prev => [...prev, orderItem]);
-    setKeypadValue('1'); // إعادة تعيين الكمية
-  }, [keypadValue]);
-
-  // التعامل مع اختيار السعر من الـ popup - محدث لدعم المجموعات
+  // معالج اختيار السعر
   const handlePriceSelect = useCallback((price: PosPrice) => {
     if (selectedProduct) {
-      // التحقق من وجود مجموعات خيارات
       if (posService.hasProductOptions(selectedProduct)) {
         setSelectedProductForOptions(selectedProduct);
         setSelectedPriceForOptions(price);
@@ -174,7 +236,7 @@ const PosSystem: React.FC = () => {
     setSelectedProduct(null);
   }, [selectedProduct, addToOrder]);
 
-  // معالج إكمال اختيار المجموعات - جديد
+  // معالج إكمال اختيار المجموعات
   const handleOptionsComplete = useCallback((selectedOptions: SelectedOption[]) => {
     if (selectedProductForOptions && selectedPriceForOptions) {
       addToOrder(selectedProductForOptions, selectedPriceForOptions, selectedOptions);
@@ -185,7 +247,7 @@ const PosSystem: React.FC = () => {
   }, [selectedProductForOptions, selectedPriceForOptions, addToOrder]);
 
   // حساب ملخص الطلب
-  const orderSummary: OrderSummary = useMemo(() => {
+  const orderSummary: OrderSummaryType = useMemo(() => {
     const subtotal = orderItems.reduce((sum, item) => sum + item.totalPrice, 0);
     const discount = 0;
     const tax = 0;
@@ -227,19 +289,34 @@ const PosSystem: React.FC = () => {
     );
   }, []);
 
+  // عرض حالة التحميل
+  if (loading) {
+    return (
+      <div className="pos-system loading">
+        <div className="loading-spinner">جاري تحميل البيانات...</div>
+      </div>
+    );
+  }
+
+  // عرض حالة الخطأ
+  if (error) {
+    return (
+      <div className="pos-system error">
+        <div className="error-message">{error}</div>
+        <button onClick={() => window.location.reload()}>إعادة المحاولة</button>
+      </div>
+    );
+  }
+
   return (
     <div className="pos-system">
-      {/* Top Header Bar */}
-<Header
-  selectedOrderType={selectedOrderType}
-  onOrderTypeChange={setSelectedOrderType}
-/>
+      <Header
+        selectedOrderType={selectedOrderType}
+        onOrderTypeChange={setSelectedOrderType}
+      />
 
-      {/* Main Content */}
       <main className="main-content">
-        {/* Left Section - Products Area */}
         <section className="products-section">
-          {/* Number Pad Bar */}
           <div className="number-pad-bar">
             <div className="keypad-grid">
               {['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '.', 'C'].map((key) => (
@@ -257,68 +334,40 @@ const PosSystem: React.FC = () => {
             </div>
           </div>
 
-          {/* Action Buttons Bar */}
-          <div className="action-buttons-bar">
-            <div className="action-chips">
-              <button 
-                className={`action-chip extra ${selectedChips.includes('extra') ? 'active' : ''}`}
-                onClick={() => handleChipClick('extra')}
-              >
-                <img src="/images/img_addcircle.svg" alt="" />
-                <span>Extra</span>
-              </button>
-              <button 
-                className={`action-chip without ${selectedChips.includes('without') ? 'active' : ''}`}
-                onClick={() => handleChipClick('without')}
-              >
-                <img src="/images/img_removecircle.svg" alt="" />
-                <span>Without</span>
-              </button>
-              <button 
-                className={`action-chip offer ${selectedChips.includes('offer') ? 'active' : ''}`}
-                onClick={() => handleChipClick('offer')}
-              >
-                <img src="/images/img_tags.svg" alt="" />
-                <span>Offer</span>
-              </button>
-            </div>
-            
-            <div className="search-container">
-              <img src="/images/img_search01.svg" alt="search" className="search-icon" />
-              <input
-                type="text"
-                placeholder="Search"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="search-input"
-              />
-              <button className="filter-button">
-                <img src="/images/img_group_7.svg" alt="Filter" />
-              </button>
-            </div>
-          </div>
+          <ActionButtons
+            selectedChips={selectedChips}
+            onChipClick={handleChipClick}
+            isExtraMode={isExtraMode}
+            isWithoutMode={isWithoutMode}
+            onExtraClick={handleExtraClick}
+            onWithoutClick={handleWithoutClick}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+          />
 
-{/* Products Grid */}
-{/* Products Grid */}
-<div className="product-grid">
-  {loading ? (
-    <div className="loading-message">Loading...</div>
-  ) : (
-    displayedProducts.map((product) => (
-      <ProductCard
-        key={product.id}
-        product={product}
-        onClick={handleProductClick}
-      />
-    ))
-  )}
-</div>
+          <div className="product-grid">
+            {displayedProducts.map((product) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                onClick={handleProductClick}
+              />
+            ))}
+          </div>
         </section>
 
-        {/* Categories Sidebar */}
         <aside className="categories-sidebar">
           <div className="categories-list">
-            {/* زر الرجوع إذا كنا نعرض الأطفال */}
+            {isAdditionMode && (
+              <button
+                onClick={handleBackToMainProducts}
+                className="category-item back-button main-back"
+              >
+                <ArrowBackIcon />
+                <span>رجوع للمنتجات الأساسية</span>
+              </button>
+            )}
+            
             {showingChildren && (
               <button
                 onClick={handleBackToParent}
@@ -329,7 +378,6 @@ const PosSystem: React.FC = () => {
               </button>
             )}
             
-            {/* عرض الفئات */}
             {categories.map((category) => (
               <button
                 key={category.id}
@@ -343,120 +391,17 @@ const PosSystem: React.FC = () => {
           </div>
         </aside>
 
-        {/* Order Summary */}
-        <aside className="order-summary">
-          <div className="order-header">
-            <div className="order-number">#123</div>
-            <div className="order-total">
-              <span className="amount">{orderSummary.total.toFixed(2)}</span>
-              <span className="currency">EGP</span>
-            </div>
-          </div>
-
-          <div className="order-content">
-            <h3 className="order-title">Order Details</h3>
-
-            <div className="customer-input">
-              <input
-                type="text"
-                placeholder="Walk in Customer"
-                value={customerName}
-                onChange={(e) => setCustomerName(e.target.value)}
-                className="customer-field"
-              />
-              <button className="customer-button">
-                <img src="/images/img_group_1000004320.svg" alt="Add customer" />
-              </button>
-            </div>
-
-            <div className="order-items">
-              {orderSummary.items.map((item) => (
-                <div key={item.id} className="order-item">
-                  <div className="item-details">
-                    <button 
-                      className="delete-button"
-                      onClick={() => removeOrderItem(item.id)}
-                    >
-                      <img src="/images/img_delete_02.svg" alt="Remove" />
-                    </button>
-                    <div className="item-info">
-                      <div className="item-name">
-                        {item.quantity} X {item.product.nameArabic}
-                        {/* إضافة اسم الحجم جنب اسم الصنف */}
-                        {item.product.hasMultiplePrices && (
-                          <span className="item-size-inline"> - {item.selectedPrice.nameArabic}</span>
-                        )}
-                      </div>
-                      
-                      {/* عرض الخيارات المختارة */}
-                      {item.selectedOptions && item.selectedOptions.length > 0 && (
-                        <div className="item-options">
-                          {item.selectedOptions.map((option, index) => (
-                            <div key={index} className="option-detail">
-                              <span className="option-text">
-                                {option.quantity > 1 ? `${option.quantity}x ` : ''}
-                                {option.itemName}
-                                {option.extraPrice > 0 && ` (+${option.extraPrice})`}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="item-prices">
-                    <div className="item-price">{item.selectedPrice.price}</div>
-                    <div className="item-total">{item.totalPrice}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="order-footer">
-            <div className="summary-rows">
-              <div className="summary-row">
-                <span>Sub Total</span>
-                <span>{orderSummary.subtotal.toFixed(2)} <small>EGP</small></span>
-              </div>
-              <div className="summary-row">
-                <span>Discount</span>
-                <span>{orderSummary.discount.toFixed(2)} <small>EGP</small></span>
-              </div>
-              <div className="summary-row">
-                <span>Tax</span>
-                <span>{orderSummary.tax.toFixed(2)} <small>EGP</small></span>
-              </div>
-              <div className="summary-row">
-                <span>Service</span>
-                <span>{orderSummary.service.toFixed(2)} <small>EGP</small></span>
-              </div>
-            </div>
-
-            <div className="total-row">
-              <span>Total</span>
-              <span>{orderSummary.total.toFixed(2)} <small>EGP</small></span>
-            </div>
-
-            <div className="action-buttons">
-              <button className="action-button send">
-                <img src="/images/img_tabler_send.svg" alt="Send" />
-                <span>Send</span>
-              </button>
-              <button className="action-button print">
-                <img src="/images/img_printer.svg" alt="Print" />
-                <span>Print</span>
-              </button>
-              <button className="action-button pay">
-                <img src="/images/img_payment_02.svg" alt="Pay" />
-                <span>Pay</span>
-              </button>
-            </div>
-          </div>
-        </aside>
+        <OrderSummary
+          orderSummary={orderSummary}
+          customerName={customerName}
+          onCustomerNameChange={setCustomerName}
+          onRemoveOrderItem={removeOrderItem}
+          onRemoveSubItem={removeSubItem}
+          selectedOrderItemId={selectedOrderItemId}
+          onOrderItemSelect={handleOrderItemSelect}
+        />
       </main>
 
-      {/* Price Selection Popup */}
       <PriceSelectionPopup
         product={selectedProduct!}
         quantity={parseInt(keypadValue) || 1}
@@ -465,19 +410,18 @@ const PosSystem: React.FC = () => {
         onSelectPrice={handlePriceSelect}
       />
 
-      {/* Product Options Popup - جديد */}
-<ProductOptionsPopup
-  product={selectedProductForOptions}
-  selectedPrice={selectedPriceForOptions}
-  quantity={parseInt(keypadValue) || 1}
-  isOpen={showOptionsPopup}
-  onClose={() => {
-    setShowOptionsPopup(false);
-    setSelectedProductForOptions(null);
-    setSelectedPriceForOptions(null);
-  }}
-  onComplete={handleOptionsComplete}
-/>
+      <ProductOptionsPopup
+        product={selectedProductForOptions}
+        selectedPrice={selectedPriceForOptions}
+        quantity={parseInt(keypadValue) || 1}
+        isOpen={showOptionsPopup}
+        onClose={() => {
+          setShowOptionsPopup(false);
+          setSelectedProductForOptions(null);
+          setSelectedPriceForOptions(null);
+        }}
+        onComplete={handleOptionsComplete}
+      />
     </div>
   );
 };

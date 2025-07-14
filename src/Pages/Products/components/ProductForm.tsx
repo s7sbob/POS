@@ -804,7 +804,7 @@ const submit = async (data: FormValues, saveAction: 'save' | 'saveAndNew') => {
         lastPurePrice: data.lastPurePrice,
         expirationDays: data.expirationDays,
         isActive: data.isActive,
-        ...(productType === 1 && { posScreenId: data.posScreenId }),
+  ...((productType === 1 || productType === 3) && { posScreenId: data.posScreenId }),
         productPrices: data.productPrices.map(price => {
           const priceData: any = {
             ...(price.productPriceId && { productPriceId: price.productPriceId }),
@@ -863,7 +863,7 @@ const submit = async (data: FormValues, saveAction: 'save' | 'saveAndNew') => {
         lastPurePrice: data.lastPurePrice,
         expirationDays: data.expirationDays,
         isActive: data.isActive,
-        ...(productType === 1 && { posScreenId: data.posScreenId }),
+  ...((productType === 1 || productType === 3) && { posScreenId: data.posScreenId }),
         productPrices: data.productPrices.map(price => {
           const priceData: any = {
             barcode: price.barcode,
@@ -1696,81 +1696,82 @@ const DesktopPriceTable = () => (
             {currentTab === 0 && (
               <Grid container spacing={3}>
                 {/* Basic Info Section */}
-                <Grid item xs={12}>
-                  <Typography variant="h6" sx={{ mb: 2, color: 'primary.main' }}>
-                    {t('products.basicInfo')}
-                  </Typography>
-                </Grid>
+<Grid item xs={12}>
+  <Typography variant="h6" sx={{ mb: 2, color: 'primary.main' }}>
+    {t('products.basicInfo')}
+  </Typography>
+</Grid>
 
-                <Grid item xs={12} md={6}>
-                  <Controller
-                    name="productName"
-                    control={control}
-                    rules={{ required: t('products.nameRequired') }}
-                    render={({ field, fieldState }) => (
-                      <TextField
-                        {...field}
-                        inputRef={nameFieldRef}
-                        label={t('products.name')}
-                        fullWidth
-                        error={!!fieldState.error}
-                        helperText={fieldState.error?.message}
-                        autoFocus
-                        onFocus={(e) => e.target.select()}
-                      />
-                    )}
-                  />
-                </Grid>
+<Grid item xs={12} md={6}>
+  <Controller
+    name="productName"
+    control={control}
+    rules={{ required: t('products.nameRequired') }}
+    render={({ field, fieldState }) => (
+      <TextField
+        {...field}
+        inputRef={nameFieldRef}
+        label={t('products.name')}
+        fullWidth
+        error={!!fieldState.error}
+        helperText={fieldState.error?.message}
+        autoFocus
+        onFocus={(e) => e.target.select()}
+      />
+    )}
+  />
+</Grid>
 
-                <Grid item xs={12} md={6}>
-                  <Controller
-                    name="groupId"
-                    control={control}
-                    rules={{ required: t('products.groupRequired') }}
-                    render={({ field, fieldState }) => (
-                      <Box>
-                        <GroupTreeSelect
-                          groups={groups}
-                          value={field.value}
-                          onChange={field.onChange}
-                          label={t('products.group')}
-                        />
-                        {fieldState.error && (
-                          <Typography variant="caption" color="error" sx={{ mt: 1, ml: 2 }}>
-                            {fieldState.error.message}
-                          </Typography>
-                        )}
-                      </Box>
-                    )}
-                  />
-                </Grid>
+<Grid item xs={12} md={6}>
+  <Controller
+    name="groupId"
+    control={control}
+    rules={{ required: t('products.groupRequired') }}
+    render={({ field, fieldState }) => (
+      <Box>
+        <GroupTreeSelect
+          groups={groups}
+          value={field.value}
+          onChange={field.onChange}
+          label={t('products.group')}
+        />
+        {fieldState.error && (
+          <Typography variant="caption" color="error" sx={{ mt: 1, ml: 2 }}>
+            {fieldState.error.message}
+          </Typography>
+        )}
+      </Box>
+    )}
+  />
+</Grid>
 
-                {productType === 1 && flatPosScreens.length > 0 && (
-                  <Grid item xs={12} md={6}>
-                    <Controller
-                      name="posScreenId"
-                      control={control}
-                      render={({ field }) => (
-                        <FormControl fullWidth>
-                          <InputLabel>{t('products.posScreen')}</InputLabel>
-                          <Select
-                            {...field}
-                            label={t('products.posScreen')}
-                          >
-                            <MenuItem value="">
-                              <em>{t('products.selectPosScreen')}</em>
-                            </MenuItem>
-                            {flatPosScreens.map((screen) => (
-                              <MenuItem key={screen.id} value={screen.id}>
-                                {'  '.repeat(screen.displayOrder || 0) + screen.name}
-                              </MenuItem>
-                            ))}
-                          </Select>
-                        </FormControl>
-                      )}
-                    />
-                  </Grid>
-                )}
+{/* POS Screen Selection - محدث ليشمل Product Type = 3 */}
+{(productType === 1 || productType === 3) && flatPosScreens.length > 0 && (
+  <Grid item xs={12} md={6}>
+    <Controller
+      name="posScreenId"
+      control={control}
+      render={({ field }) => (
+        <FormControl fullWidth>
+          <InputLabel>{t('products.posScreen')}</InputLabel>
+          <Select
+            {...field}
+            label={t('products.posScreen')}
+          >
+            <MenuItem value="">
+              <em>{t('products.selectPosScreen')}</em>
+            </MenuItem>
+            {flatPosScreens.map((screen) => (
+              <MenuItem key={screen.id} value={screen.id}>
+                {'  '.repeat(screen.displayOrder || 0) + screen.name}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      )}
+    />
+  </Grid>
+)}
 
 <Grid item xs={12} md={6}>
   <Controller

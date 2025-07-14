@@ -1190,3 +1190,190 @@ body {
     transform: translateY(0);
   }
 }
+
+
+
+/* إضافة هذا للـ CSS الموجود */
+
+/* Order Item Selection */
+.order-item {
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.order-item.selected {
+  background: rgba(3, 115, 237, 0.1);
+  border-left: 4px solid #0373ed;
+}
+
+.order-item:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+/* Extra/Without Items */
+.extra-item {
+  border-left: 3px solid #28a745;
+}
+
+.without-item {
+  border-left: 3px solid #dc3545;
+}
+
+.extra-badge {
+  background: #28a745;
+  color: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  margin-right: 4px;
+  font-weight: 600;
+}
+
+.without-badge {
+  background: #dc3545;
+  color: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  margin-right: 4px;
+  font-weight: 600;
+}
+
+.item-total.negative {
+  color: #dc3545;
+  font-weight: 600;
+}
+
+/* Active Action Chips */
+.action-chip.active {
+  background: #0373ed;
+  color: white;
+  border-color: #0373ed;
+}
+
+.action-chip.active img {
+  filter: brightness(0) invert(1);
+}
+
+
+
+
+/* إضافة هذا في responsive.css */
+
+/* Sub-items styling */
+.sub-items-container {
+  margin-top: 6px;
+  padding-left: 8px;
+  border-left: 2px solid #f0f0f0;
+}
+
+.sub-item {
+  margin-bottom: 3px;
+}
+
+.sub-item-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2px 0;
+}
+
+.sub-item-info {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+}
+
+.sub-item-badge {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+  font-weight: 600;
+  color: white;
+  flex-shrink: 0;
+}
+
+.sub-item-badge.extra {
+  background: #28a745;
+}
+
+.sub-item-badge.without {
+  background: #dc3545;
+}
+
+.sub-item-badge.option {
+  background: #6c757d;
+}
+
+.sub-item-text {
+  font-size: 10px;
+  color: #666;
+  line-height: 1.2;
+}
+
+.sub-item-delete {
+  width: 16px;
+  height: 16px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
+}
+
+.sub-item-delete:hover {
+  opacity: 1;
+}
+
+.sub-item-delete img {
+  width: 12px;
+  height: 12px;
+}
+
+/* Loading and Error states */
+.pos-system.loading,
+.pos-system.error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.loading-spinner {
+  font-size: 18px;
+  color: #666;
+}
+
+.error-message {
+  font-size: 16px;
+  color: #dc3545;
+  text-align: center;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .sub-item-text {
+    font-size: 9px;
+  }
+  
+  .sub-item-delete {
+    width: 14px;
+    height: 14px;
+  }
+  
+  .sub-item-delete img {
+    width: 10px;
+    height: 10px;
+  }
+}

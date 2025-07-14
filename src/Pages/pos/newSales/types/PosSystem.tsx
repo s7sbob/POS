@@ -70,6 +70,22 @@ export interface OrderItem {
   totalPrice: number;
   selectedOptions?: SelectedOption[]; // إضافة الخيارات المختارة
   notes?: string;
+    isExtra?: boolean;        // جديد
+  isWithout?: boolean;      // جديد
+  parentItemId?: string;    // جديد - للربط بالمنتج الأصلي
+  subItems?: SubItem[]; // جديد - للعناصر الفرعية
+}
+
+
+export interface SubItem {
+  id: string;
+  type: 'option' | 'extra' | 'without';
+  name: string;
+  quantity: number;
+  price: number;
+  isRequired?: boolean; // للمجموعات المطلوبة
+  groupId?: string; // للمجموعات
+  productId?: string; // للإضافات/بدون
 }
 
 export interface OrderSummary {

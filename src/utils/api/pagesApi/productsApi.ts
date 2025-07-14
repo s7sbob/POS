@@ -333,8 +333,8 @@ export const add = async (body: {
   isActive: boolean;
   posScreenId?: string;
   productPrices: Array<{
-    unitId?: string; // ⭐ اختياري للـ POS/Addition
-    unitFactor?: number; // ⭐ اختياري للـ POS/Addition
+    unitId?: string;
+    unitFactor?: number;
     barcode: string;
     Price: number;
     posPriceName?: string;
@@ -356,8 +356,10 @@ export const add = async (body: {
     lastPurePrice: Number(body.lastPurePrice),
     expirationDays: Number(body.expirationDays),
     isActive: Boolean(body.isActive),
-    // إرسال PosScreenId فقط للمنتجات من نوع POS (1)
-    ...(body.productType === 1 && body.posScreenId && { PosScreenId: body.posScreenId }),
+    // ⭐ تحديث: إرسال PosScreenId للمنتجات من نوع POS (1) أو Addition (3)
+    ...((body.productType === 1 || body.productType === 3) && body.posScreenId && { 
+      PosScreenId: body.posScreenId 
+    }),
     productPrices: body.productPrices.map(price => {
       const priceData: any = {
         barcode: price.barcode,
@@ -369,13 +371,13 @@ export const add = async (body: {
         })) || []
       };
 
-      // ⭐ إضافة unitId و unitFactor فقط للـ Materials (type 2)
+      // إضافة unitId و unitFactor فقط للـ Materials (type 2)
       if (body.productType === 2) {
         priceData.unitId = price.unitId;
         priceData.unitFactor = Number(price.unitFactor);
       }
 
-      // ⭐ إضافة PosPriceName فقط للـ POS (1) أو Addition (3)
+      // إضافة PosPriceName فقط للـ POS (1) أو Addition (3)
       if (body.productType === 1 || body.productType === 3) {
         priceData.PosPriceName = price.posPriceName || "";
       }
@@ -422,6 +424,7 @@ export const add = async (body: {
   }
 };
 
+
 // في دالة update:
 export const update = async (body: {
   ProductId: string;
@@ -436,8 +439,8 @@ export const update = async (body: {
   posScreenId?: string;
   productPrices: Array<{
     productPriceId?: string;
-    unitId?: string; // ⭐ اختياري للـ POS/Addition
-    unitFactor?: number; // ⭐ اختياري للـ POS/Addition
+    unitId?: string;
+    unitFactor?: number;
     barcode: string;
     Price: number;
     posPriceName?: string;
@@ -460,8 +463,10 @@ export const update = async (body: {
       reorderLevel: Number(body.reorderLevel),
       expirationDays: Number(body.expirationDays),
       isActive: Boolean(body.isActive),
-      // إرسال PosScreenId فقط للمنتجات من نوع POS (1)
-      ...(body.ProductType === 1 && body.posScreenId && { PosScreenId: body.posScreenId }),
+      // ⭐ تحديث: إرسال PosScreenId للمنتجات من نوع POS (1) أو Addition (3)
+      ...((body.ProductType === 1 || body.ProductType === 3) && body.posScreenId && { 
+        PosScreenId: body.posScreenId 
+      }),
       productPrices: body.productPrices.map(price => {
         const priceData: any = {
           ...(price.productPriceId && { productPriceId: price.productPriceId }),
@@ -475,13 +480,13 @@ export const update = async (body: {
           })) || []
         };
 
-        // ⭐ إضافة unitId و unitFactor فقط للـ Materials (type 2)
+        // إضافة unitId و unitFactor فقط للـ Materials (type 2)
         if (body.ProductType === 2) {
           priceData.unitId = price.unitId;
           priceData.unitFactor = Number(price.unitFactor);
         }
 
-        // ⭐ إضافة PosPriceName فقط للـ POS (1) أو Addition (3)
+        // إضافة PosPriceName فقط للـ POS (1) أو Addition (3)
         if (body.ProductType === 1 || body.ProductType === 3) {
           priceData.PosPriceName = price.posPriceName || "";
         }
@@ -528,4 +533,5 @@ export const update = async (body: {
     throw error;
   }
 };
+
 
