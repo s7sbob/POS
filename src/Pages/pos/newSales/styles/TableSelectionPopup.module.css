@@ -1,0 +1,373 @@
+/* src/Pages/pos/newSales/components/TableSelectionPopup.module.css */
+
+/* Popup Overlay */
+.popupOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.popupContainer {
+  background: white;
+  border-radius: 16px;
+  width: 95%;
+  max-width: 1400px;
+  height: 90vh;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+/* Close Button */
+.closeBtn {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  z-index: 1001;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  font-family: 'Cairo', sans-serif;
+}
+
+.closeBtn:hover {
+  background: #c82333;
+  transform: translateY(-2px);
+}
+
+/* Main Layout */
+.posSystem {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.mainContent {
+  flex: 1;
+  display: flex;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Products Section (Tables) */
+.productsSection {
+  flex: 1;
+  background: #f8f9fa;
+  padding: 20px;
+  overflow-y: auto;
+  padding-top: 80px; /* Space for close button */
+}
+
+.productGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 16px;
+  padding: 20px;
+}
+
+.productItem {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+  position: relative;
+  min-height: 160px;
+}
+
+.productItem:hover:not(.occupied) {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  border-color: #0373ed;
+}
+
+.productItem.occupied {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: #f8f9fa;
+}
+
+.productItem.occupied::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(220, 53, 69, 0.1);
+  border-radius: 12px;
+}
+
+.productImage {
+  width: 60px;
+  height: 60px;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f0f0f0;
+}
+
+.productImage img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.productName {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.productName span {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  font-family: 'Cairo', sans-serif;
+}
+
+.productName small {
+  font-size: 12px;
+  color: #666;
+  font-family: 'Cairo', sans-serif;
+}
+
+.status {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 500;
+  margin-top: 4px;
+  display: inline-block;
+  font-family: 'Cairo', sans-serif;
+}
+
+.status.available {
+  background: #d4edda;
+  color: #155724;
+}
+
+.status.occupied {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+/* Categories Sidebar (Sections) */
+.categoriesSidebar {
+  width: 280px;
+  background: white;
+  border-left: 1px solid #e9ecef;
+  padding: 20px;
+  overflow-y: auto;
+  height: 100%;
+}
+
+.categoriesList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 20px;
+}
+
+.categoryItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+  text-align: left;
+}
+
+.categoryItem:hover {
+  background: #e9ecef;
+  transform: translateY(-2px);
+}
+
+.categoryItem.active {
+  background: #0373ed;
+  color: white;
+  border-color: #0373ed;
+}
+
+.categoryItem.active span,
+.categoryItem.active small {
+  color: white;
+}
+
+.categoryItem img {
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.categoryItem span {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  font-family: 'Cairo', sans-serif;
+  line-height: 1.2;
+}
+
+.categoryItem small {
+  font-size: 11px;
+  color: #666;
+  font-family: 'Cairo', sans-serif;
+  margin-top: 2px;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .productGrid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 12px;
+    padding: 15px;
+  }
+  
+  .categoriesSidebar {
+    width: 240px;
+  }
+  
+  .productItem {
+    min-height: 140px;
+    padding: 12px;
+  }
+}
+
+@media (max-width: 768px) {
+  .popupContainer {
+    width: 98%;
+    height: 95vh;
+  }
+  
+  .mainContent {
+    flex-direction: column;
+  }
+  
+  .categoriesSidebar {
+    width: 100%;
+    height: 120px;
+    border-left: none;
+    border-top: 1px solid #e9ecef;
+    padding: 15px;
+  }
+  
+  .categoriesList {
+    flex-direction: row;
+    overflow-x: auto;
+    gap: 8px;
+    padding-top: 10px;
+  }
+  
+  .categoryItem {
+    min-width: 120px;
+    padding: 8px;
+    gap: 8px;
+  }
+  
+  .categoryItem img {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .categoryItem span {
+    font-size: 12px;
+  }
+  
+  .categoryItem small {
+    font-size: 10px;
+  }
+  
+  .productsSection {
+    padding: 15px;
+    padding-top: 70px;
+  }
+  
+  .productGrid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 10px;
+    padding: 10px;
+  }
+  
+  .productItem {
+    min-height: 120px;
+    padding: 10px;
+  }
+  
+  .productImage {
+    width: 50px;
+    height: 50px;
+    margin-bottom: 8px;
+  }
+  
+  .productName span {
+    font-size: 12px;
+  }
+  
+  .productName small {
+    font-size: 10px;
+  }
+  
+  .closeBtn {
+    top: 10px;
+    left: 10px;
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .productGrid {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 8px;
+  }
+  
+  .productItem {
+    min-height: 100px;
+    padding: 8px;
+  }
+  
+  .productImage {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .productName span {
+    font-size: 11px;
+  }
+  
+  .status {
+    font-size: 9px;
+    padding: 1px 4px;
+  }
+}

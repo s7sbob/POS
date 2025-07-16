@@ -14,6 +14,12 @@ import './styles/responsive.css';
 import './styles/popup.css';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import OrderItemDetailsPopup from './components/OrderItemDetailsPopup';
+import TableSelectionPopup from './components/TableSelectionPopup';
+import { useTableManager } from './hooks/useTableManager';
+import { TableSelection } from './types/TableSystem';
+import { useError } from '../../../contexts/ErrorContext';
+import * as deliveryCompaniesApi from '../../../utils/api/pagesApi/deliveryCompaniesApi';
+import { DeliveryCompany } from '../../../utils/api/pagesApi/deliveryCompaniesApi';
 
 const PosSystem: React.FC = () => {
   const [keypadValue, setKeypadValue] = useState('1');
@@ -22,7 +28,25 @@ const PosSystem: React.FC = () => {
   const [customerName, setCustomerName] = useState('');
   const [selectedChips, setSelectedChips] = useState<string[]>([]);
   const [selectedOrderType, setSelectedOrderType] = useState('Takeaway');
-  
+  const [showTablePopup, setShowTablePopup] = useState(false);
+const { showWarning } = useError();
+const [deliveryCompanies, setDeliveryCompanies] = useState<DeliveryCompany[]>([]);
+const [selectedDeliveryCompany, setSelectedDeliveryCompany] = useState<DeliveryCompany | null>(null); // ✅ null مش أي قيمة تانية
+
+  // إضافة Table Manager Hook
+const {
+  tableSections,
+  selectedTable,
+  isChooseTable,
+  selectTable,
+  clearSelectedTable,
+  getTableDisplayName,
+  getServiceCharge,
+  isTableRequired,
+  canAddProduct
+} = useTableManager();
+
+
   // استخدام Data Manager الجديد
   const {
     loading,
@@ -66,6 +90,21 @@ const PosSystem: React.FC = () => {
   const categories = showingChildren 
     ? currentCategories.find(cat => cat.id === showingChildren)?.children || []
     : rootCategories;
+
+
+
+// تحميل البيانات مرة واحدة
+useEffect(() => {
+  const loadDeliveryCompanies = async () => {
+    try {
+      const companies = await deliveryCompaniesApi.getAll();
+      setDeliveryCompanies(companies);
+    } catch (error) {
+      console.error('Error loading delivery companies:', error);
+    }
+  };
+  loadDeliveryCompanies();
+}, []);
 
   // المنتجات المعروضة
   const displayedProducts = useMemo(() => {
@@ -321,22 +360,59 @@ const handleRemoveSubItem = useCallback((orderItemId: string, subItemId: string)
   }, [rootCategories]);
 
   // معالج ضغط المنتج
-  const handleProductClick = useCallback((product: PosProduct) => {
-    if (product.hasMultiplePrices) {
-      setSelectedProduct(product);
-      setShowPricePopup(true);
-    } else if (product.productPrices.length > 0) {
-      const price = product.productPrices[0];
-      
-      if (hasProductOptions(product)) {
-        setSelectedProductForOptions(product);
-        setSelectedPriceForOptions(price);
-        setShowOptionsPopup(true);
-      } else {
-        addToOrder(product, price, []);
-      }
+const handleProductClick = useCallback((product: PosProduct) => {
+  // فحص إذا كانت الطاولة مطلوبة
+  if (!canAddProduct(selectedOrderType)) {
+    showWarning('يجب اختيار الطاولة أولاً');
+    return;
+  }
+
+  if (product.hasMultiplePrices) {
+    setSelectedProduct(product);
+    setShowPricePopup(true);
+  } else if (product.productPrices.length > 0) {
+    const price = product.productPrices[0];
+    
+    if (hasProductOptions(product)) {
+      setSelectedProductForOptions(product);
+      setSelectedPriceForOptions(price);
+      setShowOptionsPopup(true);
+    } else {
+      addToOrder(product, price, []);
     }
-  }, [addToOrder, hasProductOptions]);
+  }
+}, [addToOrder,showWarning, hasProductOptions, selectedOrderType, canAddProduct]);
+
+
+
+// إضافة معالج اختيار الطاولة
+const handleTableSelect = useCallback((selection: TableSelection) => {
+  selectTable(selection);
+  setShowTablePopup(false);
+}, [selectTable]);
+
+// إضافة معالج فتح popup الطاولة
+const handleTableClick = useCallback(() => {
+  setShowTablePopup(true);
+}, []);
+
+
+
+// تعديل معالج تغيير نوع الطلب
+const handleOrderTypeChange = useCallback((type: string) => {
+  setSelectedOrderType(type);
+  
+  // إذا تم اختيار Dine-in، افتح popup الطاولة تلقائياً
+  if (type === 'Dine-in' && isTableRequired(type)) {
+    setShowTablePopup(true);
+  }
+  
+  // إذا تم تغيير النوع لغير Dine-in، امسح الطاولة المختارة
+  if (type !== 'Dine-in') {
+    clearSelectedTable();
+  }
+}, [isTableRequired, clearSelectedTable]);
+
 
   // معالج اختيار السعر
   const handlePriceSelect = useCallback((price: PosPrice) => {
@@ -363,23 +439,28 @@ const handleRemoveSubItem = useCallback((orderItemId: string, subItemId: string)
     setSelectedPriceForOptions(null);
   }, [selectedProductForOptions, selectedPriceForOptions, addToOrder]);
 
-  // حساب ملخص الطلب
-  const orderSummary: OrderSummaryType = useMemo(() => {
-    const subtotal = orderItems.reduce((sum, item) => sum + item.totalPrice, 0);
-    const discount = 0;
-    const tax = 0;
-    const service = 0;
-    const total = subtotal - discount + tax + service;
+// تعديل حساب ملخص الطلب ليشمل الخدمة
+const orderSummary: OrderSummaryType = useMemo(() => {
+  const subtotal = orderItems.reduce((sum, item) => sum + item.totalPrice, 0);
+  const serviceCharge = getServiceCharge();
+  const service = (subtotal * serviceCharge) / 100;
+  const subtotalWithService = subtotal + service;
+  
+  // حساب الخصم على الإجمالي + الخدمة
+  const discountPercentage = 0; // سيتم إضافة آلية الخصم لاحقاً
+  const discount = (subtotalWithService * discountPercentage) / 100;
+  const tax = 0;
+  const total = subtotalWithService - discount + tax;
 
-    return {
-      items: orderItems,
-      subtotal,
-      discount,
-      tax,
-      service,
-      total
-    };
-  }, [orderItems]);
+  return {
+    items: orderItems,
+    subtotal,
+    discount,
+    tax,
+    service,
+    total
+  };
+}, [orderItems, getServiceCharge]);
 
   // حذف منتج من الطلب
   const removeOrderItem = useCallback((itemId: string) => {
@@ -413,6 +494,10 @@ const handleRemoveSubItem = useCallback((orderItemId: string, subItemId: string)
     setCustomerName('');
     setKeypadValue('1');
     
+     // إعادة تعيين الطاولة
+  clearSelectedTable();
+
+
     // إعادة تعيين الـ modes
     setIsExtraMode(false);
     setIsWithoutMode(false);
@@ -426,7 +511,7 @@ const handleRemoveSubItem = useCallback((orderItemId: string, subItemId: string)
     
     // رسالة تأكيد (اختيارية)
     console.log('Order reset successfully');
-  }, [handleBackToMainProducts]);
+}, [handleBackToMainProducts, clearSelectedTable]);
 
   // عرض حالة التحميل
   if (loading) {
@@ -449,11 +534,16 @@ const handleRemoveSubItem = useCallback((orderItemId: string, subItemId: string)
 
   return (
     <div className="pos-system">
-      <Header
-        selectedOrderType={selectedOrderType}
-        onOrderTypeChange={setSelectedOrderType}
-        onResetOrder={handleResetOrder}
-      />
+<Header
+  selectedOrderType={selectedOrderType}
+  onOrderTypeChange={handleOrderTypeChange}
+  onResetOrder={handleResetOrder}
+  onTableClick={handleTableClick}
+  tableDisplayName={getTableDisplayName()}
+  deliveryCompanies={deliveryCompanies}
+  selectedDeliveryCompany={selectedDeliveryCompany}
+  onDeliveryCompanySelect={setSelectedDeliveryCompany}
+/>
 
       <main className="main-content">
         <section className="products-section">
@@ -578,6 +668,14 @@ const handleRemoveSubItem = useCallback((orderItemId: string, subItemId: string)
         onUpdateItem={handleUpdateOrderItem}
         onRemoveItem={removeOrderItem}
       />
+
+      <TableSelectionPopup
+  isOpen={showTablePopup}
+  onClose={() => setShowTablePopup(false)}
+  onSelectTable={handleTableSelect}
+  tableSections={tableSections}
+/>
+
     </div>
   );
 };

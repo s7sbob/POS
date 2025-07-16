@@ -187,7 +187,7 @@
 
 .orderItem.selected {
   background: rgba(3, 115, 237, 0.1);
-  border-left: 30px solid #0373ed;
+  border-left: 20px solid #0373ed;
   padding-left: 8px;
   position: relative;
 }
@@ -196,10 +196,10 @@
 .orderItem.selected::before {
   content: '✕';
   position: absolute;
-  left: -30px; /* داخل الـ border بالسالب */
+  left: -20px; /* داخل الـ border بالسالب */
   top: 0;
   bottom: 0;
-  width: 30px;
+  width: 20px;
   color: white;
   font-size: 16px;
   font-weight: bold;
@@ -363,17 +363,17 @@
 /* Sub-item المحدد - مع border أكبر */
 .selectedSubItem {
   background: rgba(3, 115, 237, 0.1);
-  border-left: 30px solid #0373ed;
+  border-left: 20px solid #0373ed;
   padding-left: 8px;
   position: relative;
 }
 .selectedSubItem::before {
   content: '✕';
   position: absolute;
-  left: -30px; /* داخل الـ border بالسالب */
+  left: -20px; /* داخل الـ border بالسالب */
   top: 0;
   bottom: 0;
-  width: 30px;
+  width: 20px;
   color: white;
   font-size: 14px;
   font-weight: bold;
