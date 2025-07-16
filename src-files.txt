@@ -706,58 +706,64 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
   // إضافة state للـ sub-item المحدد
   const [selectedSubItemId, setSelectedSubItemId] = useState<string | null>(null);
   
-  const renderSubItem = (subItem: SubItem, orderItemId: string) => {
-    const canDelete = subItem.type !== 'option' || !subItem.isRequired;
-    const isSelected = selectedSubItemId === subItem.id;
-    
-    return (
-      <div 
-        key={subItem.id} 
-        className={`${styles.subItem} ${isSelected ? styles.selectedSubItem : ''}`}
-        onClick={(e) => {
-          e.stopPropagation();
-          
-          // إذا كان الضغط على منطقة الـ X (أول 20px من اليسار)
-  // التحقق من الضغط على منطقة الـ border بدقة أكبر
-  const rect = e.currentTarget.getBoundingClientRect();
-  const clickX = e.clientX - rect.left;
-  const borderWidth = 20; // عرض الـ border
+const renderSubItem = (subItem: SubItem, orderItemId: string) => {
+  // فقط المنتجات من نوع extra و without يمكن حذفها أو تحديدها
+  const canDelete = subItem.type === 'extra' || subItem.type === 'without';
+  const isSelected = selectedSubItemId === subItem.id && canDelete;
   
-  if (isSelected && canDelete && clickX <= borderWidth) {
-    onRemoveSubItem(orderItemId, subItem.id);
-    setSelectedSubItemId(null);
-  } else {
-    setSelectedSubItemId(isSelected ? null : subItem.id);
-  }
-}}
-      >
-        <div className={styles.subItemDetails}>
-          <div className={styles.subItemInfo}>
-            {/* إظهار الـ badge فقط إذا لم يكن محدد */}
-            {!isSelected && (
-              <span className={`${styles.subItemBadge} ${styles[subItem.type]}`}>
-                {subItem.type === 'extra' && '+'}
-                {subItem.type === 'without' && '-'}
-                {subItem.type === 'option' && '•'}
-              </span>
-            )}
-            <div className={styles.subItemName}>
-              {subItem.quantity} X {subItem.name}
-            </div>
-          </div>
-        </div>
+  return (
+    <div 
+      key={subItem.id} 
+      className={`${styles.subItem} ${isSelected ? styles.selectedSubItem : ''}`}
+      onClick={(e) => {
+        e.stopPropagation();
         
-        <div className={styles.subItemPrices}>
-          <div className={styles.subItemPrice}>
-            {subItem.type === 'without' ? '0' : (subItem.price / subItem.quantity).toFixed(2)}
-          </div>
-          <div className={`${styles.subItemTotal} ${subItem.price < 0 ? styles.negative : ''}`}>
-            {subItem.type === 'without' ? '0' : subItem.price.toFixed(2)}
+        // فقط إذا كان من النوع القابل للحذف
+        if (canDelete) {
+          const rect = e.currentTarget.getBoundingClientRect();
+          const clickX = e.clientX - rect.left;
+          
+          if (isSelected && clickX <= 30) {
+            onRemoveSubItem(orderItemId, subItem.id);
+            setSelectedSubItemId(null);
+          } else {
+            setSelectedSubItemId(isSelected ? null : subItem.id);
+          }
+        }
+        // إذا كان من نوع option، لا يحدث شيء
+      }}
+      style={{
+        cursor: canDelete ? 'pointer' : 'default' // تغيير الـ cursor بناءً على القابلية للحذف
+      }}
+    >
+      <div className={styles.subItemDetails}>
+        <div className={styles.subItemInfo}>
+          {/* إظهار الـ badge فقط إذا لم يكن محدد */}
+          {!isSelected && (
+            <span className={`${styles.subItemBadge} ${styles[subItem.type]}`}>
+              {subItem.type === 'extra' && '+'}
+              {subItem.type === 'without' && '-'}
+              {subItem.type === 'option' && '•'}
+            </span>
+          )}
+          <div className={styles.subItemName}>
+            {subItem.quantity} X {subItem.name}
           </div>
         </div>
       </div>
-    );
-  };
+      
+      <div className={styles.subItemPrices}>
+        <div className={styles.subItemPrice}>
+          {subItem.type === 'without' ? '0' : (subItem.price / subItem.quantity).toFixed(2)}
+        </div>
+        <div className={`${styles.subItemTotal} ${subItem.price < 0 ? styles.negative : ''}`}>
+          {subItem.type === 'without' ? '0' : subItem.price.toFixed(2)}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 
   const renderOptions = (options: any[]) => {
     return options.map((option: any, index: number) => (
@@ -819,20 +825,20 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
             <div key={item.id} className={styles.orderItemContainer}>
               <div 
                 className={`${styles.orderItem} ${selectedOrderItemId === item.id ? styles.selected : ''} ${item.isExtra ? styles.extraItem : ''} ${item.isWithout ? styles.withoutItem : ''}`}
-                onClick={() => onOrderItemSelect(item.id)}
+onClick={(e) => {
+  const rect = e.currentTarget.getBoundingClientRect();
+  const clickX = e.clientX - rect.left;
+  
+  // إذا كان محدد والضغط على أول 30px (منطقة الـ border)
+  if (selectedOrderItemId === item.id && clickX <= 30) {
+    onRemoveOrderItem(item.id);
+  } else {
+    onOrderItemSelect(item.id);
+  }
+}}
                 onDoubleClick={() => onOrderItemDoubleClick?.(item)}
               >
                 <div className={styles.itemDetails}>
-                  <button 
-                    className={styles.deleteButton}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onRemoveOrderItem(item.id);
-                    }}
-                  >
-                    <img src="/images/img_delete_02.svg" alt="Remove" />
-                  </button>
-                  
                   <div className={styles.itemInfo}>
                     <div className={styles.itemName}>
                       {item.isExtra && <span className={styles.extraBadge}>+</span>}
@@ -4178,7 +4184,36 @@ export default react;
 
 .orderItem.selected {
   background: rgba(3, 115, 237, 0.1);
-  border-left: 4px solid #0373ed;
+  border-left: 30px solid #0373ed;
+  padding-left: 8px;
+  position: relative;
+}
+
+/* حرف X للمنتج الرئيسي */
+.orderItem.selected::before {
+  content: '✕';
+  position: absolute;
+  left: -30px; /* داخل الـ border بالسالب */
+  top: 0;
+  bottom: 0;
+  width: 30px;
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 1;
+  background: transparent;
+  transition: all 0.2s ease;
+}
+
+/* تأثير hover للمنتج الرئيسي */
+.orderItem.selected:hover::before {
+  background: rgba(255, 255, 255, 0.1);
+  font-size: 18px;
+  transform: scale(1.1);
 }
 
 .orderItem.extraItem {
@@ -4325,56 +4360,93 @@ export default react;
 /* Sub-item المحدد - مع border أكبر */
 .selectedSubItem {
   background: rgba(3, 115, 237, 0.1);
-  border-left: 20px solid #0373ed;
-  padding-left: 4px;
+  border-left: 30px solid #0373ed;
+  padding-left: 8px;
   position: relative;
-  justify-content: right;
 }
-
-/* الـ X جوا الـ border فعلاً */
 .selectedSubItem::before {
-  content: 'X...';
+  content: '✕';
   position: absolute;
-  left: 0;
+  left: -30px; /* داخل الـ border بالسالب */
   top: 0;
   bottom: 0;
-  width: 0px;
+  width: 30px;
   color: white;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: bold;
-  cursor: pointer;
-  z-index: 2;
   display: flex;
   align-items: center;
-  justify-content: right;
-  background: transparent; /* بدون لون خلفية */
-  pointer-events: none; /* علشان الـ click يشتغل على الـ parent */
+  justify-content: center;
+  cursor: pointer;
+  z-index: 1;
+  background: transparent;
+  transition: all 0.2s ease;
+}
+
+/* تأثير hover للـ sub-item */
+.selectedSubItem:hover::before {
+  background: rgba(255, 255, 255, 0.1);
+  font-size: 16px;
+  transform: scale(1.1);
+}
+
+/* تأثير الضغط للعناصر المحددة */
+.orderItem.selected:active::before,
+.selectedSubItem:active::before {
+  transform: scale(0.9);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+/* الـ options لا تأخذ تأثيرات الـ hover */
+.subItem[data-type="option"] {
+  cursor: default;
+}
+
+.subItem[data-type="option"]:hover {
+  background: initial;
 }
 
 /* تحسين للتابلت */
 @media (max-width: 1024px) {
+  .orderItem.selected,
   .selectedSubItem {
-    border-left: 24px solid #0373ed;
+    border-left: 35px solid #0373ed;
   }
   
+  .orderItem.selected::before,
   .selectedSubItem::before {
-    width: 24px;
-    font-size: 13px;
+    width: 35px;
+    font-size: 15px;
   }
 }
 
 /* تحسين للموبايل */
 @media (max-width: 768px) {
+  .orderItem.selected,
   .selectedSubItem {
-    border-left: 26px solid #0373ed;
+    border-left: 38px solid #0373ed;
   }
   
+  .orderItem.selected::before,
   .selectedSubItem::before {
-    width: 26px;
-    font-size: 14px;
+    width: 38px;
+    font-size: 16px;
   }
 }
 
+/* تحسين للشاشات الصغيرة جداً */
+@media (max-width: 480px) {
+  .orderItem.selected,
+  .selectedSubItem {
+    border-left: 40px solid #0373ed;
+  }
+  
+  .orderItem.selected::before,
+  .selectedSubItem::before {
+    width: 40px;
+    font-size: 17px;
+  }
+}
 
 .subItemDetails {
   display: flex;

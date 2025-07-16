@@ -69,16 +69,17 @@ const PosSystem: React.FC = () => {
 
   // المنتجات المعروضة
   const displayedProducts = useMemo(() => {
-    if (searchQuery.trim()) {
-      return searchProducts(currentProducts, searchQuery);
-    }
-    
-    if (selectedCategory) {
-      return getProductsByScreenId(currentProducts, selectedCategory);
-    }
-    
-    return [];
-  }, [currentProducts, selectedCategory, searchQuery, searchProducts, getProductsByScreenId]);
+  if (searchQuery.trim()) {
+    // البحث في كل المنتجات بدون فلتر
+    return searchProducts(currentProducts, searchQuery);
+  }
+  
+  if (selectedCategory) {
+    return getProductsByScreenId(currentProducts, selectedCategory);
+  }
+  
+  return [];
+}, [currentProducts, selectedCategory, searchQuery, searchProducts, getProductsByScreenId]);
 
   // تحديث دالة updateOrderItem
 

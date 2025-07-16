@@ -131,15 +131,16 @@ export const useDataManager = () => {
   }, [dataState.additionCategories, dataState.normalModeCategories]);
 
   // إضافة دوال مساعدة متوافقة مع posService
-  const searchProducts = useCallback((products: PosProduct[], query: string): PosProduct[] => {
-    if (!query.trim()) return [];
-    
-    const searchTerm = query.toLowerCase();
-    return products.filter(product => 
-      product.nameArabic.toLowerCase().includes(searchTerm) ||
-      product.name.toLowerCase().includes(searchTerm)
-    );
-  }, []);
+
+const searchProducts = useCallback((products: PosProduct[], query: string): PosProduct[] => {
+  if (!query.trim()) return [];
+  
+  const searchTerm = query.toLowerCase();
+  return products.filter(product => 
+    product.nameArabic.toLowerCase().includes(searchTerm) ||
+    product.name.toLowerCase().includes(searchTerm)
+  );
+}, []);
 
   const getProductsByScreenId = useCallback((products: PosProduct[], screenId: string): PosProduct[] => {
     return products.filter(product => product.categoryId === screenId);
