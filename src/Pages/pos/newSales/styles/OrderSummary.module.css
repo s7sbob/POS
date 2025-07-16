@@ -1,0 +1,1064 @@
+/* OrderSummary Module CSS */
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap');
+
+:root {
+  /* Colors */
+  --primary-blue: #0373ed;
+  --primary-green: #23a929;
+  --primary-red: #e53935;
+  --primary-orange: #ffb74d;
+  --bg-main: #f5f5f5;
+  --bg-white: #ffffff;
+  --text-primary: #000000;
+  --text-secondary: rgba(0, 0, 0, 0.7);
+  --border-color: rgba(0, 0, 0, 0.2);
+  
+  /* Responsive spacing */
+  --scale-factor: clamp(0.8, 1vw, 1.2);
+  --spacing-xs: calc(0.25rem * var(--scale-factor));
+  --spacing-sm: calc(0.5rem * var(--scale-factor));
+  --spacing-md: calc(1rem * var(--scale-factor));
+  --spacing-lg: calc(1.5rem * var(--scale-factor));
+  --spacing-xl: calc(2rem * var(--scale-factor));
+}
+
+/* Main Container */
+.orderSummary {
+  width: clamp(280px, 35vw, 400px);
+  background: var(--bg-white);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
+}
+
+/* Header Section */
+.orderHeader {
+  height: clamp(50px, 7vh, 80px);
+  display: flex;
+  flex-shrink: 0;
+}
+
+.orderNumber {
+  flex: 1;
+  background: var(--primary-blue);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(16px, 2vw, 24px);
+  font-weight: 700;
+  border-radius: 8px 0 0 0;
+}
+
+.orderTotal {
+  width: clamp(100px, 12vw, 150px);
+  border: 2px solid var(--primary-blue);
+  color: var(--primary-blue);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+  border-radius: 0 8px 0 0;
+}
+
+.orderTotal .amount {
+  font-size: clamp(16px, 2vw, 24px);
+  font-weight: 700;
+}
+
+.orderTotal .currency {
+  font-size: clamp(10px, 1.2vw, 16px);
+  font-weight: 600;
+}
+
+/* Content Section */
+.orderContent {
+  flex: 1;
+  padding: var(--spacing-lg);
+  overflow-y: auto;
+  scrollbar-width: none;
+  scrollbar-color: var(--border-color) transparent;
+}
+
+.orderContent::-webkit-scrollbar {
+  width: 6px;
+}
+
+.orderContent::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.orderContent::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 3px;
+}
+
+/* Customer Input */
+.customerInput {
+  display: flex;
+  margin-bottom: var(--spacing-lg);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.customerField {
+  flex: 1;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: none;
+  font-size: clamp(10px, 1.2vw, 14px);
+  font-family: 'Cairo', sans-serif;
+  background: transparent;
+}
+
+.customerField:focus {
+  outline: none;
+}
+
+.customerButton {
+  width: clamp(30px, 4vw, 45px);
+  background: var(--primary-blue);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease;
+}
+
+.customerButton:hover {
+  background: #025bb5;
+}
+
+.customerButton img {
+  width: clamp(12px, 1.4vw, 18px);
+  height: clamp(12px, 1.4vw, 18px);
+}
+
+/* Order Items */
+.orderItems {
+  max-height: 50vh;
+  margin-bottom: var(--spacing-md);
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-color) transparent;
+}
+
+.orderItems::-webkit-scrollbar {
+  width: 4px;
+}
+
+.orderItems::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.orderItems::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 2px;
+}
+
+/* Order Item Container - التعديل الرئيسي للفاصل */
+.orderItemContainer {
+  margin-bottom: clamp(12px, 1.5vw, 16px); /* مسافة بين مجموعات المنتجات فقط */
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1); /* خط فاصل بين المجموعات */
+  padding-bottom: clamp(8px, 1vw, 12px);
+}
+
+.orderItemContainer:last-child {
+  border-bottom: none; /* إزالة الخط من آخر عنصر */
+}
+
+/* Main Order Item */
+.orderItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border-radius: 6px;
+  margin-bottom: 0; /* إزالة المسافة السفلية */
+}
+
+.orderItem:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.orderItem.selected {
+  background: rgba(3, 115, 237, 0.1);
+  border-left: 30px solid #0373ed;
+  padding-left: 8px;
+  position: relative;
+}
+
+/* حرف X للمنتج الرئيسي */
+.orderItem.selected::before {
+  content: '✕';
+  position: absolute;
+  left: -30px; /* داخل الـ border بالسالب */
+  top: 0;
+  bottom: 0;
+  width: 30px;
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 1;
+  background: transparent;
+  transition: all 0.2s ease;
+}
+
+/* تأثير hover للمنتج الرئيسي */
+.orderItem.selected:hover::before {
+  background: rgba(255, 255, 255, 0.1);
+  font-size: 18px;
+  transform: scale(1.1);
+}
+
+.orderItem.extraItem {
+  border-left: 3px solid #28a745;
+}
+
+.orderItem.withoutItem {
+  border-left: 3px solid #dc3545;
+}
+
+/* Item Details */
+.itemDetails {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: flex-start;
+  flex: 1;
+  min-width: 0;
+}
+
+.deleteButton {
+    order: -1; /* أول عنصر */
+
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: var(--spacing-xs);
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+.deleteButton:hover {
+  background: rgba(229, 57, 53, 0.1);
+}
+
+.deleteButton img {
+  width: clamp(12px, 1.4vw, 16px);
+  height: clamp(12px, 1.4vw, 16px);
+}
+
+.itemInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.itemName {
+  font-size: clamp(11px, 1.3vw, 16px);
+  font-weight: 600;
+  margin-bottom: var(--spacing-xs);
+  color: var(--text-primary);
+  line-height: 1.2;
+  font-family: 'Cairo', sans-serif;
+}
+
+.itemSizeInline {
+  color: var(--primary-blue);
+  font-weight: 500;
+  font-size: 0.9em;
+}
+
+/* Item Prices - التعديل الرئيسي للأسعار */
+.itemPrices {
+  display: flex;
+  align-items: center;
+  gap: clamp(6px, 1vw, 10px);
+  flex-shrink: 0;
+  min-width: fit-content;
+}
+
+.itemPrice {
+  font-size: clamp(10px, 1.2vw, 14px);
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  padding-right: clamp(6px, 1vw, 10px);
+  border-right: 1px solid #ccc; /* الخط العمودي الفاصل */
+}
+
+.itemTotal {
+  font-size: clamp(11px, 1.3vw, 16px);
+  font-weight: 700;
+  color: var(--primary-blue);
+  white-space: nowrap;
+  padding-left: clamp(6px, 1vw, 10px);
+}
+
+.itemTotal.negative {
+  color: #dc3545;
+  font-weight: 600;
+}
+
+/* Badges */
+.extraBadge, .withoutBadge {
+  color: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  margin-right: 4px;
+  font-weight: 600;
+}
+
+.extraBadge {
+  background: #28a745;
+}
+
+.withoutBadge {
+  background: #dc3545;
+}
+
+/* Sub-items Container - إزالة الفاصل مع المنتج الرئيسي */
+.subItemsContainer {
+  margin-top: 0; /* إزالة المسافة العلوية */
+  padding-left: 16px;
+  border-left: 2px solid #f0f0f0;
+}
+
+/* Sub-item */
+.subItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1px 0;
+  margin-bottom: 0px;
+  min-height: 18px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border-radius: 4px;
+  position: relative;
+}
+
+
+.subItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1px 0;
+  margin-bottom: 0px;
+  min-height: 18px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border-radius: 4px;
+  position: relative;
+}
+
+/* Sub-item المحدد - مع border أكبر */
+.selectedSubItem {
+  background: rgba(3, 115, 237, 0.1);
+  border-left: 30px solid #0373ed;
+  padding-left: 8px;
+  position: relative;
+}
+.selectedSubItem::before {
+  content: '✕';
+  position: absolute;
+  left: -30px; /* داخل الـ border بالسالب */
+  top: 0;
+  bottom: 0;
+  width: 30px;
+  color: white;
+  font-size: 14px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 1;
+  background: transparent;
+  transition: all 0.2s ease;
+}
+
+/* تأثير hover للـ sub-item */
+.selectedSubItem:hover::before {
+  background: rgba(255, 255, 255, 0.1);
+  font-size: 16px;
+  transform: scale(1.1);
+}
+
+/* تأثير الضغط للعناصر المحددة */
+.orderItem.selected:active::before,
+.selectedSubItem:active::before {
+  transform: scale(0.9);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+/* الـ options لا تأخذ تأثيرات الـ hover */
+.subItem[data-type="option"] {
+  cursor: default;
+}
+
+.subItem[data-type="option"]:hover {
+  background: initial;
+}
+
+/* تحسين للتابلت */
+@media (max-width: 1024px) {
+  .orderItem.selected,
+  .selectedSubItem {
+    border-left: 35px solid #0373ed;
+  }
+  
+  .orderItem.selected::before,
+  .selectedSubItem::before {
+    width: 35px;
+    font-size: 15px;
+  }
+}
+
+/* تحسين للموبايل */
+@media (max-width: 768px) {
+  .orderItem.selected,
+  .selectedSubItem {
+    border-left: 38px solid #0373ed;
+  }
+  
+  .orderItem.selected::before,
+  .selectedSubItem::before {
+    width: 38px;
+    font-size: 16px;
+  }
+}
+
+/* تحسين للشاشات الصغيرة جداً */
+@media (max-width: 480px) {
+  .orderItem.selected,
+  .selectedSubItem {
+    border-left: 40px solid #0373ed;
+  }
+  
+  .orderItem.selected::before,
+  .selectedSubItem::before {
+    width: 40px;
+    font-size: 17px;
+  }
+}
+
+.subItemDetails {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+}
+
+.subItemInfo {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+}
+
+.subItemBadge {
+  width: 12px; /* زيادة الحجم قليلاً */
+  height: 12px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 7px;
+  font-weight: 600;
+  color: white;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.subItemBadge.extra {
+  background: #28a745;
+}
+
+.subItemBadge.without {
+  background: #dc3545;
+}
+
+.subItemBadge.option {
+  background: #6c757d;
+}
+
+.subItemName {
+  font-size: 10px;
+  color: #666;
+  line-height: 1.2;
+  font-family: 'Cairo', sans-serif;
+}
+
+/* Sub-item Prices - نفس تصميم الأسعار الرئيسية */
+.subItemPrices {
+  display: flex;
+  align-items: center;
+  gap: clamp(4px, 0.8vw, 8px);
+  min-width: fit-content;
+}
+
+.subItemPrice {
+  font-size: 8px;
+  color: #999;
+  font-weight: 500;
+  white-space: nowrap;
+  padding-right: clamp(4px, 0.8vw, 8px);
+  border-right: 1px solid #ddd; /* الخط العمودي الفاصل */
+}
+
+.subItemTotal {
+  font-size: 9px;
+  color: #333;
+  font-weight: 600;
+  white-space: nowrap;
+  padding-left: clamp(4px, 0.8vw, 8px);
+}
+
+.subItemTotal.negative {
+  color: #dc3545;
+}
+
+.subItemDelete {
+  width: 14px;
+  height: 14px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
+  margin-left: 4px;
+}
+
+.subItemDelete:hover {
+  opacity: 1;
+}
+
+.subItemDelete img {
+  width: 8px;
+  height: 8px;
+}
+
+/* Item Options - إزالة الفاصل مع المنتج الرئيسي */
+.itemOptions {
+  margin-top: 0; /* إزالة المسافة العلوية */
+  padding-left: 16px;
+}
+
+.optionDetail {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1px;
+  padding: 2px 0;
+  min-height: 18px;
+}
+
+.optionText {
+  font-size: 10px;
+  color: #666;
+  font-weight: 400;
+  line-height: 1.2;
+  font-family: 'Cairo', sans-serif;
+  flex: 1;
+}
+
+/* Option Prices - نفس تصميم الأسعار الرئيسية */
+.optionPrices {
+  display: flex;
+  align-items: center;
+  gap: clamp(4px, 0.8vw, 8px);
+  min-width: fit-content;
+}
+
+.optionPrice {
+  font-size: 8px;
+  color: #999;
+  font-weight: 500;
+  white-space: nowrap;
+  padding-right: clamp(4px, 0.8vw, 8px);
+  border-right: 1px solid #ddd; /* الخط العمودي الفاصل */
+}
+
+.optionTotal {
+  font-size: 9px;
+  color: #333;
+  font-weight: 600;
+  white-space: nowrap;
+  padding-left: clamp(4px, 0.8vw, 8px);
+}
+
+/* Order Footer */
+.orderFooter {
+  padding: var(--spacing-md);
+  border-top: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+.summaryRows {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--spacing-sm) * 0.8);
+  margin-bottom: var(--spacing-md);
+}
+
+.summaryRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: clamp(10px, 1.2vw, 15px);
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.summaryRow span:last-child {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.totalRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: clamp(13px, 1.5vw, 19px);
+  font-weight: 700;
+  padding-top: var(--spacing-md);
+  border-top: 2px solid var(--border-color);
+  margin-bottom: var(--spacing-md);
+}
+
+.actionButtons {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-md);
+}
+
+.actionButton {
+  height: clamp(40px, 7vh, 60px);
+  border-radius: 6px;
+  border: none;
+  color: white;
+  font-size: clamp(10px, 1.2vw, 16px);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.actionButton img {
+  width: clamp(12px, 1.4vw, 18px);
+  height: clamp(12px, 1.4vw, 18px);
+}
+
+.actionButton:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.actionButton.send {
+  background: var(--primary-red);
+}
+
+.actionButton.print {
+  background: var(--primary-blue);
+}
+
+.actionButton.pay {
+  background: var(--primary-green);
+}
+
+/* Responsive Design */
+@media (max-width: 1366px) {
+  .summaryRows {
+    gap: calc(var(--spacing-sm) * 0.6);
+  }
+  
+  .orderItems {
+    max-height: 45vh;
+  }
+}
+
+@media (max-width: 1024px) {
+  .summaryRows {
+    gap: calc(var(--spacing-sm) * 0.4);
+  }
+  
+  .orderItems {
+    max-height: 42vh;
+  }
+  
+  .itemPrices, .subItemPrices, .optionPrices {
+    gap: 4px;
+  }
+}
+
+@media (max-width: 768px) {
+  .subItemName {
+    font-size: 9px;
+  }
+  
+  .subItemPrice {
+    font-size: 7px;
+  }
+  
+  .subItemTotal {
+    font-size: 8px;
+  }
+  
+  .subItemDelete {
+    width: 12px;
+    height: 12px;
+  }
+  
+  .subItemDelete img {
+    width: 6px;
+    height: 6px;
+  }
+  
+  .optionText {
+    font-size: 9px;
+  }
+  
+  .optionPrice {
+    font-size: 7px;
+  }
+  
+  .optionTotal {
+    font-size: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .orderItemContainer {
+    margin-bottom: 8px;
+  }
+  
+  .subItem {
+    padding: 1px 0;
+    margin-bottom: 0px;
+    min-height: 16px;
+  }
+  
+  .optionDetail {
+    padding: 1px 0;
+    margin-bottom: 0px;
+    min-height: 14px;
+  }
+  
+  .itemPrices, .subItemPrices, .optionPrices {
+    gap: 3px;
+  }
+}
+
+
+/* Comments Container */
+.commentsContainer {
+  margin-top: 0;
+  padding-left: 16px;
+  border-left: 2px solid #e3f2fd;
+}
+
+.commentItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 3px 0;
+  margin-bottom: 2px;
+  min-height: 20px;
+}
+
+.commentIcon {
+  font-size: 10px;
+  color: #2196f3;
+  margin-top: 1px;
+  flex-shrink: 0;
+}
+
+.commentText {
+  font-size: 10px;
+  color: #2196f3;
+  line-height: 1.3;
+  font-family: 'Cairo', sans-serif;
+  font-style: italic;
+  word-wrap: break-word;
+  flex: 1;
+}
+
+/* Responsive للتعليقات */
+@media (max-width: 768px) {
+  .commentText {
+    font-size: 9px;
+  }
+  
+  .commentIcon {
+    font-size: 9px;
+  }
+}
+
+@media (max-width: 480px) {
+  .commentItem {
+    padding: 2px 0;
+    margin-bottom: 1px;
+    min-height: 16px;
+  }
+  
+  .commentText {
+    font-size: 8px;
+  }
+  
+  .commentIcon {
+    font-size: 8px;
+  }
+}
+
+
+
+
+
+
+
+
+
+
+/* زر الحذف المدمج */
+.deleteButtonInline {
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-left: 8px;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 16px;
+}
+
+.deleteButtonInline:hover {
+  background: #c82333;
+  transform: scale(1.1);
+}
+
+/* تحديث SubItem لتقليل المسافات */
+.subItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1px 0; /* تقليل المسافة */
+  margin-bottom: 0px; /* إزالة المسافة السفلية */
+  min-height: 18px; /* تقليل الارتفاع */
+  cursor: pointer;
+}
+
+.subItem:hover {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.subItemName {
+  font-size: 10px;
+  color: #666;
+  line-height: 1.1; /* تحسين المسافة بين الأسطر */
+  font-family: 'Cairo', sans-serif;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* تحديث OrderItemContainer لتقليل المسافة */
+.orderItemContainer {
+  margin-bottom: clamp(6px, 1vw, 10px); /* تقليل المسافة */
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  padding-bottom: clamp(4px, 0.8vw, 8px); /* تقليل المسافة */
+}
+
+/* تحديث SubItemsContainer */
+.subItemsContainer {
+  margin-top: -2px; /* تقليل الفجوة مع المنتج الأساسي */
+  padding-left: 12px; /* تقليل المسافة اليسرى */
+  border-left: 2px solid #f0f0f0;
+}
+
+/* تحديث SubItemDetails */
+.subItemDetails {
+  display: flex;
+  align-items: center;
+  gap: 4px; /* تقليل المسافة */
+  flex: 1;
+}
+
+.subItemInfo {
+  display: flex;
+  align-items: center;
+  gap: 3px; /* تقليل المسافة */
+  flex: 1;
+}
+
+.subItemBadge {
+  width: 12px; /* زيادة الحجم قليلاً */
+  height: 12px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 7px;
+  font-weight: 600;
+  color: white;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+/* تحديث الـ responsive */
+@media (max-width: 768px) {
+  .deleteButtonInline {
+    font-size: 8px;
+    padding: 1px 4px;
+    min-width: 16px;
+    height: 14px;
+  }
+  
+  .subItem {
+    min-height: 16px;
+  }
+  
+  .subItemName {
+    font-size: 9px;
+  }
+}
+
+@media (max-width: 480px) {
+  .deleteButtonInline {
+    font-size: 7px;
+    padding: 1px 3px;
+    min-width: 14px;
+    height: 12px;
+  }
+  
+  .subItem {
+    min-height: 14px;
+  }
+  
+  .subItemName {
+    font-size: 8px;
+  }
+  
+  .orderItemContainer {
+    margin-bottom: 4px;
+    padding-bottom: 4px;
+  }
+  
+  .subItemsContainer {
+    padding-left: 8px;
+  }
+}
+
+
+
+
+
+
+
+
+
+/* تحديث SubItemBadge */
+.subItemBadge {
+  width: 12px; /* زيادة الحجم قليلاً */
+  height: 12px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 7px;
+  font-weight: 600;
+  color: white;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+/* حالة الحذف - يكبر ويصبح قابل للنقر */
+.subItemBadge.deletable {
+  width: 18px;
+  height: 18px;
+  font-size: 10px;
+  cursor: pointer;
+  transform: scale(1.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.subItemBadge.deletable:hover {
+  transform: scale(1.2);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+}
+
+.subItemBadge.deletable:active {
+  transform: scale(1.0);
+}
+/* ألوان الـ badges */
+.subItemBadge.extra {
+  background: #28a745;
+}
+
+.subItemBadge.extra.deletable {
+  background: #dc3545; /* أحمر للحذف */
+}
+
+.subItemBadge.without {
+  background: #dc3545;
+}
+
+.subItemBadge.without.deletable {
+  background: #dc3545; /* يبقى أحمر */
+}
+
+.subItemBadge.option {
+  background: #6c757d;
+}
+
+.subItemBadge.option.deletable {
+  background: #dc3545; /* أحمر للحذف */
+}
+
+/* تحسين للتابلت */
+@media (max-width: 1024px) {
+  .subItemBadge.deletable {
+    width: 22px; /* أكبر للتابلت */
+    height: 22px;
+    font-size: 12px;
+  }
+}
+
+/* تحسين للموبايل */
+@media (max-width: 768px) {
+  .subItemBadge.deletable {
+    width: 20px;
+    height: 20px;
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 480px) {
+  .subItemBadge.deletable {
+    width: 24px; /* أكبر للشاشات الصغيرة */
+    height: 24px;
+    font-size: 12px;
+  }
+}

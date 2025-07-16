@@ -437,3 +437,470 @@
     border-width: 1px;
   }
 }
+
+
+
+/* إضافة هذا في Header.css */
+
+.order-type-display.clickable {
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-radius: 4px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid transparent;
+  position: relative;
+  overflow: hidden;
+}
+
+.order-type-display.clickable:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.order-type-display.clickable:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* تأثير ripple عند النقر */
+.order-type-display.clickable::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.3s ease, height 0.3s ease;
+}
+
+.order-type-display.clickable:active::before {
+  width: 100px;
+  height: 100px;
+}
+
+/* إضافة أيقونة صغيرة للإشارة للـ reset */
+.order-type-display.clickable::after {
+  content: '↻';
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  font-size: 10px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.order-type-display.clickable:hover::after {
+  opacity: 0.7;
+}
+
+/* تحسين الـ tooltip */
+.order-type-display.clickable[title] {
+  position: relative;
+}
+
+.order-type-display.clickable[title]:hover::after {
+  content: attr(title);
+  position: absolute;
+  bottom: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  z-index: 1000;
+  opacity: 0.9;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .order-type-display.clickable {
+    padding: 6px 8px;
+    font-size: 12px;
+  }
+  
+  .order-type-display.clickable::after {
+    font-size: 8px;
+  }
+}
+
+
+
+/* إضافة هذا في Header.css */
+
+/* Professional Dropdown Styles */
+.professional-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  width: 420px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.15);
+  border: 1px solid #e9ecef;
+  z-index: 1000;
+  transform: translateY(8px);
+  opacity: 0;
+  animation: dropdownSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+@keyframes dropdownSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(8px);
+  }
+}
+
+.dropdown-section {
+  padding: 20px;
+}
+
+.dropdown-section:not(:last-child) {
+  border-bottom: 1px solid #f1f3f4;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+  font-family: 'Cairo', sans-serif;
+}
+
+.section-divider {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, #e9ecef, transparent);
+}
+
+/* Order Types Cards */
+.order-types-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.order-type-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: white;
+  border: 2px solid #f1f3f4;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.order-type-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, var(--accent-color), transparent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.order-type-card:hover {
+  border-color: var(--accent-color);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+.order-type-card:hover::before {
+  opacity: 0.05;
+}
+
+.order-type-card.selected {
+  border-color: var(--accent-color);
+  background: rgba(var(--accent-color), 0.05);
+  box-shadow: 0 4px 16px rgba(var(--accent-color), 0.2);
+}
+
+.order-type-card.selected::before {
+  opacity: 0.08;
+}
+
+.card-icon-container {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(var(--accent-color), 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.card-icon {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+
+.card-content {
+  flex: 1;
+  text-align: left;
+}
+
+.card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 2px;
+  font-family: 'Cairo', sans-serif;
+}
+
+.card-description {
+  font-size: 12px;
+  color: #666;
+  font-family: 'Cairo', sans-serif;
+}
+
+.card-check {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--accent-color);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: scale(0);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.order-type-card.selected .card-check {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Delivery Partners Cards */
+.delivery-partners-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.delivery-partner-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: white;
+  border: 1px solid #e9ecef;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.delivery-partner-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.delivery-partner-card:hover {
+  border-color: var(--partner-color);
+  transform: translateX(4px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.delivery-partner-card:hover::before {
+  opacity: 1;
+}
+
+.delivery-partner-card.selected {
+  border-color: var(--partner-color);
+  background: var(--partner-bg);
+  box-shadow: 0 4px 16px rgba(var(--partner-color), 0.15);
+}
+
+.partner-icon-container {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: var(--partner-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.partner-icon {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+
+.partner-content {
+  flex: 1;
+  text-align: left;
+}
+
+.partner-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 2px;
+  font-family: 'Cairo', sans-serif;
+}
+
+.partner-status {
+  font-size: 11px;
+  color: #28a745;
+  font-weight: 500;
+  font-family: 'Cairo', sans-serif;
+}
+
+.partner-badge {
+  width: 16px;
+  height: 16px;
+  color: var(--partner-color);
+  opacity: 0;
+  transform: scale(0);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.delivery-partner-card.selected .partner-badge {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Order Type Display Button Enhancement */
+.order-type-display.clickable {
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 8px;
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+}
+
+.order-type-display.clickable::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), transparent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.order-type-display.clickable:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.order-type-display.clickable:hover::before {
+  opacity: 1;
+}
+
+.order-type-display.clickable:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .professional-dropdown {
+    width: 360px;
+    right: -20px;
+  }
+  
+  .order-types-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .dropdown-section {
+    padding: 16px;
+  }
+  
+  .order-type-card {
+    padding: 12px;
+  }
+  
+  .delivery-partner-card {
+    padding: 10px 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .professional-dropdown {
+    width: 320px;
+    right: -40px;
+  }
+  
+  .section-title {
+    font-size: 14px;
+  }
+  
+  .card-title,
+  .partner-name {
+    font-size: 13px;
+  }
+  
+  .card-description {
+    font-size: 11px;
+  }
+}
+
+/* Scroll Styling */
+.professional-dropdown::-webkit-scrollbar {
+  width: 6px;
+}
+
+.professional-dropdown::-webkit-scrollbar-track {
+  background: #f1f3f4;
+  border-radius: 3px;
+}
+
+.professional-dropdown::-webkit-scrollbar-thumb {
+  background: #c1c8cd;
+  border-radius: 3px;
+}
+
+.professional-dropdown::-webkit-scrollbar-thumb:hover {
+  background: #a8b2ba;
+}

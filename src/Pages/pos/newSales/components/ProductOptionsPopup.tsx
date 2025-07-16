@@ -4,6 +4,10 @@ import { PosProduct, PosPrice, ProductOptionGroup, ProductOptionItem, SelectedOp
 import CloseIcon from '@mui/icons-material/Close';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
+import CheckIcon from '@mui/icons-material/Check';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import styles from '../styles/ProductOptionsPopup.module.css';
 
 interface ProductOptionsPopupProps {
   product: PosProduct | null;
@@ -22,38 +26,28 @@ const ProductOptionsPopup: React.FC<ProductOptionsPopupProps> = ({
   onClose,
   onComplete
 }) => {
-  // ✅ ALL HOOKS MUST BE AT THE TOP - ALWAYS CALLED IN SAME ORDER
-  const [currentGroupIndex, setCurrentGroupIndex] = useState(0);
   const [selectedOptions, setSelectedOptions] = useState<SelectedOption[]>([]);
   const [groupSelections, setGroupSelections] = useState<{[groupId: string]: {[itemId: string]: number}}>({});
+  const [currentGroupIndex, setCurrentGroupIndex] = useState(0);
 
-  // ✅ useEffect is now always called in the same position
   useEffect(() => {
     if (isOpen && product) {
-      setCurrentGroupIndex(0);
       setSelectedOptions([]);
       setGroupSelections({});
+      setCurrentGroupIndex(0);
     }
   }, [isOpen, product]);
 
-  // ✅ NOW we can do conditional rendering/early returns
-  if (!isOpen || !product || !selectedPrice) {
-    return null;
-  }
+  if (!isOpen || !product || !selectedPrice) return null;
 
   const optionGroups = product.productOptionGroups || [];
-  
+
   if (optionGroups.length === 0) {
     onComplete([]);
     return null;
   }
 
   const currentGroup = optionGroups[currentGroupIndex];
-  
-  if (!currentGroup) {
-    onComplete(selectedOptions);
-    return null;
-  }
 
   const handleItemSelection = (group: ProductOptionGroup, item: ProductOptionItem, change: number) => {
     const newSelections = { ...groupSelections };
@@ -83,197 +77,272 @@ const ProductOptionsPopup: React.FC<ProductOptionsPopupProps> = ({
     setGroupSelections(newSelections);
   };
 
-  const isGroupValid = (group: ProductOptionGroup): boolean => {
-    const selections = groupSelections[group.id] || {};
-    const totalSelected = Object.values(selections).reduce((sum, count) => sum + count, 0);
+  const handleCardClick = (group: ProductOptionGroup, item: ProductOptionItem) => {
+    const currentCount = groupSelections[group.id]?.[item.id] || 0;
+    const totalSelected = Object.values(groupSelections[group.id] || {}).reduce((sum, count) => sum + count, 0);
+    const otherItemsTotal = totalSelected - currentCount;
     
-    if (group.isRequired) {
-      return totalSelected >= group.minSelection;
+    if (group.allowMultiple) {
+      // للمجموعات المتعددة: زيادة الكمية
+      if (otherItemsTotal < group.maxSelection) {
+        handleItemSelection(group, item, 1);
+      }
+    } else {
+      // للمجموعات الفردية: تغيير الحالة
+      handleItemSelection(group, item, currentCount > 0 ? -1 : 1);
     }
-    
-    return totalSelected === 0 || totalSelected >= group.minSelection;
   };
 
-  const canSkipGroup = (group: ProductOptionGroup): boolean => {
-    return !group.isRequired;
+  const isCurrentGroupValid = (): boolean => {
+    const selections = groupSelections[currentGroup.id] || {};
+    const totalSelected = Object.values(selections).reduce((sum, count) => sum + count, 0);
+    
+    if (currentGroup.isRequired) {
+      return totalSelected >= currentGroup.minSelection;
+    }
+    
+    return true; // المجموعات غير المطلوبة صحيحة دائما
+  };
+
+  const isAllGroupsValid = (): boolean => {
+    return optionGroups.every(group => {
+      const selections = groupSelections[group.id] || {};
+      const totalSelected = Object.values(selections).reduce((sum, count) => sum + count, 0);
+      
+      if (group.isRequired) {
+        return totalSelected >= group.minSelection;
+      }
+      
+      return totalSelected === 0 || totalSelected >= group.minSelection;
+    });
   };
 
   const handleNext = () => {
-    const selections = groupSelections[currentGroup.id] || {};
-    
-    Object.entries(selections).forEach(([itemId, count]) => {
-      if (count > 0) {
-        const item = currentGroup.optionItems.find(i => i.id === itemId);
-        if (item) {
-          const existingIndex = selectedOptions.findIndex(
-            opt => opt.groupId === currentGroup.id && opt.itemId === itemId
-          );
-          
-          const newOption: SelectedOption = {
-            groupId: currentGroup.id,
-            itemId: itemId,
-            itemName: item.name,
-            quantity: count,
-            extraPrice: item.extraPrice,
-            isCommentOnly: item.isCommentOnly
-          };
-          
-          if (existingIndex >= 0) {
-            selectedOptions[existingIndex] = newOption;
-          } else {
-            selectedOptions.push(newOption);
-          }
-        }
-      }
-    });
-    
     if (currentGroupIndex < optionGroups.length - 1) {
       setCurrentGroupIndex(currentGroupIndex + 1);
-    } else {
-      onComplete(selectedOptions);
     }
   };
 
-  const handleSkip = () => {
-    if (currentGroupIndex < optionGroups.length - 1) {
-      setCurrentGroupIndex(currentGroupIndex + 1);
-    } else {
-      onComplete(selectedOptions);
-    }
-  };
-
-  const handleBack = () => {
+  const handlePrevious = () => {
     if (currentGroupIndex > 0) {
       setCurrentGroupIndex(currentGroupIndex - 1);
     }
   };
 
-  const currentSelections = groupSelections[currentGroup.id] || {};
-  const totalSelected = Object.values(currentSelections).reduce((sum, count) => sum + count, 0);
+  const handleComplete = () => {
+    const allSelectedOptions: SelectedOption[] = [];
+    
+    optionGroups.forEach(group => {
+      const selections = groupSelections[group.id] || {};
+      Object.entries(selections).forEach(([itemId, count]) => {
+        if (count > 0) {
+          const item = group.optionItems.find(i => i.id === itemId);
+          if (item) {
+            allSelectedOptions.push({
+              groupId: group.id,
+              itemId: itemId,
+              itemName: item.name,
+              quantity: count,
+              extraPrice: item.extraPrice,
+              isCommentOnly: item.isCommentOnly
+            });
+          }
+        }
+      });
+    });
+    
+    onComplete(allSelectedOptions);
+  };
+
+  const calculateTotalPrice = () => {
+    let total = selectedPrice.price * quantity;
+    
+    optionGroups.forEach(group => {
+      const selections = groupSelections[group.id] || {};
+      Object.entries(selections).forEach(([itemId, count]) => {
+        if (count > 0) {
+          const item = group.optionItems.find(i => i.id === itemId);
+          if (item) {
+            total += item.extraPrice * count * quantity;
+          }
+        }
+      });
+    });
+    
+    return total;
+  };
+
+  const selections = groupSelections[currentGroup.id] || {};
+  const totalSelected = Object.values(selections).reduce((sum, count) => sum + count, 0);
 
   return (
-    <div className="popup-overlay">
-      <div className="popup-content options-popup">
-        <div className="popup-header">
-          <div className="popup-title-section">
-            <h3 className="popup-title">{product.nameArabic}</h3>
-            <div className="popup-subtitle">
-              {selectedPrice.nameArabic} - الكمية: {quantity}
-            </div>
-          </div>
-          <button className="popup-close" onClick={onClose}>
-            <CloseIcon />
-          </button>
-        </div>
+    <div className={styles.popupOverlay}>
+      <div className={styles.popupContent}>
+<div className={styles.popupHeader}>
+  <div className={styles.popupTitleSection}>
+    <h3 className={styles.popupTitle}>{product.nameArabic}</h3>
+    <div className={styles.popupSubtitle}>
+      {selectedPrice.nameArabic} - الكمية: {quantity}
+    </div>
+  </div>
+  <div style={{ display: 'flex', gap: '8px' }}>
+    {currentGroupIndex > 0 && (
+      <button 
+        className={styles.popupClose} 
+        onClick={handlePrevious}
+        title="الرجوع للمجموعة السابقة"
+      >
+        <ArrowBackIcon />
+      </button>
+    )}
+    <button className={styles.popupClose} onClick={onClose}>
+      <CloseIcon />
+    </button>
+  </div>
+</div>
         
-        <div className="popup-body">
-          <div className="group-header">
-            <h4 className="group-title">{currentGroup.name}</h4>
-            <div className="group-progress">
-              {currentGroupIndex + 1} من {optionGroups.length}
+        <div className={styles.popupBody}>
+          {/* مؤشر التقدم */}
+          <div className={styles.progressIndicator}>
+            <div className={styles.progressText}>
+              مجموعة {currentGroupIndex + 1} من {optionGroups.length}
+            </div>
+            <div className={styles.progressBar}>
+              <div 
+                className={styles.progressFill} 
+                style={{ width: `${((currentGroupIndex + 1) / optionGroups.length) * 100}%` }}
+              />
             </div>
           </div>
-          
-          <div className="group-info">
-            <div className="selection-info">
-              {currentGroup.isRequired && (
-                <span className="required-badge">مطلوب</span>
-              )}
-              <span className="selection-count">
-                تم اختيار {totalSelected} من {currentGroup.maxSelection}
-              </span>
-            </div>
-            
-            {currentGroup.minSelection > 0 && (
-              <div className="min-selection">
-                الحد الأدنى: {currentGroup.minSelection}
+
+          <div className={styles.optionsContainer}>
+            <div className={styles.optionGroup}>
+              <div className={styles.groupHeader}>
+                <div className={styles.groupTitle}>
+                  <span className={styles.groupName}>{currentGroup.name}</span>
+                  {currentGroup.isRequired && (
+                    <span className={styles.requiredBadge}>مطلوب</span>
+                  )}
+                </div>
+                <div className={styles.groupInfo}>
+                  <span className={styles.selectionCount}>
+                    {totalSelected} من {currentGroup.maxSelection}
+                  </span>
+                  {currentGroup.minSelection > 0 && (
+                    <span className={styles.minSelection}>
+                      (الحد الأدنى: {currentGroup.minSelection})
+                    </span>
+                  )}
+                </div>
               </div>
-            )}
+              
+              <div className={styles.optionsGrid}>
+                {currentGroup.optionItems
+                  .sort((a, b) => a.sortOrder - b.sortOrder)
+                  .map((item) => {
+                    const itemCount = selections[item.id] || 0;
+                    const canAdd = currentGroup.allowMultiple 
+                      ? totalSelected < currentGroup.maxSelection
+                      : itemCount === 0;
+                    
+                    return (
+                      <div 
+                        key={item.id} 
+                        className={`${styles.optionCard} ${itemCount > 0 ? styles.selected : ''}`}
+                        onClick={() => handleCardClick(currentGroup, item)}
+                      >
+                        <div className={styles.optionContent}>
+                          <div className={styles.optionInfo}>
+                            <div className={styles.optionName}>{item.name}</div>
+                            {item.extraPrice > 0 && (
+                              <div className={styles.optionPrice}>
+                                +{item.extraPrice} EGP
+                              </div>
+                            )}
+                          </div>
+                          
+                          <div className={styles.optionControls}>
+                            {currentGroup.allowMultiple ? (
+                              <div className={styles.quantitySection}>
+                                {itemCount > 0 && (
+                                  <button
+                                    className={styles.removeBtn}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleItemSelection(currentGroup, item, -1);
+                                    }}
+                                  >
+                                    <RemoveIcon />
+                                  </button>
+                                )}
+                                
+                                {itemCount > 0 ? (
+                                  <div className={styles.quantityBadge}>
+                                    {itemCount}
+                                  </div>
+                                ) : canAdd ? (
+                                  <div className={styles.addIcon}>
+                                    <AddIcon />
+                                  </div>
+                                ) : (
+                                  <div className={styles.maxReached}>
+                                    <span>الحد الأقصى</span>
+                                  </div>
+                                )}
+                              </div>
+                            ) : (
+                              <div className={styles.singleSelect}>
+                                {itemCount > 0 ? (
+                                  <div className={styles.selectedIcon}>
+                                    <CheckIcon />
+                                  </div>
+                                ) : (
+                                  <div className={styles.unselectedIcon}>
+                                    <AddIcon />
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            </div>
           </div>
           
-          <div className="options-list">
-            {currentGroup.optionItems
-              .sort((a, b) => a.sortOrder - b.sortOrder)
-              .map((item) => {
-                const itemCount = currentSelections[item.id] || 0;
-                const canAdd = currentGroup.allowMultiple 
-                  ? totalSelected < currentGroup.maxSelection
-                  : itemCount === 0;
-                
-                return (
-                  <div key={item.id} className="option-item">
-                    <div className="option-info">
-                      <div className="option-name">{item.name}</div>
-                      {item.extraPrice > 0 && (
-                        <div className="option-price">
-                          +{item.extraPrice} EGP
-                        </div>
-                      )}
-                      {item.isCommentOnly && (
-                        <div className="comment-only">تعليق فقط</div>
-                      )}
-                    </div>
-                    
-                    <div className="option-controls">
-                      {currentGroup.allowMultiple ? (
-                        <div className="quantity-controls">
-                          <button
-                            className="quantity-btn minus"
-                            onClick={() => handleItemSelection(currentGroup, item, -1)}
-                            disabled={itemCount === 0}
-                          >
-                            <RemoveIcon />
-                          </button>
-                          <span className="quantity-display">{itemCount}</span>
-                          <button
-                            className="quantity-btn plus"
-                            onClick={() => handleItemSelection(currentGroup, item, 1)}
-                            disabled={!canAdd}
-                          >
-                            <AddIcon />
-                          </button>
-                        </div>
-                      ) : (
-                        <button
-                          className={`select-btn ${itemCount > 0 ? 'selected' : ''}`}
-                          onClick={() => handleItemSelection(currentGroup, item, itemCount > 0 ? -1 : 1)}
-                        >
-                          {itemCount > 0 ? 'مختار' : 'اختيار'}
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
+          <div className={styles.totalSection}>
+            <div className={styles.totalRow}>
+              <span className={styles.totalLabel}>الإجمالي:</span>
+              <span className={styles.totalValue}>{calculateTotalPrice().toFixed(2)} EGP</span>
+            </div>
           </div>
         </div>
         
-        <div className="popup-footer">
-          <div className="footer-buttons">
-            <button className="btn-cancel" onClick={onClose}>
-              إلغاء
-            </button>
-            
-            {currentGroupIndex > 0 && (
-              <button className="btn-back" onClick={handleBack}>
-                رجوع
-              </button>
-            )}
-            
-            {canSkipGroup(currentGroup) && (
-              <button className="btn-skip" onClick={handleSkip}>
-                تخطي
-              </button>
-            )}
-            
+        <div className={styles.popupFooter}>
+          <button className={styles.btnCancel} onClick={onClose}>
+            إلغاء
+          </button>
+          
+          {currentGroupIndex < optionGroups.length - 1 ? (
             <button
-              className="btn-next"
+              className={styles.btnConfirm}
               onClick={handleNext}
-              disabled={!isGroupValid(currentGroup)}
+              disabled={currentGroup.isRequired && !isCurrentGroupValid()}
             >
-              {currentGroupIndex < optionGroups.length - 1 ? 'التالي' : 'إنهاء'}
+              التالي
+              <ArrowForwardIcon />
             </button>
-          </div>
+          ) : (
+            <button
+              className={styles.btnConfirm}
+              onClick={handleComplete}
+              disabled={!isAllGroupsValid()}
+            >
+              تأكيد الاختيار
+            </button>
+          )}
         </div>
       </div>
     </div>

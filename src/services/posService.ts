@@ -8,6 +8,7 @@ export interface PosProduct {
   nameArabic: string;
   image: string;
   categoryId: string;
+  productType: number;
   productPrices: PosPrice[];
   hasMultiplePrices: boolean;
   displayPrice?: number;
@@ -58,6 +59,7 @@ export interface PosCategory {
   nameArabic: string;
   image: string;
   parentId?: string;
+  products?: PosProduct[]; // ✅ إضافة هذا الحقل
   children?: PosCategory[];
   hasChildren: boolean;
   hasProducts?: boolean;
@@ -168,6 +170,7 @@ const convertProductToPosProduct = (product: productsApi.Product): PosProduct =>
     categoryId: product.posScreenId || 'default',
     productPrices: prices,
     hasMultiplePrices,
+    productType: product.productType || 1, 
     displayPrice,
     productOptionGroups: productOptionGroups.length > 0 ? productOptionGroups : undefined
   };
@@ -301,4 +304,20 @@ export const getRequiredGroupsCount = (product: PosProduct): number => {
 export const getOptionalGroupsCount = (product: PosProduct): number => {
   if (!product.productOptionGroups) return 0;
   return product.productOptionGroups.filter(group => !group.isRequired).length;
+};
+
+
+
+
+export const filterProductsByType = (products: PosProduct[], productType: number): PosProduct[] => {
+  return products.filter(product => product.productType === productType);
+};
+
+export const filterCategoriesByProductType = (categories: PosCategory[], productType: number): PosCategory[] => {
+  return categories.filter(category => 
+    category.products && category.products.some(product => product.productType === productType)
+  ).map(category => ({
+    ...category,
+    products: category.products?.filter(product => product.productType === productType)
+  }));
 };

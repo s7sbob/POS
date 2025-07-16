@@ -1,5 +1,5 @@
 // src/Pages/pos/newSales/index.tsx - الكود الكامل المُحدث
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { PosProduct, CategoryItem, OrderSummary as OrderSummaryType, OrderItem, PosPrice, SelectedOption } from './types/PosSystem';
 import * as posService from '../../../services/posService';
 import PriceSelectionPopup from './components/PriceSelectionPopup';
@@ -13,6 +13,7 @@ import { useDataManager } from './hooks/useDataManager';
 import './styles/responsive.css';
 import './styles/popup.css';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import OrderItemDetailsPopup from './components/OrderItemDetailsPopup';
 
 const PosSystem: React.FC = () => {
   const [keypadValue, setKeypadValue] = useState('1');
@@ -27,9 +28,13 @@ const PosSystem: React.FC = () => {
     loading,
     error,
     getProducts,
-    getCategories
+    getCategories,
+    defaultCategoryId,
+    searchProducts,
+    getProductsByScreenId,
+    hasProductOptions
   } = useDataManager();
-  
+
   // Extra/Without States
   const [isExtraMode, setIsExtraMode] = useState(false);
   const [isWithoutMode, setIsWithoutMode] = useState(false);
@@ -46,6 +51,10 @@ const PosSystem: React.FC = () => {
   const [selectedProductForOptions, setSelectedProductForOptions] = useState<PosProduct | null>(null);
   const [selectedPriceForOptions, setSelectedPriceForOptions] = useState<PosPrice | null>(null);
   
+  // Order Details Popup States
+  const [showOrderDetailsPopup, setShowOrderDetailsPopup] = useState(false);
+  const [selectedOrderItemForDetails, setSelectedOrderItemForDetails] = useState<OrderItem | null>(null);
+  
   // Order States
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
 
@@ -61,15 +70,15 @@ const PosSystem: React.FC = () => {
   // المنتجات المعروضة
   const displayedProducts = useMemo(() => {
     if (searchQuery.trim()) {
-      return posService.searchProducts(currentProducts, searchQuery);
+      return searchProducts(currentProducts, searchQuery);
     }
     
     if (selectedCategory) {
-      return posService.getProductsByScreenId(currentProducts, selectedCategory);
+      return getProductsByScreenId(currentProducts, selectedCategory);
     }
     
     return [];
-  }, [currentProducts, selectedCategory, searchQuery]);
+  }, [currentProducts, selectedCategory, searchQuery, searchProducts, getProductsByScreenId]);
 
   // تحديث دالة updateOrderItem
 
@@ -77,19 +86,25 @@ const updateOrderItem = useCallback((itemId: string, updateType: 'addSubItem' | 
   setOrderItems(prev => prev.map(item => {
     if (item.id === itemId) {
       if (updateType === 'addSubItem') {
-        // إضافة sub-item جديد
         const newSubItems = [...(item.subItems || []), data];
-        const newTotalPrice = item.totalPrice + data.price;
+        
+        // ✅ العناصر "بدون" لا تؤثر على الإجمالي
+        const priceImpact = data.type === 'without' ? 0 : data.price;
+        const newTotalPrice = item.totalPrice + priceImpact;
+        
         return {
           ...item,
           subItems: newSubItems,
           totalPrice: newTotalPrice
         };
       } else if (updateType === 'removeSubItem') {
-        // حذف sub-item
         const removedSubItem = item.subItems?.find(sub => sub.id === data);
         const newSubItems = item.subItems?.filter(sub => sub.id !== data) || [];
-        const newTotalPrice = item.totalPrice - (removedSubItem?.price || 0);
+        
+        // ✅ العناصر "بدون" لا تؤثر على الإجمالي عند الحذف
+        const priceImpact = removedSubItem?.type === 'without' ? 0 : (removedSubItem?.price || 0);
+        const newTotalPrice = item.totalPrice - priceImpact;
+        
         return {
           ...item,
           subItems: newSubItems.length > 0 ? newSubItems : undefined,
@@ -102,49 +117,151 @@ const updateOrderItem = useCallback((itemId: string, updateType: 'addSubItem' | 
 }, []);
 
   // Order Manager Hook
-const { addToOrder, removeSubItem } = useOrderManager({
-  keypadValue,
-  isExtraMode,
-  isWithoutMode,
-  selectedOrderItemId,
-  onOrderAdd: (orderItem) => setOrderItems(prev => [...prev, orderItem]),
-  onOrderUpdate: updateOrderItem, // استخدام الدالة المُحدثة
-  onModeReset: () => {
-    setIsExtraMode(false);
-    setIsWithoutMode(false);
-    setSelectedOrderItemId(null);
-    setKeypadValue('1');
-  },
-  onLoadNormalProducts: () => {
-    // لا نحتاج لإعادة تحميل البيانات لأنها محملة مسبقاً
-  }
-});
+  const { addToOrder, removeSubItem } = useOrderManager({
+    keypadValue,
+    isExtraMode,
+    isWithoutMode,
+    selectedOrderItemId,
+    onOrderAdd: (orderItem) => setOrderItems(prev => [...prev, orderItem]),
+    onOrderUpdate: updateOrderItem,
+    onModeReset: () => {
+      setIsExtraMode(false);
+      setIsWithoutMode(false);
+      setSelectedOrderItemId(null);
+      setKeypadValue('1');
+    },
+    onLoadNormalProducts: () => {
+      // لا نحتاج لإعادة تحميل البيانات لأنها محملة مسبقاً
+    }
+  });
 
-  // معالج زر Extra
+  // إضافة معالج double click
+  const handleOrderItemDoubleClick = useCallback((item: OrderItem) => {
+    setSelectedOrderItemForDetails(item);
+    setShowOrderDetailsPopup(true);
+  }, []);
+
+  // إضافة معالج تحديث المنتج للـ OrderItemDetailsPopup
+const handleUpdateOrderItem = useCallback((itemId: string, updates: {
+  quantity?: number;
+  notes?: string;
+  discountPercentage?: number;
+  discountAmount?: number;
+}) => {
+  setOrderItems(prev => prev.map(item => {
+    if (item.id === itemId) {
+      const updatedItem = { ...item };
+      
+      if (updates.quantity !== undefined) {
+        updatedItem.quantity = updates.quantity;
+      }
+      
+      if (updates.notes !== undefined) {
+        updatedItem.notes = updates.notes;
+      }
+      
+      if (updates.discountPercentage !== undefined) {
+        updatedItem.discountPercentage = updates.discountPercentage;
+      }
+      
+      if (updates.discountAmount !== undefined) {
+        updatedItem.discountAmount = updates.discountAmount;
+      }
+      
+      // ✅ إعادة حساب السعر الإجمالي مع تجاهل عناصر "بدون"
+      const basePrice = item.selectedPrice.price * (updates.quantity || item.quantity);
+      const subItemsTotal = item.subItems?.reduce((sum, subItem) => {
+        // تجاهل عناصر "بدون" في الحساب
+        return sum + (subItem.type === 'without' ? 0 : subItem.price);
+      }, 0) || 0;
+      
+      const totalBeforeDiscount = basePrice + subItemsTotal;
+      const discountAmount = updates.discountAmount || item.discountAmount || 0;
+      updatedItem.totalPrice = totalBeforeDiscount - discountAmount;
+      
+      return updatedItem;
+    }
+    return item;
+  }));
+}, []);
+
+  // إضافة معالج حذف sub-item
+const handleRemoveSubItem = useCallback((orderItemId: string, subItemId: string) => {
+  setOrderItems(prev => prev.map(item => {
+    if (item.id === orderItemId && item.subItems) {
+      const removedSubItem = item.subItems.find(sub => sub.id === subItemId);
+      const newSubItems = item.subItems.filter(sub => sub.id !== subItemId);
+      
+      // ✅ العناصر "بدون" لا تؤثر على الإجمالي
+      const priceImpact = removedSubItem?.type === 'without' ? 0 : (removedSubItem?.price || 0);
+      const newTotalPrice = item.totalPrice - priceImpact;
+      
+      return {
+        ...item,
+        subItems: newSubItems.length > 0 ? newSubItems : undefined,
+        totalPrice: newTotalPrice
+      };
+    }
+    return item;
+  }));
+}, []);
+
+  // إضافة useEffect لتحديد الفئة الافتراضية
+  useEffect(() => {
+    if (defaultCategoryId && !selectedCategory && !isAdditionMode) {
+      setSelectedCategory(defaultCategoryId);
+    }
+  }, [defaultCategoryId, selectedCategory, isAdditionMode]);
+
+  // معالج زر Extra - التحديث الجديد
   const handleExtraClick = useCallback(() => {
+    // إذا لم يكن هناك منتج محدد، استخدم آخر منتج في السلة
+    let targetItemId = selectedOrderItemId;
+    
+    if (!targetItemId && orderItems.length > 0) {
+      targetItemId = orderItems[orderItems.length - 1].id;
+      setSelectedOrderItemId(targetItemId);
+    }
+    
+    // إذا لم يكن هناك منتجات في السلة، لا تفعل شيء
+    if (!targetItemId) {
+      return;
+    }
+    
     setIsExtraMode(true);
     setIsWithoutMode(false);
     setSelectedChips(prev => prev.includes('extra') ? prev : [...prev.filter(chip => chip !== 'without'), 'extra']);
     
-    // تحديد أول فئة من فئات الإضافات
     const additionCategories = getCategories(true).filter(cat => !cat.parentId);
     if (additionCategories.length > 0) {
       setSelectedCategory(additionCategories[0].id);
     }
-  }, [getCategories]);
+  }, [selectedOrderItemId, orderItems, getCategories]);
 
-  // معالج زر Without
+  // معالج زر Without - التحديث الجديد
   const handleWithoutClick = useCallback(() => {
+    // إذا لم يكن هناك منتج محدد، استخدم آخر منتج في السلة
+    let targetItemId = selectedOrderItemId;
+    
+    if (!targetItemId && orderItems.length > 0) {
+      targetItemId = orderItems[orderItems.length - 1].id;
+      setSelectedOrderItemId(targetItemId);
+    }
+    
+    // إذا لم يكن هناك منتجات في السلة، لا تفعل شيء
+    if (!targetItemId) {
+      return;
+    }
+    
     setIsWithoutMode(true);
     setIsExtraMode(false);
     setSelectedChips(prev => prev.includes('without') ? prev : [...prev.filter(chip => chip !== 'extra'), 'without']);
     
-    // تحديد أول فئة من فئات الإضافات
     const additionCategories = getCategories(true).filter(cat => !cat.parentId);
     if (additionCategories.length > 0) {
       setSelectedCategory(additionCategories[0].id);
     }
-  }, [getCategories]);
+  }, [selectedOrderItemId, orderItems, getCategories]);
 
   // معالج الرجوع للمنتجات الأساسية
   const handleBackToMainProducts = useCallback(() => {
@@ -153,15 +270,14 @@ const { addToOrder, removeSubItem } = useOrderManager({
     setSelectedOrderItemId(null);
     setSelectedChips(prev => prev.filter(chip => chip !== 'extra' && chip !== 'without'));
     
-    // تحديد أول فئة من الفئات الأساسية
-    const mainCategories = getCategories(false).filter(cat => !cat.parentId);
-    if (mainCategories.length > 0) {
-      setSelectedCategory(mainCategories[0].id);
+    // استخدام الفئة الافتراضية
+    if (defaultCategoryId) {
+      setSelectedCategory(defaultCategoryId);
     }
     
     setShowingChildren(null);
     setParentCategory(null);
-  }, [getCategories]);
+  }, [defaultCategoryId]);
 
   // معالج اختيار منتج في الفاتورة
   const handleOrderItemSelect = useCallback((itemId: string) => {
@@ -211,7 +327,7 @@ const { addToOrder, removeSubItem } = useOrderManager({
     } else if (product.productPrices.length > 0) {
       const price = product.productPrices[0];
       
-      if (posService.hasProductOptions(product)) {
+      if (hasProductOptions(product)) {
         setSelectedProductForOptions(product);
         setSelectedPriceForOptions(price);
         setShowOptionsPopup(true);
@@ -219,12 +335,12 @@ const { addToOrder, removeSubItem } = useOrderManager({
         addToOrder(product, price, []);
       }
     }
-  }, [addToOrder]);
+  }, [addToOrder, hasProductOptions]);
 
   // معالج اختيار السعر
   const handlePriceSelect = useCallback((price: PosPrice) => {
     if (selectedProduct) {
-      if (posService.hasProductOptions(selectedProduct)) {
+      if (hasProductOptions(selectedProduct)) {
         setSelectedProductForOptions(selectedProduct);
         setSelectedPriceForOptions(price);
         setShowPricePopup(false);
@@ -234,7 +350,7 @@ const { addToOrder, removeSubItem } = useOrderManager({
       }
     }
     setSelectedProduct(null);
-  }, [selectedProduct, addToOrder]);
+  }, [selectedProduct, addToOrder, hasProductOptions]);
 
   // معالج إكمال اختيار المجموعات
   const handleOptionsComplete = useCallback((selectedOptions: SelectedOption[]) => {
@@ -289,6 +405,28 @@ const { addToOrder, removeSubItem } = useOrderManager({
     );
   }, []);
 
+  const handleResetOrder = useCallback(() => {
+    // إعادة تعيين الفاتورة بالكامل
+    setOrderItems([]);
+    setSelectedOrderItemId(null);
+    setCustomerName('');
+    setKeypadValue('1');
+    
+    // إعادة تعيين الـ modes
+    setIsExtraMode(false);
+    setIsWithoutMode(false);
+    setSelectedChips([]);
+    
+    // الرجوع للمنتجات الأساسية
+    handleBackToMainProducts();
+    
+    // إعادة تعيين البحث
+    setSearchQuery('');
+    
+    // رسالة تأكيد (اختيارية)
+    console.log('Order reset successfully');
+  }, [handleBackToMainProducts]);
+
   // عرض حالة التحميل
   if (loading) {
     return (
@@ -313,6 +451,7 @@ const { addToOrder, removeSubItem } = useOrderManager({
       <Header
         selectedOrderType={selectedOrderType}
         onOrderTypeChange={setSelectedOrderType}
+        onResetOrder={handleResetOrder}
       />
 
       <main className="main-content">
@@ -343,6 +482,7 @@ const { addToOrder, removeSubItem } = useOrderManager({
             onWithoutClick={handleWithoutClick}
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
+            hasSelectedOrderItem={true} // ✅ دائماً true لإزالة الـ disabled
           />
 
           <div className="product-grid">
@@ -399,14 +539,18 @@ const { addToOrder, removeSubItem } = useOrderManager({
           onRemoveSubItem={removeSubItem}
           selectedOrderItemId={selectedOrderItemId}
           onOrderItemSelect={handleOrderItemSelect}
+          onOrderItemDoubleClick={handleOrderItemDoubleClick}
         />
       </main>
 
       <PriceSelectionPopup
-        product={selectedProduct!}
+        product={selectedProduct}
         quantity={parseInt(keypadValue) || 1}
         isOpen={showPricePopup}
-        onClose={() => setShowPricePopup(false)}
+        onClose={() => {
+          setShowPricePopup(false);
+          setSelectedProduct(null);
+        }}
         onSelectPrice={handlePriceSelect}
       />
 
@@ -421,6 +565,17 @@ const { addToOrder, removeSubItem } = useOrderManager({
           setSelectedPriceForOptions(null);
         }}
         onComplete={handleOptionsComplete}
+      />
+
+      <OrderItemDetailsPopup
+        orderItem={selectedOrderItemForDetails}
+        isOpen={showOrderDetailsPopup}
+        onClose={() => {
+          setShowOrderDetailsPopup(false);
+          setSelectedOrderItemForDetails(null);
+        }}
+        onUpdateItem={handleUpdateOrderItem}
+        onRemoveItem={removeOrderItem}
       />
     </div>
   );

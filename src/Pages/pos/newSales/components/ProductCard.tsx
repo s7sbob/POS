@@ -1,8 +1,7 @@
 // src/Pages/pos/newSales/components/ProductCard.tsx
 import React from 'react';
 import { PosProduct } from '../types/PosSystem';
-import * as posService from '../../../../services/posService';
-import '../Styles/ProductCard.css';
+import styles from '../styles/ProductCard.module.css';
 
 interface ProductCardProps {
   product: PosProduct;
@@ -10,41 +9,39 @@ interface ProductCardProps {
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({ product, onClick }) => {
-  const hasOptions = posService.hasProductOptions(product);
-  
+  const handleClick = () => {
+    onClick(product);
+  };
+
+  // تحديد ما إذا كان المنتج له سعر واحد أم أكثر
+  const hasMultiplePrices = product.hasMultiplePrices;
+  const singlePrice = !hasMultiplePrices && product.productPrices.length > 0 
+    ? product.productPrices[0].price 
+    : null;
+
   return (
-    <button
-      className={`product-card ${product.hasMultiplePrices ? 'multiple-prices' : ''}`}
-      onClick={() => onClick(product)}
-    >
-      <div className="product-image-container">
+    <div className={styles.productCard} onClick={handleClick}>
+      <div className={styles.productImageContainer}>
         <img 
           src={product.image} 
           alt={product.nameArabic} 
-          className="product-image" 
+          className={styles.productImage}
         />
-        {hasOptions && (
-          <div className="product-options-badge">
-            <span>خيارات</span>
+        
+        {/* عرض السعر على الصورة إذا كان المنتج له سعر واحد */}
+        {singlePrice !== null && (
+          <div className={styles.priceOverlay}>
+            {singlePrice.toFixed(2)} EGP
           </div>
         )}
       </div>
       
-      <div className="product-info-section">
-        <div className="product-details">
-          <div className="product-name">
-            {product.nameArabic}
-          </div>
-          
-          {!product.hasMultiplePrices && product.displayPrice && (
-            <div className="product-price-container">
-              <span className="product-price">{product.displayPrice}</span>
-              <span className="product-currency">EGP</span>
-            </div>
-          )}
-        </div>
+      <div className={styles.productInfo}>
+        <h3 className={styles.productName}>
+          {product.nameArabic}
+        </h3>
       </div>
-    </button>
+    </div>
   );
 };
 

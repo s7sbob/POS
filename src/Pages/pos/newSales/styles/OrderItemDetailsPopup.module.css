@@ -1,0 +1,259 @@
+/* src/Pages/pos/newSales/components/OrderItemDetailsPopup.module.css */
+
+.popupOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.orderItemDetails {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  width: 90%;
+  max-width: 600px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* السطر الرئيسي الوحيد */
+.mainRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 0;
+  border-bottom: 1px solid #eee;
+}
+
+/* اسم المنتج والسعر على اليمين */
+.productInfo {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  flex: 1;
+}
+
+.productName {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.productSize {
+  font-size: 12px;
+  color: #666;
+}
+
+.unitPrice {
+  font-size: 14px;
+  font-weight: 600;
+  color: #e74c3c;
+}
+
+/* الكمية في النص */
+.quantityControls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 0 0 auto;
+}
+
+.quantityBtn {
+  width: 36px;
+  height: 36px;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  background: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.quantityBtn:hover:not(:disabled) {
+  border-color: #0373ed;
+  background: #f8f9ff;
+}
+
+.quantityBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.quantityDisplay {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  min-width: 30px;
+  text-align: center;
+}
+
+/* الإجمالي على الشمال */
+.totalDisplay {
+  flex: 0 0 auto;
+}
+
+.totalAmount {
+  font-size: 18px;
+  font-weight: 700;
+  color: #e74c3c;
+}
+
+/* حقل الملاحظات */
+.notesSection {
+  width: 100%;
+}
+
+.notesInput {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  resize: vertical;
+  font-family: inherit;
+  transition: border-color 0.2s ease;
+}
+
+.notesInput:focus {
+  outline: none;
+  border-color: #0373ed;
+}
+
+.notesInput::placeholder {
+  color: #999;
+}
+
+/* قسم الخصم */
+.discountSection {
+  width: 100%;
+}
+
+.discountInputs {
+  display: flex;
+  gap: 16px;
+}
+
+.discountField {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.discountField label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+.discountInput {
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: border-color 0.2s ease;
+  /* إزالة الأزرار من number input */
+  -moz-appearance: textfield;
+}
+
+.discountInput::-webkit-outer-spin-button,
+.discountInput::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.discountInput:focus {
+  outline: none;
+  border-color: #0373ed;
+}
+
+/* أزرار التأكيد والإلغاء */
+.actionButtons {
+  display: flex;
+  gap: 0;
+  width: 100%;
+  margin-top: 8px;
+}
+
+.confirmBtn,
+.cancelBtn {
+  flex: 1;
+  padding: 16px;
+  font-size: 16px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.confirmBtn {
+  background: #28a745;
+  color: white;
+  border-radius: 8px 0 0 8px;
+}
+
+.confirmBtn:hover {
+  background: #218838;
+}
+
+.cancelBtn {
+  background: #f8f9fa;
+  color: #333;
+  border-radius: 0 8px 8px 0;
+  border-left: 1px solid #ddd;
+}
+
+.cancelBtn:hover {
+  background: #e9ecef;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .mainRow {
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+  }
+  
+  .productInfo {
+    align-items: center;
+    text-align: center;
+  }
+  
+  .quantityControls {
+    justify-content: center;
+  }
+  
+  .totalDisplay {
+    text-align: center;
+  }
+  
+  .discountInputs {
+    flex-direction: column;
+  }
+  
+  .actionButtons {
+    flex-direction: column;
+  }
+  
+  .confirmBtn,
+  .cancelBtn {
+    border-radius: 8px;
+  }
+  
+  .cancelBtn {
+    border-left: none;
+    border-top: 1px solid #ddd;
+  }
+}

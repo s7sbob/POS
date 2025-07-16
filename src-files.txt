@@ -12,6 +12,8 @@ interface ActionButtonsProps {
   onWithoutClick: () => void;
   searchQuery: string;
   onSearchChange: (query: string) => void;
+    hasSelectedOrderItem: boolean; // إضافة جديدة
+
 }
 
 const ActionButtons: React.FC<ActionButtonsProps> = ({
@@ -22,21 +24,27 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
   onExtraClick,
   onWithoutClick,
   searchQuery,
-  onSearchChange
+  onSearchChange,
+  hasSelectedOrderItem
+
 }) => {
   return (
     <div className="action-buttons-bar">
       <div className="action-chips">
         <button 
-          className={`action-chip extra ${selectedChips.includes('extra') || isExtraMode ? 'active' : ''}`}
-          onClick={onExtraClick}
+          className={`action-chip extra ${selectedChips.includes('extra') || isExtraMode ? 'active' : ''} ${!hasSelectedOrderItem ? 'disabled' : ''}`}
+          onClick={hasSelectedOrderItem ? onExtraClick : undefined}
+          disabled={!hasSelectedOrderItem}
+          title={!hasSelectedOrderItem ? 'يجب اختيار منتج من الفاتورة أولاً' : ''}
         >
           <img src="/images/img_addcircle.svg" alt="" />
           <span>Extra</span>
         </button>
         <button 
-          className={`action-chip without ${selectedChips.includes('without') || isWithoutMode ? 'active' : ''}`}
-          onClick={onWithoutClick}
+          className={`action-chip without ${selectedChips.includes('without') || isWithoutMode ? 'active' : ''} ${!hasSelectedOrderItem ? 'disabled' : ''}`}
+          onClick={hasSelectedOrderItem ? onWithoutClick : undefined}
+          disabled={!hasSelectedOrderItem}
+          title={!hasSelectedOrderItem ? 'يجب اختيار منتج من الفاتورة أولاً' : ''}
         >
           <img src="/images/img_removecircle.svg" alt="" />
           <span>Without</span>
@@ -77,6 +85,7 @@ import '../../styles/Header.css';
 interface HeaderProps {
   selectedOrderType: string;
   onOrderTypeChange: (type: string) => void;
+  onResetOrder?: () => void;
 }
 
 interface OrderType {
@@ -84,6 +93,8 @@ interface OrderType {
   name: string;
   displayName: string;
   icon: string;
+  color: string;
+  description: string;
 }
 
 interface DeliveryPartner {
@@ -91,10 +102,17 @@ interface DeliveryPartner {
   name: string;
   displayName: string;
   icon: string;
+  color: string;
+  bgColor: string;
 }
 
-const Header: React.FC<HeaderProps> = ({ selectedOrderType, onOrderTypeChange }) => {
+const Header: React.FC<HeaderProps> = ({ 
+  selectedOrderType, 
+  onOrderTypeChange, 
+  onResetOrder 
+}) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [selectedDeliveryPartner, setSelectedDeliveryPartner] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const orderTypes: OrderType[] = [
@@ -102,25 +120,33 @@ const Header: React.FC<HeaderProps> = ({ selectedOrderType, onOrderTypeChange })
       id: 1,
       name: 'Takeaway',
       displayName: 'Takeaway',
-      icon: '/images/takeaway.png'
+      icon: '/images/takeaway.png',
+      color: '#28a745',
+      description: 'عميل يأخذ الطلب'
     },
     {
       id: 2,
       name: 'Dine-in',
       displayName: 'Dine-in',
-      icon: '/images/dine-in.png'
+      icon: '/images/dine-in.png',
+      color: '#007bff',
+      description: 'تناول في المطعم'
     },
     {
       id: 3,
       name: 'Delivery',
       displayName: 'Delivery',
-      icon: '/images/delivery.png'
+      icon: '/images/delivery.png',
+      color: '#dc3545',
+      description: 'توصيل للمنزل'
     },
     {
       id: 4,
       name: 'Pickup',
       displayName: 'Pickup',
-      icon: '/images/pickup.png'
+      icon: '/images/pickup.png',
+      color: '#ffc107',
+      description: 'استلام من المطعم'
     }
   ];
 
@@ -128,20 +154,26 @@ const Header: React.FC<HeaderProps> = ({ selectedOrderType, onOrderTypeChange })
     {
       id: 1,
       name: 'talabat',
-      displayName: 'talabat',
-      icon: '/images/talabat.png'
+      displayName: 'طلبات',
+      icon: '/images/talabat.png',
+      color: '#ff6b35',
+      bgColor: '#fff5f3'
     },
     {
       id: 2,
       name: 'elmenus',
-      displayName: 'Elmenus',
-      icon: '/images/elmenus.png'
+      displayName: 'الميناس',
+      icon: '/images/elmenus.png',
+      color: '#00c851',
+      bgColor: '#f3fff6'
     },
     {
       id: 3,
       name: 'uber-eats',
-      displayName: 'Uber Eats',
-      icon: '/images/uber-eats.png'
+      displayName: 'أوبر إيتس',
+      icon: '/images/uber-eats.png',
+      color: '#000000',
+      bgColor: '#f8f9fa'
     }
   ];
 
@@ -155,8 +187,15 @@ const Header: React.FC<HeaderProps> = ({ selectedOrderType, onOrderTypeChange })
   };
 
   const handleDeliveryPartnerSelect = (partner: string) => {
+    setSelectedDeliveryPartner(partner);
     console.log('Selected delivery partner:', partner);
     setIsDropdownOpen(false);
+  };
+
+  const handleOrderTypeReset = () => {
+    if (onResetOrder) {
+      onResetOrder();
+    }
   };
 
   useEffect(() => {
@@ -199,9 +238,12 @@ const Header: React.FC<HeaderProps> = ({ selectedOrderType, onOrderTypeChange })
             <span>Void</span>
           </a>
           
-          <div className="order-type-display">
+          <button 
+            className="order-type-display clickable"
+            onClick={handleOrderTypeReset}
+          >
             {selectedOrderType}
-          </div>
+          </button>
           
           <div className="menu-dropdown-container" ref={dropdownRef}>
             <button className="menu-button" onClick={handleMenuClick}>
@@ -209,37 +251,71 @@ const Header: React.FC<HeaderProps> = ({ selectedOrderType, onOrderTypeChange })
             </button>
             
             {isDropdownOpen && (
-              <div className="figma-dropdown">
+              <div className="professional-dropdown">
                 {/* Order Types Section */}
-                <div className="order-types-section">
-                  {orderTypes.map((type) => (
-                    <button
-                      key={type.id}
-                      className={`figma-card ${selectedOrderType === type.name ? 'selected' : ''}`}
-                      onClick={() => handleOrderTypeSelect(type.name)}
-                    >
-                      <div className="card-icon-section">
-                        <img src={type.icon} alt={type.displayName} className="card-icon" />
-                      </div>
-                      <div className="card-label">{type.displayName}</div>
-                    </button>
-                  ))}
+                <div className="dropdown-section">
+                  <div className="section-header">
+                    <h3 className="section-title">نوع الطلب</h3>
+                    <div className="section-divider"></div>
+                  </div>
+                  
+                  <div className="order-types-grid">
+                    {orderTypes.map((type) => (
+                      <button
+                        key={type.id}
+                        className={`order-type-card ${selectedOrderType === type.name ? 'selected' : ''}`}
+                        onClick={() => handleOrderTypeSelect(type.name)}
+                        style={{ '--accent-color': type.color } as React.CSSProperties}
+                      >
+                        <div className="card-icon-container">
+                          <img src={type.icon} alt={type.displayName} className="card-icon" />
+                        </div>
+                        <div className="card-content">
+                          <div className="card-title">{type.displayName}</div>
+                        </div>
+                        <div className="card-check">
+                          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                            <path d="M13 4L6 11L3 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
                 {/* Delivery Partners Section */}
-                <div className="delivery-partners-section">
-                  {deliveryPartners.map((partner) => (
-                    <button
-                      key={partner.id}
-                      className="figma-card delivery-card"
-                      onClick={() => handleDeliveryPartnerSelect(partner.name)}
-                    >
-                      <div className="card-icon-section">
-                        <img src={partner.icon} alt={partner.displayName} className="delivery-icon" />
-                      </div>
-                      <div className="card-label">{partner.displayName}</div>
-                    </button>
-                  ))}
+                <div className="dropdown-section">
+                  <div className="section-header">
+                    <h3 className="section-title">شركاء التوصيل</h3>
+                    <div className="section-divider"></div>
+                  </div>
+                  
+                  <div className="delivery-partners-grid">
+                    {deliveryPartners.map((partner) => (
+                      <button
+                        key={partner.id}
+                        className={`delivery-partner-card ${selectedDeliveryPartner === partner.name ? 'selected' : ''}`}
+                        onClick={() => handleDeliveryPartnerSelect(partner.name)}
+                        style={{ 
+                          '--partner-color': partner.color,
+                          '--partner-bg': partner.bgColor 
+                        } as React.CSSProperties}
+                      >
+                        <div className="partner-icon-container">
+                          <img src={partner.icon} alt={partner.displayName} className="partner-icon" />
+                        </div>
+                        <div className="partner-content">
+                          <div className="partner-name">{partner.displayName}</div>
+                          <div className="partner-status">متاح</div>
+                        </div>
+                        <div className="partner-badge">
+                          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                            <circle cx="6" cy="6" r="6" fill="currentColor"/>
+                          </svg>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
             )}
@@ -252,10 +328,258 @@ const Header: React.FC<HeaderProps> = ({ selectedOrderType, onOrderTypeChange })
 
 export default Header;
 
+===== src/Pages/pos/newSales/components/OrderItemDetailsPopup.tsx =====
+// src/Pages/pos/newSales/components/OrderItemDetailsPopup.tsx
+import React, { useState, useEffect, useRef } from 'react';
+import { OrderItem } from '../types/PosSystem';
+import AddIcon from '@mui/icons-material/Add';
+import RemoveIcon from '@mui/icons-material/Remove';
+import styles from '../styles/OrderItemDetailsPopup.module.css';
+
+interface OrderItemDetailsPopupProps {
+  orderItem: OrderItem | null;
+  isOpen: boolean;
+  onClose: () => void;
+  onUpdateItem: (itemId: string, updates: {
+    quantity?: number;
+    notes?: string;
+    discountPercentage?: number;
+    discountAmount?: number;
+  }) => void;
+  onRemoveItem: (itemId: string) => void;
+}
+
+const OrderItemDetailsPopup: React.FC<OrderItemDetailsPopupProps> = ({
+  orderItem,
+  isOpen,
+  onClose,
+  onUpdateItem
+}) => {
+  const [quantity, setQuantity] = useState(1);
+  const [notes, setNotes] = useState('');
+  const [discountPercentage, setDiscountPercentage] = useState(0);
+  const [discountAmount, setDiscountAmount] = useState(0);
+  
+  // States مؤقتة للتحكم في التحديث
+  const [tempDiscountPercentage, setTempDiscountPercentage] = useState('0');
+  const [tempDiscountAmount, setTempDiscountAmount] = useState('0');
+  
+  // Refs للـ inputs
+  const percentageInputRef = useRef<HTMLInputElement>(null);
+  const amountInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (orderItem) {
+      setQuantity(orderItem.quantity);
+      setNotes(orderItem.notes || '');
+      const currentDiscount = orderItem.discountAmount || 0;
+      const baseTotal = orderItem.selectedPrice.price * orderItem.quantity;
+      const currentDiscountPercentage = baseTotal > 0 ? (currentDiscount / baseTotal) * 100 : 0;
+      setDiscountAmount(currentDiscount);
+      setDiscountPercentage(currentDiscountPercentage);
+      setTempDiscountAmount(currentDiscount.toFixed(2));
+      setTempDiscountPercentage(currentDiscountPercentage.toFixed(1));
+    }
+  }, [orderItem]);
+
+  if (!isOpen || !orderItem) return null;
+
+  const unitPrice = orderItem.selectedPrice.price;
+  const subItemsTotal = orderItem.subItems?.reduce((sum, item) => sum + item.price, 0) || 0;
+  const baseTotal = (unitPrice * quantity) + subItemsTotal;
+  const finalTotal = baseTotal - discountAmount;
+
+  const handleQuantityChange = (change: number) => {
+    const newQuantity = Math.max(1, quantity + change);
+    setQuantity(newQuantity);
+    
+    const newBaseTotal = (unitPrice * newQuantity) + subItemsTotal;
+    const newDiscountAmount = (newBaseTotal * discountPercentage) / 100;
+    setDiscountAmount(newDiscountAmount);
+    setTempDiscountAmount(newDiscountAmount.toFixed(2));
+  };
+
+  // معالج تغيير نسبة الخصم
+  const handleDiscountPercentageChange = (value: number) => {
+    const percentage = Math.max(0, Math.min(100, value));
+    setDiscountPercentage(percentage);
+    const newDiscountAmount = (baseTotal * percentage) / 100;
+    setDiscountAmount(newDiscountAmount);
+    setTempDiscountAmount(newDiscountAmount.toFixed(2));
+  };
+
+  // معالج تغيير قيمة الخصم
+  const handleDiscountAmountChange = (value: number) => {
+    const amount = Math.max(0, Math.min(baseTotal, value));
+    setDiscountAmount(amount);
+    const newDiscountPercentage = baseTotal > 0 ? (amount / baseTotal) * 100 : 0;
+    setDiscountPercentage(newDiscountPercentage);
+    setTempDiscountPercentage(newDiscountPercentage.toFixed(1));
+  };
+
+  // معالج Focus للنسبة المئوية
+  const handlePercentageFocus = () => {
+    if (percentageInputRef.current) {
+      percentageInputRef.current.select();
+    }
+  };
+
+  // معالج Focus لقيمة الخصم
+  const handleAmountFocus = () => {
+    if (amountInputRef.current) {
+      amountInputRef.current.select();
+    }
+  };
+
+  // معالج Blur للنسبة المئوية
+  const handlePercentageBlur = () => {
+    const value = parseFloat(tempDiscountPercentage) || 0;
+    handleDiscountPercentageChange(value);
+  };
+
+  // معالج Blur لقيمة الخصم
+  const handleAmountBlur = () => {
+    const value = parseFloat(tempDiscountAmount) || 0;
+    handleDiscountAmountChange(value);
+  };
+
+  // معالج Enter للنسبة المئوية
+  const handlePercentageKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      const value = parseFloat(tempDiscountPercentage) || 0;
+      handleDiscountPercentageChange(value);
+      percentageInputRef.current?.blur();
+    }
+  };
+
+  // معالج Enter لقيمة الخصم
+  const handleAmountKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      const value = parseFloat(tempDiscountAmount) || 0;
+      handleDiscountAmountChange(value);
+      amountInputRef.current?.blur();
+    }
+  };
+
+  const handleConfirm = () => {
+    onUpdateItem(orderItem.id, {
+      quantity,
+      notes,
+      discountPercentage,
+      discountAmount
+    });
+    onClose();
+  };
+
+  return (
+    <div className={styles.popupOverlay}>
+      <div className={styles.orderItemDetails}>
+        
+        {/* سطر واحد فقط: اسم المنتج + السعر + الكمية + الإجمالي */}
+        <div className={styles.mainRow}>
+          {/* اسم المنتج والسعر على اليمين */}
+          <div className={styles.productInfo}>
+            <span className={styles.productName}>{orderItem.product.nameArabic}</span>
+            {orderItem.product.hasMultiplePrices && (
+              <span className={styles.productSize}> - {orderItem.selectedPrice.nameArabic}</span>
+            )}
+            <span className={styles.unitPrice}>{unitPrice} EGP</span>
+          </div>
+
+          {/* الكمية في النص */}
+          <div className={styles.quantityControls}>
+            <button
+              className={styles.quantityBtn}
+              onClick={() => handleQuantityChange(-1)}
+              disabled={quantity <= 1}
+            >
+              <RemoveIcon />
+            </button>
+            <span className={styles.quantityDisplay}>{quantity}</span>
+            <button
+              className={styles.quantityBtn}
+              onClick={() => handleQuantityChange(1)}
+            >
+              <AddIcon />
+            </button>
+          </div>
+          
+          {/* الإجمالي على الشمال */}
+          <div className={styles.totalDisplay}>
+            <span className={styles.totalAmount}>{finalTotal.toFixed(2)} EGP</span>
+          </div>
+        </div>
+
+        {/* حقل الملاحظات */}
+        <div className={styles.notesSection}>
+          <textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="ملاحظات الصنف..."
+            className={styles.notesInput}
+            rows={3}
+          />
+        </div>
+
+        {/* قسم الخصم */}
+        <div className={styles.discountSection}>
+          <div className={styles.discountInputs}>
+            <div className={styles.discountField}>
+              <label>نسبة الخصم %</label>
+              <input
+                ref={percentageInputRef}
+                type="number"
+                value={tempDiscountPercentage}
+                onChange={(e) => setTempDiscountPercentage(e.target.value)}
+                onFocus={handlePercentageFocus}
+                onBlur={handlePercentageBlur}
+                onKeyDown={handlePercentageKeyDown}
+                min="0"
+                max="100"
+                step="0.1"
+                className={styles.discountInput}
+              />
+            </div>
+            
+            <div className={styles.discountField}>
+              <label>قيمة الخصم</label>
+              <input
+                ref={amountInputRef}
+                type="number"
+                value={tempDiscountAmount}
+                onChange={(e) => setTempDiscountAmount(e.target.value)}
+                onFocus={handleAmountFocus}
+                onBlur={handleAmountBlur}
+                onKeyDown={handleAmountKeyDown}
+                min="0"
+                max={baseTotal}
+                step="0.01"
+                className={styles.discountInput}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* أزرار التأكيد والإلغاء */}
+        <div className={styles.actionButtons}>
+          <button className={styles.confirmBtn} onClick={handleConfirm}>
+            تأكيد
+          </button>
+          <button className={styles.cancelBtn} onClick={onClose}>
+            إلغاء
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default OrderItemDetailsPopup;
+
 ===== src/Pages/pos/newSales/components/OrderManager.tsx =====
-// src/Pages/pos/newSales/components/OrderManager.tsx
+// src/Pages/pos/newSales/components/OrderManager.tsx - الكود الكامل المُحدث
 import React from 'react';
-import { PosProduct, PosPrice, SelectedOption, OrderItem } from '../types/PosSystem';
+import { PosProduct, PosPrice, SelectedOption, OrderItem, SubItem } from '../types/PosSystem';
 import * as posService from '../../../../services/posService';
 
 interface OrderManagerProps {
@@ -264,6 +588,7 @@ interface OrderManagerProps {
   isWithoutMode: boolean;
   selectedOrderItemId: string | null;
   onOrderAdd: (orderItem: OrderItem) => void;
+  onOrderUpdate: (itemId: string, updateType: 'addSubItem' | 'removeSubItem', data: any) => void;
   onModeReset: () => void;
   onLoadNormalProducts: () => void;
 }
@@ -274,6 +599,7 @@ export const useOrderManager = ({
   isWithoutMode,
   selectedOrderItemId,
   onOrderAdd,
+  onOrderUpdate,
   onModeReset,
   onLoadNormalProducts
 }: OrderManagerProps) => {
@@ -284,48 +610,52 @@ export const useOrderManager = ({
     selectedOptions: SelectedOption[]
   ) => {
     const quantity = parseInt(keypadValue) || 1;
-    const totalPrice = posService.calculateTotalPrice(price.price, selectedOptions, quantity);
+    const basePrice = posService.calculateTotalPrice(price.price, selectedOptions, quantity);
     
-    let orderItem: OrderItem;
-    
-    if (isExtraMode || isWithoutMode) {
-      if (selectedOrderItemId) {
-        // إضافة كـ Extra/Without لمنتج مختار
-        orderItem = {
-          id: `${product.id}_${price.id}_${Date.now()}`,
-          product,
-          selectedPrice: price,
-          quantity,
-          totalPrice: isWithoutMode ? -Math.abs(totalPrice) : totalPrice,
-          selectedOptions: selectedOptions.length > 0 ? selectedOptions : undefined,
-          isExtra: isExtraMode,
-          isWithout: isWithoutMode,
-          parentItemId: selectedOrderItemId
-        };
-      } else {
-        // إضافة كمنتج عادي
-        orderItem = {
-          id: `${product.id}_${price.id}_${Date.now()}`,
-          product,
-          selectedPrice: price,
-          quantity,
-          totalPrice,
-          selectedOptions: selectedOptions.length > 0 ? selectedOptions : undefined,
-        };
-      }
+    // إذا كان Extra أو Without mode مع منتج محدد
+    if ((isExtraMode || isWithoutMode) && selectedOrderItemId) {
+      const subItem: SubItem = {
+        id: `${product.id}_${price.id}_${Date.now()}`,
+        type: isExtraMode ? 'extra' : 'without',
+        name: `${product.nameArabic}${price.nameArabic ? ` - ${price.nameArabic}` : ''}`,
+        quantity,
+        price: isWithoutMode ? 0 : basePrice,
+        productId: product.id
+      };
+      
+      onOrderUpdate(selectedOrderItemId, 'addSubItem', subItem);
     } else {
-      // إضافة عادية
-      orderItem = {
+      // إضافة منتج جديد (سواء عادي أو Extra/Without منفصل)
+      const subItems: SubItem[] = [];
+      
+      // تحويل الخيارات إلى sub-items
+      selectedOptions.forEach(option => {
+        subItems.push({
+          id: `option_${option.itemId}_${Date.now()}`,
+          type: 'option',
+          name: option.itemName,
+          quantity: option.quantity,
+          price: option.extraPrice * option.quantity,
+          isRequired: true,
+          groupId: option.groupId
+        });
+      });
+      
+      const orderItem: OrderItem = {
         id: `${product.id}_${price.id}_${Date.now()}`,
         product,
         selectedPrice: price,
         quantity,
-        totalPrice,
-        selectedOptions: selectedOptions.length > 0 ? selectedOptions : undefined,
+        totalPrice: basePrice,
+        subItems: subItems.length > 0 ? subItems : undefined,
+        // إضافة كمنتج Extra/Without منفصل إذا لم يكن هناك منتج محدد
+        isExtra: isExtraMode && !selectedOrderItemId,
+        isWithout: isWithoutMode && !selectedOrderItemId,
       };
-    }
 
-    onOrderAdd(orderItem);
+      onOrderAdd(orderItem);
+    }
+    
     onModeReset();
     onLoadNormalProducts();
   }, [
@@ -333,26 +663,33 @@ export const useOrderManager = ({
     isExtraMode, 
     isWithoutMode, 
     selectedOrderItemId, 
-    onOrderAdd, 
+    onOrderAdd,
+    onOrderUpdate,
     onModeReset, 
     onLoadNormalProducts
   ]);
 
-  return { addToOrder };
+  const removeSubItem = React.useCallback((orderItemId: string, subItemId: string) => {
+    onOrderUpdate(orderItemId, 'removeSubItem', subItemId);
+  }, [onOrderUpdate]);
+
+  return { addToOrder, removeSubItem };
 };
 
 ===== src/Pages/pos/newSales/components/OrderSummary.tsx =====
-// src/Pages/pos/newSales/components/OrderSummary.tsx
-import React from 'react';
-import { OrderSummary as OrderSummaryType, OrderItem } from '../types/PosSystem';
+import React, { useState } from 'react';
+import { OrderSummary as OrderSummaryType, OrderItem, SubItem } from '../types/PosSystem';
+import styles from '../styles/OrderSummary.module.css';
 
 interface OrderSummaryProps {
   orderSummary: OrderSummaryType;
   customerName: string;
   onCustomerNameChange: (name: string) => void;
   onRemoveOrderItem: (itemId: string) => void;
+  onRemoveSubItem: (orderItemId: string, subItemId: string) => void;
   selectedOrderItemId: string | null;
   onOrderItemSelect: (itemId: string) => void;
+  onOrderItemDoubleClick?: (item: OrderItem) => void;
 }
 
 const OrderSummary: React.FC<OrderSummaryProps> = ({
@@ -360,124 +697,218 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
   customerName,
   onCustomerNameChange,
   onRemoveOrderItem,
+  onRemoveSubItem,
   selectedOrderItemId,
-  onOrderItemSelect
+  onOrderItemSelect,
+  onOrderItemDoubleClick
 }) => {
+  
+  // إضافة state للـ sub-item المحدد
+  const [selectedSubItemId, setSelectedSubItemId] = useState<string | null>(null);
+  
+  const renderSubItem = (subItem: SubItem, orderItemId: string) => {
+    const canDelete = subItem.type !== 'option' || !subItem.isRequired;
+    const isSelected = selectedSubItemId === subItem.id;
+    
+    return (
+      <div 
+        key={subItem.id} 
+        className={`${styles.subItem} ${isSelected ? styles.selectedSubItem : ''}`}
+        onClick={(e) => {
+          e.stopPropagation();
+          
+          // إذا كان الضغط على منطقة الـ X (أول 20px من اليسار)
+  // التحقق من الضغط على منطقة الـ border بدقة أكبر
+  const rect = e.currentTarget.getBoundingClientRect();
+  const clickX = e.clientX - rect.left;
+  const borderWidth = 20; // عرض الـ border
+  
+  if (isSelected && canDelete && clickX <= borderWidth) {
+    onRemoveSubItem(orderItemId, subItem.id);
+    setSelectedSubItemId(null);
+  } else {
+    setSelectedSubItemId(isSelected ? null : subItem.id);
+  }
+}}
+      >
+        <div className={styles.subItemDetails}>
+          <div className={styles.subItemInfo}>
+            {/* إظهار الـ badge فقط إذا لم يكن محدد */}
+            {!isSelected && (
+              <span className={`${styles.subItemBadge} ${styles[subItem.type]}`}>
+                {subItem.type === 'extra' && '+'}
+                {subItem.type === 'without' && '-'}
+                {subItem.type === 'option' && '•'}
+              </span>
+            )}
+            <div className={styles.subItemName}>
+              {subItem.quantity} X {subItem.name}
+            </div>
+          </div>
+        </div>
+        
+        <div className={styles.subItemPrices}>
+          <div className={styles.subItemPrice}>
+            {subItem.type === 'without' ? '0' : (subItem.price / subItem.quantity).toFixed(2)}
+          </div>
+          <div className={`${styles.subItemTotal} ${subItem.price < 0 ? styles.negative : ''}`}>
+            {subItem.type === 'without' ? '0' : subItem.price.toFixed(2)}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderOptions = (options: any[]) => {
+    return options.map((option: any, index: number) => (
+      <div key={index} className={styles.optionDetail}>
+        <span className={styles.optionText}>
+          {option.quantity} X {option.itemName}
+        </span>
+        <div className={styles.optionPrices}>
+          <div className={styles.optionPrice}>
+            {option.extraPrice > 0 ? `+${option.extraPrice}` : '0'}
+          </div>
+          <div className={styles.optionTotal}>
+            {(option.extraPrice * option.quantity).toFixed(2)}
+          </div>
+        </div>
+      </div>
+    ));
+  };
+
+  const renderNotes = (notes: string) => {
+    if (!notes || notes.trim() === '') return null;
+    
+    return (
+      <div className={styles.commentsContainer}>
+        <div className={styles.commentItem}>
+          <span className={styles.commentIcon}>💬</span>
+          <span className={styles.commentText}>{notes}</span>
+        </div>
+      </div>
+    );
+  };
+
   return (
-    <aside className="order-summary">
-      <div className="order-header">
-        <div className="order-number">#123</div>
-        <div className="order-total">
-          <span className="amount">{orderSummary.total.toFixed(2)}</span>
-          <span className="currency">EGP</span>
+    <aside className={styles.orderSummary}>
+      <div className={styles.orderHeader}>
+        <div className={styles.orderNumber}>#123</div>
+        <div className={styles.orderTotal}>
+          <span className={styles.amount}>{orderSummary.total.toFixed(2)}</span>
+          <span className={styles.currency}>EGP</span>
         </div>
       </div>
 
-      <div className="order-content">
-        <h3 className="order-title">Order Details</h3>
-
-        <div className="customer-input">
+      <div className={styles.orderContent}>
+        <div className={styles.customerInput}>
           <input
             type="text"
             placeholder="Walk in Customer"
             value={customerName}
             onChange={(e) => onCustomerNameChange(e.target.value)}
-            className="customer-field"
+            className={styles.customerField}
           />
-          <button className="customer-button">
+          <button className={styles.customerButton}>
             <img src="/images/img_group_1000004320.svg" alt="Add customer" />
           </button>
         </div>
 
-        <div className="order-items">
+        <div className={styles.orderItems}>
           {orderSummary.items.map((item) => (
-            <div 
-              key={item.id} 
-              className={`order-item ${selectedOrderItemId === item.id ? 'selected' : ''} ${item.isExtra ? 'extra-item' : ''} ${item.isWithout ? 'without-item' : ''}`}
-              onClick={() => onOrderItemSelect(item.id)}
-            >
-              <div className="item-details">
-                <button 
-                  className="delete-button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onRemoveOrderItem(item.id);
-                  }}
-                >
-                  <img src="/images/img_delete_02.svg" alt="Remove" />
-                </button>
-                <div className="item-info">
-                  <div className="item-name">
-                    {item.isExtra && <span className="extra-badge">+</span>}
-                    {item.isWithout && <span className="without-badge">-</span>}
-                    {item.quantity} X {item.product.nameArabic}
-                    {item.product.hasMultiplePrices && (
-                      <span className="item-size-inline"> - {item.selectedPrice.nameArabic}</span>
-                    )}
-                  </div>
+            <div key={item.id} className={styles.orderItemContainer}>
+              <div 
+                className={`${styles.orderItem} ${selectedOrderItemId === item.id ? styles.selected : ''} ${item.isExtra ? styles.extraItem : ''} ${item.isWithout ? styles.withoutItem : ''}`}
+                onClick={() => onOrderItemSelect(item.id)}
+                onDoubleClick={() => onOrderItemDoubleClick?.(item)}
+              >
+                <div className={styles.itemDetails}>
+                  <button 
+                    className={styles.deleteButton}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onRemoveOrderItem(item.id);
+                    }}
+                  >
+                    <img src="/images/img_delete_02.svg" alt="Remove" />
+                  </button>
                   
-                  {/* عرض الخيارات المختارة */}
-                  {item.selectedOptions && item.selectedOptions.length > 0 && (
-                    <div className="item-options">
-                      {item.selectedOptions.map((option, index) => (
-                        <div key={index} className="option-detail">
-                          <span className="option-text">
-                            {option.quantity > 1 ? `${option.quantity}x ` : ''}
-                            {option.itemName}
-                            {option.extraPrice > 0 && ` (+${option.extraPrice})`}
-                          </span>
-                        </div>
-                      ))}
+                  <div className={styles.itemInfo}>
+                    <div className={styles.itemName}>
+                      {item.isExtra && <span className={styles.extraBadge}>+</span>}
+                      {item.isWithout && <span className={styles.withoutBadge}>-</span>}
+                      {item.quantity} X {item.product.nameArabic}
+                      {item.product.hasMultiplePrices && (
+                        <span className={styles.itemSizeInline}> - {item.selectedPrice.nameArabic}</span>
+                      )}
                     </div>
-                  )}
+                  </div>
+                </div>
+                
+                <div className={styles.itemPrices}>
+                  <div className={styles.itemPrice}>{item.selectedPrice.price}</div>
+                  <div className={`${styles.itemTotal} ${item.isWithout ? styles.negative : ''}`}>
+                    {item.totalPrice}
+                  </div>
                 </div>
               </div>
-              <div className="item-prices">
-                <div className="item-price">{item.selectedPrice.price}</div>
-                <div className={`item-total ${item.isWithout ? 'negative' : ''}`}>
-                  {item.totalPrice}
+              
+              {/* عرض التعليقات */}
+              {item.notes && renderNotes(item.notes)}
+              
+              {/* عرض Sub-items */}
+              {item.subItems && item.subItems.length > 0 && (
+                <div className={styles.subItemsContainer}>
+                  {item.subItems.map(subItem => renderSubItem(subItem, item.id))}
                 </div>
-              </div>
+              )}
+              
+              {/* عرض الخيارات القديمة */}
+              {item.selectedOptions && item.selectedOptions.length > 0 && !item.subItems && (
+                <div className={styles.itemOptions}>
+                  {renderOptions(item.selectedOptions)}
+                </div>
+              )}
             </div>
           ))}
         </div>
       </div>
 
-      <div className="order-footer">
-        <div className="summary-rows">
-          <div className="summary-row">
+      <div className={styles.orderFooter}>
+        <div className={styles.summaryRows}>
+          <div className={styles.summaryRow}>
             <span>Sub Total</span>
             <span>{orderSummary.subtotal.toFixed(2)} <small>EGP</small></span>
           </div>
-          <div className="summary-row">
+          <div className={styles.summaryRow}>
             <span>Discount</span>
             <span>{orderSummary.discount.toFixed(2)} <small>EGP</small></span>
           </div>
-          <div className="summary-row">
+          <div className={styles.summaryRow}>
             <span>Tax</span>
             <span>{orderSummary.tax.toFixed(2)} <small>EGP</small></span>
           </div>
-          <div className="summary-row">
+          <div className={styles.summaryRow}>
             <span>Service</span>
             <span>{orderSummary.service.toFixed(2)} <small>EGP</small></span>
           </div>
         </div>
 
-        <div className="total-row">
+        <div className={styles.totalRow}>
           <span>Total</span>
           <span>{orderSummary.total.toFixed(2)} <small>EGP</small></span>
         </div>
 
-        <div className="action-buttons">
-          <button className="action-button send">
+        <div className={styles.actionButtons}>
+          <button className={`${styles.actionButton} ${styles.send}`}>
             <img src="/images/img_tabler_send.svg" alt="Send" />
             <span>Send</span>
           </button>
-          <button className="action-button print">
+          <button className={`${styles.actionButton} ${styles.print}`}>
             <img src="/images/img_printer.svg" alt="Print" />
             <span>Print</span>
           </button>
-          <button className="action-button pay">
+          <button className={`${styles.actionButton} ${styles.pay}`}>
             <img src="/images/img_payment_02.svg" alt="Pay" />
             <span>Pay</span>
           </button>
@@ -494,9 +925,10 @@ export default OrderSummary;
 import React, { useEffect, useRef } from 'react';
 import { PosProduct, PosPrice } from '../types/PosSystem';
 import CloseIcon from '@mui/icons-material/Close';
+import styles from '../styles/PriceSelectionPopup.module.css';
 
 interface PriceSelectionPopupProps {
-  product: PosProduct;
+  product: PosProduct | null;
   quantity: number;
   isOpen: boolean;
   onClose: () => void;
@@ -512,7 +944,6 @@ const PriceSelectionPopup: React.FC<PriceSelectionPopupProps> = ({
 }) => {
   const overlayRef = useRef<HTMLDivElement>(null);
 
-  // إقفال الـ popup عند الضغط خارجه
   useEffect(() => {
     const handleOverlayClick = (e: MouseEvent) => {
       if (overlayRef.current && e.target === overlayRef.current) {
@@ -529,7 +960,6 @@ const PriceSelectionPopup: React.FC<PriceSelectionPopupProps> = ({
     };
   }, [isOpen, onClose]);
 
-  // إقفال الـ popup عند الضغط على Escape
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -546,34 +976,31 @@ const PriceSelectionPopup: React.FC<PriceSelectionPopupProps> = ({
     };
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !product) return null;
 
   return (
-    <div className="popup-overlay" ref={overlayRef}>
-      <div className="popup-content">
-        <div className="popup-header">
-          <h3 className="popup-title">{product.nameArabic}</h3>
-          <button className="popup-close" onClick={onClose}>
+    <div className={styles.popupOverlay} ref={overlayRef}>
+      <div className={styles.popupContent}>
+        <div className={styles.popupHeader}>
+          <h3 className={styles.popupTitle}>{product.nameArabic}</h3>
+          <button className={styles.popupClose} onClick={onClose}>
             <CloseIcon />
           </button>
         </div>
         
-        <div className="popup-body">
-          <div className="quantity-display">
-            الكمية: {quantity}
-          </div>
+        <div className={styles.popupBody}>
           
-          <div className="prices-grid">
+          <div className={styles.pricesGrid}>
             {product.productPrices.map((price) => (
               <button
                 key={price.id}
-                className="price-card"
+                className={styles.priceCard}
                 onClick={() => onSelectPrice(price)}
               >
-                <div className="price-name">{price.nameArabic}</div>
-                <div className="price-value">
-                  <span className="price">{price.price}</span>
-                  <span className="currency">EGP</span>
+                <div className={styles.priceName}>{price.nameArabic}</div>
+                <div className={styles.priceValue}>
+                  <span className={styles.price}>{price.price}</span>
+                  <span className={styles.currency}>EGP</span>
                 </div>
               </button>
             ))}
@@ -590,8 +1017,7 @@ export default PriceSelectionPopup;
 // src/Pages/pos/newSales/components/ProductCard.tsx
 import React from 'react';
 import { PosProduct } from '../types/PosSystem';
-import * as posService from '../../../../services/posService';
-import '../Styles/ProductCard.css';
+import styles from '../styles/ProductCard.module.css';
 
 interface ProductCardProps {
   product: PosProduct;
@@ -599,41 +1025,39 @@ interface ProductCardProps {
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({ product, onClick }) => {
-  const hasOptions = posService.hasProductOptions(product);
-  
+  const handleClick = () => {
+    onClick(product);
+  };
+
+  // تحديد ما إذا كان المنتج له سعر واحد أم أكثر
+  const hasMultiplePrices = product.hasMultiplePrices;
+  const singlePrice = !hasMultiplePrices && product.productPrices.length > 0 
+    ? product.productPrices[0].price 
+    : null;
+
   return (
-    <button
-      className={`product-card ${product.hasMultiplePrices ? 'multiple-prices' : ''}`}
-      onClick={() => onClick(product)}
-    >
-      <div className="product-image-container">
+    <div className={styles.productCard} onClick={handleClick}>
+      <div className={styles.productImageContainer}>
         <img 
           src={product.image} 
           alt={product.nameArabic} 
-          className="product-image" 
+          className={styles.productImage}
         />
-        {hasOptions && (
-          <div className="product-options-badge">
-            <span>خيارات</span>
+        
+        {/* عرض السعر على الصورة إذا كان المنتج له سعر واحد */}
+        {singlePrice !== null && (
+          <div className={styles.priceOverlay}>
+            {singlePrice.toFixed(2)} EGP
           </div>
         )}
       </div>
       
-      <div className="product-info-section">
-        <div className="product-details">
-          <div className="product-name">
-            {product.nameArabic}
-          </div>
-          
-          {!product.hasMultiplePrices && product.displayPrice && (
-            <div className="product-price-container">
-              <span className="product-price">{product.displayPrice}</span>
-              <span className="product-currency">EGP</span>
-            </div>
-          )}
-        </div>
+      <div className={styles.productInfo}>
+        <h3 className={styles.productName}>
+          {product.nameArabic}
+        </h3>
       </div>
-    </button>
+    </div>
   );
 };
 
@@ -646,6 +1070,10 @@ import { PosProduct, PosPrice, ProductOptionGroup, ProductOptionItem, SelectedOp
 import CloseIcon from '@mui/icons-material/Close';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
+import CheckIcon from '@mui/icons-material/Check';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import styles from '../styles/ProductOptionsPopup.module.css';
 
 interface ProductOptionsPopupProps {
   product: PosProduct | null;
@@ -664,38 +1092,28 @@ const ProductOptionsPopup: React.FC<ProductOptionsPopupProps> = ({
   onClose,
   onComplete
 }) => {
-  // ✅ ALL HOOKS MUST BE AT THE TOP - ALWAYS CALLED IN SAME ORDER
-  const [currentGroupIndex, setCurrentGroupIndex] = useState(0);
   const [selectedOptions, setSelectedOptions] = useState<SelectedOption[]>([]);
   const [groupSelections, setGroupSelections] = useState<{[groupId: string]: {[itemId: string]: number}}>({});
+  const [currentGroupIndex, setCurrentGroupIndex] = useState(0);
 
-  // ✅ useEffect is now always called in the same position
   useEffect(() => {
     if (isOpen && product) {
-      setCurrentGroupIndex(0);
       setSelectedOptions([]);
       setGroupSelections({});
+      setCurrentGroupIndex(0);
     }
   }, [isOpen, product]);
 
-  // ✅ NOW we can do conditional rendering/early returns
-  if (!isOpen || !product || !selectedPrice) {
-    return null;
-  }
+  if (!isOpen || !product || !selectedPrice) return null;
 
   const optionGroups = product.productOptionGroups || [];
-  
+
   if (optionGroups.length === 0) {
     onComplete([]);
     return null;
   }
 
   const currentGroup = optionGroups[currentGroupIndex];
-  
-  if (!currentGroup) {
-    onComplete(selectedOptions);
-    return null;
-  }
 
   const handleItemSelection = (group: ProductOptionGroup, item: ProductOptionItem, change: number) => {
     const newSelections = { ...groupSelections };
@@ -725,197 +1143,272 @@ const ProductOptionsPopup: React.FC<ProductOptionsPopupProps> = ({
     setGroupSelections(newSelections);
   };
 
-  const isGroupValid = (group: ProductOptionGroup): boolean => {
-    const selections = groupSelections[group.id] || {};
-    const totalSelected = Object.values(selections).reduce((sum, count) => sum + count, 0);
+  const handleCardClick = (group: ProductOptionGroup, item: ProductOptionItem) => {
+    const currentCount = groupSelections[group.id]?.[item.id] || 0;
+    const totalSelected = Object.values(groupSelections[group.id] || {}).reduce((sum, count) => sum + count, 0);
+    const otherItemsTotal = totalSelected - currentCount;
     
-    if (group.isRequired) {
-      return totalSelected >= group.minSelection;
+    if (group.allowMultiple) {
+      // للمجموعات المتعددة: زيادة الكمية
+      if (otherItemsTotal < group.maxSelection) {
+        handleItemSelection(group, item, 1);
+      }
+    } else {
+      // للمجموعات الفردية: تغيير الحالة
+      handleItemSelection(group, item, currentCount > 0 ? -1 : 1);
     }
-    
-    return totalSelected === 0 || totalSelected >= group.minSelection;
   };
 
-  const canSkipGroup = (group: ProductOptionGroup): boolean => {
-    return !group.isRequired;
+  const isCurrentGroupValid = (): boolean => {
+    const selections = groupSelections[currentGroup.id] || {};
+    const totalSelected = Object.values(selections).reduce((sum, count) => sum + count, 0);
+    
+    if (currentGroup.isRequired) {
+      return totalSelected >= currentGroup.minSelection;
+    }
+    
+    return true; // المجموعات غير المطلوبة صحيحة دائما
+  };
+
+  const isAllGroupsValid = (): boolean => {
+    return optionGroups.every(group => {
+      const selections = groupSelections[group.id] || {};
+      const totalSelected = Object.values(selections).reduce((sum, count) => sum + count, 0);
+      
+      if (group.isRequired) {
+        return totalSelected >= group.minSelection;
+      }
+      
+      return totalSelected === 0 || totalSelected >= group.minSelection;
+    });
   };
 
   const handleNext = () => {
-    const selections = groupSelections[currentGroup.id] || {};
-    
-    Object.entries(selections).forEach(([itemId, count]) => {
-      if (count > 0) {
-        const item = currentGroup.optionItems.find(i => i.id === itemId);
-        if (item) {
-          const existingIndex = selectedOptions.findIndex(
-            opt => opt.groupId === currentGroup.id && opt.itemId === itemId
-          );
-          
-          const newOption: SelectedOption = {
-            groupId: currentGroup.id,
-            itemId: itemId,
-            itemName: item.name,
-            quantity: count,
-            extraPrice: item.extraPrice,
-            isCommentOnly: item.isCommentOnly
-          };
-          
-          if (existingIndex >= 0) {
-            selectedOptions[existingIndex] = newOption;
-          } else {
-            selectedOptions.push(newOption);
-          }
-        }
-      }
-    });
-    
     if (currentGroupIndex < optionGroups.length - 1) {
       setCurrentGroupIndex(currentGroupIndex + 1);
-    } else {
-      onComplete(selectedOptions);
     }
   };
 
-  const handleSkip = () => {
-    if (currentGroupIndex < optionGroups.length - 1) {
-      setCurrentGroupIndex(currentGroupIndex + 1);
-    } else {
-      onComplete(selectedOptions);
-    }
-  };
-
-  const handleBack = () => {
+  const handlePrevious = () => {
     if (currentGroupIndex > 0) {
       setCurrentGroupIndex(currentGroupIndex - 1);
     }
   };
 
-  const currentSelections = groupSelections[currentGroup.id] || {};
-  const totalSelected = Object.values(currentSelections).reduce((sum, count) => sum + count, 0);
+  const handleComplete = () => {
+    const allSelectedOptions: SelectedOption[] = [];
+    
+    optionGroups.forEach(group => {
+      const selections = groupSelections[group.id] || {};
+      Object.entries(selections).forEach(([itemId, count]) => {
+        if (count > 0) {
+          const item = group.optionItems.find(i => i.id === itemId);
+          if (item) {
+            allSelectedOptions.push({
+              groupId: group.id,
+              itemId: itemId,
+              itemName: item.name,
+              quantity: count,
+              extraPrice: item.extraPrice,
+              isCommentOnly: item.isCommentOnly
+            });
+          }
+        }
+      });
+    });
+    
+    onComplete(allSelectedOptions);
+  };
+
+  const calculateTotalPrice = () => {
+    let total = selectedPrice.price * quantity;
+    
+    optionGroups.forEach(group => {
+      const selections = groupSelections[group.id] || {};
+      Object.entries(selections).forEach(([itemId, count]) => {
+        if (count > 0) {
+          const item = group.optionItems.find(i => i.id === itemId);
+          if (item) {
+            total += item.extraPrice * count * quantity;
+          }
+        }
+      });
+    });
+    
+    return total;
+  };
+
+  const selections = groupSelections[currentGroup.id] || {};
+  const totalSelected = Object.values(selections).reduce((sum, count) => sum + count, 0);
 
   return (
-    <div className="popup-overlay">
-      <div className="popup-content options-popup">
-        <div className="popup-header">
-          <div className="popup-title-section">
-            <h3 className="popup-title">{product.nameArabic}</h3>
-            <div className="popup-subtitle">
-              {selectedPrice.nameArabic} - الكمية: {quantity}
-            </div>
-          </div>
-          <button className="popup-close" onClick={onClose}>
-            <CloseIcon />
-          </button>
-        </div>
+    <div className={styles.popupOverlay}>
+      <div className={styles.popupContent}>
+<div className={styles.popupHeader}>
+  <div className={styles.popupTitleSection}>
+    <h3 className={styles.popupTitle}>{product.nameArabic}</h3>
+    <div className={styles.popupSubtitle}>
+      {selectedPrice.nameArabic} - الكمية: {quantity}
+    </div>
+  </div>
+  <div style={{ display: 'flex', gap: '8px' }}>
+    {currentGroupIndex > 0 && (
+      <button 
+        className={styles.popupClose} 
+        onClick={handlePrevious}
+        title="الرجوع للمجموعة السابقة"
+      >
+        <ArrowBackIcon />
+      </button>
+    )}
+    <button className={styles.popupClose} onClick={onClose}>
+      <CloseIcon />
+    </button>
+  </div>
+</div>
         
-        <div className="popup-body">
-          <div className="group-header">
-            <h4 className="group-title">{currentGroup.name}</h4>
-            <div className="group-progress">
-              {currentGroupIndex + 1} من {optionGroups.length}
+        <div className={styles.popupBody}>
+          {/* مؤشر التقدم */}
+          <div className={styles.progressIndicator}>
+            <div className={styles.progressText}>
+              مجموعة {currentGroupIndex + 1} من {optionGroups.length}
+            </div>
+            <div className={styles.progressBar}>
+              <div 
+                className={styles.progressFill} 
+                style={{ width: `${((currentGroupIndex + 1) / optionGroups.length) * 100}%` }}
+              />
             </div>
           </div>
-          
-          <div className="group-info">
-            <div className="selection-info">
-              {currentGroup.isRequired && (
-                <span className="required-badge">مطلوب</span>
-              )}
-              <span className="selection-count">
-                تم اختيار {totalSelected} من {currentGroup.maxSelection}
-              </span>
-            </div>
-            
-            {currentGroup.minSelection > 0 && (
-              <div className="min-selection">
-                الحد الأدنى: {currentGroup.minSelection}
+
+          <div className={styles.optionsContainer}>
+            <div className={styles.optionGroup}>
+              <div className={styles.groupHeader}>
+                <div className={styles.groupTitle}>
+                  <span className={styles.groupName}>{currentGroup.name}</span>
+                  {currentGroup.isRequired && (
+                    <span className={styles.requiredBadge}>مطلوب</span>
+                  )}
+                </div>
+                <div className={styles.groupInfo}>
+                  <span className={styles.selectionCount}>
+                    {totalSelected} من {currentGroup.maxSelection}
+                  </span>
+                  {currentGroup.minSelection > 0 && (
+                    <span className={styles.minSelection}>
+                      (الحد الأدنى: {currentGroup.minSelection})
+                    </span>
+                  )}
+                </div>
               </div>
-            )}
+              
+              <div className={styles.optionsGrid}>
+                {currentGroup.optionItems
+                  .sort((a, b) => a.sortOrder - b.sortOrder)
+                  .map((item) => {
+                    const itemCount = selections[item.id] || 0;
+                    const canAdd = currentGroup.allowMultiple 
+                      ? totalSelected < currentGroup.maxSelection
+                      : itemCount === 0;
+                    
+                    return (
+                      <div 
+                        key={item.id} 
+                        className={`${styles.optionCard} ${itemCount > 0 ? styles.selected : ''}`}
+                        onClick={() => handleCardClick(currentGroup, item)}
+                      >
+                        <div className={styles.optionContent}>
+                          <div className={styles.optionInfo}>
+                            <div className={styles.optionName}>{item.name}</div>
+                            {item.extraPrice > 0 && (
+                              <div className={styles.optionPrice}>
+                                +{item.extraPrice} EGP
+                              </div>
+                            )}
+                          </div>
+                          
+                          <div className={styles.optionControls}>
+                            {currentGroup.allowMultiple ? (
+                              <div className={styles.quantitySection}>
+                                {itemCount > 0 && (
+                                  <button
+                                    className={styles.removeBtn}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleItemSelection(currentGroup, item, -1);
+                                    }}
+                                  >
+                                    <RemoveIcon />
+                                  </button>
+                                )}
+                                
+                                {itemCount > 0 ? (
+                                  <div className={styles.quantityBadge}>
+                                    {itemCount}
+                                  </div>
+                                ) : canAdd ? (
+                                  <div className={styles.addIcon}>
+                                    <AddIcon />
+                                  </div>
+                                ) : (
+                                  <div className={styles.maxReached}>
+                                    <span>الحد الأقصى</span>
+                                  </div>
+                                )}
+                              </div>
+                            ) : (
+                              <div className={styles.singleSelect}>
+                                {itemCount > 0 ? (
+                                  <div className={styles.selectedIcon}>
+                                    <CheckIcon />
+                                  </div>
+                                ) : (
+                                  <div className={styles.unselectedIcon}>
+                                    <AddIcon />
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            </div>
           </div>
           
-          <div className="options-list">
-            {currentGroup.optionItems
-              .sort((a, b) => a.sortOrder - b.sortOrder)
-              .map((item) => {
-                const itemCount = currentSelections[item.id] || 0;
-                const canAdd = currentGroup.allowMultiple 
-                  ? totalSelected < currentGroup.maxSelection
-                  : itemCount === 0;
-                
-                return (
-                  <div key={item.id} className="option-item">
-                    <div className="option-info">
-                      <div className="option-name">{item.name}</div>
-                      {item.extraPrice > 0 && (
-                        <div className="option-price">
-                          +{item.extraPrice} EGP
-                        </div>
-                      )}
-                      {item.isCommentOnly && (
-                        <div className="comment-only">تعليق فقط</div>
-                      )}
-                    </div>
-                    
-                    <div className="option-controls">
-                      {currentGroup.allowMultiple ? (
-                        <div className="quantity-controls">
-                          <button
-                            className="quantity-btn minus"
-                            onClick={() => handleItemSelection(currentGroup, item, -1)}
-                            disabled={itemCount === 0}
-                          >
-                            <RemoveIcon />
-                          </button>
-                          <span className="quantity-display">{itemCount}</span>
-                          <button
-                            className="quantity-btn plus"
-                            onClick={() => handleItemSelection(currentGroup, item, 1)}
-                            disabled={!canAdd}
-                          >
-                            <AddIcon />
-                          </button>
-                        </div>
-                      ) : (
-                        <button
-                          className={`select-btn ${itemCount > 0 ? 'selected' : ''}`}
-                          onClick={() => handleItemSelection(currentGroup, item, itemCount > 0 ? -1 : 1)}
-                        >
-                          {itemCount > 0 ? 'مختار' : 'اختيار'}
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
+          <div className={styles.totalSection}>
+            <div className={styles.totalRow}>
+              <span className={styles.totalLabel}>الإجمالي:</span>
+              <span className={styles.totalValue}>{calculateTotalPrice().toFixed(2)} EGP</span>
+            </div>
           </div>
         </div>
         
-        <div className="popup-footer">
-          <div className="footer-buttons">
-            <button className="btn-cancel" onClick={onClose}>
-              إلغاء
-            </button>
-            
-            {currentGroupIndex > 0 && (
-              <button className="btn-back" onClick={handleBack}>
-                رجوع
-              </button>
-            )}
-            
-            {canSkipGroup(currentGroup) && (
-              <button className="btn-skip" onClick={handleSkip}>
-                تخطي
-              </button>
-            )}
-            
+        <div className={styles.popupFooter}>
+          <button className={styles.btnCancel} onClick={onClose}>
+            إلغاء
+          </button>
+          
+          {currentGroupIndex < optionGroups.length - 1 ? (
             <button
-              className="btn-next"
+              className={styles.btnConfirm}
               onClick={handleNext}
-              disabled={!isGroupValid(currentGroup)}
+              disabled={currentGroup.isRequired && !isCurrentGroupValid()}
             >
-              {currentGroupIndex < optionGroups.length - 1 ? 'التالي' : 'إنهاء'}
+              التالي
+              <ArrowForwardIcon />
             </button>
-          </div>
+          ) : (
+            <button
+              className={styles.btnConfirm}
+              onClick={handleComplete}
+              disabled={!isAllGroupsValid()}
+            >
+              تأكيد الاختيار
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -1271,8 +1764,176 @@ const SearchView: React.FC<SearchViewProps> = ({
 };
 
 export default SearchView;
+===== src/Pages/pos/newSales/hooks/useDataManager.tsx =====
+// src/Pages/pos/newSales/hooks/useDataManager.tsx
+import { useState, useEffect, useCallback } from 'react';
+import { PosProduct, CategoryItem } from '../types/PosSystem';
+import * as posService from '../../../../services/posService';
+
+interface DataState {
+  mainProducts: PosProduct[];
+  mainCategories: CategoryItem[];
+  additionProducts: PosProduct[];
+  additionCategories: CategoryItem[];
+  normalModeProducts: PosProduct[];
+  normalModeCategories: CategoryItem[];
+  loading: boolean;
+  error: string | null;
+  defaultCategoryId: string | null;
+}
+
+export const useDataManager = () => {
+  const [dataState, setDataState] = useState<DataState>({
+    mainProducts: [],
+    mainCategories: [],
+    additionProducts: [],
+    additionCategories: [],
+    normalModeProducts: [],
+    normalModeCategories: [],
+    loading: true,
+    error: null,
+    defaultCategoryId: null
+  });
+
+  const loadAllData = useCallback(async () => {
+    try {
+      setDataState(prev => ({ ...prev, loading: true, error: null }));
+
+      // تحميل البيانات من posService (التي تحتوي على productType)
+      const [mainProducts, additionProducts] = await Promise.all([
+        posService.getAllPosProducts(),
+        posService.getAdditionProducts()
+      ]);
+
+      // تحويل البيانات إلى النوع المطلوب
+      const convertedMainProducts: PosProduct[] = mainProducts.map(product => ({
+        ...product,
+        productType: product.productType || 1 // ضمان وجود productType
+      }));
+
+      const convertedAdditionProducts: PosProduct[] = additionProducts.map(product => ({
+        ...product,
+        productType: product.productType || 3 // ضمان وجود productType
+      }));
+
+      const [mainCategories, additionCategories] = await Promise.all([
+        posService.getAllCategories(mainProducts),
+        posService.getCategoriesByProductType(3)
+      ]);
+
+      // تحويل الفئات إلى النوع المطلوب
+      const convertedMainCategories: CategoryItem[] = mainCategories.map(category => ({
+        ...category,
+        products: category.products?.map(product => ({
+          ...product,
+          productType: product.productType || 1
+        }))
+      }));
+
+      const convertedAdditionCategories: CategoryItem[] = additionCategories.map(category => ({
+        ...category,
+        products: category.products?.map(product => ({
+          ...product,
+          productType: product.productType || 3
+        }))
+      }));
+
+      // دمج المنتجات للعرض العادي
+      const normalModeProducts = [...convertedMainProducts, ...convertedAdditionProducts];
+      const normalModeCategories = await posService.getAllCategories([...mainProducts, ...additionProducts]);
+      
+      const convertedNormalModeCategories: CategoryItem[] = normalModeCategories.map(category => ({
+        ...category,
+        products: category.products?.map(product => ({
+          ...product,
+          productType: product.productType || 1
+        }))
+      }));
+
+      const rootMainCategories = convertedNormalModeCategories.filter(cat => !cat.parentId);
+      const defaultCategoryId = rootMainCategories.length > 0 ? rootMainCategories[0].id : null;
+
+      setDataState({
+        mainProducts: convertedMainProducts,
+        mainCategories: convertedMainCategories,
+        additionProducts: convertedAdditionProducts,
+        additionCategories: convertedAdditionCategories,
+        normalModeProducts,
+        normalModeCategories: convertedNormalModeCategories,
+        loading: false,
+        error: null,
+        defaultCategoryId
+      });
+
+    } catch (error) {
+      console.error('Error loading data:', error);
+      setDataState(prev => ({
+        ...prev,
+        loading: false,
+        error: 'فشل في تحميل البيانات'
+      }));
+    }
+  }, []);
+
+  useEffect(() => {
+    loadAllData();
+  }, [loadAllData]);
+
+  // دالة للحصول على المنتجات المفلترة حسب الوضع
+  const getProducts = useCallback((isAdditionMode: boolean): PosProduct[] => {
+    if (isAdditionMode) {
+      return dataState.additionProducts.filter(product => product.productType === 3);
+    }
+    return dataState.normalModeProducts;
+  }, [dataState.additionProducts, dataState.normalModeProducts]);
+
+  // دالة للحصول على الفئات المفلترة حسب الوضع
+  const getCategories = useCallback((isAdditionMode: boolean): CategoryItem[] => {
+    if (isAdditionMode) {
+      return dataState.additionCategories.filter(category => 
+        category.products && category.products.some(product => product.productType === 3)
+      );
+    }
+    return dataState.normalModeCategories;
+  }, [dataState.additionCategories, dataState.normalModeCategories]);
+
+  // إضافة دوال مساعدة متوافقة مع posService
+  const searchProducts = useCallback((products: PosProduct[], query: string): PosProduct[] => {
+    if (!query.trim()) return [];
+    
+    const searchTerm = query.toLowerCase();
+    return products.filter(product => 
+      product.nameArabic.toLowerCase().includes(searchTerm) ||
+      product.name.toLowerCase().includes(searchTerm)
+    );
+  }, []);
+
+  const getProductsByScreenId = useCallback((products: PosProduct[], screenId: string): PosProduct[] => {
+    return products.filter(product => product.categoryId === screenId);
+  }, []);
+
+  const hasProductOptions = useCallback((product: PosProduct): boolean => {
+    return !!(product.productOptionGroups && product.productOptionGroups.length > 0);
+  }, []);
+
+  return {
+    ...dataState,
+    loadAllData,
+    getProducts,
+    getCategories,
+    // إضافة الدوال المساعدة
+    searchProducts,
+    getProductsByScreenId,
+    hasProductOptions,
+    // مؤشرات الحالة
+    isLoading: dataState.loading,
+    hasError: !!dataState.error,
+    isDataReady: !dataState.loading && !dataState.error && dataState.normalModeProducts.length > 0
+  };
+};
+
 ===== src/Pages/pos/newSales/index.tsx =====
-// src/Pages/pos/newSales/index.tsx
+// src/Pages/pos/newSales/index.tsx - الكود الكامل المُحدث
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { PosProduct, CategoryItem, OrderSummary as OrderSummaryType, OrderItem, PosPrice, SelectedOption } from './types/PosSystem';
 import * as posService from '../../../services/posService';
@@ -1283,9 +1944,11 @@ import Header from './components/common/Header';
 import ActionButtons from './components/ActionButtons';
 import OrderSummary from './components/OrderSummary';
 import { useOrderManager } from './components/OrderManager';
+import { useDataManager } from './hooks/useDataManager';
 import './styles/responsive.css';
 import './styles/popup.css';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import OrderItemDetailsPopup from './components/OrderItemDetailsPopup';
 
 const PosSystem: React.FC = () => {
   const [keypadValue, setKeypadValue] = useState('1');
@@ -1295,23 +1958,26 @@ const PosSystem: React.FC = () => {
   const [selectedChips, setSelectedChips] = useState<string[]>([]);
   const [selectedOrderType, setSelectedOrderType] = useState('Takeaway');
   
-  // API States
-  const [allProducts, setAllProducts] = useState<PosProduct[]>([]);
-  const [categories, setCategories] = useState<CategoryItem[]>([]);
-  const [displayedProducts, setDisplayedProducts] = useState<PosProduct[]>([]);
-  const [loading, setLoading] = useState(false);
-  
+  // استخدام Data Manager الجديد
+  const {
+    loading,
+    error,
+    getProducts,
+    getCategories,
+    defaultCategoryId,
+    searchProducts,
+    getProductsByScreenId,
+    hasProductOptions
+  } = useDataManager();
+
   // Extra/Without States
   const [isExtraMode, setIsExtraMode] = useState(false);
   const [isWithoutMode, setIsWithoutMode] = useState(false);
   const [selectedOrderItemId, setSelectedOrderItemId] = useState<string | null>(null);
-  const [originalProducts, setOriginalProducts] = useState<PosProduct[]>([]);
-  const [originalCategories, setOriginalCategories] = useState<CategoryItem[]>([]);
   
-  // إضافة states جديدة للتحكم في عرض الأطفال
+  // Categories States
   const [showingChildren, setShowingChildren] = useState<string | null>(null);
   const [, setParentCategory] = useState<CategoryItem | null>(null);
-  const [allCategories, setAllCategories] = useState<CategoryItem[]>([]);
   
   // Popup States
   const [showPricePopup, setShowPricePopup] = useState(false);
@@ -1320,105 +1986,233 @@ const PosSystem: React.FC = () => {
   const [selectedProductForOptions, setSelectedProductForOptions] = useState<PosProduct | null>(null);
   const [selectedPriceForOptions, setSelectedPriceForOptions] = useState<PosPrice | null>(null);
   
+  // Order Details Popup States
+  const [showOrderDetailsPopup, setShowOrderDetailsPopup] = useState(false);
+  const [selectedOrderItemForDetails, setSelectedOrderItemForDetails] = useState<OrderItem | null>(null);
+  
   // Order States
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
 
-  // دالة تحميل المنتجات العادية
-  const loadAllData = async () => {
-    try {
-      setLoading(true);
-      
-      // جلب كل المنتجات أولاً
-      const products = await posService.getAllPosProducts();
-      setAllProducts(products);
-      setOriginalProducts(products);
-      
-      // ثم جلب الفئات
-      const apiCategories = await posService.getAllCategories(products);
-      setAllCategories(apiCategories); // حفظ جميع الفئات
-      setOriginalCategories(apiCategories);
-      const rootCategories = apiCategories.filter(cat => !cat.parentId);
-      setCategories(rootCategories);
-      
-      if (rootCategories.length > 0) {
-        setSelectedCategory(rootCategories[0].id);
-      }
-    } catch (error) {
-      console.error('Error loading data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // الحصول على البيانات الحالية
+  const isAdditionMode = isExtraMode || isWithoutMode;
+  const currentProducts = getProducts(isAdditionMode);
+  const currentCategories = getCategories(isAdditionMode);
+  const rootCategories = currentCategories.filter(cat => !cat.parentId);
+  const categories = showingChildren 
+    ? currentCategories.find(cat => cat.id === showingChildren)?.children || []
+    : rootCategories;
 
-  // دالة تحميل منتجات الإضافات
-  const loadAdditionProducts = useCallback(async () => {
-    try {
-      setLoading(true);
-      const additionProducts = await posService.getAdditionProducts();
-      const additionCategories = await posService.getCategoriesByProductType(3);
-      
-      setAllProducts(additionProducts);
-      setCategories(additionCategories);
-      
-      if (additionCategories.length > 0) {
-        setSelectedCategory(additionCategories[0].id);
-      }
-    } catch (error) {
-      console.error('Error loading addition products:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  // Load all data on mount
-  useEffect(() => {
-    loadAllData();
-  }, []);
-
-  // Update displayed products when category or search changes
-  useEffect(() => {
+  // المنتجات المعروضة
+  const displayedProducts = useMemo(() => {
     if (searchQuery.trim()) {
-      const searchResults = posService.searchProducts(allProducts, searchQuery);
-      setDisplayedProducts(searchResults);
-    } else if (selectedCategory) {
-      const categoryProducts = posService.getProductsByScreenId(allProducts, selectedCategory);
-      setDisplayedProducts(categoryProducts);
-    } else {
-      setDisplayedProducts([]);
+      return searchProducts(currentProducts, searchQuery);
     }
-  }, [selectedCategory, searchQuery, allProducts]);
+    
+    if (selectedCategory) {
+      return getProductsByScreenId(currentProducts, selectedCategory);
+    }
+    
+    return [];
+  }, [currentProducts, selectedCategory, searchQuery, searchProducts, getProductsByScreenId]);
+
+  // تحديث دالة updateOrderItem
+
+const updateOrderItem = useCallback((itemId: string, updateType: 'addSubItem' | 'removeSubItem', data: any) => {
+  setOrderItems(prev => prev.map(item => {
+    if (item.id === itemId) {
+      if (updateType === 'addSubItem') {
+        const newSubItems = [...(item.subItems || []), data];
+        
+        // ✅ العناصر "بدون" لا تؤثر على الإجمالي
+        const priceImpact = data.type === 'without' ? 0 : data.price;
+        const newTotalPrice = item.totalPrice + priceImpact;
+        
+        return {
+          ...item,
+          subItems: newSubItems,
+          totalPrice: newTotalPrice
+        };
+      } else if (updateType === 'removeSubItem') {
+        const removedSubItem = item.subItems?.find(sub => sub.id === data);
+        const newSubItems = item.subItems?.filter(sub => sub.id !== data) || [];
+        
+        // ✅ العناصر "بدون" لا تؤثر على الإجمالي عند الحذف
+        const priceImpact = removedSubItem?.type === 'without' ? 0 : (removedSubItem?.price || 0);
+        const newTotalPrice = item.totalPrice - priceImpact;
+        
+        return {
+          ...item,
+          subItems: newSubItems.length > 0 ? newSubItems : undefined,
+          totalPrice: newTotalPrice
+        };
+      }
+    }
+    return item;
+  }));
+}, []);
 
   // Order Manager Hook
-  const { addToOrder } = useOrderManager({
+  const { addToOrder, removeSubItem } = useOrderManager({
     keypadValue,
     isExtraMode,
     isWithoutMode,
     selectedOrderItemId,
     onOrderAdd: (orderItem) => setOrderItems(prev => [...prev, orderItem]),
+    onOrderUpdate: updateOrderItem,
     onModeReset: () => {
       setIsExtraMode(false);
       setIsWithoutMode(false);
       setSelectedOrderItemId(null);
       setKeypadValue('1');
     },
-    onLoadNormalProducts: loadAllData
+    onLoadNormalProducts: () => {
+      // لا نحتاج لإعادة تحميل البيانات لأنها محملة مسبقاً
+    }
   });
 
-  // معالج زر Extra
+  // إضافة معالج double click
+  const handleOrderItemDoubleClick = useCallback((item: OrderItem) => {
+    setSelectedOrderItemForDetails(item);
+    setShowOrderDetailsPopup(true);
+  }, []);
+
+  // إضافة معالج تحديث المنتج للـ OrderItemDetailsPopup
+const handleUpdateOrderItem = useCallback((itemId: string, updates: {
+  quantity?: number;
+  notes?: string;
+  discountPercentage?: number;
+  discountAmount?: number;
+}) => {
+  setOrderItems(prev => prev.map(item => {
+    if (item.id === itemId) {
+      const updatedItem = { ...item };
+      
+      if (updates.quantity !== undefined) {
+        updatedItem.quantity = updates.quantity;
+      }
+      
+      if (updates.notes !== undefined) {
+        updatedItem.notes = updates.notes;
+      }
+      
+      if (updates.discountPercentage !== undefined) {
+        updatedItem.discountPercentage = updates.discountPercentage;
+      }
+      
+      if (updates.discountAmount !== undefined) {
+        updatedItem.discountAmount = updates.discountAmount;
+      }
+      
+      // ✅ إعادة حساب السعر الإجمالي مع تجاهل عناصر "بدون"
+      const basePrice = item.selectedPrice.price * (updates.quantity || item.quantity);
+      const subItemsTotal = item.subItems?.reduce((sum, subItem) => {
+        // تجاهل عناصر "بدون" في الحساب
+        return sum + (subItem.type === 'without' ? 0 : subItem.price);
+      }, 0) || 0;
+      
+      const totalBeforeDiscount = basePrice + subItemsTotal;
+      const discountAmount = updates.discountAmount || item.discountAmount || 0;
+      updatedItem.totalPrice = totalBeforeDiscount - discountAmount;
+      
+      return updatedItem;
+    }
+    return item;
+  }));
+}, []);
+
+  // إضافة معالج حذف sub-item
+const handleRemoveSubItem = useCallback((orderItemId: string, subItemId: string) => {
+  setOrderItems(prev => prev.map(item => {
+    if (item.id === orderItemId && item.subItems) {
+      const removedSubItem = item.subItems.find(sub => sub.id === subItemId);
+      const newSubItems = item.subItems.filter(sub => sub.id !== subItemId);
+      
+      // ✅ العناصر "بدون" لا تؤثر على الإجمالي
+      const priceImpact = removedSubItem?.type === 'without' ? 0 : (removedSubItem?.price || 0);
+      const newTotalPrice = item.totalPrice - priceImpact;
+      
+      return {
+        ...item,
+        subItems: newSubItems.length > 0 ? newSubItems : undefined,
+        totalPrice: newTotalPrice
+      };
+    }
+    return item;
+  }));
+}, []);
+
+  // إضافة useEffect لتحديد الفئة الافتراضية
+  useEffect(() => {
+    if (defaultCategoryId && !selectedCategory && !isAdditionMode) {
+      setSelectedCategory(defaultCategoryId);
+    }
+  }, [defaultCategoryId, selectedCategory, isAdditionMode]);
+
+  // معالج زر Extra - التحديث الجديد
   const handleExtraClick = useCallback(() => {
+    // إذا لم يكن هناك منتج محدد، استخدم آخر منتج في السلة
+    let targetItemId = selectedOrderItemId;
+    
+    if (!targetItemId && orderItems.length > 0) {
+      targetItemId = orderItems[orderItems.length - 1].id;
+      setSelectedOrderItemId(targetItemId);
+    }
+    
+    // إذا لم يكن هناك منتجات في السلة، لا تفعل شيء
+    if (!targetItemId) {
+      return;
+    }
+    
     setIsExtraMode(true);
     setIsWithoutMode(false);
     setSelectedChips(prev => prev.includes('extra') ? prev : [...prev.filter(chip => chip !== 'without'), 'extra']);
-    loadAdditionProducts();
-  }, [loadAdditionProducts]);
+    
+    const additionCategories = getCategories(true).filter(cat => !cat.parentId);
+    if (additionCategories.length > 0) {
+      setSelectedCategory(additionCategories[0].id);
+    }
+  }, [selectedOrderItemId, orderItems, getCategories]);
 
-  // معالج زر Without
+  // معالج زر Without - التحديث الجديد
   const handleWithoutClick = useCallback(() => {
+    // إذا لم يكن هناك منتج محدد، استخدم آخر منتج في السلة
+    let targetItemId = selectedOrderItemId;
+    
+    if (!targetItemId && orderItems.length > 0) {
+      targetItemId = orderItems[orderItems.length - 1].id;
+      setSelectedOrderItemId(targetItemId);
+    }
+    
+    // إذا لم يكن هناك منتجات في السلة، لا تفعل شيء
+    if (!targetItemId) {
+      return;
+    }
+    
     setIsWithoutMode(true);
     setIsExtraMode(false);
     setSelectedChips(prev => prev.includes('without') ? prev : [...prev.filter(chip => chip !== 'extra'), 'without']);
-    loadAdditionProducts();
-  }, [loadAdditionProducts]);
+    
+    const additionCategories = getCategories(true).filter(cat => !cat.parentId);
+    if (additionCategories.length > 0) {
+      setSelectedCategory(additionCategories[0].id);
+    }
+  }, [selectedOrderItemId, orderItems, getCategories]);
+
+  // معالج الرجوع للمنتجات الأساسية
+  const handleBackToMainProducts = useCallback(() => {
+    setIsExtraMode(false);
+    setIsWithoutMode(false);
+    setSelectedOrderItemId(null);
+    setSelectedChips(prev => prev.filter(chip => chip !== 'extra' && chip !== 'without'));
+    
+    // استخدام الفئة الافتراضية
+    if (defaultCategoryId) {
+      setSelectedCategory(defaultCategoryId);
+    }
+    
+    setShowingChildren(null);
+    setParentCategory(null);
+  }, [defaultCategoryId]);
 
   // معالج اختيار منتج في الفاتورة
   const handleOrderItemSelect = useCallback((itemId: string) => {
@@ -1429,15 +2223,13 @@ const PosSystem: React.FC = () => {
     }
   }, [selectedOrderItemId]);
 
-  // تحديث handleCategorySelect للمنطق الجديد
+  // معالج اختيار الفئة
   const handleCategorySelect = useCallback((categoryId: string) => {
     const category = categories.find(cat => cat.id === categoryId);
     
     if (category?.hasChildren && category.children) {
-      // إخفاء كل الفئات وإظهار الأطفال فقط
       setShowingChildren(categoryId);
       setParentCategory(category);
-      setCategories(category.children);
       if (category.children.length > 0) {
         setSelectedCategory(category.children[0].id);
       }
@@ -1452,85 +2244,38 @@ const PosSystem: React.FC = () => {
     setSearchQuery('');
   }, []);
 
-
-
-
-  // دالة الرجوع للمنتجات الأساسية
-const handleBackToMainProducts = useCallback(async () => {
-  // إعادة تعيين الـ modes
-  setIsExtraMode(false);
-  setIsWithoutMode(false);
-  setSelectedOrderItemId(null);
-  
-  // إعادة تعيين الـ chips
-  setSelectedChips(prev => prev.filter(chip => chip !== 'extra' && chip !== 'without'));
-  
-  // إعادة تحميل المنتجات الأساسية
-  try {
-    setLoading(true);
-    
-    setAllProducts(originalProducts);
-    setCategories(originalCategories.filter(cat => !cat.parentId));
-    setAllCategories(originalCategories);
-    
-    const rootCategories = originalCategories.filter(cat => !cat.parentId);
-    if (rootCategories.length > 0) {
-      setSelectedCategory(rootCategories[0].id);
-    }
-    
-    // إعادة تعيين الـ children states
-    setShowingChildren(null);
-    setParentCategory(null);
-    
-  } catch (error) {
-    console.error('Error loading main products:', error);
-  } finally {
-    setLoading(false);
-  }
-}, [originalProducts, originalCategories]);
-
-
   // دالة الرجوع للفئة الأب
-  const handleBackToParent = useCallback(async () => {
+  const handleBackToParent = useCallback(() => {
     setShowingChildren(null);
     setParentCategory(null);
-    
-    // إعادة تحميل الفئات الأساسية
-    const rootCategories = (isExtraMode || isWithoutMode) ? 
-      categories : originalCategories.filter(cat => !cat.parentId);
-    setCategories(rootCategories);
     
     if (rootCategories.length > 0) {
       setSelectedCategory(rootCategories[0].id);
     }
-  }, [isExtraMode, isWithoutMode, categories, originalCategories]);
+  }, [rootCategories]);
 
-  // التعامل مع ضغط المنتج - محدث لدعم المجموعات
+  // معالج ضغط المنتج
   const handleProductClick = useCallback((product: PosProduct) => {
     if (product.hasMultiplePrices) {
-      // فتح الـ popup لاختيار السعر
       setSelectedProduct(product);
       setShowPricePopup(true);
     } else if (product.productPrices.length > 0) {
       const price = product.productPrices[0];
       
-      // التحقق من وجود مجموعات خيارات
-      if (posService.hasProductOptions(product)) {
+      if (hasProductOptions(product)) {
         setSelectedProductForOptions(product);
         setSelectedPriceForOptions(price);
         setShowOptionsPopup(true);
       } else {
-        // إضافة للفاتورة مباشرة
         addToOrder(product, price, []);
       }
     }
-  }, [addToOrder]);
+  }, [addToOrder, hasProductOptions]);
 
-  // التعامل مع اختيار السعر من الـ popup - محدث لدعم المجموعات
+  // معالج اختيار السعر
   const handlePriceSelect = useCallback((price: PosPrice) => {
     if (selectedProduct) {
-      // التحقق من وجود مجموعات خيارات
-      if (posService.hasProductOptions(selectedProduct)) {
+      if (hasProductOptions(selectedProduct)) {
         setSelectedProductForOptions(selectedProduct);
         setSelectedPriceForOptions(price);
         setShowPricePopup(false);
@@ -1540,9 +2285,9 @@ const handleBackToMainProducts = useCallback(async () => {
       }
     }
     setSelectedProduct(null);
-  }, [selectedProduct, addToOrder]);
+  }, [selectedProduct, addToOrder, hasProductOptions]);
 
-  // معالج إكمال اختيار المجموعات - جديد
+  // معالج إكمال اختيار المجموعات
   const handleOptionsComplete = useCallback((selectedOptions: SelectedOption[]) => {
     if (selectedProductForOptions && selectedPriceForOptions) {
       addToOrder(selectedProductForOptions, selectedPriceForOptions, selectedOptions);
@@ -1595,19 +2340,57 @@ const handleBackToMainProducts = useCallback(async () => {
     );
   }, []);
 
+  const handleResetOrder = useCallback(() => {
+    // إعادة تعيين الفاتورة بالكامل
+    setOrderItems([]);
+    setSelectedOrderItemId(null);
+    setCustomerName('');
+    setKeypadValue('1');
+    
+    // إعادة تعيين الـ modes
+    setIsExtraMode(false);
+    setIsWithoutMode(false);
+    setSelectedChips([]);
+    
+    // الرجوع للمنتجات الأساسية
+    handleBackToMainProducts();
+    
+    // إعادة تعيين البحث
+    setSearchQuery('');
+    
+    // رسالة تأكيد (اختيارية)
+    console.log('Order reset successfully');
+  }, [handleBackToMainProducts]);
+
+  // عرض حالة التحميل
+  if (loading) {
+    return (
+      <div className="pos-system loading">
+        <div className="loading-spinner">جاري تحميل البيانات...</div>
+      </div>
+    );
+  }
+
+  // عرض حالة الخطأ
+  if (error) {
+    return (
+      <div className="pos-system error">
+        <div className="error-message">{error}</div>
+        <button onClick={() => window.location.reload()}>إعادة المحاولة</button>
+      </div>
+    );
+  }
+
   return (
     <div className="pos-system">
-      {/* Top Header Bar */}
       <Header
         selectedOrderType={selectedOrderType}
         onOrderTypeChange={setSelectedOrderType}
+        onResetOrder={handleResetOrder}
       />
 
-      {/* Main Content */}
       <main className="main-content">
-        {/* Left Section - Products Area */}
         <section className="products-section">
-          {/* Number Pad Bar */}
           <div className="number-pad-bar">
             <div className="keypad-grid">
               {['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '.', 'C'].map((key) => (
@@ -1625,7 +2408,6 @@ const handleBackToMainProducts = useCallback(async () => {
             </div>
           </div>
 
-          {/* Action Buttons Component */}
           <ActionButtons
             selectedChips={selectedChips}
             onChipClick={handleChipClick}
@@ -1635,84 +2417,78 @@ const handleBackToMainProducts = useCallback(async () => {
             onWithoutClick={handleWithoutClick}
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
+            hasSelectedOrderItem={true} // ✅ دائماً true لإزالة الـ disabled
           />
 
-          {/* Products Grid */}
           <div className="product-grid">
-            {loading ? (
-              <div className="loading-message">Loading...</div>
-            ) : (
-              displayedProducts.map((product) => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  onClick={handleProductClick}
-                />
-              ))
-            )}
+            {displayedProducts.map((product) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                onClick={handleProductClick}
+              />
+            ))}
           </div>
         </section>
 
-{/* Categories Sidebar */}
-<aside className="categories-sidebar">
-  <div className="categories-list">
-    {/* زرار الرجوع للمنتجات الأساسية عند كون في Extra/Without mode */}
-    {(isExtraMode || isWithoutMode) && (
-      <button
-        onClick={handleBackToMainProducts}
-        className="category-item back-button main-back"
-      >
-        <ArrowBackIcon />
-        <span>رجوع للمنتجات الأساسية</span>
-      </button>
-    )}
-    
-    {/* زر الرجوع إذا كنا نعرض الأطفال */}
-    {showingChildren && (
-      <button
-        onClick={handleBackToParent}
-        className="category-item back-button"
-      >
-        <ArrowBackIcon />
-        <span>رجوع</span>
-      </button>
-    )}
-    
-    {/* عرض الفئات */}
-    {categories.map((category) => (
-      <button
-        key={category.id}
-        onClick={() => showingChildren ? handleChildCategorySelect(category.id) : handleCategorySelect(category.id)}
-        className={`category-item ${category.id === selectedCategory ? 'active' : ''}`}
-      >
-        <img src={category.image} alt={category.name} />
-        <span>{category.nameArabic}</span>
-      </button>
-    ))}
-  </div>
-</aside>
+        <aside className="categories-sidebar">
+          <div className="categories-list">
+            {isAdditionMode && (
+              <button
+                onClick={handleBackToMainProducts}
+                className="category-item back-button main-back"
+              >
+                <ArrowBackIcon />
+                <span>رجوع للمنتجات الأساسية</span>
+              </button>
+            )}
+            
+            {showingChildren && (
+              <button
+                onClick={handleBackToParent}
+                className="category-item back-button"
+              >
+                <ArrowBackIcon />
+                <span>رجوع</span>
+              </button>
+            )}
+            
+            {categories.map((category) => (
+              <button
+                key={category.id}
+                onClick={() => showingChildren ? handleChildCategorySelect(category.id) : handleCategorySelect(category.id)}
+                className={`category-item ${category.id === selectedCategory ? 'active' : ''}`}
+              >
+                <img src={category.image} alt={category.name} />
+                <span>{category.nameArabic}</span>
+              </button>
+            ))}
+          </div>
+        </aside>
 
-        {/* Order Summary */}
         <OrderSummary
           orderSummary={orderSummary}
           customerName={customerName}
           onCustomerNameChange={setCustomerName}
           onRemoveOrderItem={removeOrderItem}
+          onRemoveSubItem={removeSubItem}
           selectedOrderItemId={selectedOrderItemId}
           onOrderItemSelect={handleOrderItemSelect}
+          onOrderItemDoubleClick={handleOrderItemDoubleClick}
         />
       </main>
 
-      {/* Price Selection Popup */}
       <PriceSelectionPopup
-        product={selectedProduct!}
+        product={selectedProduct}
         quantity={parseInt(keypadValue) || 1}
         isOpen={showPricePopup}
-        onClose={() => setShowPricePopup(false)}
+        onClose={() => {
+          setShowPricePopup(false);
+          setSelectedProduct(null);
+        }}
         onSelectPrice={handlePriceSelect}
       />
 
-      {/* Product Options Popup - جديد */}
       <ProductOptionsPopup
         product={selectedProductForOptions}
         selectedPrice={selectedPriceForOptions}
@@ -1724,6 +2500,17 @@ const handleBackToMainProducts = useCallback(async () => {
           setSelectedPriceForOptions(null);
         }}
         onComplete={handleOptionsComplete}
+      />
+
+      <OrderItemDetailsPopup
+        orderItem={selectedOrderItemForDetails}
+        isOpen={showOrderDetailsPopup}
+        onClose={() => {
+          setShowOrderDetailsPopup(false);
+          setSelectedOrderItemForDetails(null);
+        }}
+        onUpdateItem={handleUpdateOrderItem}
+        onRemoveItem={removeOrderItem}
       />
     </div>
   );
@@ -2473,6 +3260,1733 @@ export default react;
   }
 }
 
+
+
+/* إضافة هذا في Header.css */
+
+.order-type-display.clickable {
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-radius: 4px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid transparent;
+  position: relative;
+  overflow: hidden;
+}
+
+.order-type-display.clickable:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.order-type-display.clickable:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* تأثير ripple عند النقر */
+.order-type-display.clickable::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.3s ease, height 0.3s ease;
+}
+
+.order-type-display.clickable:active::before {
+  width: 100px;
+  height: 100px;
+}
+
+/* إضافة أيقونة صغيرة للإشارة للـ reset */
+.order-type-display.clickable::after {
+  content: '↻';
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  font-size: 10px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.order-type-display.clickable:hover::after {
+  opacity: 0.7;
+}
+
+/* تحسين الـ tooltip */
+.order-type-display.clickable[title] {
+  position: relative;
+}
+
+.order-type-display.clickable[title]:hover::after {
+  content: attr(title);
+  position: absolute;
+  bottom: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  z-index: 1000;
+  opacity: 0.9;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .order-type-display.clickable {
+    padding: 6px 8px;
+    font-size: 12px;
+  }
+  
+  .order-type-display.clickable::after {
+    font-size: 8px;
+  }
+}
+
+
+
+/* إضافة هذا في Header.css */
+
+/* Professional Dropdown Styles */
+.professional-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  width: 420px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.15);
+  border: 1px solid #e9ecef;
+  z-index: 1000;
+  transform: translateY(8px);
+  opacity: 0;
+  animation: dropdownSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+@keyframes dropdownSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(8px);
+  }
+}
+
+.dropdown-section {
+  padding: 20px;
+}
+
+.dropdown-section:not(:last-child) {
+  border-bottom: 1px solid #f1f3f4;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+  font-family: 'Cairo', sans-serif;
+}
+
+.section-divider {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, #e9ecef, transparent);
+}
+
+/* Order Types Cards */
+.order-types-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.order-type-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: white;
+  border: 2px solid #f1f3f4;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.order-type-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, var(--accent-color), transparent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.order-type-card:hover {
+  border-color: var(--accent-color);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+.order-type-card:hover::before {
+  opacity: 0.05;
+}
+
+.order-type-card.selected {
+  border-color: var(--accent-color);
+  background: rgba(var(--accent-color), 0.05);
+  box-shadow: 0 4px 16px rgba(var(--accent-color), 0.2);
+}
+
+.order-type-card.selected::before {
+  opacity: 0.08;
+}
+
+.card-icon-container {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(var(--accent-color), 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.card-icon {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+
+.card-content {
+  flex: 1;
+  text-align: left;
+}
+
+.card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 2px;
+  font-family: 'Cairo', sans-serif;
+}
+
+.card-description {
+  font-size: 12px;
+  color: #666;
+  font-family: 'Cairo', sans-serif;
+}
+
+.card-check {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--accent-color);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: scale(0);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.order-type-card.selected .card-check {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Delivery Partners Cards */
+.delivery-partners-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.delivery-partner-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: white;
+  border: 1px solid #e9ecef;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.delivery-partner-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.delivery-partner-card:hover {
+  border-color: var(--partner-color);
+  transform: translateX(4px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.delivery-partner-card:hover::before {
+  opacity: 1;
+}
+
+.delivery-partner-card.selected {
+  border-color: var(--partner-color);
+  background: var(--partner-bg);
+  box-shadow: 0 4px 16px rgba(var(--partner-color), 0.15);
+}
+
+.partner-icon-container {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: var(--partner-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.partner-icon {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+
+.partner-content {
+  flex: 1;
+  text-align: left;
+}
+
+.partner-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 2px;
+  font-family: 'Cairo', sans-serif;
+}
+
+.partner-status {
+  font-size: 11px;
+  color: #28a745;
+  font-weight: 500;
+  font-family: 'Cairo', sans-serif;
+}
+
+.partner-badge {
+  width: 16px;
+  height: 16px;
+  color: var(--partner-color);
+  opacity: 0;
+  transform: scale(0);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.delivery-partner-card.selected .partner-badge {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Order Type Display Button Enhancement */
+.order-type-display.clickable {
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 8px;
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+}
+
+.order-type-display.clickable::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), transparent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.order-type-display.clickable:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.order-type-display.clickable:hover::before {
+  opacity: 1;
+}
+
+.order-type-display.clickable:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .professional-dropdown {
+    width: 360px;
+    right: -20px;
+  }
+  
+  .order-types-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .dropdown-section {
+    padding: 16px;
+  }
+  
+  .order-type-card {
+    padding: 12px;
+  }
+  
+  .delivery-partner-card {
+    padding: 10px 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .professional-dropdown {
+    width: 320px;
+    right: -40px;
+  }
+  
+  .section-title {
+    font-size: 14px;
+  }
+  
+  .card-title,
+  .partner-name {
+    font-size: 13px;
+  }
+  
+  .card-description {
+    font-size: 11px;
+  }
+}
+
+/* Scroll Styling */
+.professional-dropdown::-webkit-scrollbar {
+  width: 6px;
+}
+
+.professional-dropdown::-webkit-scrollbar-track {
+  background: #f1f3f4;
+  border-radius: 3px;
+}
+
+.professional-dropdown::-webkit-scrollbar-thumb {
+  background: #c1c8cd;
+  border-radius: 3px;
+}
+
+.professional-dropdown::-webkit-scrollbar-thumb:hover {
+  background: #a8b2ba;
+}
+
+===== src/Pages/pos/newSales/styles/OrderItemDetailsPopup.module.css =====
+/* src/Pages/pos/newSales/components/OrderItemDetailsPopup.module.css */
+
+.popupOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.orderItemDetails {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  width: 90%;
+  max-width: 600px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* السطر الرئيسي الوحيد */
+.mainRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 0;
+  border-bottom: 1px solid #eee;
+}
+
+/* اسم المنتج والسعر على اليمين */
+.productInfo {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  flex: 1;
+}
+
+.productName {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.productSize {
+  font-size: 12px;
+  color: #666;
+}
+
+.unitPrice {
+  font-size: 14px;
+  font-weight: 600;
+  color: #e74c3c;
+}
+
+/* الكمية في النص */
+.quantityControls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 0 0 auto;
+}
+
+.quantityBtn {
+  width: 36px;
+  height: 36px;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  background: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.quantityBtn:hover:not(:disabled) {
+  border-color: #0373ed;
+  background: #f8f9ff;
+}
+
+.quantityBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.quantityDisplay {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  min-width: 30px;
+  text-align: center;
+}
+
+/* الإجمالي على الشمال */
+.totalDisplay {
+  flex: 0 0 auto;
+}
+
+.totalAmount {
+  font-size: 18px;
+  font-weight: 700;
+  color: #e74c3c;
+}
+
+/* حقل الملاحظات */
+.notesSection {
+  width: 100%;
+}
+
+.notesInput {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  resize: vertical;
+  font-family: inherit;
+  transition: border-color 0.2s ease;
+}
+
+.notesInput:focus {
+  outline: none;
+  border-color: #0373ed;
+}
+
+.notesInput::placeholder {
+  color: #999;
+}
+
+/* قسم الخصم */
+.discountSection {
+  width: 100%;
+}
+
+.discountInputs {
+  display: flex;
+  gap: 16px;
+}
+
+.discountField {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.discountField label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+.discountInput {
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: border-color 0.2s ease;
+  /* إزالة الأزرار من number input */
+  -moz-appearance: textfield;
+}
+
+.discountInput::-webkit-outer-spin-button,
+.discountInput::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.discountInput:focus {
+  outline: none;
+  border-color: #0373ed;
+}
+
+/* أزرار التأكيد والإلغاء */
+.actionButtons {
+  display: flex;
+  gap: 0;
+  width: 100%;
+  margin-top: 8px;
+}
+
+.confirmBtn,
+.cancelBtn {
+  flex: 1;
+  padding: 16px;
+  font-size: 16px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.confirmBtn {
+  background: #28a745;
+  color: white;
+  border-radius: 8px 0 0 8px;
+}
+
+.confirmBtn:hover {
+  background: #218838;
+}
+
+.cancelBtn {
+  background: #f8f9fa;
+  color: #333;
+  border-radius: 0 8px 8px 0;
+  border-left: 1px solid #ddd;
+}
+
+.cancelBtn:hover {
+  background: #e9ecef;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .mainRow {
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+  }
+  
+  .productInfo {
+    align-items: center;
+    text-align: center;
+  }
+  
+  .quantityControls {
+    justify-content: center;
+  }
+  
+  .totalDisplay {
+    text-align: center;
+  }
+  
+  .discountInputs {
+    flex-direction: column;
+  }
+  
+  .actionButtons {
+    flex-direction: column;
+  }
+  
+  .confirmBtn,
+  .cancelBtn {
+    border-radius: 8px;
+  }
+  
+  .cancelBtn {
+    border-left: none;
+    border-top: 1px solid #ddd;
+  }
+}
+
+===== src/Pages/pos/newSales/styles/OrderSummary.module.css =====
+/* OrderSummary Module CSS */
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap');
+
+:root {
+  /* Colors */
+  --primary-blue: #0373ed;
+  --primary-green: #23a929;
+  --primary-red: #e53935;
+  --primary-orange: #ffb74d;
+  --bg-main: #f5f5f5;
+  --bg-white: #ffffff;
+  --text-primary: #000000;
+  --text-secondary: rgba(0, 0, 0, 0.7);
+  --border-color: rgba(0, 0, 0, 0.2);
+  
+  /* Responsive spacing */
+  --scale-factor: clamp(0.8, 1vw, 1.2);
+  --spacing-xs: calc(0.25rem * var(--scale-factor));
+  --spacing-sm: calc(0.5rem * var(--scale-factor));
+  --spacing-md: calc(1rem * var(--scale-factor));
+  --spacing-lg: calc(1.5rem * var(--scale-factor));
+  --spacing-xl: calc(2rem * var(--scale-factor));
+}
+
+/* Main Container */
+.orderSummary {
+  width: clamp(280px, 35vw, 400px);
+  background: var(--bg-white);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
+}
+
+/* Header Section */
+.orderHeader {
+  height: clamp(50px, 7vh, 80px);
+  display: flex;
+  flex-shrink: 0;
+}
+
+.orderNumber {
+  flex: 1;
+  background: var(--primary-blue);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(16px, 2vw, 24px);
+  font-weight: 700;
+  border-radius: 8px 0 0 0;
+}
+
+.orderTotal {
+  width: clamp(100px, 12vw, 150px);
+  border: 2px solid var(--primary-blue);
+  color: var(--primary-blue);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+  border-radius: 0 8px 0 0;
+}
+
+.orderTotal .amount {
+  font-size: clamp(16px, 2vw, 24px);
+  font-weight: 700;
+}
+
+.orderTotal .currency {
+  font-size: clamp(10px, 1.2vw, 16px);
+  font-weight: 600;
+}
+
+/* Content Section */
+.orderContent {
+  flex: 1;
+  padding: var(--spacing-lg);
+  overflow-y: auto;
+  scrollbar-width: none;
+  scrollbar-color: var(--border-color) transparent;
+}
+
+.orderContent::-webkit-scrollbar {
+  width: 6px;
+}
+
+.orderContent::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.orderContent::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 3px;
+}
+
+/* Customer Input */
+.customerInput {
+  display: flex;
+  margin-bottom: var(--spacing-lg);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.customerField {
+  flex: 1;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: none;
+  font-size: clamp(10px, 1.2vw, 14px);
+  font-family: 'Cairo', sans-serif;
+  background: transparent;
+}
+
+.customerField:focus {
+  outline: none;
+}
+
+.customerButton {
+  width: clamp(30px, 4vw, 45px);
+  background: var(--primary-blue);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease;
+}
+
+.customerButton:hover {
+  background: #025bb5;
+}
+
+.customerButton img {
+  width: clamp(12px, 1.4vw, 18px);
+  height: clamp(12px, 1.4vw, 18px);
+}
+
+/* Order Items */
+.orderItems {
+  max-height: 50vh;
+  margin-bottom: var(--spacing-md);
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-color) transparent;
+}
+
+.orderItems::-webkit-scrollbar {
+  width: 4px;
+}
+
+.orderItems::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.orderItems::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 2px;
+}
+
+/* Order Item Container - التعديل الرئيسي للفاصل */
+.orderItemContainer {
+  margin-bottom: clamp(12px, 1.5vw, 16px); /* مسافة بين مجموعات المنتجات فقط */
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1); /* خط فاصل بين المجموعات */
+  padding-bottom: clamp(8px, 1vw, 12px);
+}
+
+.orderItemContainer:last-child {
+  border-bottom: none; /* إزالة الخط من آخر عنصر */
+}
+
+/* Main Order Item */
+.orderItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border-radius: 6px;
+  margin-bottom: 0; /* إزالة المسافة السفلية */
+}
+
+.orderItem:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.orderItem.selected {
+  background: rgba(3, 115, 237, 0.1);
+  border-left: 4px solid #0373ed;
+}
+
+.orderItem.extraItem {
+  border-left: 3px solid #28a745;
+}
+
+.orderItem.withoutItem {
+  border-left: 3px solid #dc3545;
+}
+
+/* Item Details */
+.itemDetails {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: flex-start;
+  flex: 1;
+  min-width: 0;
+}
+
+.deleteButton {
+    order: -1; /* أول عنصر */
+
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: var(--spacing-xs);
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+.deleteButton:hover {
+  background: rgba(229, 57, 53, 0.1);
+}
+
+.deleteButton img {
+  width: clamp(12px, 1.4vw, 16px);
+  height: clamp(12px, 1.4vw, 16px);
+}
+
+.itemInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.itemName {
+  font-size: clamp(11px, 1.3vw, 16px);
+  font-weight: 600;
+  margin-bottom: var(--spacing-xs);
+  color: var(--text-primary);
+  line-height: 1.2;
+  font-family: 'Cairo', sans-serif;
+}
+
+.itemSizeInline {
+  color: var(--primary-blue);
+  font-weight: 500;
+  font-size: 0.9em;
+}
+
+/* Item Prices - التعديل الرئيسي للأسعار */
+.itemPrices {
+  display: flex;
+  align-items: center;
+  gap: clamp(6px, 1vw, 10px);
+  flex-shrink: 0;
+  min-width: fit-content;
+}
+
+.itemPrice {
+  font-size: clamp(10px, 1.2vw, 14px);
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  padding-right: clamp(6px, 1vw, 10px);
+  border-right: 1px solid #ccc; /* الخط العمودي الفاصل */
+}
+
+.itemTotal {
+  font-size: clamp(11px, 1.3vw, 16px);
+  font-weight: 700;
+  color: var(--primary-blue);
+  white-space: nowrap;
+  padding-left: clamp(6px, 1vw, 10px);
+}
+
+.itemTotal.negative {
+  color: #dc3545;
+  font-weight: 600;
+}
+
+/* Badges */
+.extraBadge, .withoutBadge {
+  color: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  margin-right: 4px;
+  font-weight: 600;
+}
+
+.extraBadge {
+  background: #28a745;
+}
+
+.withoutBadge {
+  background: #dc3545;
+}
+
+/* Sub-items Container - إزالة الفاصل مع المنتج الرئيسي */
+.subItemsContainer {
+  margin-top: 0; /* إزالة المسافة العلوية */
+  padding-left: 16px;
+  border-left: 2px solid #f0f0f0;
+}
+
+/* Sub-item */
+.subItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1px 0;
+  margin-bottom: 0px;
+  min-height: 18px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border-radius: 4px;
+  position: relative;
+}
+
+
+.subItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1px 0;
+  margin-bottom: 0px;
+  min-height: 18px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border-radius: 4px;
+  position: relative;
+}
+
+/* Sub-item المحدد - مع border أكبر */
+.selectedSubItem {
+  background: rgba(3, 115, 237, 0.1);
+  border-left: 20px solid #0373ed;
+  padding-left: 4px;
+  position: relative;
+  justify-content: right;
+}
+
+/* الـ X جوا الـ border فعلاً */
+.selectedSubItem::before {
+  content: 'X...';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 0px;
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: right;
+  background: transparent; /* بدون لون خلفية */
+  pointer-events: none; /* علشان الـ click يشتغل على الـ parent */
+}
+
+/* تحسين للتابلت */
+@media (max-width: 1024px) {
+  .selectedSubItem {
+    border-left: 24px solid #0373ed;
+  }
+  
+  .selectedSubItem::before {
+    width: 24px;
+    font-size: 13px;
+  }
+}
+
+/* تحسين للموبايل */
+@media (max-width: 768px) {
+  .selectedSubItem {
+    border-left: 26px solid #0373ed;
+  }
+  
+  .selectedSubItem::before {
+    width: 26px;
+    font-size: 14px;
+  }
+}
+
+
+.subItemDetails {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+}
+
+.subItemInfo {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+}
+
+.subItemBadge {
+  width: 12px; /* زيادة الحجم قليلاً */
+  height: 12px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 7px;
+  font-weight: 600;
+  color: white;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.subItemBadge.extra {
+  background: #28a745;
+}
+
+.subItemBadge.without {
+  background: #dc3545;
+}
+
+.subItemBadge.option {
+  background: #6c757d;
+}
+
+.subItemName {
+  font-size: 10px;
+  color: #666;
+  line-height: 1.2;
+  font-family: 'Cairo', sans-serif;
+}
+
+/* Sub-item Prices - نفس تصميم الأسعار الرئيسية */
+.subItemPrices {
+  display: flex;
+  align-items: center;
+  gap: clamp(4px, 0.8vw, 8px);
+  min-width: fit-content;
+}
+
+.subItemPrice {
+  font-size: 8px;
+  color: #999;
+  font-weight: 500;
+  white-space: nowrap;
+  padding-right: clamp(4px, 0.8vw, 8px);
+  border-right: 1px solid #ddd; /* الخط العمودي الفاصل */
+}
+
+.subItemTotal {
+  font-size: 9px;
+  color: #333;
+  font-weight: 600;
+  white-space: nowrap;
+  padding-left: clamp(4px, 0.8vw, 8px);
+}
+
+.subItemTotal.negative {
+  color: #dc3545;
+}
+
+.subItemDelete {
+  width: 14px;
+  height: 14px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
+  margin-left: 4px;
+}
+
+.subItemDelete:hover {
+  opacity: 1;
+}
+
+.subItemDelete img {
+  width: 8px;
+  height: 8px;
+}
+
+/* Item Options - إزالة الفاصل مع المنتج الرئيسي */
+.itemOptions {
+  margin-top: 0; /* إزالة المسافة العلوية */
+  padding-left: 16px;
+}
+
+.optionDetail {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1px;
+  padding: 2px 0;
+  min-height: 18px;
+}
+
+.optionText {
+  font-size: 10px;
+  color: #666;
+  font-weight: 400;
+  line-height: 1.2;
+  font-family: 'Cairo', sans-serif;
+  flex: 1;
+}
+
+/* Option Prices - نفس تصميم الأسعار الرئيسية */
+.optionPrices {
+  display: flex;
+  align-items: center;
+  gap: clamp(4px, 0.8vw, 8px);
+  min-width: fit-content;
+}
+
+.optionPrice {
+  font-size: 8px;
+  color: #999;
+  font-weight: 500;
+  white-space: nowrap;
+  padding-right: clamp(4px, 0.8vw, 8px);
+  border-right: 1px solid #ddd; /* الخط العمودي الفاصل */
+}
+
+.optionTotal {
+  font-size: 9px;
+  color: #333;
+  font-weight: 600;
+  white-space: nowrap;
+  padding-left: clamp(4px, 0.8vw, 8px);
+}
+
+/* Order Footer */
+.orderFooter {
+  padding: var(--spacing-md);
+  border-top: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+.summaryRows {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--spacing-sm) * 0.8);
+  margin-bottom: var(--spacing-md);
+}
+
+.summaryRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: clamp(10px, 1.2vw, 15px);
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.summaryRow span:last-child {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.totalRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: clamp(13px, 1.5vw, 19px);
+  font-weight: 700;
+  padding-top: var(--spacing-md);
+  border-top: 2px solid var(--border-color);
+  margin-bottom: var(--spacing-md);
+}
+
+.actionButtons {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-md);
+}
+
+.actionButton {
+  height: clamp(40px, 7vh, 60px);
+  border-radius: 6px;
+  border: none;
+  color: white;
+  font-size: clamp(10px, 1.2vw, 16px);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.actionButton img {
+  width: clamp(12px, 1.4vw, 18px);
+  height: clamp(12px, 1.4vw, 18px);
+}
+
+.actionButton:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.actionButton.send {
+  background: var(--primary-red);
+}
+
+.actionButton.print {
+  background: var(--primary-blue);
+}
+
+.actionButton.pay {
+  background: var(--primary-green);
+}
+
+/* Responsive Design */
+@media (max-width: 1366px) {
+  .summaryRows {
+    gap: calc(var(--spacing-sm) * 0.6);
+  }
+  
+  .orderItems {
+    max-height: 45vh;
+  }
+}
+
+@media (max-width: 1024px) {
+  .summaryRows {
+    gap: calc(var(--spacing-sm) * 0.4);
+  }
+  
+  .orderItems {
+    max-height: 42vh;
+  }
+  
+  .itemPrices, .subItemPrices, .optionPrices {
+    gap: 4px;
+  }
+}
+
+@media (max-width: 768px) {
+  .subItemName {
+    font-size: 9px;
+  }
+  
+  .subItemPrice {
+    font-size: 7px;
+  }
+  
+  .subItemTotal {
+    font-size: 8px;
+  }
+  
+  .subItemDelete {
+    width: 12px;
+    height: 12px;
+  }
+  
+  .subItemDelete img {
+    width: 6px;
+    height: 6px;
+  }
+  
+  .optionText {
+    font-size: 9px;
+  }
+  
+  .optionPrice {
+    font-size: 7px;
+  }
+  
+  .optionTotal {
+    font-size: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .orderItemContainer {
+    margin-bottom: 8px;
+  }
+  
+  .subItem {
+    padding: 1px 0;
+    margin-bottom: 0px;
+    min-height: 16px;
+  }
+  
+  .optionDetail {
+    padding: 1px 0;
+    margin-bottom: 0px;
+    min-height: 14px;
+  }
+  
+  .itemPrices, .subItemPrices, .optionPrices {
+    gap: 3px;
+  }
+}
+
+
+/* Comments Container */
+.commentsContainer {
+  margin-top: 0;
+  padding-left: 16px;
+  border-left: 2px solid #e3f2fd;
+}
+
+.commentItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 3px 0;
+  margin-bottom: 2px;
+  min-height: 20px;
+}
+
+.commentIcon {
+  font-size: 10px;
+  color: #2196f3;
+  margin-top: 1px;
+  flex-shrink: 0;
+}
+
+.commentText {
+  font-size: 10px;
+  color: #2196f3;
+  line-height: 1.3;
+  font-family: 'Cairo', sans-serif;
+  font-style: italic;
+  word-wrap: break-word;
+  flex: 1;
+}
+
+/* Responsive للتعليقات */
+@media (max-width: 768px) {
+  .commentText {
+    font-size: 9px;
+  }
+  
+  .commentIcon {
+    font-size: 9px;
+  }
+}
+
+@media (max-width: 480px) {
+  .commentItem {
+    padding: 2px 0;
+    margin-bottom: 1px;
+    min-height: 16px;
+  }
+  
+  .commentText {
+    font-size: 8px;
+  }
+  
+  .commentIcon {
+    font-size: 8px;
+  }
+}
+
+
+
+
+
+
+
+
+
+
+/* زر الحذف المدمج */
+.deleteButtonInline {
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-left: 8px;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 16px;
+}
+
+.deleteButtonInline:hover {
+  background: #c82333;
+  transform: scale(1.1);
+}
+
+/* تحديث SubItem لتقليل المسافات */
+.subItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1px 0; /* تقليل المسافة */
+  margin-bottom: 0px; /* إزالة المسافة السفلية */
+  min-height: 18px; /* تقليل الارتفاع */
+  cursor: pointer;
+}
+
+.subItem:hover {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.subItemName {
+  font-size: 10px;
+  color: #666;
+  line-height: 1.1; /* تحسين المسافة بين الأسطر */
+  font-family: 'Cairo', sans-serif;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* تحديث OrderItemContainer لتقليل المسافة */
+.orderItemContainer {
+  margin-bottom: clamp(6px, 1vw, 10px); /* تقليل المسافة */
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  padding-bottom: clamp(4px, 0.8vw, 8px); /* تقليل المسافة */
+}
+
+/* تحديث SubItemsContainer */
+.subItemsContainer {
+  margin-top: -2px; /* تقليل الفجوة مع المنتج الأساسي */
+  padding-left: 12px; /* تقليل المسافة اليسرى */
+  border-left: 2px solid #f0f0f0;
+}
+
+/* تحديث SubItemDetails */
+.subItemDetails {
+  display: flex;
+  align-items: center;
+  gap: 4px; /* تقليل المسافة */
+  flex: 1;
+}
+
+.subItemInfo {
+  display: flex;
+  align-items: center;
+  gap: 3px; /* تقليل المسافة */
+  flex: 1;
+}
+
+.subItemBadge {
+  width: 12px; /* زيادة الحجم قليلاً */
+  height: 12px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 7px;
+  font-weight: 600;
+  color: white;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+/* تحديث الـ responsive */
+@media (max-width: 768px) {
+  .deleteButtonInline {
+    font-size: 8px;
+    padding: 1px 4px;
+    min-width: 16px;
+    height: 14px;
+  }
+  
+  .subItem {
+    min-height: 16px;
+  }
+  
+  .subItemName {
+    font-size: 9px;
+  }
+}
+
+@media (max-width: 480px) {
+  .deleteButtonInline {
+    font-size: 7px;
+    padding: 1px 3px;
+    min-width: 14px;
+    height: 12px;
+  }
+  
+  .subItem {
+    min-height: 14px;
+  }
+  
+  .subItemName {
+    font-size: 8px;
+  }
+  
+  .orderItemContainer {
+    margin-bottom: 4px;
+    padding-bottom: 4px;
+  }
+  
+  .subItemsContainer {
+    padding-left: 8px;
+  }
+}
+
+
+
+
+
+
+
+
+
+/* تحديث SubItemBadge */
+.subItemBadge {
+  width: 12px; /* زيادة الحجم قليلاً */
+  height: 12px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 7px;
+  font-weight: 600;
+  color: white;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+/* حالة الحذف - يكبر ويصبح قابل للنقر */
+.subItemBadge.deletable {
+  width: 18px;
+  height: 18px;
+  font-size: 10px;
+  cursor: pointer;
+  transform: scale(1.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.subItemBadge.deletable:hover {
+  transform: scale(1.2);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+}
+
+.subItemBadge.deletable:active {
+  transform: scale(1.0);
+}
+/* ألوان الـ badges */
+.subItemBadge.extra {
+  background: #28a745;
+}
+
+.subItemBadge.extra.deletable {
+  background: #dc3545; /* أحمر للحذف */
+}
+
+.subItemBadge.without {
+  background: #dc3545;
+}
+
+.subItemBadge.without.deletable {
+  background: #dc3545; /* يبقى أحمر */
+}
+
+.subItemBadge.option {
+  background: #6c757d;
+}
+
+.subItemBadge.option.deletable {
+  background: #dc3545; /* أحمر للحذف */
+}
+
+/* تحسين للتابلت */
+@media (max-width: 1024px) {
+  .subItemBadge.deletable {
+    width: 22px; /* أكبر للتابلت */
+    height: 22px;
+    font-size: 12px;
+  }
+}
+
+/* تحسين للموبايل */
+@media (max-width: 768px) {
+  .subItemBadge.deletable {
+    width: 20px;
+    height: 20px;
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 480px) {
+  .subItemBadge.deletable {
+    width: 24px; /* أكبر للشاشات الصغيرة */
+    height: 24px;
+    font-size: 12px;
+  }
+}
 ===== src/Pages/pos/newSales/styles/popup.css =====
 /* src/Pages/pos/newSales/styles/popup.css */
 .popup-overlay {
@@ -2955,425 +5469,802 @@ export default react;
     min-width: 80px;
   }
 }
-===== src/Pages/pos/newSales/styles/ProductCard.css =====
-/* src/Pages/pos/newSales/components/ProductCard.css */
+===== src/Pages/pos/newSales/styles/PriceSelectionPopup.module.css =====
+/* src/Pages/pos/newSales/components/PriceSelectionPopup.module.css */
 
-.product-card {
+.popupOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.popupContent {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  width: 50%;
+  max-height: 80vh;
+  overflow-y: auto;
+  animation: slideIn 0.3s ease-out;
+}
+
+.popupHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.popupTitle {
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+}
+
+.popupClose {
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: #f5f5f5;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.popupClose:hover {
+  background: #e9ecef;
+  transform: scale(1.1);
+}
+
+.popupBody {
+  padding: 20px;
+}
+
+.quantityDisplay {
+  text-align: center;
+  font-size: 16px;
+  font-weight: 500;
+  color: #666;
+  margin-bottom: 20px;
+  padding: 10px;
+  background: #f8f9fa;
+  border-radius: 6px;
+}
+
+.pricesGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 15px;
+}
+
+.priceCard {
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  padding: 20px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
   display: flex;
   flex-direction: column;
-  background: #ffffff;
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  cursor: pointer;
-  border: none;
-  padding: 0;
-  width: 100%;
-  aspect-ratio: 0.85;
-  min-height: 200px;
+  align-items: center;
+  text-align: center;
 }
 
-.product-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-}
-
-.product-card:active {
+.priceCard:hover {
+  border-color: #0373ed;
+  background: #f8f9ff;
   transform: translateY(-2px);
-  transition: transform 0.1s ease;
+  box-shadow: 0 4px 12px rgba(3, 115, 237, 0.2);
 }
 
-/* حاوية الصورة */
-.product-image-container {
-  width: 100%;
-  height: 70%;
+.priceName {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.priceValue {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+}
+
+.price {
+  font-size: 24px;
+  font-weight: 700;
+  color: #0373ed;
+}
+
+.currency {
+  font-size: 14px;
+  color: #666;
+  font-weight: 500;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-50px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .popupContent {
+    width: 95%;
+    margin: 10px;
+  }
+  
+  .pricesGrid {
+    grid-template-columns: 1fr;
+  }
+  
+  .popupHeader {
+    padding: 15px;
+  }
+  
+  .popupBody {
+    padding: 15px;
+  }
+  
+  .popupTitle {
+    font-size: 18px;
+  }
+}
+
+===== src/Pages/pos/newSales/styles/ProductCard.module.css =====
+/* src/Pages/pos/newSales/styles/ProductCard.module.css */
+
+.productCard {
+  background: white;
+  border-radius: 12px;
   overflow: hidden;
-  position: relative;
-  background: #f8f9fa;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  height: auto; /* تغيير من fixed height إلى auto */
+  min-height: 180px; /* حد أدنى للارتفاع */
 }
 
-.product-image {
+.productCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.productCard:active {
+  transform: translateY(-2px);
+}
+
+.productImageContainer {
+  position: relative;
+  width: 100%;
+  height: 120px; /* ارتفاع ثابت للصورة */
+  overflow: hidden;
+}
+
+.productImage {
   width: 100%;
   height: 100%;
   object-fit: cover;
   transition: transform 0.3s ease;
 }
 
-.product-card:hover .product-image {
+.productCard:hover .productImage {
   transform: scale(1.05);
 }
 
-/* قسم المعلومات - الجزء الأبيض */
-.product-info-section {
+/* النص المعروض على الصورة (السعر) */
+.priceOverlay {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(3, 115, 237, 0.9);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  backdrop-filter: blur(4px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.productInfo {
+  padding: 12px;
+  flex: 1; /* يأخذ باقي المساحة المتاحة */
   display: flex;
   flex-direction: column;
-  padding: clamp(6px, 1.5vw, 12px);
-  height: 30%;
-  background: #ffffff;
-  justify-content: center;
+  justify-content: flex-start;
 }
 
-/* حاوية التفاصيل - الاسم والسعر جنب بعض */
-.product-details {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: clamp(4px, 1vw, 8px);
-  width: 100%;
-}
-
-/* اسم المنتج - يأخذ المساحة المتاحة */
-.product-name {
-  font-size: clamp(10px, 1.6vw, 14px);
+.productName {
+  font-size: 14px;
   font-weight: 600;
-  color: #2c3e50;
-  line-height: 1.2;
-  text-align: right;
+  color: #333;
+  margin: 0;
+  line-height: 1.4;
+  text-align: center;
   word-wrap: break-word;
   overflow-wrap: break-word;
-  hyphens: auto;
-  flex: 1;
-  min-width: 0; /* مهم للـ flexbox */
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  margin-left: clamp(4px, 0.8vw, 6px);
+  /* إزالة height constraints لتسمح بالتوسع */
 }
 
-/* للمنتجات بأسعار متعددة - اسم المنتج في المنتصف */
-.product-card.multiple-prices .product-details {
-  justify-content: center;
-}
-
-.product-card.multiple-prices .product-name {
-  text-align: center;
-  margin-left: 0;
-  flex: none;
-}
-
-/* حاوية السعر - ثابتة على اليسار */
-.product-price-container {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  justify-content: center;
-  flex-shrink: 0;
-  min-width: clamp(35px, 8vw, 50px);
-}
-
-.product-price {
-  font-size: clamp(12px, 2vw, 16px);
-  font-weight: 700;
-  color: #e74c3c;
-  line-height: 1;
-  white-space: nowrap;
-}
-
-.product-currency {
-  font-size: clamp(8px, 1.4vw, 11px);
-  font-weight: 500;
-  color: #7f8c8d;
-  line-height: 1;
-  margin-top: 1px;
-}
-
-/* مؤشر الخيارات */
-.product-options-badge {
-  position: absolute;
-  top: clamp(4px, 1vw, 8px);
-  left: clamp(4px, 1vw, 8px);
-  background: linear-gradient(135deg, #3498db, #2980b9);
-  color: white;
-  padding: clamp(2px, 0.5vw, 4px) clamp(4px, 1vw, 8px);
-  border-radius: clamp(6px, 1.5vw, 12px);
-  font-size: clamp(7px, 1.2vw, 10px);
-  font-weight: 500;
-  box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
-  backdrop-filter: blur(4px);
-}
-
-/* Responsive Design مع ضمان القراءة الواضحة */
-
-/* شاشات كبيرة جداً */
-@media (min-width: 1920px) {
-  .product-card {
-    min-height: 240px;
-  }
-  
-  .product-info-section {
-    padding: 14px;
-  }
-  
-  .product-details {
-    gap: 10px;
-  }
-  
-  .product-name {
-    font-size: 14px;
-  }
-  
-  .product-price {
-    font-size: 16px;
-  }
-  
-  .product-currency {
-    font-size: 11px;
-  }
-}
-
-/* شاشات كبيرة */
-@media (max-width: 1600px) {
-  .product-card {
-    min-height: 220px;
-  }
-  
-  .product-info-section {
-    padding: 12px;
-  }
-  
-  .product-details {
-    gap: 8px;
-  }
-  
-  .product-name {
-    font-size: 13px;
-  }
-  
-  .product-price {
-    font-size: 15px;
-  }
-  
-  .product-currency {
-    font-size: 10px;
-  }
-}
-
-/* شاشات متوسطة */
-@media (max-width: 1400px) {
-  .product-card {
-    min-height: 200px;
-  }
-  
-  .product-info-section {
-    padding: 10px;
-  }
-  
-  .product-details {
-    gap: 6px;
-  }
-  
-  .product-name {
-    font-size: 12px;
-  }
-  
-  .product-price {
-    font-size: 14px;
-  }
-  
-  .product-currency {
-    font-size: 9px;
-  }
-}
-
-/* شاشات لابتوب */
-@media (max-width: 1200px) {
-  .product-card {
-    min-height: 180px;
-  }
-  
-  .product-info-section {
-    padding: 8px;
-  }
-  
-  .product-details {
-    gap: 5px;
-  }
-  
-  .product-name {
-    font-size: 11px;
-  }
-  
-  .product-price {
-    font-size: 13px;
-  }
-  
-  .product-currency {
-    font-size: 8px;
-  }
-}
-
-/* شاشات صغيرة */
-@media (max-width: 1024px) {
-  .product-card {
+/* Responsive Design */
+@media (max-width: 1366px) {
+  .productCard {
     min-height: 160px;
   }
   
-  .product-info-section {
-    padding: 6px;
+  .productImageContainer {
+    height: 100px;
   }
   
-  .product-details {
-    gap: 4px;
+  .productName {
+    font-size: 13px;
   }
   
-  .product-name {
-    font-size: 10px;
-    -webkit-line-clamp: 2;
-  }
-  
-  .product-price {
-    font-size: 12px;
-  }
-  
-  .product-currency {
-    font-size: 7px;
-  }
-  
-  .product-price-container {
-    min-width: 30px;
+  .priceOverlay {
+    font-size: 11px;
+    padding: 3px 6px;
   }
 }
 
-/* تابلت */
-@media (max-width: 768px) {
-  .product-card {
+@media (max-width: 1024px) {
+  .productCard {
     min-height: 140px;
   }
   
-  .product-info-section {
-    padding: 5px;
+  .productImageContainer {
+    height: 90px;
   }
   
-  .product-details {
-    gap: 3px;
+  .productName {
+    font-size: 12px;
   }
   
-  .product-name {
-    font-size: 9px;
-    -webkit-line-clamp: 2;
+  .productInfo {
+    padding: 10px;
   }
   
-  .product-price {
-    font-size: 11px;
-  }
-  
-  .product-currency {
-    font-size: 6px;
-  }
-  
-  .product-price-container {
-    min-width: 25px;
+  .priceOverlay {
+    font-size: 10px;
+    padding: 2px 5px;
   }
 }
 
-/* موبايل */
-@media (max-width: 480px) {
-  .product-card {
+@media (max-width: 768px) {
+  .productCard {
     min-height: 120px;
   }
   
-  .product-info-section {
-    padding: 4px;
+  .productImageContainer {
+    height: 80px;
   }
   
-  .product-details {
-    gap: 2px;
+  .productName {
+    font-size: 11px;
   }
   
-  .product-name {
-    font-size: 8px;
-    -webkit-line-clamp: 2;
+  .productInfo {
+    padding: 8px;
   }
   
-  .product-price {
+  .priceOverlay {
+    font-size: 9px;
+    padding: 2px 4px;
+  }
+}
+
+@media (max-width: 480px) {
+  .productCard {
+    min-height: 100px;
+  }
+  
+  .productImageContainer {
+    height: 70px;
+  }
+  
+  .productName {
     font-size: 10px;
   }
   
-  .product-currency {
-    font-size: 6px;
+  .productInfo {
+    padding: 6px;
   }
   
-  .product-price-container {
-    min-width: 20px;
+  .priceOverlay {
+    font-size: 8px;
+    padding: 1px 3px;
   }
 }
 
-/* تحسينات للزووم العالي */
-@media (min-resolution: 150dpi) {
-  .product-name {
-    font-size: clamp(9px, 1.4vw, 12px);
-  }
-  
-  .product-price {
-    font-size: clamp(11px, 1.8vw, 14px);
-  }
-  
-  .product-currency {
-    font-size: clamp(6px, 1.2vw, 9px);
-  }
-}
+===== src/Pages/pos/newSales/styles/ProductOptionsPopup.module.css =====
+/* src/Pages/pos/newSales/components/ProductOptionsPopup.module.css */
 
-@media (min-resolution: 200dpi) {
-  .product-name {
-    font-size: clamp(8px, 1.2vw, 11px);
-  }
-  
-  .product-price {
-    font-size: clamp(10px, 1.6vw, 13px);
-  }
-  
-  .product-currency {
-    font-size: clamp(5px, 1vw, 8px);
-  }
-}
-
-/* تحسينات إضافية للنصوص الطويلة */
-.product-name {
-  text-overflow: ellipsis;
-  word-break: break-word;
-}
-
-/* تأثيرات بصرية */
-.product-card::before {
-  content: '';
-  position: absolute;
+.popupOverlay {
+  position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1));
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  pointer-events: none;
-  z-index: 1;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
 }
 
-.product-card:hover::before {
-  opacity: 1;
+.popupContent {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  max-width: 700px;
+  width: 50%;
+  max-height: 85vh;
+  overflow-y: auto;
 }
 
-/* تحسينات الأداء */
-.product-card {
-  will-change: transform;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
+.popupHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 20px;
+  border-bottom: 1px solid #e9ecef;
+  background: #f8f9fa;
 }
 
-.product-image {
-  will-change: transform;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
+.popupTitleSection {
+  flex: 1;
 }
 
-/* ضمان وضوح النصوص */
-.product-name,
-.product-price,
-.product-currency {
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizeLegibility;
+.popupTitle {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 5px 0;
+  font-family: 'Cairo', sans-serif;
+}
+
+.popupSubtitle {
+  font-size: 14px;
+  color: #666;
+  margin: 0;
+  font-family: 'Cairo', sans-serif;
+}
+
+.popupClose {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: #e9ecef;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.popupClose:hover {
+  background: #dee2e6;
+  transform: scale(1.1);
+}
+
+.popupBody {
+  padding: 20px;
+}
+
+.optionsContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+.optionGroup {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 20px;
+  border-left: 4px solid #0373ed;
+}
+
+.groupHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.groupTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.groupName {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  font-family: 'Cairo', sans-serif;
+}
+
+.requiredBadge {
+  background: #e74c3c;
+  color: white;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 500;
+  font-family: 'Cairo', sans-serif;
+}
+
+.groupInfo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #666;
+  font-family: 'Cairo', sans-serif;
+}
+
+.selectionCount {
+  font-weight: 600;
+  color: #0373ed;
+}
+
+.minSelection {
+  color: #666;
+}
+
+.optionsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 12px;
+}
+
+.optionCard {
+  background: white;
+  border: 2px solid #e9ecef;
+  border-radius: 12px;
+  padding: 16px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.optionCard:hover {
+  border-color: #0373ed;
+  background: rgba(3, 115, 237, 0.05);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(3, 115, 237, 0.15);
+}
+
+.optionCard.selected {
+  border-color: #0373ed;
+  background: rgba(3, 115, 237, 0.1);
+  box-shadow: 0 4px 16px rgba(3, 115, 237, 0.2);
+}
+
+.optionContent {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+  text-align: center;
+}
+
+.optionInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.optionName {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  line-height: 1.3;
+  font-family: 'Cairo', sans-serif;
+}
+
+.optionPrice {
+  font-size: 12px;
+  color: #e74c3c;
+  font-weight: 500;
+  font-family: 'Cairo', sans-serif;
+}
+
+.optionControls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+/* للمجموعات المتعددة */
+.quantitySection {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  justify-content: center;
+}
+
+.removeBtn {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 50%;
+  background: #dc3545;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(220, 53, 69, 0.2);
+}
+
+.removeBtn:hover {
+  background: #c82333;
+  transform: scale(1.1);
+  box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+}
+
+.quantityBadge {
+  background: #0373ed;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 14px;
+  font-weight: 600;
+  min-width: 32px;
+  text-align: center;
+  font-family: 'Cairo', sans-serif;
+  box-shadow: 0 2px 4px rgba(3, 115, 237, 0.2);
+}
+
+.addIcon {
+  width: 32px;
+  height: 32px;
+  border: 2px dashed #0373ed;
+  border-radius: 50%;
+  color: #0373ed;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.optionCard:hover .addIcon {
+  border-style: solid;
+  background: rgba(3, 115, 237, 0.1);
+}
+
+.maxReached {
+  padding: 6px 12px;
+  background: #f8f9fa;
+  border-radius: 16px;
+  font-size: 12px;
+  color: #666;
+  font-family: 'Cairo', sans-serif;
+}
+
+/* للمجموعات الفردية */
+.singleSelect {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.selectedIcon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #28a745;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(40, 167, 69, 0.2);
+}
+
+.unselectedIcon {
+  width: 32px;
+  height: 32px;
+  border: 2px dashed #0373ed;
+  border-radius: 50%;
+  color: #0373ed;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.optionCard:hover .unselectedIcon {
+  border-style: solid;
+  background: rgba(3, 115, 237, 0.1);
+}
+
+.totalSection {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #e9ecef;
+}
+
+.totalRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 18px;
+  font-weight: 600;
+  font-family: 'Cairo', sans-serif;
+}
+
+.totalLabel {
+  color: #333;
+}
+
+.totalValue {
+  color: #0373ed;
+}
+
+.popupFooter {
+  display: flex;
+  gap: 12px;
+  padding: 20px;
+  border-top: 1px solid #e9ecef;
+  background: #f8f9fa;
+}
+
+.btnCancel {
+  flex: 1;
+  padding: 12px;
+  background: #f8f9fa;
+  color: #666;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  font-family: 'Cairo', sans-serif;
+}
+
+.btnCancel:hover {
+  background: #e9ecef;
+}
+
+.btnConfirm {
+  flex: 2;
+  padding: 12px;
+  background: #0373ed;
+  color: white;
+  border: 1px solid #0373ed;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  font-family: 'Cairo', sans-serif;
+}
+
+.btnConfirm:hover:not(:disabled) {
+  background: #0256c7;
+}
+
+.btnConfirm:disabled {
+  background: #ccc;
+  border-color: #ccc;
+  cursor: not-allowed;
+}
+
+/* تأثيرات النقر */
+.optionCard:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(3, 115, 237, 0.2);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .popupContent {
+    width: 98%;
+    max-height: 90vh;
+  }
+  
+  .optionsGrid {
+    grid-template-columns: 1fr;
+  }
+  
+  .groupHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .popupFooter {
+    flex-direction: column;
+  }
+  
+  .optionGroup {
+    padding: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .popupHeader {
+    padding: 15px;
+  }
+  
+  .popupBody {
+    padding: 15px;
+  }
+  
+  .optionCard {
+    padding: 12px;
+  }
+  
+  .popupTitle {
+    font-size: 16px;
+  }
+  
+  .groupName {
+    font-size: 14px;
+  }
+  
+  .optionName {
+    font-size: 13px;
+  }
+  
+  .removeBtn {
+    width: 24px;
+    height: 24px;
+  }
+  
+  .quantityBadge {
+    padding: 4px 8px;
+    font-size: 12px;
+  }
+  
+  .selectedIcon,
+  .unselectedIcon,
+  .addIcon {
+    width: 28px;
+    height: 28px;
+  }
 }
 
 ===== src/Pages/pos/newSales/styles/responsive.css =====
@@ -3414,7 +6305,7 @@ html[dir="rtl"] .pos-system * {
   
   /* Component heights */
   --header-height: clamp(60px, 8vh, 100px);
-  --keypad-height: clamp(80px, 10vh, 120px);
+  --keypad-height: clamp(80px, 8vh, 120px);
   --action-bar-height: clamp(50px, 7vh, 80px);
 }
 
@@ -3423,6 +6314,8 @@ html[dir="rtl"] .pos-system * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+      font-family: 'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+
 }
 
 html {
@@ -3617,7 +6510,7 @@ body {
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
-  padding: var(--spacing-md) var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-md);
   border-radius: 6px;
   border: none;
   color: white;
@@ -3995,7 +6888,6 @@ body {
 
 .order-items {
   max-height: 50vh; /* زيادة من 40vh إلى 50vh */
-  overflow-y: auto;
   margin-bottom: var(--spacing-md); /* كان var(--spacing-lg) */
   scrollbar-width: thin;
   scrollbar-color: var(--border-color) transparent;
@@ -4255,9 +7147,6 @@ body {
     height: clamp(55px, 8vh, 85px);
   }
   
-  .number-pad-bar {
-    height: clamp(85px, 11vh, 125px);
-  }
   
   .top-bar {
     height: clamp(65px, 9vh, 105px);
@@ -4622,18 +7511,426 @@ body {
   color: #dc3545;
   font-weight: 600;
 }
+/* Sub-items styling */
+.sub-items-container {
+  margin-top: 6px;
+  padding-left: 8px;
+  border-left: 2px solid #f0f0f0;
+}
 
-/* Active Action Chips */
-.action-chip.active {
-  background: #0373ed;
+.sub-item {
+  margin-bottom: 3px;
+}
+
+.sub-item-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2px 0;
+}
+
+.sub-item-info {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+}
+
+.sub-item-badge {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+  font-weight: 600;
   color: white;
-  border-color: #0373ed;
+  flex-shrink: 0;
 }
 
-.action-chip.active img {
-  filter: brightness(0) invert(1);
+.sub-item-badge.extra {
+  background: #28a745;
 }
 
+.sub-item-badge.without {
+  background: #dc3545;
+}
+
+.sub-item-badge.option {
+  background: #6c757d;
+}
+
+.sub-item-text {
+  font-size: 10px;
+  color: #666;
+  line-height: 1.2;
+}
+
+.sub-item-delete {
+  width: 16px;
+  height: 16px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
+}
+
+.sub-item-delete:hover {
+  opacity: 1;
+}
+
+.sub-item-delete img {
+  width: 12px;
+  height: 12px;
+}
+
+/* Loading and Error states */
+.pos-system.loading,
+.pos-system.error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.loading-spinner {
+  font-size: 18px;
+  color: #666;
+}
+
+.error-message {
+  font-size: 16px;
+  color: #dc3545;
+  text-align: center;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .sub-item-text {
+    font-size: 9px;
+  }
+  
+  .sub-item-delete {
+    width: 14px;
+    height: 14px;
+  }
+  
+  .sub-item-delete img {
+    width: 10px;
+    height: 10px;
+  }
+}
+
+
+
+* تصميم التعليق */
+.item-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  margin-top: 4px;
+  padding: 3px 6px;
+  background: rgba(108, 117, 125, 0.1);
+  border-radius: 4px;
+  border-left: 2px solid #6c757d;
+}
+
+.note-icon {
+  font-size: 10px;
+  line-height: 1;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.note-text {
+  font-size: 10px;
+  color: #6c757d;
+  line-height: 1.2;
+  font-style: italic;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  flex: 1;
+}
+
+/* تأكيد أن التعليق بنفس حجم الخيارات */
+.item-note,
+.option-detail,
+.sub-item {
+  font-size: 10px;
+  line-height: 1.2;
+  margin-top: 3px;
+}
+
+/* Responsive للتعليقات */
+@media (max-width: 768px) {
+  .item-note {
+    padding: 2px 4px;
+    margin-top: 3px;
+  }
+  
+  .note-icon {
+    font-size: 9px;
+  }
+  
+  .note-text {
+    font-size: 9px;
+  }
+}
+
+@media (max-width: 480px) {
+  .item-note {
+    padding: 2px 3px;
+    margin-top: 2px;
+  }
+  
+  .note-icon {
+    font-size: 8px;
+  }
+  
+  .note-text {
+    font-size: 8px;
+  }
+}
+
+/* تحسينات إضافية */
+.item-note:empty {
+  display: none;
+}
+
+.note-text:empty {
+  display: none;
+}
+
+/* تأثير hover خفيف */
+.order-item:hover .item-note {
+  background: rgba(108, 117, 125, 0.15);
+}
+
+
+/* للمنتجات الإضافية */
+.order-item.extra-item .item-note {
+  background: rgba(40, 167, 69, 0.1);
+  border-left-color: #28a745;
+}
+
+.order-item.extra-item .note-text {
+  color: #28a745;
+}
+
+/* للمنتجات بدون */
+.order-item.without-item .item-note {
+  background: rgba(220, 53, 69, 0.1);
+  border-left-color: #dc3545;
+}
+
+.order-item.without-item .note-text {
+  color: #dc3545;
+}
+
+
+
+
+/* تحديث Sub-items styling */
+.order-item-container {
+  margin-bottom: 8px;
+}
+
+.sub-items-container {
+  margin-top: 6px;
+  padding-left: 20px;
+  border-left: 2px solid #f0f0f0;
+}
+
+.sub-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+  margin-bottom: 2px;
+  min-height: 24px;
+}
+
+.sub-item-details {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+}
+
+.sub-item-info {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+}
+
+.sub-item-badge {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+  font-weight: 600;
+  color: white;
+  flex-shrink: 0;
+}
+
+.sub-item-badge.extra {
+  background: #28a745;
+}
+
+.sub-item-badge.without {
+  background: #dc3545;
+}
+
+.sub-item-badge.option {
+  background: #6c757d;
+}
+
+.sub-item-name {
+  font-size: 10px;
+  color: #666;
+  line-height: 1.2;
+  font-family: 'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+}
+
+.sub-item-prices {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  min-width: 60px;
+}
+
+.sub-item-price {
+  font-size: 9px;
+  color: #999;
+  font-weight: 500;
+}
+
+.sub-item-total {
+  font-size: 10px;
+  color: #333;
+  font-weight: 600;
+}
+
+.sub-item-total.negative {
+  color: #dc3545;
+}
+
+.sub-item-delete {
+  width: 16px;
+  height: 16px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
+  margin-left: 4px;
+}
+
+.sub-item-delete:hover {
+  opacity: 1;
+}
+
+.sub-item-delete img {
+  width: 10px;
+  height: 10px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .sub-item-name {
+    font-size: 9px;
+  }
+  
+  .sub-item-price {
+    font-size: 8px;
+  }
+  
+  .sub-item-total {
+    font-size: 9px;
+  }
+  
+  .sub-item-delete {
+    width: 14px;
+    height: 14px;
+  }
+  
+  .sub-item-delete img {
+    width: 8px;
+    height: 8px;
+  }
+}
+
+
+/* حالة الأزرار المعطلة */
+.action-chip.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.action-chip.disabled:hover {
+  background: inherit;
+  border-color: inherit;
+  transform: none;
+  box-shadow: none;
+}
+
+.action-chip.disabled img {
+  opacity: 0.5;
+}
+
+.action-chip.disabled span {
+  opacity: 0.5;
+}
+
+/* تحسين الـ tooltip */
+.action-chip[title] {
+  position: relative;
+}
+
+.action-chip[title]:hover::after {
+  content: attr(title);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #333;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  z-index: 1000;
+  margin-bottom: 5px;
+}
+
+.action-chip[title]:hover::before {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: #333;
+  z-index: 1000;
+}
 ===== src/Pages/pos/newSales/styles/tailwind.css =====
 @tailwind base;
 @tailwind components;
@@ -4712,6 +8009,7 @@ export interface PosProduct {
   nameArabic: string;
   image: string;
   categoryId: string;
+  productType: number; // ✅ إضافة هذا الحقل
   productPrices: PosPrice[];
   hasMultiplePrices: boolean;
   displayPrice?: number;
@@ -4762,6 +8060,7 @@ export interface CategoryItem {
   name: string;
   nameArabic: string;
   image: string;
+  products?: PosProduct[]; // ✅ إضافة هذا الحقل
   parentId?: string;
   children?: CategoryItem[];
   hasChildren: boolean;
@@ -4780,6 +8079,21 @@ export interface OrderItem {
     isExtra?: boolean;        // جديد
   isWithout?: boolean;      // جديد
   parentItemId?: string;    // جديد - للربط بالمنتج الأصلي
+  subItems?: SubItem[]; // جديد - للعناصر الفرعية
+  discountPercentage?: number; // جديد
+  discountAmount?: number; // جديد
+}
+
+
+export interface SubItem {
+  id: string;
+  type: 'option' | 'extra' | 'without';
+  name: string;
+  quantity: number;
+  price: number;
+  isRequired?: boolean; // للمجموعات المطلوبة
+  groupId?: string; // للمجموعات
+  productId?: string; // للإضافات/بدون
 }
 
 export interface OrderSummary {

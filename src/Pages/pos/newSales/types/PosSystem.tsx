@@ -5,6 +5,7 @@ export interface PosProduct {
   nameArabic: string;
   image: string;
   categoryId: string;
+  productType: number; // ✅ إضافة هذا الحقل
   productPrices: PosPrice[];
   hasMultiplePrices: boolean;
   displayPrice?: number;
@@ -55,6 +56,7 @@ export interface CategoryItem {
   name: string;
   nameArabic: string;
   image: string;
+  products?: PosProduct[]; // ✅ إضافة هذا الحقل
   parentId?: string;
   children?: CategoryItem[];
   hasChildren: boolean;
@@ -74,6 +76,8 @@ export interface OrderItem {
   isWithout?: boolean;      // جديد
   parentItemId?: string;    // جديد - للربط بالمنتج الأصلي
   subItems?: SubItem[]; // جديد - للعناصر الفرعية
+  discountPercentage?: number; // جديد
+  discountAmount?: number; // جديد
 }
 
 

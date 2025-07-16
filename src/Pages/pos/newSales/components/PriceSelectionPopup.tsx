@@ -2,9 +2,10 @@
 import React, { useEffect, useRef } from 'react';
 import { PosProduct, PosPrice } from '../types/PosSystem';
 import CloseIcon from '@mui/icons-material/Close';
+import styles from '../styles/PriceSelectionPopup.module.css';
 
 interface PriceSelectionPopupProps {
-  product: PosProduct;
+  product: PosProduct | null;
   quantity: number;
   isOpen: boolean;
   onClose: () => void;
@@ -20,7 +21,6 @@ const PriceSelectionPopup: React.FC<PriceSelectionPopupProps> = ({
 }) => {
   const overlayRef = useRef<HTMLDivElement>(null);
 
-  // إقفال الـ popup عند الضغط خارجه
   useEffect(() => {
     const handleOverlayClick = (e: MouseEvent) => {
       if (overlayRef.current && e.target === overlayRef.current) {
@@ -37,7 +37,6 @@ const PriceSelectionPopup: React.FC<PriceSelectionPopupProps> = ({
     };
   }, [isOpen, onClose]);
 
-  // إقفال الـ popup عند الضغط على Escape
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -54,34 +53,31 @@ const PriceSelectionPopup: React.FC<PriceSelectionPopupProps> = ({
     };
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !product) return null;
 
   return (
-    <div className="popup-overlay" ref={overlayRef}>
-      <div className="popup-content">
-        <div className="popup-header">
-          <h3 className="popup-title">{product.nameArabic}</h3>
-          <button className="popup-close" onClick={onClose}>
+    <div className={styles.popupOverlay} ref={overlayRef}>
+      <div className={styles.popupContent}>
+        <div className={styles.popupHeader}>
+          <h3 className={styles.popupTitle}>{product.nameArabic}</h3>
+          <button className={styles.popupClose} onClick={onClose}>
             <CloseIcon />
           </button>
         </div>
         
-        <div className="popup-body">
-          <div className="quantity-display">
-            الكمية: {quantity}
-          </div>
+        <div className={styles.popupBody}>
           
-          <div className="prices-grid">
+          <div className={styles.pricesGrid}>
             {product.productPrices.map((price) => (
               <button
                 key={price.id}
-                className="price-card"
+                className={styles.priceCard}
                 onClick={() => onSelectPrice(price)}
               >
-                <div className="price-name">{price.nameArabic}</div>
-                <div className="price-value">
-                  <span className="price">{price.price}</span>
-                  <span className="currency">EGP</span>
+                <div className={styles.priceName}>{price.nameArabic}</div>
+                <div className={styles.priceValue}>
+                  <span className={styles.price}>{price.price}</span>
+                  <span className={styles.currency}>EGP</span>
                 </div>
               </button>
             ))}

@@ -1,4 +1,4 @@
-// src/Pages/pos/newSales/components/OrderManager.tsx - الكود الكامل المُصحح
+// src/Pages/pos/newSales/components/OrderManager.tsx - الكود الكامل المُحدث
 import React from 'react';
 import { PosProduct, PosPrice, SelectedOption, OrderItem, SubItem } from '../types/PosSystem';
 import * as posService from '../../../../services/posService';
@@ -33,21 +33,20 @@ export const useOrderManager = ({
     const quantity = parseInt(keypadValue) || 1;
     const basePrice = posService.calculateTotalPrice(price.price, selectedOptions, quantity);
     
+    // إذا كان Extra أو Without mode مع منتج محدد
     if ((isExtraMode || isWithoutMode) && selectedOrderItemId) {
-      // إضافة كـ sub-item للمنتج المختار
       const subItem: SubItem = {
         id: `${product.id}_${price.id}_${Date.now()}`,
         type: isExtraMode ? 'extra' : 'without',
         name: `${product.nameArabic}${price.nameArabic ? ` - ${price.nameArabic}` : ''}`,
         quantity,
-        price: isWithoutMode ? -Math.abs(basePrice) : basePrice,
+        price: isWithoutMode ? 0 : basePrice,
         productId: product.id
       };
       
-      // تحديث المنتج الأساسي بإضافة sub-item
       onOrderUpdate(selectedOrderItemId, 'addSubItem', subItem);
     } else {
-      // إضافة منتج جديد
+      // إضافة منتج جديد (سواء عادي أو Extra/Without منفصل)
       const subItems: SubItem[] = [];
       
       // تحويل الخيارات إلى sub-items
@@ -58,7 +57,7 @@ export const useOrderManager = ({
           name: option.itemName,
           quantity: option.quantity,
           price: option.extraPrice * option.quantity,
-          isRequired: true, // افتراض أن الخيارات مطلوبة
+          isRequired: true,
           groupId: option.groupId
         });
       });
@@ -70,6 +69,7 @@ export const useOrderManager = ({
         quantity,
         totalPrice: basePrice,
         subItems: subItems.length > 0 ? subItems : undefined,
+        // إضافة كمنتج Extra/Without منفصل إذا لم يكن هناك منتج محدد
         isExtra: isExtraMode && !selectedOrderItemId,
         isWithout: isWithoutMode && !selectedOrderItemId,
       };
@@ -90,7 +90,6 @@ export const useOrderManager = ({
     onLoadNormalProducts
   ]);
 
-  // دالة حذف sub-item
   const removeSubItem = React.useCallback((orderItemId: string, subItemId: string) => {
     onOrderUpdate(orderItemId, 'removeSubItem', subItemId);
   }, [onOrderUpdate]);
