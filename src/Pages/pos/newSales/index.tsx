@@ -1,4 +1,4 @@
-// src/Pages/pos/newSales/index.tsx - الكود الكامل المُحدث
+// src/Pages/pos/newSales/index.tsx
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { PosProduct, CategoryItem, OrderSummary as OrderSummaryType, OrderItem, PosPrice, SelectedOption } from './types/PosSystem';
 import * as posService from '../../../services/posService';
@@ -20,32 +20,36 @@ import { TableSelection } from './types/TableSystem';
 import { useError } from '../../../contexts/ErrorContext';
 import * as deliveryCompaniesApi from '../../../utils/api/pagesApi/deliveryCompaniesApi';
 import { DeliveryCompany } from '../../../utils/api/pagesApi/deliveryCompaniesApi';
+import { Customer, CustomerAddress } from 'src/utils/api/pagesApi/customersApi';
 
 const PosSystem: React.FC = () => {
-  const [keypadValue, setKeypadValue] = useState('1');
+  const [keypadValue, setKeypadValue] = useState('0');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [customerName, setCustomerName] = useState('');
   const [selectedChips, setSelectedChips] = useState<string[]>([]);
   const [selectedOrderType, setSelectedOrderType] = useState('Takeaway');
   const [showTablePopup, setShowTablePopup] = useState(false);
-const { showWarning } = useError();
-const [deliveryCompanies, setDeliveryCompanies] = useState<DeliveryCompany[]>([]);
-const [selectedDeliveryCompany, setSelectedDeliveryCompany] = useState<DeliveryCompany | null>(null); // ✅ null مش أي قيمة تانية
+  const { showWarning } = useError();
+  const [deliveryCompanies, setDeliveryCompanies] = useState<DeliveryCompany[]>([]);
+  const [selectedDeliveryCompany, setSelectedDeliveryCompany] = useState<DeliveryCompany | null>(null);
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [selectedAddress, setSelectedAddress] = useState<CustomerAddress | null>(null);
+  const [taxRate, setTaxRate] = useState(0);
+  const [deliveryCharge, setDeliveryCharge] = useState(0);
 
   // إضافة Table Manager Hook
-const {
-  tableSections,
-  selectedTable,
-  isChooseTable,
-  selectTable,
-  clearSelectedTable,
-  getTableDisplayName,
-  getServiceCharge,
-  isTableRequired,
-  canAddProduct
-} = useTableManager();
-
+  const {
+    tableSections,
+    selectedTable,
+    isChooseTable,
+    selectTable,
+    clearSelectedTable,
+    getTableDisplayName,
+    getServiceCharge,
+    isTableRequired,
+    canAddProduct
+  } = useTableManager();
 
   // استخدام Data Manager الجديد
   const {
@@ -58,6 +62,24 @@ const {
     getProductsByScreenId,
     hasProductOptions
   } = useDataManager();
+
+  // دالة لجلب رسوم التوصيل من الـ zone
+  const getDeliveryCharge = useCallback((): number => {
+    if (selectedOrderType === 'Delivery' && selectedAddress && selectedAddress.zoneId) {
+      return 15; // يمكن تحديثها من API
+    }
+    return 0;
+  }, [selectedOrderType, selectedAddress]);
+
+  const handleCustomerSelect = useCallback((customer: Customer, address: CustomerAddress) => {
+    setSelectedCustomer(customer);
+    setSelectedAddress(address);
+    setCustomerName(`${customer.name} - ${customer.phone1}`);
+  }, []);
+
+  const handleDeliveryChargeChange = useCallback((charge: number) => {
+    setDeliveryCharge(charge);
+  }, []);
 
   // Extra/Without States
   const [isExtraMode, setIsExtraMode] = useState(false);
@@ -91,70 +113,64 @@ const {
     ? currentCategories.find(cat => cat.id === showingChildren)?.children || []
     : rootCategories;
 
-
-
-// تحميل البيانات مرة واحدة
-useEffect(() => {
-  const loadDeliveryCompanies = async () => {
-    try {
-      const companies = await deliveryCompaniesApi.getAll();
-      setDeliveryCompanies(companies);
-    } catch (error) {
-      console.error('Error loading delivery companies:', error);
-    }
-  };
-  loadDeliveryCompanies();
-}, []);
+  // تحميل البيانات مرة واحدة
+  useEffect(() => {
+    const loadDeliveryCompanies = async () => {
+      try {
+        const companies = await deliveryCompaniesApi.getAll();
+        setDeliveryCompanies(companies);
+      } catch (error) {
+        console.error('Error loading delivery companies:', error);
+      }
+    };
+    loadDeliveryCompanies();
+  }, []);
 
   // المنتجات المعروضة
   const displayedProducts = useMemo(() => {
-  if (searchQuery.trim()) {
-    // البحث في كل المنتجات بدون فلتر
-    return searchProducts(currentProducts, searchQuery);
-  }
-  
-  if (selectedCategory) {
-    return getProductsByScreenId(currentProducts, selectedCategory);
-  }
-  
-  return [];
-}, [currentProducts, selectedCategory, searchQuery, searchProducts, getProductsByScreenId]);
+    if (searchQuery.trim()) {
+      return searchProducts(currentProducts, searchQuery);
+    }
+    
+    if (selectedCategory) {
+      return getProductsByScreenId(currentProducts, selectedCategory);
+    }
+    
+    return [];
+  }, [currentProducts, selectedCategory, searchQuery, searchProducts, getProductsByScreenId]);
 
   // تحديث دالة updateOrderItem
-
-const updateOrderItem = useCallback((itemId: string, updateType: 'addSubItem' | 'removeSubItem', data: any) => {
-  setOrderItems(prev => prev.map(item => {
-    if (item.id === itemId) {
-      if (updateType === 'addSubItem') {
-        const newSubItems = [...(item.subItems || []), data];
-        
-        // ✅ العناصر "بدون" لا تؤثر على الإجمالي
-        const priceImpact = data.type === 'without' ? 0 : data.price;
-        const newTotalPrice = item.totalPrice + priceImpact;
-        
-        return {
-          ...item,
-          subItems: newSubItems,
-          totalPrice: newTotalPrice
-        };
-      } else if (updateType === 'removeSubItem') {
-        const removedSubItem = item.subItems?.find(sub => sub.id === data);
-        const newSubItems = item.subItems?.filter(sub => sub.id !== data) || [];
-        
-        // ✅ العناصر "بدون" لا تؤثر على الإجمالي عند الحذف
-        const priceImpact = removedSubItem?.type === 'without' ? 0 : (removedSubItem?.price || 0);
-        const newTotalPrice = item.totalPrice - priceImpact;
-        
-        return {
-          ...item,
-          subItems: newSubItems.length > 0 ? newSubItems : undefined,
-          totalPrice: newTotalPrice
-        };
+  const updateOrderItem = useCallback((itemId: string, updateType: 'addSubItem' | 'removeSubItem', data: any) => {
+    setOrderItems(prev => prev.map(item => {
+      if (item.id === itemId) {
+        if (updateType === 'addSubItem') {
+          const newSubItems = [...(item.subItems || []), data];
+          
+          const priceImpact = data.type === 'without' ? 0 : data.price;
+          const newTotalPrice = item.totalPrice + priceImpact;
+          
+          return {
+            ...item,
+            subItems: newSubItems,
+            totalPrice: newTotalPrice
+          };
+        } else if (updateType === 'removeSubItem') {
+          const removedSubItem = item.subItems?.find(sub => sub.id === data);
+          const newSubItems = item.subItems?.filter(sub => sub.id !== data) || [];
+          
+          const priceImpact = removedSubItem?.type === 'without' ? 0 : (removedSubItem?.price || 0);
+          const newTotalPrice = item.totalPrice - priceImpact;
+          
+          return {
+            ...item,
+            subItems: newSubItems.length > 0 ? newSubItems : undefined,
+            totalPrice: newTotalPrice
+          };
+        }
       }
-    }
-    return item;
-  }));
-}, []);
+      return item;
+    }));
+  }, []);
 
   // Order Manager Hook
   const { addToOrder, removeSubItem } = useOrderManager({
@@ -168,7 +184,7 @@ const updateOrderItem = useCallback((itemId: string, updateType: 'addSubItem' | 
       setIsExtraMode(false);
       setIsWithoutMode(false);
       setSelectedOrderItemId(null);
-      setKeypadValue('1');
+      setKeypadValue('0');
     },
     onLoadNormalProducts: () => {
       // لا نحتاج لإعادة تحميل البيانات لأنها محملة مسبقاً
@@ -182,69 +198,66 @@ const updateOrderItem = useCallback((itemId: string, updateType: 'addSubItem' | 
   }, []);
 
   // إضافة معالج تحديث المنتج للـ OrderItemDetailsPopup
-const handleUpdateOrderItem = useCallback((itemId: string, updates: {
-  quantity?: number;
-  notes?: string;
-  discountPercentage?: number;
-  discountAmount?: number;
-}) => {
-  setOrderItems(prev => prev.map(item => {
-    if (item.id === itemId) {
-      const updatedItem = { ...item };
-      
-      if (updates.quantity !== undefined) {
-        updatedItem.quantity = updates.quantity;
+  const handleUpdateOrderItem = useCallback((itemId: string, updates: {
+    quantity?: number;
+    notes?: string;
+    discountPercentage?: number;
+    discountAmount?: number;
+  }) => {
+    setOrderItems(prev => prev.map(item => {
+      if (item.id === itemId) {
+        const updatedItem = { ...item };
+        
+        if (updates.quantity !== undefined) {
+          updatedItem.quantity = updates.quantity;
+        }
+        
+        if (updates.notes !== undefined) {
+          updatedItem.notes = updates.notes;
+        }
+        
+        if (updates.discountPercentage !== undefined) {
+          updatedItem.discountPercentage = updates.discountPercentage;
+        }
+        
+        if (updates.discountAmount !== undefined) {
+          updatedItem.discountAmount = updates.discountAmount;
+        }
+        
+        const basePrice = item.selectedPrice.price * (updates.quantity || item.quantity);
+        const subItemsTotal = item.subItems?.reduce((sum, subItem) => {
+          return sum + (subItem.type === 'without' ? 0 : subItem.price);
+        }, 0) || 0;
+        
+        const totalBeforeDiscount = basePrice + subItemsTotal;
+        const discountAmount = updates.discountAmount || item.discountAmount || 0;
+        updatedItem.totalPrice = totalBeforeDiscount - discountAmount;
+        
+        return updatedItem;
       }
-      
-      if (updates.notes !== undefined) {
-        updatedItem.notes = updates.notes;
-      }
-      
-      if (updates.discountPercentage !== undefined) {
-        updatedItem.discountPercentage = updates.discountPercentage;
-      }
-      
-      if (updates.discountAmount !== undefined) {
-        updatedItem.discountAmount = updates.discountAmount;
-      }
-      
-      // ✅ إعادة حساب السعر الإجمالي مع تجاهل عناصر "بدون"
-      const basePrice = item.selectedPrice.price * (updates.quantity || item.quantity);
-      const subItemsTotal = item.subItems?.reduce((sum, subItem) => {
-        // تجاهل عناصر "بدون" في الحساب
-        return sum + (subItem.type === 'without' ? 0 : subItem.price);
-      }, 0) || 0;
-      
-      const totalBeforeDiscount = basePrice + subItemsTotal;
-      const discountAmount = updates.discountAmount || item.discountAmount || 0;
-      updatedItem.totalPrice = totalBeforeDiscount - discountAmount;
-      
-      return updatedItem;
-    }
-    return item;
-  }));
-}, []);
+      return item;
+    }));
+  }, []);
 
   // إضافة معالج حذف sub-item
-const handleRemoveSubItem = useCallback((orderItemId: string, subItemId: string) => {
-  setOrderItems(prev => prev.map(item => {
-    if (item.id === orderItemId && item.subItems) {
-      const removedSubItem = item.subItems.find(sub => sub.id === subItemId);
-      const newSubItems = item.subItems.filter(sub => sub.id !== subItemId);
-      
-      // ✅ العناصر "بدون" لا تؤثر على الإجمالي
-      const priceImpact = removedSubItem?.type === 'without' ? 0 : (removedSubItem?.price || 0);
-      const newTotalPrice = item.totalPrice - priceImpact;
-      
-      return {
-        ...item,
-        subItems: newSubItems.length > 0 ? newSubItems : undefined,
-        totalPrice: newTotalPrice
-      };
-    }
-    return item;
-  }));
-}, []);
+  const handleRemoveSubItem = useCallback((orderItemId: string, subItemId: string) => {
+    setOrderItems(prev => prev.map(item => {
+      if (item.id === orderItemId && item.subItems) {
+        const removedSubItem = item.subItems.find(sub => sub.id === subItemId);
+        const newSubItems = item.subItems.filter(sub => sub.id !== subItemId);
+        
+        const priceImpact = removedSubItem?.type === 'without' ? 0 : (removedSubItem?.price || 0);
+        const newTotalPrice = item.totalPrice - priceImpact;
+        
+        return {
+          ...item,
+          subItems: newSubItems.length > 0 ? newSubItems : undefined,
+          totalPrice: newTotalPrice
+        };
+      }
+      return item;
+    }));
+  }, []);
 
   // إضافة useEffect لتحديد الفئة الافتراضية
   useEffect(() => {
@@ -255,7 +268,6 @@ const handleRemoveSubItem = useCallback((orderItemId: string, subItemId: string)
 
   // معالج زر Extra - التحديث الجديد
   const handleExtraClick = useCallback(() => {
-    // إذا لم يكن هناك منتج محدد، استخدم آخر منتج في السلة
     let targetItemId = selectedOrderItemId;
     
     if (!targetItemId && orderItems.length > 0) {
@@ -263,7 +275,6 @@ const handleRemoveSubItem = useCallback((orderItemId: string, subItemId: string)
       setSelectedOrderItemId(targetItemId);
     }
     
-    // إذا لم يكن هناك منتجات في السلة، لا تفعل شيء
     if (!targetItemId) {
       return;
     }
@@ -280,7 +291,6 @@ const handleRemoveSubItem = useCallback((orderItemId: string, subItemId: string)
 
   // معالج زر Without - التحديث الجديد
   const handleWithoutClick = useCallback(() => {
-    // إذا لم يكن هناك منتج محدد، استخدم آخر منتج في السلة
     let targetItemId = selectedOrderItemId;
     
     if (!targetItemId && orderItems.length > 0) {
@@ -288,7 +298,6 @@ const handleRemoveSubItem = useCallback((orderItemId: string, subItemId: string)
       setSelectedOrderItemId(targetItemId);
     }
     
-    // إذا لم يكن هناك منتجات في السلة، لا تفعل شيء
     if (!targetItemId) {
       return;
     }
@@ -310,7 +319,6 @@ const handleRemoveSubItem = useCallback((orderItemId: string, subItemId: string)
     setSelectedOrderItemId(null);
     setSelectedChips(prev => prev.filter(chip => chip !== 'extra' && chip !== 'without'));
     
-    // استخدام الفئة الافتراضية
     if (defaultCategoryId) {
       setSelectedCategory(defaultCategoryId);
     }
@@ -360,59 +368,51 @@ const handleRemoveSubItem = useCallback((orderItemId: string, subItemId: string)
   }, [rootCategories]);
 
   // معالج ضغط المنتج
-const handleProductClick = useCallback((product: PosProduct) => {
-  // فحص إذا كانت الطاولة مطلوبة
-  if (!canAddProduct(selectedOrderType)) {
-    showWarning('يجب اختيار الطاولة أولاً');
-    return;
-  }
-
-  if (product.hasMultiplePrices) {
-    setSelectedProduct(product);
-    setShowPricePopup(true);
-  } else if (product.productPrices.length > 0) {
-    const price = product.productPrices[0];
-    
-    if (hasProductOptions(product)) {
-      setSelectedProductForOptions(product);
-      setSelectedPriceForOptions(price);
-      setShowOptionsPopup(true);
-    } else {
-      addToOrder(product, price, []);
+  const handleProductClick = useCallback((product: PosProduct) => {
+    if (!canAddProduct(selectedOrderType)) {
+      showWarning('يجب اختيار الطاولة أولاً');
+      return;
     }
-  }
-}, [addToOrder,showWarning, hasProductOptions, selectedOrderType, canAddProduct]);
 
+    if (product.hasMultiplePrices) {
+      setSelectedProduct(product);
+      setShowPricePopup(true);
+    } else if (product.productPrices.length > 0) {
+      const price = product.productPrices[0];
+      
+      if (hasProductOptions(product)) {
+        setSelectedProductForOptions(product);
+        setSelectedPriceForOptions(price);
+        setShowOptionsPopup(true);
+      } else {
+        addToOrder(product, price, []);
+      }
+    }
+  }, [addToOrder, showWarning, hasProductOptions, selectedOrderType, canAddProduct]);
 
+  // إضافة معالج اختيار الطاولة
+  const handleTableSelect = useCallback((selection: TableSelection) => {
+    selectTable(selection);
+    setShowTablePopup(false);
+  }, [selectTable]);
 
-// إضافة معالج اختيار الطاولة
-const handleTableSelect = useCallback((selection: TableSelection) => {
-  selectTable(selection);
-  setShowTablePopup(false);
-}, [selectTable]);
-
-// إضافة معالج فتح popup الطاولة
-const handleTableClick = useCallback(() => {
-  setShowTablePopup(true);
-}, []);
-
-
-
-// تعديل معالج تغيير نوع الطلب
-const handleOrderTypeChange = useCallback((type: string) => {
-  setSelectedOrderType(type);
-  
-  // إذا تم اختيار Dine-in، افتح popup الطاولة تلقائياً
-  if (type === 'Dine-in' && isTableRequired(type)) {
+  // إضافة معالج فتح popup الطاولة
+  const handleTableClick = useCallback(() => {
     setShowTablePopup(true);
-  }
-  
-  // إذا تم تغيير النوع لغير Dine-in، امسح الطاولة المختارة
-  if (type !== 'Dine-in') {
-    clearSelectedTable();
-  }
-}, [isTableRequired, clearSelectedTable]);
+  }, []);
 
+  // تعديل معالج تغيير نوع الطلب
+  const handleOrderTypeChange = useCallback((type: string) => {
+    setSelectedOrderType(type);
+    
+    if (type === 'Dine-in' && isTableRequired(type)) {
+      setShowTablePopup(true);
+    }
+    
+    if (type !== 'Dine-in') {
+      clearSelectedTable();
+    }
+  }, [isTableRequired, clearSelectedTable]);
 
   // معالج اختيار السعر
   const handlePriceSelect = useCallback((price: PosPrice) => {
@@ -439,45 +439,137 @@ const handleOrderTypeChange = useCallback((type: string) => {
     setSelectedPriceForOptions(null);
   }, [selectedProductForOptions, selectedPriceForOptions, addToOrder]);
 
-// تعديل حساب ملخص الطلب ليشمل الخدمة
-const orderSummary: OrderSummaryType = useMemo(() => {
-  const subtotal = orderItems.reduce((sum, item) => sum + item.totalPrice, 0);
-  const serviceCharge = getServiceCharge();
-  const service = (subtotal * serviceCharge) / 100;
-  const subtotalWithService = subtotal + service;
-  
-  // حساب الخصم على الإجمالي + الخدمة
-  const discountPercentage = 0; // سيتم إضافة آلية الخصم لاحقاً
-  const discount = (subtotalWithService * discountPercentage) / 100;
-  const tax = 0;
-  const total = subtotalWithService - discount + tax;
-
-  return {
-    items: orderItems,
-    subtotal,
-    discount,
-    tax,
-    service,
-    total
-  };
-}, [orderItems, getServiceCharge]);
+  // تعديل حساب ملخص الطلب ليشمل الخدمة
+  const orderSummary: OrderSummaryType = useMemo(() => {
+    const subtotal = orderItems.reduce((sum, item) => sum + item.totalPrice, 0);
+    const serviceCharge = getServiceCharge();
+    const service = (subtotal * serviceCharge) / 100;
+    const discountPercentage = 0;
+    const discount = (subtotal * discountPercentage) / 100;
+    
+    return {
+      items: orderItems,
+      subtotal,
+      discount,
+      tax: 0,
+      service,
+      total: subtotal + service + deliveryCharge - discount
+    };
+  }, [orderItems, getServiceCharge, deliveryCharge]);
 
   // حذف منتج من الطلب
   const removeOrderItem = useCallback((itemId: string) => {
     setOrderItems(prev => prev.filter(item => item.id !== itemId));
   }, []);
 
+  // دالة التحقق من صحة الإدخال
+  const validateKeypadInput = useCallback((value: string): boolean => {
+    if (!value || value.trim() === '') return false;
+    if (value === '.') return true;
+    
+    const numValue = parseFloat(value);
+    if (isNaN(numValue)) return false;
+    if (numValue < 0) return false;
+    
+    const decimalPlaces = value.split('.')[1]?.length || 0;
+    if (decimalPlaces > 3) return false;
+    if (numValue > 999999) return false;
+    
+    return true;
+  }, []);
+
+  // معالج إدخال الأرقام المحسن
   const handleNumberClick = useCallback((number: string) => {
-    if (keypadValue === '1' && number !== '.') {
-      setKeypadValue(number);
-    } else if (keypadValue !== '0') {
-      setKeypadValue(prev => prev + number);
+    let newValue = keypadValue;
+    
+    if (number === '.') {
+      if (!keypadValue.includes('.')) {
+        newValue = keypadValue + '.';
+      } else {
+        return;
+      }
+    } else {
+      if (keypadValue === '0' && number !== '0') {
+        newValue = number;
+      } else {
+        newValue = keypadValue + number;
+      }
     }
+    
+    if (validateKeypadInput(newValue)) {
+      setKeypadValue(newValue);
+    }
+  }, [keypadValue, validateKeypadInput]);
+
+  // دالة للحصول على القيمة الرقمية
+  const getNumericValue = useCallback((): number => {
+    const value = parseFloat(keypadValue);
+    return isNaN(value) || value <= 0 ? 1 : value;
   }, [keypadValue]);
 
+  // دالة المسح
   const handleClearClick = useCallback(() => {
-    setKeypadValue('1');
+    setKeypadValue('0');
   }, []);
+
+  // ✅ إصلاح دعم لوحة المفاتيح العادية مع حل خطأ contentEditable
+  useEffect(() => {
+    const handleKeyPress = (event: KeyboardEvent) => {
+      // التحقق من عدم وجود popup مفتوح
+      const isAnyPopupOpen = showPricePopup || showOptionsPopup || showOrderDetailsPopup || showTablePopup;
+      
+      // التحقق من عدم وجود input مركز عليه - مع إصلاح خطأ contentEditable
+      const activeElement = document.activeElement;
+      const isInputFocused = activeElement?.tagName === 'INPUT' || 
+                            activeElement?.tagName === 'TEXTAREA' || 
+                            (activeElement as HTMLElement)?.contentEditable === 'true';
+      
+      // إذا كان هناك popup مفتوح أو input مركز عليه، لا نتدخل
+      if (isAnyPopupOpen || isInputFocused) {
+        return;
+      }
+      
+      const key = event.key;
+      
+      // الأرقام والنقطة العشرية
+      if (/^[0-9]$/.test(key)) {
+        event.preventDefault();
+        handleNumberClick(key);
+      } else if (key === '.') {
+        event.preventDefault();
+        handleNumberClick('.');
+      } else if (key === 'Backspace') {
+        event.preventDefault();
+        // حذف آخر رقم
+        if (keypadValue.length > 1) {
+          const newValue = keypadValue.slice(0, -1);
+          if (validateKeypadInput(newValue)) {
+            setKeypadValue(newValue);
+          }
+        } else {
+          setKeypadValue('0');
+        }
+      } else if (key === 'Delete' || key === 'Escape') {
+        event.preventDefault();
+        handleClearClick();
+      } else if (key === 'Enter') {
+        event.preventDefault();
+        // يمكن إضافة وظيفة معينة عند الضغط على Enter
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyPress);
+    return () => document.removeEventListener('keydown', handleKeyPress);
+  }, [
+    keypadValue, 
+    handleNumberClick, 
+    handleClearClick, 
+    validateKeypadInput,
+    showPricePopup,
+    showOptionsPopup,
+    showOrderDetailsPopup,
+    showTablePopup
+  ]);
 
   const handleChipClick = useCallback((chipType: string) => {
     setSelectedChips(prev => 
@@ -488,30 +580,27 @@ const orderSummary: OrderSummaryType = useMemo(() => {
   }, []);
 
   const handleResetOrder = useCallback(() => {
-    // إعادة تعيين الفاتورة بالكامل
     setOrderItems([]);
     setSelectedOrderItemId(null);
     setCustomerName('');
-    setKeypadValue('1');
+    setKeypadValue('0');
     
-     // إعادة تعيين الطاولة
-  clearSelectedTable();
+    setSelectedCustomer(null);
+    setSelectedAddress(null);
+    setDeliveryCharge(0);
 
+    clearSelectedTable();
 
-    // إعادة تعيين الـ modes
     setIsExtraMode(false);
     setIsWithoutMode(false);
     setSelectedChips([]);
     
-    // الرجوع للمنتجات الأساسية
     handleBackToMainProducts();
     
-    // إعادة تعيين البحث
     setSearchQuery('');
     
-    // رسالة تأكيد (اختيارية)
     console.log('Order reset successfully');
-}, [handleBackToMainProducts, clearSelectedTable]);
+  }, [handleBackToMainProducts, clearSelectedTable]);
 
   // عرض حالة التحميل
   if (loading) {
@@ -534,16 +623,18 @@ const orderSummary: OrderSummaryType = useMemo(() => {
 
   return (
     <div className="pos-system">
-<Header
-  selectedOrderType={selectedOrderType}
-  onOrderTypeChange={handleOrderTypeChange}
-  onResetOrder={handleResetOrder}
-  onTableClick={handleTableClick}
-  tableDisplayName={getTableDisplayName()}
-  deliveryCompanies={deliveryCompanies}
-  selectedDeliveryCompany={selectedDeliveryCompany}
-  onDeliveryCompanySelect={setSelectedDeliveryCompany}
-/>
+      <Header
+        selectedOrderType={selectedOrderType}
+        onOrderTypeChange={handleOrderTypeChange}
+        onResetOrder={handleResetOrder}
+        onTableClick={handleTableClick}
+        tableDisplayName={getTableDisplayName()}
+        deliveryCompanies={deliveryCompanies}
+        selectedDeliveryCompany={selectedDeliveryCompany}
+        onDeliveryCompanySelect={setSelectedDeliveryCompany}
+        selectedCustomer={selectedCustomer}
+        selectedAddress={selectedAddress}
+      />
 
       <main className="main-content">
         <section className="products-section">
@@ -573,7 +664,7 @@ const orderSummary: OrderSummaryType = useMemo(() => {
             onWithoutClick={handleWithoutClick}
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
-            hasSelectedOrderItem={true} // ✅ دائماً true لإزالة الـ disabled
+            hasSelectedOrderItem={true}
           />
 
           <div className="product-grid">
@@ -627,16 +718,21 @@ const orderSummary: OrderSummaryType = useMemo(() => {
           customerName={customerName}
           onCustomerNameChange={setCustomerName}
           onRemoveOrderItem={removeOrderItem}
-          onRemoveSubItem={removeSubItem}
+          onRemoveSubItem={handleRemoveSubItem}
           selectedOrderItemId={selectedOrderItemId}
           onOrderItemSelect={handleOrderItemSelect}
           onOrderItemDoubleClick={handleOrderItemDoubleClick}
+          selectedCustomer={selectedCustomer}
+          selectedAddress={selectedAddress}
+          onCustomerSelect={handleCustomerSelect}
+          orderType={selectedOrderType}
+          onDeliveryChargeChange={handleDeliveryChargeChange}
         />
       </main>
 
       <PriceSelectionPopup
         product={selectedProduct}
-        quantity={parseInt(keypadValue) || 1}
+        quantity={getNumericValue()}
         isOpen={showPricePopup}
         onClose={() => {
           setShowPricePopup(false);
@@ -648,7 +744,7 @@ const orderSummary: OrderSummaryType = useMemo(() => {
       <ProductOptionsPopup
         product={selectedProductForOptions}
         selectedPrice={selectedPriceForOptions}
-        quantity={parseInt(keypadValue) || 1}
+        quantity={getNumericValue()}
         isOpen={showOptionsPopup}
         onClose={() => {
           setShowOptionsPopup(false);
@@ -670,12 +766,11 @@ const orderSummary: OrderSummaryType = useMemo(() => {
       />
 
       <TableSelectionPopup
-  isOpen={showTablePopup}
-  onClose={() => setShowTablePopup(false)}
-  onSelectTable={handleTableSelect}
-  tableSections={tableSections}
-/>
-
+        isOpen={showTablePopup}
+        onClose={() => setShowTablePopup(false)}
+        onSelectTable={handleTableSelect}
+        tableSections={tableSections}
+      />
     </div>
   );
 };

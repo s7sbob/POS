@@ -1,5 +1,6 @@
 // src/Pages/pos/newSales/components/Header.tsx
 import React, { useState, useRef, useEffect } from 'react';
+import { Customer, CustomerAddress } from 'src/utils/api/pagesApi/customersApi';
 import { DeliveryCompany } from '../../../../../utils/api/pagesApi/deliveryCompaniesApi';
 import '../../styles/Header.css';
 
@@ -9,9 +10,11 @@ interface HeaderProps {
   onResetOrder?: () => void;
   onTableClick?: () => void;
   tableDisplayName?: string;
-  deliveryCompanies?: DeliveryCompany[]; // ✅ تصحيح النوع
-  selectedDeliveryCompany?: DeliveryCompany | null; // ✅ تصحيح النوع
-  onDeliveryCompanySelect?: (company: DeliveryCompany) => void; // ✅ تصحيح النوع
+  deliveryCompanies?: DeliveryCompany[];
+  selectedDeliveryCompany?: DeliveryCompany | null;
+  onDeliveryCompanySelect?: (company: DeliveryCompany) => void;
+  selectedCustomer?: Customer | null;
+  selectedAddress?: CustomerAddress | null;
 }
 
 const Header: React.FC<HeaderProps> = ({ 
@@ -20,14 +23,15 @@ const Header: React.FC<HeaderProps> = ({
   onResetOrder,
   onTableClick,
   tableDisplayName = 'Table',
-  deliveryCompanies = [], // ✅ إضافة هذا
-  selectedDeliveryCompany, // ✅ إضافة هذا
-  onDeliveryCompanySelect // ✅ إضافة هذا
+  deliveryCompanies = [],
+  selectedDeliveryCompany,
+  onDeliveryCompanySelect,
+  selectedCustomer,
+  selectedAddress
 }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // نفس الـ orderTypes الموجودة
   const orderTypes = [
     { id: 1, name: 'Takeaway', displayName: 'Takeaway', icon: '/images/takeaway.png', color: '#28a745', description: 'عميل يأخذ الطلب' },
     { id: 2, name: 'Dine-in', displayName: 'Dine-in', icon: '/images/dine-in.png', color: '#007bff', description: 'تناول في المطعم' },
@@ -42,13 +46,41 @@ const Header: React.FC<HeaderProps> = ({
     setIsDropdownOpen(false);
   };
 
-  // ✅ تحويل الـ API data للـ format المطلوب
   const activeDeliveryCompanies = deliveryCompanies.filter(company => company.isActive);
 
   return (
     <header className="pos-header">
       <div className="header-content">
         <img src="/images/img_foodify_logo_2_78x166.png" alt="Foodify Logo" className="header-logo" />
+        
+        {/* Customer Info Section */}
+        {selectedCustomer && (
+          <div className="customer-info-section">
+            <div className="customer-info-card">
+              <div className="customer-basic-info">
+                <div className="customer-name">
+                  <span className="customer-icon">👤</span>
+                  <span>{selectedCustomer.name}</span>
+                  {selectedCustomer.isVIP && <span className="vip-badge">VIP</span>}
+                </div>
+                <div className="customer-phone">
+                  <span className="phone-icon">📞</span>
+                  <span>{selectedCustomer.phone1}</span>
+                </div>
+              </div>
+              
+              {selectedAddress && selectedAddress.addressLine && (
+                <div className="customer-address">
+                  <span className="address-icon">📍</span>
+                  <span className="address-text">
+                    {selectedAddress.addressLine}
+                    {selectedAddress.zoneName && ` - ${selectedAddress.zoneName}`}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
         
         <nav className="header-nav">
           <a href="#" className="nav-item active">
@@ -82,7 +114,6 @@ const Header: React.FC<HeaderProps> = ({
             
             {isDropdownOpen && (
               <div className="professional-dropdown">
-                {/* Order Types Section */}
                 <div className="dropdown-section">
                   <div className="section-header">
                     <h3 className="section-title">نوع الطلب</h3>
@@ -113,7 +144,6 @@ const Header: React.FC<HeaderProps> = ({
                   </div>
                 </div>
 
-                {/* ✅ استبدال الـ static data بـ API data */}
                 {activeDeliveryCompanies.length > 0 && (
                   <div className="dropdown-section">
                     <div className="section-header">

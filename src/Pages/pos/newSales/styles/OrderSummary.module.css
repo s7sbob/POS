@@ -1062,3 +1062,384 @@
     font-size: 12px;
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* إضافة هذه الأنماط لـ OrderSummary.module.css */
+
+.customerInputContainer {
+  position: relative;
+  margin-bottom: var(--spacing-lg);
+}
+
+.customerInput {
+  display: flex;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.customerField {
+  flex: 1;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: none;
+  font-size: clamp(10px, 1.2vw, 14px);
+  font-family: 'Cairo', sans-serif;
+  background: transparent;
+}
+
+.customerField:focus {
+  outline: none;
+}
+
+.customerButton {
+  width: clamp(30px, 4vw, 45px);
+  background: var(--primary-blue);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease;
+}
+
+.customerButton:hover {
+  background: #025bb5;
+}
+
+.customerButton img {
+  width: clamp(12px, 1.4vw, 18px);
+  height: clamp(12px, 1.4vw, 18px);
+}
+
+/* Customer Dropdown Styles */
+.customerDropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid var(--border-color);
+  border-top: none;
+  border-radius: 0 0 6px 6px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.dropdownHeader {
+  padding: 8px 12px;
+  background: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+  font-size: 12px;
+  font-weight: 600;
+  color: #495057;
+}
+
+.customerOption {
+  padding: 12px;
+  cursor: pointer;
+  border-bottom: 1px solid #f1f3f4;
+  transition: background 0.2s ease;
+}
+
+.customerOption:hover {
+  background: #f8f9fa;
+}
+
+.customerOption:last-child {
+  border-bottom: none;
+}
+
+.customerInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.customerName {
+  font-weight: 600;
+  font-size: 14px;
+  color: #333;
+}
+
+.customerPhone {
+  font-size: 12px;
+  color: #666;
+}
+
+.customerDetails {
+  font-size: 11px;
+  color: #999;
+}
+
+.searchingMessage {
+  padding: 16px;
+  text-align: center;
+  color: #666;
+  font-size: 12px;
+}
+
+.noResults {
+  padding: 16px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.noResults span {
+  color: #666;
+  font-size: 12px;
+}
+
+.addNewCustomerBtn {
+  background: var(--primary-blue);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background 0.2s ease;
+}
+
+.addNewCustomerBtn:hover {
+  background: #025bb5;
+}
+
+/* Address Selection Dropdown */
+.addressSelectionContainer {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid var(--border-color);
+  border-top: none;
+  border-radius: 0 0 6px 6px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  z-index: 1001;
+  max-height: 250px;
+  overflow-y: auto;
+}
+
+.addressHeader {
+  padding: 8px 12px;
+  background: #e3f2fd;
+  border-bottom: 1px solid #bbdefb;
+  font-size: 12px;
+  font-weight: 600;
+  color: #1976d2;
+}
+
+.addressOption {
+  padding: 12px;
+  cursor: pointer;
+  border-bottom: 1px solid #f1f3f4;
+  transition: background 0.2s ease;
+}
+
+.addressOption:hover {
+  background: #f8f9fa;
+}
+
+.addressOption:last-child {
+  border-bottom: none;
+}
+
+.addressInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.addressLine {
+  font-weight: 600;
+  font-size: 13px;
+  color: #333;
+}
+
+.addressDetails {
+  font-size: 11px;
+  color: #666;
+}
+
+.addressLandmark {
+  font-size: 10px;
+  color: #999;
+  font-style: italic;
+}
+
+/* Selected Customer Display */
+.selectedCustomerInfo {
+  background: #e3f2fd;
+  border: 1px solid #bbdefb;
+  border-radius: 4px;
+  padding: 8px 12px;
+  margin-bottom: var(--spacing-md);
+}
+
+.customerDisplayName {
+  font-weight: 600;
+  font-size: 13px;
+  color: #1976d2;
+  margin-bottom: 4px;
+}
+
+.selectedAddressInfo {
+  font-size: 11px;
+  color: #1976d2;
+  opacity: 0.8;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .customerDropdown,
+  .addressSelectionContainer {
+    max-height: 200px;
+  }
+  
+  .customerOption,
+  .addressOption {
+    padding: 8px;
+  }
+  
+  .customerName,
+  .addressLine {
+    font-size: 12px;
+  }
+  
+  .customerPhone,
+  .addressDetails {
+    font-size: 10px;
+  }
+}
+
+
+
+
+
+
+.selectedOption {
+  background-color: #007bff !important;
+  color: white !important;
+}
+
+.selectedOption .customerName,
+.selectedOption .customerPhone,
+.selectedOption .customerDetails {
+  color: white !important;
+}
+
+.customerDropdown {
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.customerOption {
+  padding: 12px;
+  cursor: pointer;
+  border-bottom: 1px solid #eee;
+  transition: background-color 0.2s;
+}
+
+.customerOption:hover {
+  background-color: #f5f5f5;
+}
+
+.customerOption:last-child {
+  border-bottom: none;
+}
+
+
+
+/* أنماط البحث المحسن */
+.customerField:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.customerButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.selectedOption {
+  background-color: #007bff !important;
+  color: white;
+}
+
+.selectedOption .customerName,
+.selectedOption .customerPhone,
+.selectedOption .customerDetails {
+  color: white;
+}
+
+.addNewCustomerBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.searchingMessage {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  color: #666;
+  font-size: 14px;
+  justify-content: center;
+}
+
+.loadingSpinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid #007bff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+
+
+
+
+/* إضافة styles للحالة الخاصة بـ Takeaway */
+.takeawayButtons {
+  display: flex;
+  justify-content: center;
+}
+
+.takeawayButtons .actionButton.pay.fullWidth {
+  flex: 1;
+  min-width: 100%;
+  max-width: 100%;
+}
+
+/* للتأكد من أن الزر يأخذ العرض الكامل */
+.actionButton.fullWidth {
+  width: 100% !important;
+  flex-grow: 1;
+}

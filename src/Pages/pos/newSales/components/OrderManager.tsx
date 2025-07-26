@@ -30,7 +30,7 @@ export const useOrderManager = ({
     price: PosPrice, 
     selectedOptions: SelectedOption[]
   ) => {
-    const quantity = parseInt(keypadValue) || 1;
+  const quantity = parseFloat(keypadValue) || 1; // استخدام parseFloat بدلاً من parseInt
     const basePrice = posService.calculateTotalPrice(price.price, selectedOptions, quantity);
     
     // إذا كان Extra أو Without mode مع منتج محدد

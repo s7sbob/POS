@@ -67,7 +67,8 @@ const CustomerForm: React.FC<Props> = ({
         const zonesData = await deliveryZonesApi.getAll();
         setZones(zonesData);
       } catch (error) {
-        }
+        console.error('Error loading zones:', error);
+      }
     };
     
     if (open) {
@@ -75,25 +76,50 @@ const CustomerForm: React.FC<Props> = ({
     }
   }, [open]);
 
-  React.useEffect(() => {
-    if (open) {
-      if (mode === 'add') {
-        reset(defaults);
-      } else if (initialValues) {
-        reset({
-          name: initialValues.name,
-          phone1: initialValues.phone1,
-          phone2: initialValues.phone2 || '',
-          phone3: initialValues.phone3 || '',
-          phone4: initialValues.phone4 || '',
-          isVIP: initialValues.isVIP,
-          isBlocked: initialValues.isBlocked,
-          isActive: initialValues.isActive,
-          addresses: initialValues.addresses || []
-        });
-      }
+  // تحديث النموذج عند فتحه أو تغيير القيم الأولية
+React.useEffect(() => {
+  if (open) {
+    if (mode === 'add') {
+      const formValues = initialValues ? {
+        name: initialValues.name || '',
+        phone1: initialValues.phone1 || '',
+        phone2: initialValues.phone2 || '',
+        phone3: initialValues.phone3 || '',
+        phone4: initialValues.phone4 || '',
+        isVIP: initialValues.isVIP || false,
+        isBlocked: initialValues.isBlocked || false,
+        isActive: initialValues.isActive !== undefined ? initialValues.isActive : true,
+        addresses: initialValues.addresses || []
+      } : {
+        name: '',
+        phone1: '',
+        phone2: '',
+        phone3: '',
+        phone4: '',
+        isVIP: false,
+        isBlocked: false,
+        isActive: true,
+        addresses: []
+      };
+      
+      console.log('Resetting form with values:', formValues);
+      reset(formValues);
+    } else if (mode === 'edit' && initialValues) {
+      reset({
+        name: initialValues.name,
+        phone1: initialValues.phone1,
+        phone2: initialValues.phone2 || '',
+        phone3: initialValues.phone3 || '',
+        phone4: initialValues.phone4 || '',
+        isVIP: initialValues.isVIP,
+        isBlocked: initialValues.isBlocked,
+        isActive: initialValues.isActive,
+        addresses: initialValues.addresses || []
+      });
     }
-  }, [open, mode, initialValues, reset]);
+  }
+}, [open, mode, initialValues, reset]); // أزلت defaults من هنا
+
 
   React.useEffect(() => {
     if (isSubmitSuccessful && mode === 'add') {
@@ -102,7 +128,7 @@ const CustomerForm: React.FC<Props> = ({
       }, 100);
       return () => clearTimeout(timer);
     }
-  }, [isSubmitSuccessful, mode, reset]);
+  }, [isSubmitSuccessful, mode, reset, defaults]);
 
   const addAddress = () => {
     appendAddress({
@@ -172,7 +198,8 @@ const CustomerForm: React.FC<Props> = ({
         }, 100);
       }
     } catch (error) {
-      } finally {
+      console.error('Submit error:', error);
+    } finally {
       setIsSubmitting(false);
     }
   };

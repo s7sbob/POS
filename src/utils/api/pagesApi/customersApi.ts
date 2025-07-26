@@ -180,3 +180,18 @@ export const deleteCustomer = async (id: string): Promise<void> => {
     throw error;
   }
 };
+
+
+
+
+export const searchByPhone = async (phone: string): Promise<Customer[]> => {
+  try {
+    const response = await api.get(`/SearchCustomersByPhone?phone=${phone}`);
+    if (response.data?.isvalid && response.data?.data) {
+      return response.data.data.map(toCustomer);
+    }
+    return [];
+  } catch (error) {
+    throw error;
+  }
+};
