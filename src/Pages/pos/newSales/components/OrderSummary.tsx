@@ -7,6 +7,7 @@ import * as deliveryZonesApi from 'src/utils/api/pagesApi/deliveryZonesApi';
 import CustomerDetailsPopup from './CustomerDetailsPopup';
 import CustomerForm from '../../customers/components/CustomerForm';
 import styles from '../styles/OrderSummary.module.css';
+import PaymentPopup from './PaymentPopup';
 
 interface OrderSummaryProps {
   orderSummary: OrderSummaryType;
@@ -22,6 +23,7 @@ interface OrderSummaryProps {
   onCustomerSelect: (customer: Customer, address: CustomerAddress) => void;
   orderType: string;
   onDeliveryChargeChange: (charge: number) => void;
+  readOnly: boolean;
 }
 
 const OrderSummary: React.FC<OrderSummaryProps> = ({
@@ -37,7 +39,9 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
   selectedAddress,
   onCustomerSelect,
   orderType,
-  onDeliveryChargeChange
+  onDeliveryChargeChange,
+  readOnly = false // إضافة جديدة
+
 }) => {
   const [selectedSubItemId, setSelectedSubItemId] = useState<string | null>(null);
   const [phoneInput, setPhoneInput] = useState('');
@@ -59,6 +63,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
   const lastSearchQuery = useRef<string>('');
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+const [showPaymentPopup, setShowPaymentPopup] = useState(false);
 
   // تحميل المناطق عند بدء التشغيل
   useEffect(() => {
@@ -725,25 +730,27 @@ const shouldShowPayOnly = orderType === 'Takeaway';
           <span>Total</span>
           <span>{finalTotal.toFixed(2)} <small>EGP</small></span>
         </div>
-
- <div className={`${styles.actionButtons} ${shouldShowPayOnly ? styles.takeawayButtons : ''}`}>
+{!readOnly && (
+  <div className={`${styles.actionButtons} ${shouldShowPayOnly ? styles.takeawayButtons : ''}`}>
         {shouldShowAllButtons && (
           <>
             <button className={`${styles.actionButton} ${styles.send}`}>
               <img src="/images/img_tabler_send.svg" alt="Send" />
               <span>Send</span>
             </button>
-            <button className={`${styles.actionButton} ${styles.print}`}>
+            <button onClick={() => setShowPaymentPopup(true)} className={`${styles.actionButton} ${styles.print}`}>
               <img src="/images/img_printer.svg" alt="Print" />
               <span>Print</span>
             </button>
           </>
         )}
-        <button className={`${styles.actionButton} ${styles.pay} ${shouldShowPayOnly ? styles.fullWidth : ''}`}>
+        <button onClick={() => setShowPaymentPopup(true)} className={`${styles.actionButton} ${styles.pay} ${shouldShowPayOnly ? styles.fullWidth : ''}`}>
           <img src="/images/img_payment_02.svg" alt="Pay" />
           <span>Pay</span>
         </button>
       </div>
+      )}
+
     </div>
 
       {/* Customer Details Popup */}
@@ -753,6 +760,31 @@ const shouldShowPayOnly = orderType === 'Takeaway';
         onClose={handleCustomerDetailsClose}
         onSelectCustomer={handleCustomerDetailsSelect}
       />
+
+
+<PaymentPopup
+  isOpen={showPaymentPopup}
+  onClose={() => setShowPaymentPopup(false)}
+  orderSummary={orderSummary}
+  customerName={customerName}
+  onCustomerNameChange={onCustomerNameChange}
+  onRemoveOrderItem={onRemoveOrderItem}
+  onRemoveSubItem={onRemoveSubItem}
+  selectedOrderItemId={selectedOrderItemId}
+  onOrderItemSelect={onOrderItemSelect}
+  onOrderItemDoubleClick={onOrderItemDoubleClick}
+  selectedCustomer={selectedCustomer}
+  selectedAddress={selectedAddress}
+  onCustomerSelect={onCustomerSelect}
+  orderType={orderType}
+  onDeliveryChargeChange={onDeliveryChargeChange}
+  onPaymentComplete={(payments) => {
+    console.log('مدفوعات:', payments);
+    setShowPaymentPopup(false);
+    // هنا يمكنك إضافة منطق حفظ الدفع
+  }}
+/>
+
 
       {/* Customer Form Popup */}
       {showCustomerForm && (

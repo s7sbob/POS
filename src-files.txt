@@ -927,6 +927,7 @@ import * as deliveryZonesApi from 'src/utils/api/pagesApi/deliveryZonesApi';
 import CustomerDetailsPopup from './CustomerDetailsPopup';
 import CustomerForm from '../../customers/components/CustomerForm';
 import styles from '../styles/OrderSummary.module.css';
+import PaymentPopup from './PaymentPopup';
 
 interface OrderSummaryProps {
   orderSummary: OrderSummaryType;
@@ -942,6 +943,7 @@ interface OrderSummaryProps {
   onCustomerSelect: (customer: Customer, address: CustomerAddress) => void;
   orderType: string;
   onDeliveryChargeChange: (charge: number) => void;
+  readOnly: boolean;
 }
 
 const OrderSummary: React.FC<OrderSummaryProps> = ({
@@ -957,7 +959,9 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
   selectedAddress,
   onCustomerSelect,
   orderType,
-  onDeliveryChargeChange
+  onDeliveryChargeChange,
+  readOnly = false // إضافة جديدة
+
 }) => {
   const [selectedSubItemId, setSelectedSubItemId] = useState<string | null>(null);
   const [phoneInput, setPhoneInput] = useState('');
@@ -979,6 +983,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
   const lastSearchQuery = useRef<string>('');
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+const [showPaymentPopup, setShowPaymentPopup] = useState(false);
 
   // تحميل المناطق عند بدء التشغيل
   useEffect(() => {
@@ -1196,7 +1201,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
     setSelectedResultIndex(-1);
     setInputHasFocus(false);
   }, []);
-  
+
 const handleKeyDown = useCallback(async (e: React.KeyboardEvent<HTMLInputElement>) => {
   if (showDropdown && searchResults.length > 0) {
     switch (e.key) {
@@ -1508,6 +1513,10 @@ const handleKeyDown = useCallback(async (e: React.KeyboardEvent<HTMLInputElement
     );
   };
 
+
+  const shouldShowAllButtons = orderType !== 'Takeaway';
+const shouldShowPayOnly = orderType === 'Takeaway';
+
   return (
     <aside className={styles.orderSummary}>
       <div className={styles.orderHeader}>
@@ -1641,22 +1650,28 @@ const handleKeyDown = useCallback(async (e: React.KeyboardEvent<HTMLInputElement
           <span>Total</span>
           <span>{finalTotal.toFixed(2)} <small>EGP</small></span>
         </div>
-
-        <div className={styles.actionButtons}>
-          <button className={`${styles.actionButton} ${styles.send}`}>
-            <img src="/images/img_tabler_send.svg" alt="Send" />
-            <span>Send</span>
-          </button>
-          <button className={`${styles.actionButton} ${styles.print}`}>
-            <img src="/images/img_printer.svg" alt="Print" />
-            <span>Print</span>
-          </button>
-          <button className={`${styles.actionButton} ${styles.pay}`}>
-            <img src="/images/img_payment_02.svg" alt="Pay" />
-            <span>Pay</span>
-          </button>
-        </div>
+{!readOnly && (
+  <div className={`${styles.actionButtons} ${shouldShowPayOnly ? styles.takeawayButtons : ''}`}>
+        {shouldShowAllButtons && (
+          <>
+            <button className={`${styles.actionButton} ${styles.send}`}>
+              <img src="/images/img_tabler_send.svg" alt="Send" />
+              <span>Send</span>
+            </button>
+            <button onClick={() => setShowPaymentPopup(true)} className={`${styles.actionButton} ${styles.print}`}>
+              <img src="/images/img_printer.svg" alt="Print" />
+              <span>Print</span>
+            </button>
+          </>
+        )}
+        <button onClick={() => setShowPaymentPopup(true)} className={`${styles.actionButton} ${styles.pay} ${shouldShowPayOnly ? styles.fullWidth : ''}`}>
+          <img src="/images/img_payment_02.svg" alt="Pay" />
+          <span>Pay</span>
+        </button>
       </div>
+      )}
+
+    </div>
 
       {/* Customer Details Popup */}
       <CustomerDetailsPopup
@@ -1665,6 +1680,31 @@ const handleKeyDown = useCallback(async (e: React.KeyboardEvent<HTMLInputElement
         onClose={handleCustomerDetailsClose}
         onSelectCustomer={handleCustomerDetailsSelect}
       />
+
+
+<PaymentPopup
+  isOpen={showPaymentPopup}
+  onClose={() => setShowPaymentPopup(false)}
+  orderSummary={orderSummary}
+  customerName={customerName}
+  onCustomerNameChange={onCustomerNameChange}
+  onRemoveOrderItem={onRemoveOrderItem}
+  onRemoveSubItem={onRemoveSubItem}
+  selectedOrderItemId={selectedOrderItemId}
+  onOrderItemSelect={onOrderItemSelect}
+  onOrderItemDoubleClick={onOrderItemDoubleClick}
+  selectedCustomer={selectedCustomer}
+  selectedAddress={selectedAddress}
+  onCustomerSelect={onCustomerSelect}
+  orderType={orderType}
+  onDeliveryChargeChange={onDeliveryChargeChange}
+  onPaymentComplete={(payments) => {
+    console.log('مدفوعات:', payments);
+    setShowPaymentPopup(false);
+    // هنا يمكنك إضافة منطق حفظ الدفع
+  }}
+/>
+
 
       {/* Customer Form Popup */}
       {showCustomerForm && (
@@ -1693,6 +1733,677 @@ const handleKeyDown = useCallback(async (e: React.KeyboardEvent<HTMLInputElement
 };
 
 export default OrderSummary;
+
+===== src/Pages/pos/newSales/components/paymentPopup components/PaymentCenter.tsx =====
+import React from 'react';
+import styles from './styles/PaymentCenter.module.css';
+
+interface PaymentCenterProps {
+  totalAmount: number;
+  paidAmount: string;
+  remainingAmount: number;
+  onAmountChange: (amount: string) => void;
+  onQuickAmountSelect: (amount: number) => void;
+}
+
+const PaymentCenter: React.FC<PaymentCenterProps> = ({
+  totalAmount,
+  paidAmount,
+  remainingAmount,
+  onAmountChange,
+  onQuickAmountSelect
+}) => {
+  const handleKeypadClick = (value: string) => {
+    if (value === 'c') {
+      onAmountChange('0');
+    } else if (value === 'erase') {
+      const newValue = paidAmount.slice(0, -1);
+      onAmountChange(newValue || '0');
+    } else if (value === '.') {
+      if (!paidAmount.includes('.')) {
+        onAmountChange(paidAmount === '0' ? '0.' : paidAmount + '.');
+      }
+    } else {
+      const newValue = paidAmount === '0' ? value : paidAmount + value;
+      onAmountChange(newValue);
+    }
+  };
+
+  return (
+    <div className={styles.wrapper}>
+      <div className={styles.headerRow}>
+        <h2 className={styles.balanceTitle}>
+          الرصيد المستحق: {totalAmount.toFixed(2)}
+        </h2>
+      </div>
+
+      <div className={styles.fieldsRow}>
+
+
+        <div className={styles.fieldBlock}>
+          <label className={styles.label}>المبلغ المتبقي</label>
+          <div className={styles.remainingBox}>{remainingAmount.toFixed(2)}</div>
+        </div>
+
+                <div className={styles.fieldBlock}>
+          <label className={styles.label}>المدفوع نقدا</label>
+          <input 
+            type="text" 
+            readOnly 
+            value={paidAmount} 
+            className={styles.input} 
+          />
+        </div>
+      </div>
+
+      <div className={styles.quickButtons}>
+        {[5, 10, 15, 20].map(val => (
+          <button key={val} className={styles.quickBtn} onClick={() => onQuickAmountSelect(val)}>
+            {val} EGP
+          </button>
+        ))}
+      </div>
+
+      <div className={styles.keypad}>
+        {[
+          ['1','2','3','50'],
+          ['4','5','6','100'],
+          ['7','8','9','200'],
+          ['c','0','.','erase']
+        ].map((row, rowIndex) => (
+          <div key={rowIndex} className={styles.keypadRow}>
+            {row.map(key => (
+              <button
+                key={key}
+                className={`${styles.keypadBtn} ${['50','100','200'].includes(key) ? styles.gray : ''}`}
+                onClick={() => key === 'erase' ? handleKeypadClick('erase') : handleKeypadClick(key)}
+              >
+                {key === 'erase' ? '×' : key === 'c' ? 'C' : key + (['50','100','200'].includes(key) ? ' EGP' : '')}
+              </button>
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export default PaymentCenter;
+===== src/Pages/pos/newSales/components/paymentPopup components/PaymentLeft.tsx =====
+import React from 'react';
+import OrderSummary from '../OrderSummary';
+import styles from './styles/PaymentLeft.module.css';
+
+interface PaymentLeftProps {
+  orderSummary: any;
+  customerName: string;
+  onCustomerNameChange: (name: string) => void;
+  onRemoveOrderItem: (itemId: string) => void;
+  onRemoveSubItem: (orderItemId: string, subItemId: string) => void;
+  selectedOrderItemId: string | null;
+  onOrderItemSelect: (itemId: string) => void;
+  onOrderItemDoubleClick?: (item: any) => void;
+  selectedCustomer: any;
+  selectedAddress: any;
+  onCustomerSelect: (customer: any, address: any) => void;
+  orderType: string;
+  onDeliveryChargeChange: (charge: number) => void;
+}
+
+const PaymentLeft: React.FC<PaymentLeftProps> = (props) => {
+  return (
+    <div className={styles.container}>
+      <div className={styles.header}>
+        <h3 className={styles.title}>ملخص الطلب</h3>
+      </div>
+      <div className={styles.orderSummaryWrapper}>
+        <OrderSummary 
+          {...props}
+          readOnly={true}
+        />
+      </div>
+    </div>
+  );
+};
+
+export default PaymentLeft;
+
+===== src/Pages/pos/newSales/components/paymentPopup components/PaymentRight.tsx =====
+// ✅ Final PaymentRight.tsx matching Figma design with Finish button and 2-column layout
+import React, { useState } from 'react';
+import styles from './styles/PaymentRight.module.css';
+
+interface PaymentMethod {
+  id: string;
+  name: string;
+  amount: number;
+}
+
+interface PaymentRightProps {
+  availablePaymentMethods: string[];
+  selectedPayments: PaymentMethod[];
+  onPaymentMethodAdd: (method: string, amount: number) => void;
+  onPaymentMethodRemove: (id: string) => void;
+  onFinishPayment: () => void;
+  currentAmount: number;
+}
+
+const PaymentRight: React.FC<PaymentRightProps> = ({
+  availablePaymentMethods = ['كاش', 'بطاقة ائتمان'],
+  selectedPayments,
+  onPaymentMethodAdd,
+  onPaymentMethodRemove,
+  onFinishPayment,
+  currentAmount
+}) => {
+  const [selectedMethod, setSelectedMethod] = useState<string>('كاش');
+
+  const handleSelect = (method: string) => {
+    setSelectedMethod(method);
+    onPaymentMethodAdd(method, currentAmount);
+  };
+
+  return (
+    <div className={styles.container}>
+            <button className={styles.finishBtn} onClick={onFinishPayment}>
+        إنهاء
+      </button>
+      <div className={styles.methodList}>
+        {availablePaymentMethods.map((method) => (
+          <button
+            key={method}
+            className={`${styles.methodBtn} ${selectedMethod === method ? styles.active : ''}`}
+            onClick={() => handleSelect(method)}
+          >
+            <span className={styles.methodAmount}>{currentAmount.toFixed(2)}</span>
+            <span className={styles.methodType}>{method}</span>
+            {selectedMethod === method && <span className={styles.check}>✓</span>}
+          </button>
+        ))}
+      </div>
+
+
+    </div>
+  );
+};
+
+export default PaymentRight;
+===== src/Pages/pos/newSales/components/paymentPopup components/styles/PaymentCenter.module.css =====
+/* ✅ Updated PaymentCenter.module.css */
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  height: 100%;
+  width: 100%;
+  padding: 1rem;
+  box-sizing: border-box;
+  font-family: "Cairo", sans-serif;
+}
+
+.headerRow {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.balanceTitle {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #000;
+  direction: rtl;
+}
+
+.fieldsRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 2rem;
+}
+
+.fieldBlock {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.label {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #333;
+  direction: rtl;
+  text-align: right;
+}
+
+.input {
+  padding: 0.75rem;
+  font-size: 1.5rem;
+  text-align: center;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  background: #fff;
+  font-weight: 600;
+}
+
+.remainingBox {
+  padding: 0.75rem;
+  font-size: 1.5rem;
+  text-align: center;
+  border-radius: 10px;
+  background-color: #0373ed;
+  color: white;
+  font-weight: 600;
+}
+
+.quickButtons {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.quickBtn {
+  flex: 1;
+  background-color: #d9d9d9;
+  border: none;
+  border-radius: 10px;
+  padding: 0.75rem;
+  font-size: 1.3rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.quickBtn:hover {
+  background-color: #c8c8c8;
+}
+
+.keypad {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.keypadRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.keypadBtn {
+  flex: 1;
+  padding: 1rem;
+  font-size: 1.3rem;
+  font-weight: 700;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.keypadBtn.gray {
+  background-color: #d9d9d9;
+}
+
+.keypadBtn:hover {
+  background-color: #f0f0f0;
+}
+
+.keypadBtn:active {
+  transform: scale(0.96);
+}
+
+@media (max-width: 768px) {
+  .balanceTitle {
+    font-size: 1.4rem;
+  }
+  .input, .remainingBox {
+    font-size: 1.2rem;
+    padding: 0.5rem;
+  }
+  .quickBtn, .keypadBtn {
+    font-size: 1rem;
+    padding: 0.5rem;
+  }
+}
+===== src/Pages/pos/newSales/components/paymentPopup components/styles/PaymentLeft.module.css =====
+.container {
+  width: 100%;
+  height: 100%;
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #e9ecef;
+  display: flex;
+  flex-direction: column;
+}
+
+/* قاعدة عامة للخطوط */
+:where(.container,
+       .container *) { 
+  font-size: var(--fs); 
+}
+
+.header {
+  background: #0373ed;
+  color: white;
+  padding: clamp(12px, 2vw, 20px);
+  text-align: center;
+  border-bottom: 2px solid #e9ecef;
+}
+
+.title {
+  margin: 0;
+  font-family: "Cairo-Bold", Helvetica;
+  font-weight: 700;
+  font-size: calc(var(--fs) * 1.4);
+  direction: rtl;
+}
+
+.orderSummaryWrapper {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  padding: clamp(8px, 1.5vw, 16px);
+}
+
+.orderSummaryWrapper::-webkit-scrollbar {
+  width: clamp(4px, 0.8vw, 8px);
+}
+
+.orderSummaryWrapper::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.orderSummaryWrapper::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 10px;
+}
+
+.orderSummaryWrapper::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Responsive للشاشات المختلفة */
+@media (max-width: 1600px) {
+  .orderSummaryWrapper {
+    padding: clamp(6px, 1.2vw, 14px);
+  }
+}
+
+@media (max-width: 1024px) {
+  .container {
+    border-radius: 8px;
+  }
+  
+  .orderSummaryWrapper {
+    padding: clamp(6px, 1vw, 12px);
+  }
+}
+
+===== src/Pages/pos/newSales/components/paymentPopup components/styles/PaymentRight.module.css =====
+/* ✅ Final PaymentRight.module.css matching Figma with 2-column layout and Finish button */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  height: 100%;
+  width: 100%;
+  padding: 1rem;
+  font-family: "Cairo", sans-serif;
+  box-sizing: border-box;
+}
+
+.methodList {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.methodBtn {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #ffffff;
+  border: 1px solid #ccc;
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  position: relative;
+}
+
+.methodBtn:hover {
+  background-color: #f1f1f1;
+}
+
+.active {
+  border: 2px solid #28a745;
+  background-color: #eafaf1;
+}
+
+.methodAmount {
+  color: #000;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.methodType {
+  color: #000;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.check {
+  color: #28a745;
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.finishBtn {
+  background-color: #007bff;
+  color: white;
+  font-weight: 700;
+  font-size: 1.2rem;
+  border: none;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  width: 100%;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.finishBtn:hover {
+  background-color: #0069d9;
+}
+===== src/Pages/pos/newSales/components/PaymentPopup.tsx =====
+import React, { useState, useRef, useEffect } from 'react';
+import styles from '../styles/PaymentPopup.module.css';
+import PaymentLeft from './paymentPopup components/PaymentLeft';
+import PaymentCenter from './paymentPopup components/PaymentCenter';
+import PaymentRight from './paymentPopup components/PaymentRight';
+
+interface PaymentMethod {
+  id: string;
+  name: string;
+  amount: number;
+}
+
+interface PaymentPopupProps {
+  isOpen: boolean;
+  onClose: () => void;
+  orderSummary: any;
+  customerName: string;
+  onCustomerNameChange: (name: string) => void;
+  onRemoveOrderItem: (itemId: string) => void;
+  onRemoveSubItem: (orderItemId: string, subItemId: string) => void;
+  selectedOrderItemId: string | null;
+  onOrderItemSelect: (itemId: string) => void;
+  onOrderItemDoubleClick?: (item: any) => void;
+  selectedCustomer: any;
+  selectedAddress: any;
+  onCustomerSelect: (customer: any, address: any) => void;
+  orderType: string;
+  onDeliveryChargeChange: (charge: number) => void;
+  onPaymentComplete: (payments: PaymentMethod[]) => void;
+}
+
+const PaymentPopup: React.FC<PaymentPopupProps> = ({
+  isOpen,
+  onClose,
+  orderSummary,
+  customerName,
+  onCustomerNameChange,
+  onRemoveOrderItem,
+  onRemoveSubItem,
+  selectedOrderItemId,
+  onOrderItemSelect,
+  onOrderItemDoubleClick,
+  selectedCustomer,
+  selectedAddress,
+  onCustomerSelect,
+  orderType,
+  onDeliveryChargeChange,
+  onPaymentComplete
+}) => {
+  // States
+  const [paidAmount, setPaidAmount] = useState('200.00');
+  const [selectedPayments, setSelectedPayments] = useState<PaymentMethod[]>([]);
+  
+  const overlayRef = useRef<HTMLDivElement>(null);
+  
+  // Calculations
+  const totalAmount = orderSummary?.total || 200;
+  const remainingAmount = totalAmount - parseFloat(paidAmount || '0');
+  const currentInputAmount = parseFloat(paidAmount || '0');
+
+  // إغلاق عند الضغط خارج النافذة
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (overlayRef.current && event.target === overlayRef.current) {
+        onClose();
+      }
+    };
+    if (isOpen) document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isOpen, onClose]);
+
+  // إغلاق بـ ESC
+  useEffect(() => {
+    const handleEsc = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+    };
+    if (isOpen) document.addEventListener('keydown', handleEsc);
+    return () => document.removeEventListener('keydown', handleEsc);
+  }, [isOpen, onClose]);
+
+  // Handlers for center section
+  const handleAmountChange = (amount: string) => {
+    setPaidAmount(amount);
+  };
+
+  const handleQuickAmountSelect = (amount: number) => {
+    setPaidAmount(amount.toFixed(2));
+  };
+
+  // Handlers for right section
+  const handlePaymentMethodAdd = (method: string, amount: number) => {
+    const newPayment: PaymentMethod = {
+      id: Date.now().toString(),
+      name: method,
+      amount: amount
+    };
+    setSelectedPayments(prev => [...prev, newPayment]);
+  };
+
+  const handlePaymentMethodRemove = (id: string) => {
+    setSelectedPayments(prev => prev.filter(payment => payment.id !== id));
+  };
+
+  const handleFinishPayment = () => {
+    if (selectedPayments.length > 0) {
+      onPaymentComplete(selectedPayments);
+      onClose();
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className={styles.overlay} ref={overlayRef}>
+      <div className={styles.popup}>
+        
+        {/* Header مع اللوجو وزر الإغلاق */}
+        <div className={styles.header}>
+          <div className={styles.logo}>
+            <img src="/images/logo.png" alt="Foodify" />
+          </div>
+          <h2 className={styles.title}>تأكيد الدفع</h2>
+          <button className={styles.closeBtn} onClick={onClose}>
+            ×
+          </button>
+        </div>
+
+        {/* المحتوى الرئيسي - 3 أجزاء متساوية */}
+        <div className={styles.content}>
+          
+          {/* الجانب الأيسر - OrderSummary */}
+          <div className={styles.leftSection}>
+            <PaymentLeft
+              orderSummary={orderSummary}
+              customerName={customerName}
+              onCustomerNameChange={onCustomerNameChange}
+              onRemoveOrderItem={onRemoveOrderItem}
+              onRemoveSubItem={onRemoveSubItem}
+              selectedOrderItemId={selectedOrderItemId}
+              onOrderItemSelect={onOrderItemSelect}
+              onOrderItemDoubleClick={onOrderItemDoubleClick}
+              selectedCustomer={selectedCustomer}
+              selectedAddress={selectedAddress}
+              onCustomerSelect={onCustomerSelect}
+              orderType={orderType}
+              onDeliveryChargeChange={onDeliveryChargeChange}
+            />
+          </div>
+
+          {/* الوسط - المبالغ والكيبورد */}
+          <div className={styles.centerSection}>
+            <PaymentCenter
+              totalAmount={totalAmount}
+              paidAmount={paidAmount}
+              remainingAmount={remainingAmount}
+              onAmountChange={handleAmountChange}
+              onQuickAmountSelect={handleQuickAmountSelect}
+            />
+          </div>
+
+          {/* الجانب الأيمن - طرق الدفع */}
+          <div className={styles.rightSection}>
+            <PaymentRight
+              availablePaymentMethods={['كاش', 'بطاقة ائتمان', 'فيزا', 'والت', 'خليط']}
+              selectedPayments={selectedPayments}
+              onPaymentMethodAdd={handlePaymentMethodAdd}
+              onPaymentMethodRemove={handlePaymentMethodRemove}
+              onFinishPayment={handleFinishPayment}
+              currentAmount={currentInputAmount}
+            />
+          </div>
+
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default PaymentPopup;
 
 ===== src/Pages/pos/newSales/components/PriceSelectionPopup.tsx =====
 // src/Pages/pos/newSales/components/PriceSelectionPopup.tsx
@@ -3705,6 +4416,8 @@ const PosSystem: React.FC = () => {
         onSelectTable={handleTableSelect}
         tableSections={tableSections}
       />
+
+      
     </div>
   );
 };
@@ -6737,6 +7450,319 @@ export default react;
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
+
+
+
+
+
+/* إضافة styles للحالة الخاصة بـ Takeaway */
+.takeawayButtons {
+  display: flex;
+  justify-content: center;
+}
+
+.takeawayButtons .actionButton.pay.fullWidth {
+  flex: 1;
+  min-width: 100%;
+  max-width: 100%;
+}
+
+/* للتأكد من أن الزر يأخذ العرض الكامل */
+.actionButton.fullWidth {
+  width: 100% !important;
+  flex-grow: 1;
+}
+
+===== src/Pages/pos/newSales/styles/PaymentPopup.module.css =====
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.popup {
+  background: #f5f5f5;
+  width: clamp(90vw, 95vw, 1800px);
+  height: clamp(85vh, 90vh, 1200px);
+  border-radius: clamp(8px, 1.5vw, 16px);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+/* Header */
+.header {
+  background: white;
+  height: clamp(60px, 10vh, 80px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 clamp(20px, 4vw, 40px);
+  border-bottom: 2px solid #e9ecef;
+  position: relative;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+}
+
+.logo img {
+  height: clamp(40px, 8vh, 60px);
+  width: auto;
+}
+
+.title {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: "Cairo-Bold", Helvetica;
+  font-weight: 700;
+  color: #333;
+  font-size: clamp(18px, 3vw, 24px);
+  margin: 0;
+  direction: rtl;
+}
+
+.closeBtn {
+  background: #ff6b6b;
+  color: white;
+  border: none;
+  width: clamp(30px, 5vw, 40px);
+  height: clamp(30px, 5vw, 40px);
+  border-radius: 50%;
+  font-size: clamp(18px, 3vw, 24px);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.closeBtn:hover {
+  background: #ff5252;
+  transform: scale(1.1);
+}
+
+/* المحتوى الرئيسي */
+.content {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: clamp(10px, 2vw, 20px);
+  padding: clamp(10px, 2vw, 20px);
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* الأجزاء الثلاثة */
+.leftSection,
+.centerSection,
+.rightSection {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  border-radius: clamp(8px, 1.5vw, 12px);
+  overflow: hidden;
+}
+
+
+
+
+/* Responsive Design لجميع شاشات الكمبيوتر/اللابتوب */
+
+/* شاشات كبيرة جداً 2560px+ */
+@media (min-width: 2560px) {
+  .popup {
+    width: 85vw;
+    height: 85vh;
+  }
+  
+  .content {
+    gap: clamp(20px, 2.5vw, 30px);
+    padding: clamp(20px, 2.5vw, 30px);
+  }
+}
+
+/* شاشات كبيرة 1920px - 2559px */
+@media (max-width: 2559px) and (min-width: 1920px) {
+  .popup {
+    width: 90vw;
+    height: 88vh;
+  }
+}
+
+/* شاشات قياسية 1680px - 1919px */
+@media (max-width: 1919px) and (min-width: 1680px) {
+  .popup {
+    width: 92vw;
+    height: 90vh;
+  }
+}
+
+/* شاشات متوسطة 1440px - 1679px */
+@media (max-width: 1679px) and (min-width: 1440px) {
+  .popup {
+    width: 95vw;
+    height: 92vh;
+  }
+  
+  .content {
+    gap: clamp(12px, 1.8vw, 18px);
+    padding: clamp(12px, 1.8vw, 18px);
+  }
+}
+
+/* شاشات صغيرة 1366px - 1439px */
+@media (max-width: 1439px) and (min-width: 1366px) {
+  .popup {
+    width: 98vw;
+    height: 95vh;
+  }
+  
+  .header {
+    height: clamp(50px, 8vh, 70px);
+    padding: 0 clamp(15px, 3vw, 30px);
+  }
+  
+  .content {
+    gap: clamp(10px, 1.5vw, 15px);
+    padding: clamp(10px, 1.5vw, 15px);
+  }
+}
+
+/* لابتوب كبير 1280px - 1365px */
+@media (max-width: 1365px) and (min-width: 1280px) {
+  .popup {
+    width: 99vw;
+    height: 98vh;
+    border-radius: clamp(6px, 1vw, 12px);
+  }
+  
+  .header {
+    height: clamp(50px, 7vh, 65px);
+  }
+  
+  .content {
+    gap: clamp(8px, 1.2vw, 12px);
+    padding: clamp(8px, 1.2vw, 12px);
+  }
+}
+
+/* لابتوب متوسط 1024px - 1279px */
+@media (max-width: 1279px) and (min-width: 1024px) {
+  .popup {
+    width: 100vw;
+    height: 100vh;
+    border-radius: 0;
+  }
+  
+  .header {
+    height: clamp(45px, 6vh, 60px);
+    padding: 0 clamp(12px, 2vw, 20px);
+  }
+  
+  .logo img {
+    height: clamp(35px, 6vh, 50px);
+  }
+  
+  .title {
+    font-size: clamp(16px, 2.5vw, 20px);
+  }
+  
+  .closeBtn {
+    width: clamp(28px, 4vw, 35px);
+    height: clamp(28px, 4vw, 35px);
+    font-size: clamp(16px, 2.5vw, 20px);
+  }
+  
+  .content {
+    gap: clamp(6px, 1vw, 10px);
+    padding: clamp(6px, 1vw, 10px);
+  }
+}
+
+/* لابتوب صغير/تابلت كبير 768px - 1023px */
+@media (max-width: 1023px) {
+  .popup {
+    width: 100vw;
+    height: 100vh;
+    border-radius: 0;
+  }
+  
+  .header {
+    height: clamp(40px, 5vh, 50px);
+    padding: 0 clamp(10px, 1.5vw, 15px);
+  }
+  
+  .logo img {
+    height: clamp(30px, 4vh, 40px);
+  }
+  
+  .title {
+    font-size: clamp(14px, 2vw, 18px);
+  }
+  
+  .closeBtn {
+    width: clamp(25px, 3.5vw, 30px);
+    height: clamp(25px, 3.5vw, 30px);
+    font-size: clamp(14px, 2vw, 18px);
+  }
+  
+  .content {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(0, 0.4fr) minmax(0, 1fr) minmax(0, 0.6fr);
+    gap: clamp(5px, 0.8vw, 8px);
+    padding: clamp(5px, 0.8vw, 8px);
+  }
+  
+  .leftSection {
+    order: 1;
+    overflow-y: auto;
+  }
+  
+  .centerSection {
+    order: 2;
+  }
+  
+  .rightSection {
+    order: 3;
+    overflow-y: auto;
+  }
+}
+
+/* شاشات صغيرة جداً */
+@media (max-width: 768px) {
+  .content {
+    grid-template-rows: minmax(200px, 30vh) 1fr minmax(150px, 25vh);
+  }
+}
+
+@media (max-width: 480px) {
+  .header {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+  
+  .title {
+    position: static;
+    transform: none;
+    font-size: clamp(12px, 3vw, 16px);
+  }
+  
+  .content {
+    grid-template-rows: minmax(150px, 25vh) 1fr minmax(120px, 20vh);
+  }
+}
+
+
+
 ===== src/Pages/pos/newSales/styles/popup.css =====
 /* src/Pages/pos/newSales/styles/popup.css */
 .popup-overlay {

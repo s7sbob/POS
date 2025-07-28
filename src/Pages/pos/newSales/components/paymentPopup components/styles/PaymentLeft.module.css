@@ -1,0 +1,77 @@
+.container {
+  width: 100%;
+  height: 100%;
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #e9ecef;
+  display: flex;
+  flex-direction: column;
+}
+
+/* قاعدة عامة للخطوط */
+:where(.container,
+       .container *) { 
+  font-size: var(--fs); 
+}
+
+.header {
+  background: #0373ed;
+  color: white;
+  padding: clamp(12px, 2vw, 20px);
+  text-align: center;
+  border-bottom: 2px solid #e9ecef;
+}
+
+.title {
+  margin: 0;
+  font-family: "Cairo-Bold", Helvetica;
+  font-weight: 700;
+  font-size: calc(var(--fs) * 1.4);
+  direction: rtl;
+}
+
+.orderSummaryWrapper {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  padding: clamp(8px, 1.5vw, 16px);
+}
+
+.orderSummaryWrapper::-webkit-scrollbar {
+  width: clamp(4px, 0.8vw, 8px);
+}
+
+.orderSummaryWrapper::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.orderSummaryWrapper::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 10px;
+}
+
+.orderSummaryWrapper::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Responsive للشاشات المختلفة */
+@media (max-width: 1600px) {
+  .orderSummaryWrapper {
+    padding: clamp(6px, 1.2vw, 14px);
+  }
+}
+
+@media (max-width: 1024px) {
+  .container {
+    border-radius: 8px;
+  }
+  
+  .orderSummaryWrapper {
+    padding: clamp(6px, 1vw, 12px);
+  }
+}
+
+

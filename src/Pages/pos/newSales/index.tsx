@@ -771,6 +771,8 @@ const PosSystem: React.FC = () => {
         onSelectTable={handleTableSelect}
         tableSections={tableSections}
       />
+
+      
     </div>
   );
 };

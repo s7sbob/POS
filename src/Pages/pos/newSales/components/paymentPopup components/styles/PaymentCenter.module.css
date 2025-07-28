@@ -1,0 +1,139 @@
+/* ✅ Updated PaymentCenter.module.css */
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  height: 100%;
+  width: 100%;
+  padding: 1rem;
+  box-sizing: border-box;
+  font-family: "Cairo", sans-serif;
+}
+
+.headerRow {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.balanceTitle {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #000;
+  direction: rtl;
+}
+
+.fieldsRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 2rem;
+}
+
+.fieldBlock {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.label {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #333;
+  direction: rtl;
+  text-align: right;
+}
+
+.input {
+  padding: 0.75rem;
+  font-size: 1.5rem;
+  text-align: center;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  background: #fff;
+  font-weight: 600;
+}
+
+.remainingBox {
+  padding: 0.75rem;
+  font-size: 1.5rem;
+  text-align: center;
+  border-radius: 10px;
+  background-color: #0373ed;
+  color: white;
+  font-weight: 600;
+}
+
+.quickButtons {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.quickBtn {
+  flex: 1;
+  background-color: #d9d9d9;
+  border: none;
+  border-radius: 10px;
+  padding: 0.75rem;
+  font-size: 1.3rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.quickBtn:hover {
+  background-color: #c8c8c8;
+}
+
+.keypad {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.keypadRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.keypadBtn {
+  flex: 1;
+  padding: 1rem;
+  font-size: 1.3rem;
+  font-weight: 700;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.keypadBtn.gray {
+  background-color: #d9d9d9;
+}
+
+.keypadBtn:hover {
+  background-color: #f0f0f0;
+}
+
+.keypadBtn:active {
+  transform: scale(0.96);
+}
+
+@media (max-width: 768px) {
+  .balanceTitle {
+    font-size: 1.4rem;
+  }
+  .input, .remainingBox {
+    font-size: 1.2rem;
+    padding: 0.5rem;
+  }
+  .quickBtn, .keypadBtn {
+    font-size: 1rem;
+    padding: 0.5rem;
+  }
+}
