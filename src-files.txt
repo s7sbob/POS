@@ -1735,6 +1735,7 @@ const shouldShowPayOnly = orderType === 'Takeaway';
 export default OrderSummary;
 
 ===== src/Pages/pos/newSales/components/paymentPopup components/PaymentCenter.tsx =====
+// src/Pages/pos/newSales/components/paymentPopup components/PaymentCenter.tsx
 import React from 'react';
 import styles from './styles/PaymentCenter.module.css';
 
@@ -1742,6 +1743,8 @@ interface PaymentCenterProps {
   totalAmount: number;
   paidAmount: string;
   remainingAmount: number;
+  changeAmount: number;
+  totalPaidFromMethods: number;
   onAmountChange: (amount: string) => void;
   onQuickAmountSelect: (amount: number) => void;
 }
@@ -1750,6 +1753,8 @@ const PaymentCenter: React.FC<PaymentCenterProps> = ({
   totalAmount,
   paidAmount,
   remainingAmount,
+  changeAmount,
+  totalPaidFromMethods,
   onAmountChange,
   onQuickAmountSelect
 }) => {
@@ -1769,24 +1774,39 @@ const PaymentCenter: React.FC<PaymentCenterProps> = ({
     }
   };
 
+  // حساب إجمالي المدفوع (من الطرق + النقدي الحالي)
+  const currentInputAmount = parseFloat(paidAmount) || 0;
+  const totalPaidAmount = totalPaidFromMethods + currentInputAmount;
+  
+  // حساب الباقي للعميل (إذا كان المدفوع أكبر من المطلوب)
+  const customerChange = Math.max(0, totalPaidAmount - totalAmount);
+
   return (
     <div className={styles.wrapper}>
       <div className={styles.headerRow}>
         <h2 className={styles.balanceTitle}>
-          الرصيد المستحق: {totalAmount.toFixed(2)}
+          إجمالي الفاتورة: {totalAmount.toFixed(2)} جنيه
         </h2>
       </div>
 
+      {/* عرض المبلغ المدفوع من طرق أخرى */}
+      {/* {totalPaidFromMethods > 0 && (
+        <div className={styles.paidMethodsRow}>
+          <div className={styles.paidMethodsInfo}>
+            <span className={styles.paidMethodsLabel}>مدفوع بطرق أخرى:</span>
+            <span className={styles.paidMethodsAmount}>{totalPaidFromMethods.toFixed(2)} جنيه</span>
+          </div>
+        </div>
+      )} */}
+
       <div className={styles.fieldsRow}>
-
-
         <div className={styles.fieldBlock}>
-          <label className={styles.label}>المبلغ المتبقي</label>
+          <label className={styles.label}>المبلغ المتبقي (كاش)</label>
           <div className={styles.remainingBox}>{remainingAmount.toFixed(2)}</div>
         </div>
 
-                <div className={styles.fieldBlock}>
-          <label className={styles.label}>المدفوع نقدا</label>
+        <div className={styles.fieldBlock}>
+          <label className={styles.label}>المدفوع نقداً</label>
           <input 
             type="text" 
             readOnly 
@@ -1824,53 +1844,284 @@ const PaymentCenter: React.FC<PaymentCenterProps> = ({
           </div>
         ))}
       </div>
+
+      {/* قسم الباقي للعميل - يظهر دائماً */}
+      <div className={styles.changeSection}>
+        {/* <div className={styles.changeHeader}>
+          <div className={styles.changeSummary}>
+            <span className={styles.summaryLabel}>إجمالي المدفوع:</span>
+            <span className={styles.summaryValue}>{totalPaidAmount.toFixed(2)} جنيه</span>
+          </div>
+        </div> */}
+        
+        <div className={styles.changeDisplay}>
+          <div className={styles.changeLabel}>الباقي للعميل</div>
+          <div className={`${styles.changeAmount} ${customerChange > 0 ? styles.hasChange : styles.noChange}`}>
+            {customerChange.toFixed(2)} جنيه
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
 
 export default PaymentCenter;
+
 ===== src/Pages/pos/newSales/components/paymentPopup components/PaymentLeft.tsx =====
+// src/Pages/pos/newSales/components/paymentPopup components/PaymentLeft.tsx
 import React from 'react';
-import OrderSummary from '../OrderSummary';
+import PaymentOrderSummary from './PaymentOrderSummary';
 import styles from './styles/PaymentLeft.module.css';
 
 interface PaymentLeftProps {
   orderSummary: any;
-  customerName: string;
-  onCustomerNameChange: (name: string) => void;
-  onRemoveOrderItem: (itemId: string) => void;
-  onRemoveSubItem: (orderItemId: string, subItemId: string) => void;
-  selectedOrderItemId: string | null;
-  onOrderItemSelect: (itemId: string) => void;
-  onOrderItemDoubleClick?: (item: any) => void;
   selectedCustomer: any;
   selectedAddress: any;
-  onCustomerSelect: (customer: any, address: any) => void;
   orderType: string;
-  onDeliveryChargeChange: (charge: number) => void;
+  deliveryCharge: number;
 }
 
-const PaymentLeft: React.FC<PaymentLeftProps> = (props) => {
+const PaymentLeft: React.FC<PaymentLeftProps> = ({
+  orderSummary,
+  selectedCustomer,
+  selectedAddress,
+  orderType,
+  deliveryCharge,
+}) => {
   return (
     <div className={styles.container}>
-      <div className={styles.header}>
-        <h3 className={styles.title}>ملخص الطلب</h3>
-      </div>
-      <div className={styles.orderSummaryWrapper}>
-        <OrderSummary 
-          {...props}
-          readOnly={true}
-        />
-      </div>
+        <PaymentOrderSummary 
+          orderSummary={orderSummary}
+          selectedCustomer={selectedCustomer}
+          selectedAddress={selectedAddress}
+          orderType={orderType}
+          deliveryCharge={deliveryCharge} onGoBack={function (): void {
+            throw new Error('Function not implemented.');
+          } }        />
     </div>
   );
 };
 
 export default PaymentLeft;
 
+===== src/Pages/pos/newSales/components/paymentPopup components/PaymentOrderSummary.tsx =====
+// src/Pages/pos/newSales/components/paymentPopup components/PaymentOrderSummary.tsx
+import React from 'react';
+import { OrderSummary as OrderSummaryType, OrderItem, SubItem } from '../../types/PosSystem';
+import { Customer, CustomerAddress } from 'src/utils/api/pagesApi/customersApi';
+import styles from './styles/PaymentOrderSummary.module.css';
+
+interface PaymentOrderSummaryProps {
+  orderSummary: OrderSummaryType;
+  selectedCustomer: Customer | null;
+  selectedAddress: CustomerAddress | null;
+  orderType: string;
+  deliveryCharge: number;
+    onGoBack: () => void;
+
+}
+
+const PaymentOrderSummary: React.FC<PaymentOrderSummaryProps> = ({
+  orderSummary,
+  selectedCustomer,
+  selectedAddress,
+  orderType,
+  deliveryCharge,
+  onGoBack
+}) => {
+  // حساب الإجمالي النهائي
+  const subtotalWithDelivery = orderSummary.subtotal + deliveryCharge;
+  const taxAmount = 0;
+  const finalTotal = subtotalWithDelivery + taxAmount - orderSummary.discount;
+
+  // دالة عرض SubItem
+  const renderSubItem = (subItem: SubItem) => {
+    return (
+      <div key={subItem.id} className={styles.subItem}>
+        <div className={styles.subItemDetails}>
+          <div className={styles.subItemInfo}>
+            <span className={`${styles.subItemBadge} ${styles[subItem.type]}`}>
+              {subItem.type === 'extra' && '+'}
+              {subItem.type === 'without' && '-'}
+              {subItem.type === 'option' && '•'}
+            </span>
+            <div className={styles.subItemName}>
+              {subItem.quantity} X {subItem.name}
+            </div>
+          </div>
+        </div>
+        
+        <div className={styles.subItemPrices}>
+          <div className={styles.subItemPrice}>
+            {subItem.type === 'without' ? '0' : (subItem.price / subItem.quantity).toFixed(2)}
+          </div>
+          <div className={`${styles.subItemTotal} ${subItem.price < 0 ? styles.negative : ''}`}>
+            {subItem.type === 'without' ? '0' : subItem.price.toFixed(2)}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // دالة عرض Options
+  const renderOptions = (options: any[]) => {
+    return options.map((option: any, index: number) => (
+      <div key={index} className={styles.optionDetail}>
+        <span className={styles.optionText}>
+          {option.quantity} X {option.itemName}
+        </span>
+        <div className={styles.optionPrices}>
+          <div className={styles.optionPrice}>
+            {option.extraPrice > 0 ? `+${option.extraPrice}` : '0'}
+          </div>
+          <div className={styles.optionTotal}>
+            {(option.extraPrice * option.quantity).toFixed(2)}
+          </div>
+        </div>
+      </div>
+    ));
+  };
+
+  // دالة عرض Notes
+  const renderNotes = (notes: string) => {
+    if (!notes || notes.trim() === '') return null;
+    
+    return (
+      <div className={styles.commentsContainer}>
+        <div className={styles.commentItem}>
+          <span className={styles.commentIcon}>💬</span>
+          <span className={styles.commentText}>{notes}</span>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className={styles.orderSummary}>
+      {/* Header */}
+      <div className={styles.orderHeader}>
+        <div className={styles.orderNumber}>#123</div>
+        <div className={styles.orderTotal}>
+          <span className={styles.amount}>{finalTotal.toFixed(2)}</span>
+          <span className={styles.currency}>EGP</span>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className={styles.orderContent}>
+        {/* Customer Info */}
+        {selectedCustomer && (
+          <div className={styles.customerInfo}>
+            <div className={styles.customerName}>
+              👤 {selectedCustomer.name}
+              {selectedCustomer.isVIP && <span className={styles.vipBadge}>VIP</span>}
+            </div>
+            <div className={styles.customerPhone}>
+              📞 {selectedCustomer.phone1}
+            </div>
+            {selectedAddress && selectedAddress.addressLine && (
+              <div className={styles.customerAddress}>
+                📍 {selectedAddress.addressLine}
+                {selectedAddress.zoneName && ` - ${selectedAddress.zoneName}`}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Order Items */}
+        <div className={styles.orderItems}>
+          {orderSummary.items.map((item) => (
+            <div key={item.id} className={styles.orderItemContainer}>
+              <div className={`${styles.orderItem} ${item.isExtra ? styles.extraItem : ''} ${item.isWithout ? styles.withoutItem : ''}`}>
+                <div className={styles.itemDetails}>
+                  <div className={styles.itemInfo}>
+                    <div className={styles.itemName}>
+                      {item.isExtra && <span className={styles.extraBadge}>+</span>}
+                      {item.isWithout && <span className={styles.withoutBadge}>-</span>}
+                      {item.quantity} X {item.product.nameArabic}
+                      {item.product.hasMultiplePrices && (
+                        <span className={styles.itemSizeInline}> - {item.selectedPrice.nameArabic}</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                
+                <div className={styles.itemPrices}>
+                  <div className={styles.itemPrice}>{item.selectedPrice.price}</div>
+                  <div className={`${styles.itemTotal} ${item.isWithout ? styles.negative : ''}`}>
+                    {item.totalPrice.toFixed(2)}
+                  </div>
+                </div>
+              </div>
+              
+              {item.notes && renderNotes(item.notes)}
+              
+              {item.subItems && item.subItems.length > 0 && (
+                <div className={styles.subItemsContainer}>
+                  {item.subItems.map(subItem => renderSubItem(subItem))}
+                </div>
+              )}
+              
+              {item.selectedOptions && item.selectedOptions.length > 0 && !item.subItems && (
+                <div className={styles.itemOptions}>
+                  {renderOptions(item.selectedOptions)}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div className={styles.orderFooter}>
+        <div className={styles.summaryRows}>
+          <div className={styles.summaryRow}>
+            <span>Sub Total</span>
+            <span>{orderSummary.subtotal.toFixed(2)} <small>EGP</small></span>
+          </div>
+          
+          {deliveryCharge > 0 && (
+            <div className={styles.summaryRow}>
+              <span>Delivery</span>
+              <span>{deliveryCharge.toFixed(2)} <small>EGP</small></span>
+            </div>
+          )}
+          
+          <div className={styles.summaryRow}>
+            <span>Discount</span>
+            <span>{orderSummary.discount.toFixed(2)} <small>EGP</small></span>
+          </div>
+          
+          <div className={styles.summaryRow}>
+            <span>Tax</span>
+            <span>{taxAmount.toFixed(2)} <small>EGP</small></span>
+          </div>
+          
+          <div className={styles.summaryRow}>
+            <span>Service</span>
+            <span>{orderSummary.service.toFixed(2)} <small>EGP</small></span>
+          </div>
+        </div>
+
+        <div className={styles.totalRow}>
+          <span>Total</span>
+          <span>{finalTotal.toFixed(2)} <small>EGP</small></span>
+        </div>
+
+              <div className={styles.backButtonContainer}>
+        <button className={styles.backButton} onClick={onGoBack}>
+          رجوع
+        </button>
+      </div>
+      </div>
+    </div>
+  );
+};
+
+export default PaymentOrderSummary;
+
 ===== src/Pages/pos/newSales/components/paymentPopup components/PaymentRight.tsx =====
-// ✅ Final PaymentRight.tsx matching Figma design with Finish button and 2-column layout
-import React, { useState } from 'react';
+import React from 'react';
 import styles from './styles/PaymentRight.module.css';
 
 interface PaymentMethod {
@@ -1886,133 +2137,271 @@ interface PaymentRightProps {
   onPaymentMethodRemove: (id: string) => void;
   onFinishPayment: () => void;
   currentAmount: number;
+  remainingAmount: number;
+  onAmountReset: () => void; // إضافة function لتصفير المبلغ
 }
 
 const PaymentRight: React.FC<PaymentRightProps> = ({
-  availablePaymentMethods = ['كاش', 'بطاقة ائتمان'],
+  availablePaymentMethods = [],
   selectedPayments,
   onPaymentMethodAdd,
   onPaymentMethodRemove,
   onFinishPayment,
-  currentAmount
+  currentAmount,
+  remainingAmount,
+  onAmountReset
 }) => {
-  const [selectedMethod, setSelectedMethod] = useState<string>('كاش');
-
   const handleSelect = (method: string) => {
-    setSelectedMethod(method);
-    onPaymentMethodAdd(method, currentAmount);
+    // التأكد من وجود مبلغ قبل الإضافة
+    if (currentAmount > 0) {
+      onPaymentMethodAdd(method, currentAmount);
+      onAmountReset(); // تصفير المبلغ بعد الإضافة
+    }
   };
+
+  // البحث عن طريقة دفع موجودة لتحديث مبلغها
+  const getPaymentMethodTotal = (methodName: string) => {
+    return selectedPayments
+      .filter(payment => payment.name === methodName)
+      .reduce((sum, payment) => sum + payment.amount, 0);
+  };
+
+  // التحقق من إمكانية إنهاء الدفع
+  const canFinish = selectedPayments.length > 0;
+
+  if (availablePaymentMethods.length === 0) {
+    return (
+      <div className={styles.container}>
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'center', 
+          height: '100%',
+          fontFamily: 'Cairo, sans-serif',
+          color: '#666'
+        }}>
+          جاري تحميل طرق الدفع...
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.container}>
-            <button className={styles.finishBtn} onClick={onFinishPayment}>
-        إنهاء
+      {/* زر الإنهاء في الأعلى */}
+      <button 
+        className={`${styles.finishBtn} ${!canFinish ? styles.disabled : ''}`}
+        onClick={onFinishPayment}
+        disabled={!canFinish}
+      >
+        إنهاء الدفع
       </button>
-      <div className={styles.methodList}>
-        {availablePaymentMethods.map((method) => (
-          <button
-            key={method}
-            className={`${styles.methodBtn} ${selectedMethod === method ? styles.active : ''}`}
-            onClick={() => handleSelect(method)}
-          >
-            <span className={styles.methodAmount}>{currentAmount.toFixed(2)}</span>
-            <span className={styles.methodType}>{method}</span>
-            {selectedMethod === method && <span className={styles.check}>✓</span>}
-          </button>
-        ))}
+      
+      {/* طرق الدفع في عمودين */}
+      <div className={styles.methodGrid}>
+        {availablePaymentMethods.map((method) => {
+          const totalForMethod = getPaymentMethodTotal(method);
+          const hasPayment = totalForMethod > 0;
+          
+          return (
+            <button
+              key={method}
+              className={`${styles.methodBtn} ${hasPayment ? styles.hasPayment : ''}`}
+              onClick={() => handleSelect(method)}
+              disabled={currentAmount <= 0} // تعطيل الزر إذا لم يكن هناك مبلغ
+            >
+              <div className={styles.methodContent}>
+                <span className={styles.methodType}>{method}</span>
+                {hasPayment && (
+                  <span className={styles.methodAmount}>
+                    {totalForMethod.toFixed(2)} جنيه
+                  </span>
+                )}
+              </div>
+            </button>
+          );
+        })}
       </div>
 
+      {/* عرض ملخص المدفوعات المحددة */}
+      {selectedPayments.length > 0 && (
+        <div className={styles.selectedPayments}>
+          <h4 className={styles.paymentsTitle}>المدفوعات المحددة:</h4>
+          <div className={styles.paymentsList}>
+            {selectedPayments.map((payment) => (
+              <div key={payment.id} className={styles.selectedPayment}>
+                <div className={styles.paymentInfo}>
+                  <span className={styles.paymentMethod}>{payment.name}</span>
+                  <span className={styles.paymentAmount}>{payment.amount.toFixed(2)} جنيه</span>
+                </div>
+                <button 
+                  onClick={() => onPaymentMethodRemove(payment.id)}
+                  className={styles.removeBtn}
+                  title="حذف"
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+          <div className={styles.totalPayments}>
+            <strong>
+              إجمالي المدفوع: {selectedPayments.reduce((sum, payment) => sum + payment.amount, 0).toFixed(2)} جنيه
+            </strong>
+          </div>
+        </div>
+      )}
 
+      {/* عرض معلومات المبلغ المتبقي */}
+      <div className={styles.paymentSummary}>
+        <div className={styles.summaryRow}>
+          <span>المتبقي للدفع:</span>
+          <span className={styles.remainingAmount}>{remainingAmount.toFixed(2)} جنيه</span>
+        </div>
+        {currentAmount > 0 && (
+          <div className={styles.summaryRow}>
+            <span>المبلغ الحالي:</span>
+            <span className={styles.currentAmount}>{currentAmount.toFixed(2)} جنيه</span>
+          </div>
+        )}
+      </div>
+
+      {/* رسالة توضيحية */}
+      {currentAmount <= 0 && (
+        <div className={styles.instructionMessage}>
+          <p>اكتب المبلغ أولاً ثم اختر طريقة الدفع</p>
+        </div>
+      )}
     </div>
   );
 };
 
 export default PaymentRight;
+
 ===== src/Pages/pos/newSales/components/paymentPopup components/styles/PaymentCenter.module.css =====
-/* ✅ Updated PaymentCenter.module.css */
+/* src/Pages/pos/newSales/components/paymentPopup components/styles/PaymentCenter.module.css */
 
 .wrapper {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
   height: 100%;
   width: 100%;
-  padding: 1rem;
+  padding: 0.8rem;
   box-sizing: border-box;
   font-family: "Cairo", sans-serif;
+  overflow: hidden;
+  gap: 0.6rem; /* مسافة صغيرة ثابتة */
 }
 
 .headerRow {
   display: flex;
   justify-content: center;
   align-items: center;
+  flex-shrink: 0;
+  height: 50px; /* ارتفاع ثابت */
 }
 
 .balanceTitle {
-  font-size: 1.8rem;
+  font-size: 1.4rem;
   font-weight: 700;
   color: #000;
   direction: rtl;
+  text-align: center;
+}
+
+.paidMethodsRow {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 0.6rem;
+  border-left: 4px solid #28a745;
+  flex-shrink: 0;
+  min-height: 40px; /* حد أدنى للارتفاع */
+}
+
+.paidMethodsInfo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.paidMethodsLabel {
+  font-size: 0.9rem;
+  color: #333;
+  font-weight: 600;
+}
+
+.paidMethodsAmount {
+  font-size: 1rem;
+  color: #28a745;
+  font-weight: 700;
 }
 
 .fieldsRow {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 2rem;
+  gap: 0.8rem;
+  flex-shrink: 0;
+  height: 80px; /* ارتفاع ثابت */
 }
 
 .fieldBlock {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.4rem;
+  height: 100%;
 }
 
 .label {
-  font-size: 1rem;
+  font-size: 0.8rem;
   font-weight: 700;
   color: #333;
   direction: rtl;
   text-align: right;
+  flex-shrink: 0;
+}
+
+.input, .remainingBox {
+  padding: 0.6rem;
+  font-size: 1.1rem;
+  text-align: center;
+  border-radius: 8px;
+  font-weight: 600;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .input {
-  padding: 0.75rem;
-  font-size: 1.5rem;
-  text-align: center;
   border: 1px solid #ccc;
-  border-radius: 10px;
   background: #fff;
-  font-weight: 600;
 }
 
 .remainingBox {
-  padding: 0.75rem;
-  font-size: 1.5rem;
-  text-align: center;
-  border-radius: 10px;
   background-color: #0373ed;
   color: white;
-  font-weight: 600;
 }
 
 .quickButtons {
   display: flex;
   justify-content: space-between;
-  gap: 0.75rem;
+  gap: 0.6rem;
+  flex-shrink: 0;
+  height: 45px; /* ارتفاع ثابت */
 }
 
 .quickBtn {
   flex: 1;
   background-color: #d9d9d9;
   border: none;
-  border-radius: 10px;
-  padding: 0.75rem;
-  font-size: 1.3rem;
+  border-radius: 8px;
+  font-size: 1rem;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s ease;
+  height: 100%;
 }
 
 .quickBtn:hover {
@@ -2022,25 +2411,33 @@ export default PaymentRight;
 .keypad {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.5rem;
+  flex: 1; /* يأخذ المساحة المتبقية */
+  min-height: 0;
+  overflow: hidden;
 }
 
 .keypadRow {
   display: flex;
   justify-content: space-between;
-  gap: 0.75rem;
+  gap: 0.5rem;
+  flex: 1; /* توزيع متساوي */
+  min-height: 0;
 }
 
 .keypadBtn {
   flex: 1;
-  padding: 1rem;
-  font-size: 1.3rem;
+  font-size: 1rem;
   font-weight: 700;
   background-color: #fff;
   border: 1px solid #ccc;
-  border-radius: 10px;
+  border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .keypadBtn.gray {
@@ -2055,19 +2452,126 @@ export default PaymentRight;
   transform: scale(0.96);
 }
 
-@media (max-width: 768px) {
+.changeSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.8rem;
+  background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+  border: 2px solid #2196f3;
+  border-radius: 10px;
+  flex-shrink: 0;
+  height: 100px; /* ارتفاع ثابت */
+  overflow: hidden;
+}
+
+.changeHeader {
+  display: flex;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.changeSummary {
+  display: flex;
+  gap: 0.8rem;
+  align-items: center;
+  direction: rtl;
+}
+
+.summaryLabel {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #1976d2;
+}
+
+.summaryValue {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #0d47a1;
+}
+
+.changeDisplay {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  flex: 1;
+  justify-content: center;
+}
+
+.changeLabel {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1976d2;
+  direction: rtl;
+}
+
+.changeAmount {
+  font-size: 1.4rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  padding: 0.3rem 0.6rem;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+}
+
+.hasChange {
+  background: linear-gradient(135deg, #28a745, #20c95e);
+  color: white;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+  box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+}
+
+.noChange {
+  background: #f8f9fa;
+  color: #6c757d;
+  border: 2px dashed #dee2e6;
+}
+
+/* تكيف مع دقة 1920x1080 مع zoom 125% */
+@media screen and (width: 1536px) and (height: 864px) {
+  .wrapper {
+    padding: 0.6rem;
+    gap: 0.5rem;
+  }
+  
+  .headerRow {
+    height: 45px;
+  }
+  
   .balanceTitle {
-    font-size: 1.4rem;
+    font-size: 1.3rem;
   }
-  .input, .remainingBox {
+  
+  .fieldsRow {
+    height: 70px;
+  }
+  
+  .quickButtons {
+    height: 40px;
+  }
+  
+  .changeSection {
+    height: 85px;
+    padding: 0.6rem;
+  }
+  
+  .changeAmount {
     font-size: 1.2rem;
-    padding: 0.5rem;
-  }
-  .quickBtn, .keypadBtn {
-    font-size: 1rem;
-    padding: 0.5rem;
   }
 }
+
+/* للشاشات عالية الدقة مع zoom */
+@media screen and (min-width: 1400px) and (max-width: 1600px) {
+  .wrapper {
+    gap: 0.5rem;
+  }
+  
+  .keypadBtn {
+    font-size: 0.95rem;
+  }
+}
+
 ===== src/Pages/pos/newSales/components/paymentPopup components/styles/PaymentLeft.module.css =====
 .container {
   width: 100%;
@@ -2145,91 +2649,800 @@ export default PaymentRight;
   }
 }
 
-===== src/Pages/pos/newSales/components/paymentPopup components/styles/PaymentRight.module.css =====
-/* ✅ Final PaymentRight.module.css matching Figma with 2-column layout and Finish button */
 
-.container {
+
+===== src/Pages/pos/newSales/components/paymentPopup components/styles/PaymentOrderSummary.module.css =====
+/* src/Pages/pos/newSales/components/paymentPopup components/styles/PaymentOrderSummary.module.css */
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap');
+
+:root {
+  --primary-blue: #0373ed;
+  --primary-green: #23a929;
+  --primary-red: #e53935;
+  --bg-white: #ffffff;
+  --text-primary: #000000;
+  --text-secondary: rgba(0, 0, 0, 0.7);
+  --border-color: rgba(0, 0, 0, 0.2);
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+}
+
+.orderSummary {
+  width: 100%;
+  height: 100%;
+  background: var(--bg-white);
+  border-radius: 8px;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  height: 100%;
-  width: 100%;
-  padding: 1rem;
-  font-family: "Cairo", sans-serif;
-  box-sizing: border-box;
+  overflow: hidden;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.1);
 }
 
-.methodList {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.75rem;
-  width: 100%;
+/* Header */
+.orderHeader {
+  height: clamp(50px, 7vh, 80px);
+  display: flex;
+  flex-shrink: 0;
 }
 
-.methodBtn {
+.orderNumber {
+  flex: 1;
+  background: var(--primary-blue);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(16px, 2vw, 24px);
+  font-weight: 700;
+  border-radius: 8px 0 0 0;
+}
+
+.orderTotal {
+  width: clamp(100px, 12vw, 150px);
+  border: 2px solid var(--primary-blue);
+  color: var(--primary-blue);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+  border-radius: 0 8px 0 0;
+}
+
+.orderTotal .amount {
+  font-size: clamp(16px, 2vw, 24px);
+  font-weight: 700;
+}
+
+.orderTotal .currency {
+  font-size: clamp(10px, 1.2vw, 16px);
+  font-weight: 600;
+}
+
+/* Content */
+.orderContent {
+  flex: 1;
+  padding: var(--spacing-lg);
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.orderContent::-webkit-scrollbar {
+  width: 6px;
+}
+
+.orderContent::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.orderContent::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 3px;
+}
+
+/* Customer Info */
+.customerInfo {
+  background: #e3f2fd;
+  border: 1px solid #bbdefb;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: var(--spacing-lg);
+  font-family: 'Cairo', sans-serif;
+}
+
+.customerName {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  color: #1976d2;
+  margin-bottom: 4px;
+}
+
+.vipBadge {
+  background: linear-gradient(135deg, #ffd700 0%, #ffed4a 100%);
+  color: #8b4513;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.customerPhone {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #1976d2;
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+
+.customerAddress {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #1976d2;
+  font-size: 11px;
+}
+
+/* Order Items */
+.orderItems {
+  max-height: 50vh;
+  margin-bottom: var(--spacing-md);
+  scrollbar-width: thin;
+}
+
+.orderItems::-webkit-scrollbar {
+  width: 4px;
+}
+
+.orderItems::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 2px;
+}
+
+.orderItemContainer {
+  margin-bottom: clamp(12px, 1.5vw, 16px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  padding-bottom: clamp(8px, 1vw, 12px);
+}
+
+.orderItemContainer:last-child {
+  border-bottom: none;
+}
+
+.orderItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-radius: 6px;
+  margin-bottom: 0;
+}
+
+.orderItem.extraItem {
+  border-left: 3px solid #28a745;
+}
+
+.orderItem.withoutItem {
+  border-left: 3px solid #dc3545;
+}
+
+.itemDetails {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: flex-start;
+  flex: 1;
+  min-width: 0;
+}
+
+.itemInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.itemName {
+  font-size: clamp(11px, 1.3vw, 16px);
+  font-weight: 600;
+  margin-bottom: var(--spacing-xs);
+  color: var(--text-primary);
+  line-height: 1.2;
+  font-family: 'Cairo', sans-serif;
+}
+
+.itemSizeInline {
+  color: var(--primary-blue);
+  font-weight: 500;
+  font-size: 0.9em;
+}
+
+.extraBadge, .withoutBadge {
+  color: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  margin-right: 4px;
+  font-weight: 600;
+}
+
+.extraBadge {
+  background: #28a745;
+}
+
+.withoutBadge {
+  background: #dc3545;
+}
+
+.itemPrices {
+  display: flex;
+  align-items: center;
+  gap: clamp(6px, 1vw, 10px);
+  flex-shrink: 0;
+  min-width: fit-content;
+}
+
+.itemPrice {
+  font-size: clamp(10px, 1.2vw, 14px);
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  padding-right: clamp(6px, 1vw, 10px);
+  border-right: 1px solid #ccc;
+}
+
+.itemTotal {
+  font-size: clamp(11px, 1.3vw, 16px);
+  font-weight: 700;
+  color: var(--primary-blue);
+  white-space: nowrap;
+  padding-left: clamp(6px, 1vw, 10px);
+}
+
+.itemTotal.negative {
+  color: #dc3545;
+  font-weight: 600;
+}
+
+/* Sub Items */
+.subItemsContainer {
+  margin-top: 0;
+  padding-left: 16px;
+  border-left: 2px solid #f0f0f0;
+}
+
+.subItem {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: #ffffff;
-  border: 1px solid #ccc;
-  border-radius: 0.5rem;
-  padding: 0.75rem 1rem;
-  font-size: 1rem;
+  padding: 1px 0;
+  margin-bottom: 0px;
+  min-height: 18px;
+  border-radius: 4px;
+}
+
+.subItemDetails {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+}
+
+.subItemInfo {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+}
+
+.subItemBadge {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 7px;
+  font-weight: 600;
+  color: white;
+  flex-shrink: 0;
+}
+
+.subItemBadge.extra {
+  background: #28a745;
+}
+
+.subItemBadge.without {
+  background: #dc3545;
+}
+
+.subItemBadge.option {
+  background: #6c757d;
+}
+
+.subItemName {
+  font-size: 10px;
+  color: #666;
+  line-height: 1.2;
+  font-family: 'Cairo', sans-serif;
+}
+
+.subItemPrices {
+  display: flex;
+  align-items: center;
+  gap: clamp(4px, 0.8vw, 8px);
+  min-width: fit-content;
+}
+
+.subItemPrice {
+  font-size: 8px;
+  color: #999;
+  font-weight: 500;
+  white-space: nowrap;
+  padding-right: clamp(4px, 0.8vw, 8px);
+  border-right: 1px solid #ddd;
+}
+
+.subItemTotal {
+  font-size: 9px;
+  color: #333;
+  font-weight: 600;
+  white-space: nowrap;
+  padding-left: clamp(4px, 0.8vw, 8px);
+}
+
+.subItemTotal.negative {
+  color: #dc3545;
+}
+
+/* Options */
+.itemOptions {
+  margin-top: 0;
+  padding-left: 16px;
+}
+
+.optionDetail {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1px;
+  padding: 2px 0;
+  min-height: 18px;
+}
+
+.optionText {
+  font-size: 10px;
+  color: #666;
+  font-weight: 400;
+  line-height: 1.2;
+  font-family: 'Cairo', sans-serif;
+  flex: 1;
+}
+
+.optionPrices {
+  display: flex;
+  align-items: center;
+  gap: clamp(4px, 0.8vw, 8px);
+  min-width: fit-content;
+}
+
+.optionPrice {
+  font-size: 8px;
+  color: #999;
+  font-weight: 500;
+  white-space: nowrap;
+  padding-right: clamp(4px, 0.8vw, 8px);
+  border-right: 1px solid #ddd;
+}
+
+.optionTotal {
+  font-size: 9px;
+  color: #333;
+  font-weight: 600;
+  white-space: nowrap;
+  padding-left: clamp(4px, 0.8vw, 8px);
+}
+
+/* Comments */
+.commentsContainer {
+  margin-top: 0;
+  padding-left: 16px;
+  border-left: 2px solid #e3f2fd;
+}
+
+.commentItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 3px 0;
+  margin-bottom: 2px;
+  min-height: 20px;
+}
+
+.commentIcon {
+  font-size: 10px;
+  color: #2196f3;
+  margin-top: 1px;
+  flex-shrink: 0;
+}
+
+.commentText {
+  font-size: 10px;
+  color: #2196f3;
+  line-height: 1.3;
+  font-family: 'Cairo', sans-serif;
+  font-style: italic;
+  word-wrap: break-word;
+  flex: 1;
+}
+
+/* Footer */
+.orderFooter {
+  padding: var(--spacing-md);
+  border-top: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+.summaryRows {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--spacing-sm) * 0.8);
+  margin-bottom: var(--spacing-md);
+}
+
+.summaryRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: clamp(10px, 1.2vw, 15px);
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.summaryRow span:last-child {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.totalRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: clamp(13px, 1.5vw, 19px);
+  font-weight: 700;
+  padding-top: var(--spacing-md);
+  border-top: 2px solid var(--border-color);
+  margin-bottom: var(--spacing-md);
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .summaryRows {
+    gap: calc(var(--spacing-sm) * 0.6);
+  }
+  
+  .orderItems {
+    max-height: 42vh;
+  }
+  
+  .itemPrices, .subItemPrices, .optionPrices {
+    gap: 4px;
+  }
+}
+
+@media (max-width: 768px) {
+  .subItemName {
+    font-size: 9px;
+  }
+  
+  .subItemPrice {
+    font-size: 7px;
+  }
+  
+  .subItemTotal {
+    font-size: 8px;
+  }
+  
+  .optionText {
+    font-size: 9px;
+  }
+  
+  .optionPrice {
+    font-size: 7px;
+  }
+  
+  .optionTotal {
+    font-size: 8px;
+  }
+  
+  .commentText {
+    font-size: 9px;
+  }
+}
+
+
+
+/* إضافة أنماط زر الرجوع */
+.backButtonContainer {
+  padding: clamp(8px, 1.5vw, 16px);
+}
+
+.backButton {
+  background: var(--primary-blue);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: clamp(12px, 2vw, 16px) clamp(24px, 4vw, 32px);
+  font-size: clamp(14px, 1.6vw, 18px);
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease-in-out;
-  position: relative;
+  transition: all 0.3s ease;
+  font-family: 'Cairo', sans-serif;
+  width: 100%;
+  margin: 0 auto;
+  display: block;
 }
 
-.methodBtn:hover {
-  background-color: #f1f1f1;
+.backButton:hover {
+  background: #025bb5;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(3, 115, 237, 0.3);
 }
 
-.active {
-  border: 2px solid #28a745;
-  background-color: #eafaf1;
+.backButton:active {
+  transform: translateY(0);
 }
 
-.methodAmount {
-  color: #000;
-  font-size: 1rem;
-  font-weight: 600;
-}
+===== src/Pages/pos/newSales/components/paymentPopup components/styles/PaymentRight.module.css =====
+/* src/Pages/pos/newSales/components/paymentPopup components/styles/PaymentRight.module.css */
 
-.methodType {
-  color: #000;
-  font-size: 1rem;
-  font-weight: 500;
-}
-
-.check {
-  color: #28a745;
-  font-size: 1.5rem;
-  font-weight: bold;
+.container {
+  width: 100%;
+  height: 100%;
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #e9ecef;
+  display: flex;
+  flex-direction: column;
+  padding: 0.8rem;
+  font-family: "Cairo", sans-serif;
+  gap: 0.6rem;
+  min-height: 0;
 }
 
 .finishBtn {
-  background-color: #007bff;
-  color: white;
-  font-weight: 700;
-  font-size: 1.2rem;
-  border: none;
-  border-radius: 0.5rem;
-  padding: 1rem;
   width: 100%;
+  height: 50px; /* ارتفاع ثابت */
+  font-size: 1.2rem;
+  font-weight: 700;
+  background: #28a745;
+  color: white;
+  border: none;
+  border-radius: 10px;
   cursor: pointer;
-  transition: all 0.2s ease-in-out;
+  transition: all 0.2s ease;
+  direction: rtl;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.finishBtn:hover {
-  background-color: #0069d9;
+.finishBtn:hover:not(.disabled) {
+  background: #218838;
 }
+
+.finishBtn.disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+}
+
+.methodGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 0.2rem;
+  min-height: 0;
+  align-content: start; /* محاذاة للأعلى */
+}
+
+.methodBtn {
+  padding: 0.8rem;
+  background: #f8f9fa;
+  border: 2px solid #e9ecef;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  direction: rtl;
+  height: 65px; /* ارتفاع ثابت */
+  display: flex;
+  align-items: center;
+}
+
+.methodBtn:hover:not(:disabled) {
+  background: #e9ecef;
+  border-color: #0373ed;
+}
+
+.methodBtn:disabled {
+  background: #f5f5f5;
+  color: #999;
+  cursor: not-allowed;
+  border-color: #ddd;
+}
+
+.methodBtn.hasPayment {
+  background: #e8f5e8;
+  border-color: #28a745;
+  color: #155724;
+}
+
+.methodBtn.hasPayment:hover {
+  background: #d4edda;
+}
+
+.methodContent {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.2rem;
+}
+
+.methodType {
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-align: right;
+}
+
+.methodAmount {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #28a745;
+}
+
+.selectedPayments {
+  border-top: 1px solid #e9ecef;
+  padding-top: 0.6rem;
+  flex-shrink: 0;
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.paymentsTitle {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  direction: rtl;
+  color: #333;
+}
+
+.paymentsList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 0.5rem;
+}
+
+.selectedPayment {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.4rem;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border-right: 3px solid #0373ed;
+  min-height: 40px;
+}
+
+.paymentInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  flex: 1;
+  direction: rtl;
+  text-align: right;
+}
+
+.paymentMethod {
+  font-weight: 600;
+  color: #333;
+  font-size: 0.9rem;
+}
+
+.paymentAmount {
+  font-size: 0.8rem;
+  color: #0373ed;
+  font-weight: 600;
+}
+
+.removeBtn {
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.removeBtn:hover {
+  background: #c82333;
+}
+
+.totalPayments {
+  padding: 0.6rem;
+  background: #e9ecef;
+  border-radius: 6px;
+  text-align: center;
+  direction: rtl;
+  color: #333;
+  font-size: 0.9rem;
+}
+
+.paymentSummary {
+  border-top: 1px solid #e9ecef;
+  padding-top: 0.6rem;
+  flex-shrink: 0;
+}
+
+.summaryRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.3rem 0;
+  direction: rtl;
+  font-size: 0.9rem;
+}
+
+.remainingAmount {
+  color: #0373ed;
+  font-weight: 700;
+}
+
+.currentAmount {
+  color: #ff6b35;
+  font-weight: 700;
+}
+
+.instructionMessage {
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 8px;
+  padding: 0.8rem;
+  text-align: center;
+  direction: rtl;
+  color: #856404;
+  font-weight: 600;
+  flex-shrink: 0;
+  font-size: 0.9rem;
+}
+
+.instructionMessage p {
+  margin: 0;
+}
+
 ===== src/Pages/pos/newSales/components/PaymentPopup.tsx =====
-import React, { useState, useRef, useEffect } from 'react';
-import styles from '../styles/PaymentPopup.module.css';
+// src/Pages/pos/newSales/components/PaymentPopup.tsx
+import React, { useState, useEffect, useRef } from 'react';
+import { OrderSummary as OrderSummaryType } from '../types/PosSystem';
+import { Customer, CustomerAddress } from 'src/utils/api/pagesApi/customersApi';
 import PaymentLeft from './paymentPopup components/PaymentLeft';
 import PaymentCenter from './paymentPopup components/PaymentCenter';
 import PaymentRight from './paymentPopup components/PaymentRight';
+import * as posPaymentMethodsApi from '../../../../utils/api/pagesApi/posPaymentMethodsApi';
+import styles from '../styles/PaymentPopup.module.css';
 
 interface PaymentMethod {
   id: string;
@@ -2240,7 +3453,7 @@ interface PaymentMethod {
 interface PaymentPopupProps {
   isOpen: boolean;
   onClose: () => void;
-  orderSummary: any;
+  orderSummary: OrderSummaryType;
   customerName: string;
   onCustomerNameChange: (name: string) => void;
   onRemoveOrderItem: (itemId: string) => void;
@@ -2248,9 +3461,9 @@ interface PaymentPopupProps {
   selectedOrderItemId: string | null;
   onOrderItemSelect: (itemId: string) => void;
   onOrderItemDoubleClick?: (item: any) => void;
-  selectedCustomer: any;
-  selectedAddress: any;
-  onCustomerSelect: (customer: any, address: any) => void;
+  selectedCustomer: Customer | null;
+  selectedAddress: CustomerAddress | null;
+  onCustomerSelect: (customer: Customer, address: CustomerAddress) => void;
   orderType: string;
   onDeliveryChargeChange: (charge: number) => void;
   onPaymentComplete: (payments: PaymentMethod[]) => void;
@@ -2274,38 +3487,86 @@ const PaymentPopup: React.FC<PaymentPopupProps> = ({
   onDeliveryChargeChange,
   onPaymentComplete
 }) => {
-  // States
-  const [paidAmount, setPaidAmount] = useState('200.00');
-  const [selectedPayments, setSelectedPayments] = useState<PaymentMethod[]>([]);
-  
   const overlayRef = useRef<HTMLDivElement>(null);
-  
-  // Calculations
-  const totalAmount = orderSummary?.total || 200;
-  const remainingAmount = totalAmount - parseFloat(paidAmount || '0');
-  const currentInputAmount = parseFloat(paidAmount || '0');
+  const [loading, setLoading] = useState(true);
+  const [availablePaymentMethods, setAvailablePaymentMethods] = useState<string[]>([]);
+  const [selectedPayments, setSelectedPayments] = useState<PaymentMethod[]>([]);
+  const [paidAmount, setPaidAmount] = useState('0');
 
-  // إغلاق عند الضغط خارج النافذة
+  // حساب المبالغ
+  const deliveryCharge = 0; // يمكن تمريره من props
+  const subtotalWithDelivery = orderSummary.subtotal + deliveryCharge;
+  const taxAmount = 0;
+  const totalAmount = subtotalWithDelivery + taxAmount - orderSummary.discount;
+  
+  // حساب المبلغ المدفوع من طرق الدفع المحددة
+  const totalPaidFromMethods = selectedPayments.reduce((sum, payment) => sum + payment.amount, 0);
+  
+  // حساب المبلغ المتبقي (يجب أن يُدفع نقداً)
+  const remainingAmount = Math.max(0, totalAmount - totalPaidFromMethods);
+  
+  // المبلغ الحالي من الكيبورد
+  const currentInputAmount = parseFloat(paidAmount) || 0;
+  
+  // حساب الباقي للعميل (التغيير) - فقط للكاش
+  const changeAmount = Math.max(0, currentInputAmount - remainingAmount);
+
+
+
+  const handleAmountReset = () => {
+  setPaidAmount('0');
+};
+
+
+  // تحميل طرق الدفع المتاحة
+useEffect(() => {
+  const loadPaymentMethods = async () => {
+    try {
+      setLoading(true);
+      const methods = await posPaymentMethodsApi.getAll();
+      
+      // عرض طرق الدفع بنفس ترتيب الـ API مع فلترة بسيطة فقط
+      const filteredMethods = methods
+        .filter(method => {
+          // استبعاد طرق الدفع التي لا نريدها في POS فقط
+          const excludedMethods = ['CL', 'ضيافة', 'نقاط'];
+          return !excludedMethods.includes(method.name);
+        })
+        .map(method => method.name); // الحفاظ على الترتيب الأصلي من الـ API
+        
+      console.log('Payment methods loaded:', filteredMethods);
+      setAvailablePaymentMethods(filteredMethods);
+    } catch (error) {
+      console.error('Error loading payment methods:', error);
+      setAvailablePaymentMethods(['كاش', 'فيزا', 'إنستاباي', 'محفظة إلكترونية']);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (isOpen) {
+    loadPaymentMethods();
+  }
+}, [isOpen]);
+
+  // إغلاق عند الضغط على الخلفية
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (overlayRef.current && event.target === overlayRef.current) {
+    const handleOverlayClick = (e: MouseEvent) => {
+      if (overlayRef.current && e.target === overlayRef.current) {
         onClose();
       }
     };
-    if (isOpen) document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isOpen, onClose]);
 
-  // إغلاق بـ ESC
-  useEffect(() => {
-    const handleEsc = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose();
+    if (isOpen) {
+      document.addEventListener('mousedown', handleOverlayClick);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleOverlayClick);
     };
-    if (isOpen) document.addEventListener('keydown', handleEsc);
-    return () => document.removeEventListener('keydown', handleEsc);
   }, [isOpen, onClose]);
 
-  // Handlers for center section
+  // Handlers للقسم الأوسط
   const handleAmountChange = (amount: string) => {
     setPaidAmount(amount);
   };
@@ -2314,14 +3575,21 @@ const PaymentPopup: React.FC<PaymentPopupProps> = ({
     setPaidAmount(amount.toFixed(2));
   };
 
-  // Handlers for right section
+  // Handlers للقسم الأيمن
   const handlePaymentMethodAdd = (method: string, amount: number) => {
+    if (amount <= 0) return;
+    
     const newPayment: PaymentMethod = {
       id: Date.now().toString(),
       name: method,
       amount: amount
     };
+    
     setSelectedPayments(prev => [...prev, newPayment]);
+    
+    // إعادة تعيين المبلغ المدخل إلى المبلغ المتبقي الجديد
+    const newRemainingAmount = Math.max(0, totalAmount - totalPaidFromMethods - amount);
+    setPaidAmount(newRemainingAmount.toFixed(2));
   };
 
   const handlePaymentMethodRemove = (id: string) => {
@@ -2329,8 +3597,23 @@ const PaymentPopup: React.FC<PaymentPopupProps> = ({
   };
 
   const handleFinishPayment = () => {
-    if (selectedPayments.length > 0) {
-      onPaymentComplete(selectedPayments);
+    if (selectedPayments.length > 0 || currentInputAmount > 0) {
+      let finalPayments = [...selectedPayments];
+      
+      // إضافة الكاش إذا كان هناك مبلغ مدخل
+      if (currentInputAmount > 0) {
+        const cashMethod = availablePaymentMethods.find(method => 
+          method.toLowerCase().includes('كاش') || method.toLowerCase().includes('cash')
+        ) || 'كاش';
+        
+        finalPayments.push({
+          id: Date.now().toString(),
+          name: cashMethod,
+          amount: currentInputAmount
+        });
+      }
+      
+      onPaymentComplete(finalPayments);
       onClose();
     }
   };
@@ -2341,10 +3624,10 @@ const PaymentPopup: React.FC<PaymentPopupProps> = ({
     <div className={styles.overlay} ref={overlayRef}>
       <div className={styles.popup}>
         
-        {/* Header مع اللوجو وزر الإغلاق */}
+        {/* Header */}
         <div className={styles.header}>
           <div className={styles.logo}>
-            <img src="/images/logo.png" alt="Foodify" />
+            <img src="/images/img_foodify_logo_2_78x166.png" alt="Foodify" />
           </div>
           <h2 className={styles.title}>تأكيد الدفع</h2>
           <button className={styles.closeBtn} onClick={onClose}>
@@ -2352,25 +3635,17 @@ const PaymentPopup: React.FC<PaymentPopupProps> = ({
           </button>
         </div>
 
-        {/* المحتوى الرئيسي - 3 أجزاء متساوية */}
+        {/* المحتوى الرئيسي */}
         <div className={styles.content}>
           
           {/* الجانب الأيسر - OrderSummary */}
           <div className={styles.leftSection}>
             <PaymentLeft
               orderSummary={orderSummary}
-              customerName={customerName}
-              onCustomerNameChange={onCustomerNameChange}
-              onRemoveOrderItem={onRemoveOrderItem}
-              onRemoveSubItem={onRemoveSubItem}
-              selectedOrderItemId={selectedOrderItemId}
-              onOrderItemSelect={onOrderItemSelect}
-              onOrderItemDoubleClick={onOrderItemDoubleClick}
               selectedCustomer={selectedCustomer}
               selectedAddress={selectedAddress}
-              onCustomerSelect={onCustomerSelect}
               orderType={orderType}
-              onDeliveryChargeChange={onDeliveryChargeChange}
+              deliveryCharge={deliveryCharge}
             />
           </div>
 
@@ -2380,6 +3655,8 @@ const PaymentPopup: React.FC<PaymentPopupProps> = ({
               totalAmount={totalAmount}
               paidAmount={paidAmount}
               remainingAmount={remainingAmount}
+              changeAmount={changeAmount}
+              totalPaidFromMethods={totalPaidFromMethods}
               onAmountChange={handleAmountChange}
               onQuickAmountSelect={handleQuickAmountSelect}
             />
@@ -2387,14 +3664,28 @@ const PaymentPopup: React.FC<PaymentPopupProps> = ({
 
           {/* الجانب الأيمن - طرق الدفع */}
           <div className={styles.rightSection}>
-            <PaymentRight
-              availablePaymentMethods={['كاش', 'بطاقة ائتمان', 'فيزا', 'والت', 'خليط']}
-              selectedPayments={selectedPayments}
-              onPaymentMethodAdd={handlePaymentMethodAdd}
-              onPaymentMethodRemove={handlePaymentMethodRemove}
-              onFinishPayment={handleFinishPayment}
-              currentAmount={currentInputAmount}
-            />
+            {loading ? (
+              <div style={{ 
+                display: 'flex', 
+                justifyContent: 'center', 
+                alignItems: 'center', 
+                height: '100%',
+                fontFamily: 'Cairo, sans-serif'
+              }}>
+                جاري تحميل طرق الدفع...
+              </div>
+            ) : (
+<PaymentRight
+  availablePaymentMethods={availablePaymentMethods}
+  selectedPayments={selectedPayments}
+  onPaymentMethodAdd={handlePaymentMethodAdd}
+  onPaymentMethodRemove={handlePaymentMethodRemove}
+  onFinishPayment={handleFinishPayment}
+  currentAmount={currentInputAmount}
+  remainingAmount={remainingAmount}
+  onAmountReset={handleAmountReset} // إضافة هذا السطر
+/>
+            )}
           </div>
 
         </div>

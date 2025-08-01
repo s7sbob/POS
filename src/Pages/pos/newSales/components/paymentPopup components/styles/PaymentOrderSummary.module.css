@@ -512,7 +512,6 @@
 /* إضافة أنماط زر الرجوع */
 .backButtonContainer {
   padding: clamp(8px, 1.5vw, 16px);
-  border-top: 1px solid #e9ecef;
 }
 
 .backButton {
@@ -527,7 +526,6 @@
   transition: all 0.3s ease;
   font-family: 'Cairo', sans-serif;
   width: 100%;
-  max-width: 200px;
   margin: 0 auto;
   display: block;
 }

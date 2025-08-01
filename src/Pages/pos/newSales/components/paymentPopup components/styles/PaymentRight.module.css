@@ -1,78 +1,237 @@
-/* ✅ Final PaymentRight.module.css matching Figma with 2-column layout and Finish button */
+/* src/Pages/pos/newSales/components/paymentPopup components/styles/PaymentRight.module.css */
 
 .container {
+  width: 100%;
+  height: 100%;
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #e9ecef;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  height: 100%;
-  width: 100%;
-  padding: 1rem;
+  padding: 0.8rem;
   font-family: "Cairo", sans-serif;
-  box-sizing: border-box;
-}
-
-.methodList {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.75rem;
-  width: 100%;
-}
-
-.methodBtn {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background-color: #ffffff;
-  border: 1px solid #ccc;
-  border-radius: 0.5rem;
-  padding: 0.75rem 1rem;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease-in-out;
-  position: relative;
-}
-
-.methodBtn:hover {
-  background-color: #f1f1f1;
-}
-
-.active {
-  border: 2px solid #28a745;
-  background-color: #eafaf1;
-}
-
-.methodAmount {
-  color: #000;
-  font-size: 1rem;
-  font-weight: 600;
-}
-
-.methodType {
-  color: #000;
-  font-size: 1rem;
-  font-weight: 500;
-}
-
-.check {
-  color: #28a745;
-  font-size: 1.5rem;
-  font-weight: bold;
+  gap: 0.6rem;
+  min-height: 0;
 }
 
 .finishBtn {
-  background-color: #007bff;
-  color: white;
-  font-weight: 700;
-  font-size: 1.2rem;
-  border: none;
-  border-radius: 0.5rem;
-  padding: 1rem;
   width: 100%;
+  height: 50px; /* ارتفاع ثابت */
+  font-size: 1.2rem;
+  font-weight: 700;
+  background: #28a745;
+  color: white;
+  border: none;
+  border-radius: 10px;
   cursor: pointer;
-  transition: all 0.2s ease-in-out;
+  transition: all 0.2s ease;
+  direction: rtl;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.finishBtn:hover {
-  background-color: #0069d9;
+.finishBtn:hover:not(.disabled) {
+  background: #218838;
+}
+
+.finishBtn.disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+}
+
+.methodGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 0.2rem;
+  min-height: 0;
+  align-content: start; /* محاذاة للأعلى */
+}
+
+.methodBtn {
+  padding: 0.8rem;
+  background: #f8f9fa;
+  border: 2px solid #e9ecef;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  direction: rtl;
+  height: 65px; /* ارتفاع ثابت */
+  display: flex;
+  align-items: center;
+}
+
+.methodBtn:hover:not(:disabled) {
+  background: #e9ecef;
+  border-color: #0373ed;
+}
+
+.methodBtn:disabled {
+  background: #f5f5f5;
+  color: #999;
+  cursor: not-allowed;
+  border-color: #ddd;
+}
+
+.methodBtn.hasPayment {
+  background: #e8f5e8;
+  border-color: #28a745;
+  color: #155724;
+}
+
+.methodBtn.hasPayment:hover {
+  background: #d4edda;
+}
+
+.methodContent {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.2rem;
+}
+
+.methodType {
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-align: right;
+}
+
+.methodAmount {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #28a745;
+}
+
+.selectedPayments {
+  border-top: 1px solid #e9ecef;
+  padding-top: 0.6rem;
+  flex-shrink: 0;
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.paymentsTitle {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  direction: rtl;
+  color: #333;
+}
+
+.paymentsList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 0.5rem;
+}
+
+.selectedPayment {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.4rem;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border-right: 3px solid #0373ed;
+  min-height: 40px;
+}
+
+.paymentInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  flex: 1;
+  direction: rtl;
+  text-align: right;
+}
+
+.paymentMethod {
+  font-weight: 600;
+  color: #333;
+  font-size: 0.9rem;
+}
+
+.paymentAmount {
+  font-size: 0.8rem;
+  color: #0373ed;
+  font-weight: 600;
+}
+
+.removeBtn {
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.removeBtn:hover {
+  background: #c82333;
+}
+
+.totalPayments {
+  padding: 0.6rem;
+  background: #e9ecef;
+  border-radius: 6px;
+  text-align: center;
+  direction: rtl;
+  color: #333;
+  font-size: 0.9rem;
+}
+
+.paymentSummary {
+  border-top: 1px solid #e9ecef;
+  padding-top: 0.6rem;
+  flex-shrink: 0;
+}
+
+.summaryRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.3rem 0;
+  direction: rtl;
+  font-size: 0.9rem;
+}
+
+.remainingAmount {
+  color: #0373ed;
+  font-weight: 700;
+}
+
+.currentAmount {
+  color: #ff6b35;
+  font-weight: 700;
+}
+
+.instructionMessage {
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 8px;
+  padding: 0.8rem;
+  text-align: center;
+  direction: rtl;
+  color: #856404;
+  font-weight: 600;
+  flex-shrink: 0;
+  font-size: 0.9rem;
+}
+
+.instructionMessage p {
+  margin: 0;
 }

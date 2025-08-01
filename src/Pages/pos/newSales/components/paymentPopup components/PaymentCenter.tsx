@@ -1,3 +1,4 @@
+// src/Pages/pos/newSales/components/paymentPopup components/PaymentCenter.tsx
 import React from 'react';
 import styles from './styles/PaymentCenter.module.css';
 
@@ -5,6 +6,8 @@ interface PaymentCenterProps {
   totalAmount: number;
   paidAmount: string;
   remainingAmount: number;
+  changeAmount: number;
+  totalPaidFromMethods: number;
   onAmountChange: (amount: string) => void;
   onQuickAmountSelect: (amount: number) => void;
 }
@@ -13,6 +16,8 @@ const PaymentCenter: React.FC<PaymentCenterProps> = ({
   totalAmount,
   paidAmount,
   remainingAmount,
+  changeAmount,
+  totalPaidFromMethods,
   onAmountChange,
   onQuickAmountSelect
 }) => {
@@ -32,24 +37,39 @@ const PaymentCenter: React.FC<PaymentCenterProps> = ({
     }
   };
 
+  // حساب إجمالي المدفوع (من الطرق + النقدي الحالي)
+  const currentInputAmount = parseFloat(paidAmount) || 0;
+  const totalPaidAmount = totalPaidFromMethods + currentInputAmount;
+  
+  // حساب الباقي للعميل (إذا كان المدفوع أكبر من المطلوب)
+  const customerChange = Math.max(0, totalPaidAmount - totalAmount);
+
   return (
     <div className={styles.wrapper}>
       <div className={styles.headerRow}>
         <h2 className={styles.balanceTitle}>
-          الرصيد المستحق: {totalAmount.toFixed(2)}
+          إجمالي الفاتورة: {totalAmount.toFixed(2)} جنيه
         </h2>
       </div>
 
+      {/* عرض المبلغ المدفوع من طرق أخرى */}
+      {/* {totalPaidFromMethods > 0 && (
+        <div className={styles.paidMethodsRow}>
+          <div className={styles.paidMethodsInfo}>
+            <span className={styles.paidMethodsLabel}>مدفوع بطرق أخرى:</span>
+            <span className={styles.paidMethodsAmount}>{totalPaidFromMethods.toFixed(2)} جنيه</span>
+          </div>
+        </div>
+      )} */}
+
       <div className={styles.fieldsRow}>
-
-
         <div className={styles.fieldBlock}>
-          <label className={styles.label}>المبلغ المتبقي</label>
+          <label className={styles.label}>المبلغ المتبقي (كاش)</label>
           <div className={styles.remainingBox}>{remainingAmount.toFixed(2)}</div>
         </div>
 
-                <div className={styles.fieldBlock}>
-          <label className={styles.label}>المدفوع نقدا</label>
+        <div className={styles.fieldBlock}>
+          <label className={styles.label}>المدفوع نقداً</label>
           <input 
             type="text" 
             readOnly 
@@ -86,6 +106,23 @@ const PaymentCenter: React.FC<PaymentCenterProps> = ({
             ))}
           </div>
         ))}
+      </div>
+
+      {/* قسم الباقي للعميل - يظهر دائماً */}
+      <div className={styles.changeSection}>
+        {/* <div className={styles.changeHeader}>
+          <div className={styles.changeSummary}>
+            <span className={styles.summaryLabel}>إجمالي المدفوع:</span>
+            <span className={styles.summaryValue}>{totalPaidAmount.toFixed(2)} جنيه</span>
+          </div>
+        </div> */}
+        
+        <div className={styles.changeDisplay}>
+          <div className={styles.changeLabel}>الباقي للعميل</div>
+          <div className={`${styles.changeAmount} ${customerChange > 0 ? styles.hasChange : styles.noChange}`}>
+            {customerChange.toFixed(2)} جنيه
+          </div>
+        </div>
       </div>
     </div>
   );

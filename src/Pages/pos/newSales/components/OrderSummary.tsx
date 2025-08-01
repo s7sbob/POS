@@ -264,6 +264,8 @@ const [showPaymentPopup, setShowPaymentPopup] = useState(false);
     }
   }, [phoneInput, searchResults.length]);
 
+  const canOpenPayment = orderSummary.items.length > 0;
+
   // معالج Blur للـ input
   const handleInputBlur = useCallback(() => {
     // تأخير إخفاء الـ dropdown للسماح بالنقر على النتائج
@@ -732,24 +734,31 @@ const shouldShowPayOnly = orderType === 'Takeaway';
         </div>
 {!readOnly && (
   <div className={`${styles.actionButtons} ${shouldShowPayOnly ? styles.takeawayButtons : ''}`}>
-        {shouldShowAllButtons && (
-          <>
-            <button className={`${styles.actionButton} ${styles.send}`}>
-              <img src="/images/img_tabler_send.svg" alt="Send" />
-              <span>Send</span>
-            </button>
-            <button onClick={() => setShowPaymentPopup(true)} className={`${styles.actionButton} ${styles.print}`}>
-              <img src="/images/img_printer.svg" alt="Print" />
-              <span>Print</span>
-            </button>
-          </>
-        )}
-        <button onClick={() => setShowPaymentPopup(true)} className={`${styles.actionButton} ${styles.pay} ${shouldShowPayOnly ? styles.fullWidth : ''}`}>
-          <img src="/images/img_payment_02.svg" alt="Pay" />
-          <span>Pay</span>
-        </button>
-      </div>
+      {shouldShowAllButtons && (
+        <>
+          <button className={`${styles.actionButton} ${styles.send}`}>
+            <img src="/images/img_tabler_send.svg" alt="Send" />
+            <span>Send</span>
+          </button>
+          <button onClick={() => canOpenPayment && setShowPaymentPopup(true)}
+                  disabled={!canOpenPayment}
+                  className={`${styles.actionButton} ${styles.print} ${!canOpenPayment ? styles.disabledBtn : ''}`}>
+            <img src="/images/img_printer.svg" alt="Print" />
+            <span>Print</span>
+          </button>
+        </>
       )}
+      <button
+        onClick={() => canOpenPayment && setShowPaymentPopup(true)}
+        disabled={!canOpenPayment}
+        className={`${styles.actionButton} ${styles.pay} ${shouldShowPayOnly ? styles.fullWidth : ''} ${!canOpenPayment ? styles.disabledBtn : ''}`}
+        title={!canOpenPayment ? "لا يمكن الدفع بدون إضافة أصناف" : undefined}
+      >
+        <img src="/images/img_payment_02.svg" alt="Pay" />
+        <span>Pay</span>
+      </button>
+  </div>
+)}
 
     </div>
 

@@ -1,87 +1,126 @@
-/* ✅ Updated PaymentCenter.module.css */
+/* src/Pages/pos/newSales/components/paymentPopup components/styles/PaymentCenter.module.css */
 
 .wrapper {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
   height: 100%;
   width: 100%;
-  padding: 1rem;
+  padding: 0.8rem;
   box-sizing: border-box;
   font-family: "Cairo", sans-serif;
+  overflow: hidden;
+  gap: 0.6rem; /* مسافة صغيرة ثابتة */
 }
 
 .headerRow {
   display: flex;
   justify-content: center;
   align-items: center;
+  flex-shrink: 0;
+  height: 50px; /* ارتفاع ثابت */
 }
 
 .balanceTitle {
-  font-size: 1.8rem;
+  font-size: 1.4rem;
   font-weight: 700;
   color: #000;
   direction: rtl;
+  text-align: center;
+}
+
+.paidMethodsRow {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 0.6rem;
+  border-left: 4px solid #28a745;
+  flex-shrink: 0;
+  min-height: 40px; /* حد أدنى للارتفاع */
+}
+
+.paidMethodsInfo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.paidMethodsLabel {
+  font-size: 0.9rem;
+  color: #333;
+  font-weight: 600;
+}
+
+.paidMethodsAmount {
+  font-size: 1rem;
+  color: #28a745;
+  font-weight: 700;
 }
 
 .fieldsRow {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 2rem;
+  gap: 0.8rem;
+  flex-shrink: 0;
+  height: 80px; /* ارتفاع ثابت */
 }
 
 .fieldBlock {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.4rem;
+  height: 100%;
 }
 
 .label {
-  font-size: 1rem;
+  font-size: 0.8rem;
   font-weight: 700;
   color: #333;
   direction: rtl;
   text-align: right;
+  flex-shrink: 0;
+}
+
+.input, .remainingBox {
+  padding: 0.6rem;
+  font-size: 1.1rem;
+  text-align: center;
+  border-radius: 8px;
+  font-weight: 600;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .input {
-  padding: 0.75rem;
-  font-size: 1.5rem;
-  text-align: center;
   border: 1px solid #ccc;
-  border-radius: 10px;
   background: #fff;
-  font-weight: 600;
 }
 
 .remainingBox {
-  padding: 0.75rem;
-  font-size: 1.5rem;
-  text-align: center;
-  border-radius: 10px;
   background-color: #0373ed;
   color: white;
-  font-weight: 600;
 }
 
 .quickButtons {
   display: flex;
   justify-content: space-between;
-  gap: 0.75rem;
+  gap: 0.6rem;
+  flex-shrink: 0;
+  height: 45px; /* ارتفاع ثابت */
 }
 
 .quickBtn {
   flex: 1;
   background-color: #d9d9d9;
   border: none;
-  border-radius: 10px;
-  padding: 0.75rem;
-  font-size: 1.3rem;
+  border-radius: 8px;
+  font-size: 1rem;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s ease;
+  height: 100%;
 }
 
 .quickBtn:hover {
@@ -91,25 +130,33 @@
 .keypad {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.5rem;
+  flex: 1; /* يأخذ المساحة المتبقية */
+  min-height: 0;
+  overflow: hidden;
 }
 
 .keypadRow {
   display: flex;
   justify-content: space-between;
-  gap: 0.75rem;
+  gap: 0.5rem;
+  flex: 1; /* توزيع متساوي */
+  min-height: 0;
 }
 
 .keypadBtn {
   flex: 1;
-  padding: 1rem;
-  font-size: 1.3rem;
+  font-size: 1rem;
   font-weight: 700;
   background-color: #fff;
   border: 1px solid #ccc;
-  border-radius: 10px;
+  border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .keypadBtn.gray {
@@ -124,16 +171,122 @@
   transform: scale(0.96);
 }
 
-@media (max-width: 768px) {
+.changeSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.8rem;
+  background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+  border: 2px solid #2196f3;
+  border-radius: 10px;
+  flex-shrink: 0;
+  height: 100px; /* ارتفاع ثابت */
+  overflow: hidden;
+}
+
+.changeHeader {
+  display: flex;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.changeSummary {
+  display: flex;
+  gap: 0.8rem;
+  align-items: center;
+  direction: rtl;
+}
+
+.summaryLabel {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #1976d2;
+}
+
+.summaryValue {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #0d47a1;
+}
+
+.changeDisplay {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  flex: 1;
+  justify-content: center;
+}
+
+.changeLabel {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1976d2;
+  direction: rtl;
+}
+
+.changeAmount {
+  font-size: 1.4rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  padding: 0.3rem 0.6rem;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+}
+
+.hasChange {
+  background: linear-gradient(135deg, #28a745, #20c95e);
+  color: white;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+  box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+}
+
+.noChange {
+  background: #f8f9fa;
+  color: #6c757d;
+  border: 2px dashed #dee2e6;
+}
+
+/* تكيف مع دقة 1920x1080 مع zoom 125% */
+@media screen and (width: 1536px) and (height: 864px) {
+  .wrapper {
+    padding: 0.6rem;
+    gap: 0.5rem;
+  }
+  
+  .headerRow {
+    height: 45px;
+  }
+  
   .balanceTitle {
-    font-size: 1.4rem;
+    font-size: 1.3rem;
   }
-  .input, .remainingBox {
+  
+  .fieldsRow {
+    height: 70px;
+  }
+  
+  .quickButtons {
+    height: 40px;
+  }
+  
+  .changeSection {
+    height: 85px;
+    padding: 0.6rem;
+  }
+  
+  .changeAmount {
     font-size: 1.2rem;
-    padding: 0.5rem;
   }
-  .quickBtn, .keypadBtn {
-    font-size: 1rem;
-    padding: 0.5rem;
+}
+
+/* للشاشات عالية الدقة مع zoom */
+@media screen and (min-width: 1400px) and (max-width: 1600px) {
+  .wrapper {
+    gap: 0.5rem;
+  }
+  
+  .keypadBtn {
+    font-size: 0.95rem;
   }
 }

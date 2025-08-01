@@ -726,8 +726,7 @@ const PosSystem: React.FC = () => {
           selectedAddress={selectedAddress}
           onCustomerSelect={handleCustomerSelect}
           orderType={selectedOrderType}
-          onDeliveryChargeChange={handleDeliveryChargeChange}
-        />
+          onDeliveryChargeChange={handleDeliveryChargeChange} readOnly={false}        />
       </main>
 
       <PriceSelectionPopup
