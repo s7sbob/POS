@@ -4,10 +4,8 @@ import React from 'react';
 import Chart from 'react-apexcharts';
 import { useTheme } from '@mui/material/styles';
 import DashboardCard from '../../shared/DashboardCard';
-import CustomSelect from '../../forms/theme-elements/CustomSelect';
 import { Props } from 'react-apexcharts';
 import {
-  MenuItem,
   Typography,
   Box,
   Table,
@@ -27,12 +25,6 @@ import img3 from 'src/assets/images/products/s7.jpg';
 import img4 from 'src/assets/images/products/s4.jpg';
 
 const ProductPerformances = () => {
-  // for select
-  const [month, setMonth] = React.useState('1');
-
-  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setMonth(event.target.value);
-  };
 
   // chart color
   const theme = useTheme();
@@ -203,19 +195,6 @@ const ProductPerformances = () => {
   return (
     <DashboardCard
       title="Product Performance"
-      action={
-        <CustomSelect
-          labelId="month-dd"
-          id="month-dd"
-          size="small"
-          value={month}
-          onChange={handleChange}
-        >
-          <MenuItem value={1}>March 2023</MenuItem>
-          <MenuItem value={2}>April 2023</MenuItem>
-          <MenuItem value={3}>May 2023</MenuItem>
-        </CustomSelect>
-      }
     >
       <TableContainer>
         <Table

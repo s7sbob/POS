@@ -4,7 +4,6 @@ import React from 'react';
 import { Box, Grid2 as Grid } from '@mui/material';
 import PageContainer from 'src/components/container/PageContainer';
 
-import WeeklyStats from 'src/components/dashboards/modern/WeeklyStats';
 import YearlySales from 'src/components/dashboards/ecommerce/YearlySales';
 import PaymentGateways from 'src/components/dashboards/ecommerce/PaymentGateways';
 import WelcomeCard from 'src/components/dashboards/ecommerce/WelcomeCard';
@@ -104,7 +103,6 @@ const Ecommerce = () => {
               sm: 6,
               lg: 4
             }}>
-            <WeeklyStats />
           </Grid>
           {/* column */}
           <Grid

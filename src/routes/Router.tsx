@@ -21,7 +21,7 @@ const FullLayout = Loadable(lazy(() => import('../layouts/full/FullLayout')));
 const BlankLayout = Loadable(lazy(() => import('../layouts/blank/BlankLayout')));
 
 /* ****Dashboard***** */
-const ModernDash = Loadable(lazy(() => import('../views/dashboard/Modern')));
+const ModernDash = Loadable(lazy(() => import('../views/dashboard/Ecommerce')));
 
 /* ****Auth Pages***** */
 const Login = Loadable(lazy(() => import('../Pages/auth/LoginPage')));
