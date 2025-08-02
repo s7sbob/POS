@@ -17,7 +17,7 @@
 
 .finishBtn {
   width: 100%;
-  height: 50px; /* ارتفاع ثابت */
+  height: 50px;
   font-size: 1.2rem;
   font-weight: 700;
   background: #28a745;
@@ -42,156 +42,119 @@
   cursor: not-allowed;
 }
 
-.methodGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.6rem;
+.methodsList {
   flex: 1;
   overflow-y: auto;
   padding-right: 0.2rem;
-  min-height: 0;
-  align-content: start; /* محاذاة للأعلى */
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+  align-content: start;
 }
 
-.methodBtn {
-  padding: 0.8rem;
-  background: #f8f9fa;
+.methodItem {
   border: 2px solid #e9ecef;
-  border-radius: 10px;
+  border-radius: 8px;
+  padding: 0.6rem;
+  background: #f8f9fa;
+  transition: all 0.3s ease;
   cursor: pointer;
-  transition: all 0.2s ease;
-  direction: rtl;
-  height: 65px; /* ارتفاع ثابت */
-  display: flex;
-  align-items: center;
-}
-
-.methodBtn:hover:not(:disabled) {
-  background: #e9ecef;
-  border-color: #0373ed;
-}
-
-.methodBtn:disabled {
-  background: #f5f5f5;
-  color: #999;
-  cursor: not-allowed;
-  border-color: #ddd;
-}
-
-.methodBtn.hasPayment {
-  background: #e8f5e8;
-  border-color: #28a745;
-  color: #155724;
-}
-
-.methodBtn.hasPayment:hover {
-  background: #d4edda;
-}
-
-.methodContent {
-  width: 100%;
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
-  gap: 0.2rem;
+  min-height: 60px;
+  position: relative;
+  user-select: none; /* منع تحديد النص */
 }
 
-.methodType {
-  font-size: 0.95rem;
-  font-weight: 600;
+.methodItem:hover {
+  background: #e9ecef;
+  border-color: #dee2e6;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* طريقة الدفع المفعلة */
+.methodItem.active {
+  background: #e8f5e8;
+  border-color: #28a745;
+}
+
+.methodItem.active:hover {
+  background: #d4edda;
+  border-color: #1e7e34;
+}
+
+/* طريقة الدفع المحددة للتعديل */
+.methodItem.selectedForEdit {
+  background: #e8f4fd;
+  border-color: #0373ed;
+  box-shadow: 0 0 0 2px rgba(3, 115, 237, 0.2);
+}
+
+.methodItem.selectedForEdit:hover {
+  background: #d1ecf1;
+}
+
+/* طريقة الدفع المفعلة والمحددة للتعديل */
+.methodItem.active.selectedForEdit {
+  background: #d4edda;
+  border-color: #0373ed;
+  box-shadow: 0 0 0 2px rgba(3, 115, 237, 0.3);
+}
+
+/* طريقة دفع بها مبلغ */
+.methodItem.hasAmount {
+  border-width: 3px;
+}
+
+.methodHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  direction: rtl;
+  margin-bottom: 0.3rem;
+}
+
+.methodCheckbox {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #28a745;
+  flex-shrink: 0;
+}
+
+.methodName {
+  font-size: 0.9rem;
+  color: #333;
+  flex: 1;
   text-align: right;
+  line-height: 1.2;
+  word-break: break-word;
+  font-weight: 600;
 }
 
 .methodAmount {
   font-size: 0.8rem;
-  font-weight: 700;
   color: #28a745;
-}
-
-.selectedPayments {
-  border-top: 1px solid #e9ecef;
-  padding-top: 0.6rem;
-  flex-shrink: 0;
-  max-height: 150px;
-  overflow-y: auto;
-}
-
-.paymentsTitle {
-  font-size: 1rem;
   font-weight: 700;
-  margin-bottom: 0.5rem;
-  direction: rtl;
-  color: #333;
+  background: rgba(40, 167, 69, 0.15);
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  text-align: center;
+  margin-top: 0.2rem;
+  border: 1px solid rgba(40, 167, 69, 0.3);
 }
 
-.paymentsList {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-  margin-bottom: 0.5rem;
-}
-
-.selectedPayment {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.4rem;
-  background: #f8f9fa;
-  border-radius: 6px;
-  border-right: 3px solid #0373ed;
-  min-height: 40px;
-}
-
-.paymentInfo {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-  flex: 1;
-  direction: rtl;
-  text-align: right;
-}
-
-.paymentMethod {
-  font-weight: 600;
-  color: #333;
-  font-size: 0.9rem;
-}
-
-.paymentAmount {
-  font-size: 0.8rem;
+.editIndicator {
+  font-size: 0.7rem;
   color: #0373ed;
   font-weight: 600;
-}
-
-.removeBtn {
-  background: #dc3545;
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 22px;
-  height: 22px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  font-weight: bold;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-  flex-shrink: 0;
-}
-
-.removeBtn:hover {
-  background: #c82333;
-}
-
-.totalPayments {
-  padding: 0.6rem;
-  background: #e9ecef;
-  border-radius: 6px;
+  background: rgba(3, 115, 237, 0.1);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
   text-align: center;
-  direction: rtl;
-  color: #333;
-  font-size: 0.9rem;
+  margin-top: 0.2rem;
+  border: 1px solid rgba(3, 115, 237, 0.2);
 }
 
 .paymentSummary {
@@ -209,29 +172,65 @@
   font-size: 0.9rem;
 }
 
-.remainingAmount {
+.totalPaid {
+  color: #28a745;
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.methodsCount {
   color: #0373ed;
-  font-weight: 700;
-}
-
-.currentAmount {
-  color: #ff6b35;
-  font-weight: 700;
-}
-
-.instructionMessage {
-  background: #fff3cd;
-  border: 1px solid #ffeaa7;
-  border-radius: 8px;
-  padding: 0.8rem;
-  text-align: center;
-  direction: rtl;
-  color: #856404;
   font-weight: 600;
-  flex-shrink: 0;
-  font-size: 0.9rem;
 }
 
-.instructionMessage p {
-  margin: 0;
+/* تحسينات للشاشات الصغيرة */
+@media (max-width: 768px) {
+  .methodsList {
+    grid-template-columns: 1fr;
+  }
+  
+  .methodName {
+    font-size: 0.85rem;
+  }
+  
+  .methodAmount {
+    font-size: 0.75rem;
+  }
+}
+
+/* تحسين للشاشات الواسعة جداً */
+@media (min-width: 1400px) {
+  .methodsList {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}
+
+/* أنماط للأسماء الطويلة */
+.methodItem.longName .methodName {
+  font-size: 0.8rem;
+  line-height: 1.1;
+}
+
+/* تحسين التمرير */
+.methodsList {
+  scrollbar-width: thin;
+  scrollbar-color: #ccc #f1f1f1;
+}
+
+.methodsList::-webkit-scrollbar {
+  width: 6px;
+}
+
+.methodsList::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.methodsList::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 3px;
+}
+
+.methodsList::-webkit-scrollbar-thumb:hover {
+  background: #999;
 }

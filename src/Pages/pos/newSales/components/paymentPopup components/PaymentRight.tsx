@@ -1,50 +1,83 @@
+// src/Pages/pos/newSales/components/paymentPopup components/PaymentRight.tsx
 import React from 'react';
 import styles from './styles/PaymentRight.module.css';
 
-interface PaymentMethod {
-  id: string;
-  name: string;
+interface PaymentMethodData {
+  method: string;
   amount: number;
+  isSelected: boolean;
 }
 
 interface PaymentRightProps {
   availablePaymentMethods: string[];
-  selectedPayments: PaymentMethod[];
-  onPaymentMethodAdd: (method: string, amount: number) => void;
-  onPaymentMethodRemove: (id: string) => void;
+  selectedPayments: PaymentMethodData[];
+  selectedPaymentMethod: string | null;
+  onPaymentMethodSelect: (method: string) => void;
+  onPaymentMethodToggle: (method: string) => void;
   onFinishPayment: () => void;
-  currentAmount: number;
-  remainingAmount: number;
-  onAmountReset: () => void; // إضافة function لتصفير المبلغ
+  canFinish: boolean;
+  totalPaidAllMethods: number;
 }
 
 const PaymentRight: React.FC<PaymentRightProps> = ({
   availablePaymentMethods = [],
   selectedPayments,
-  onPaymentMethodAdd,
-  onPaymentMethodRemove,
+  selectedPaymentMethod,
+  onPaymentMethodSelect,
+  onPaymentMethodToggle,
   onFinishPayment,
-  currentAmount,
-  remainingAmount,
-  onAmountReset
-}) => {
-  const handleSelect = (method: string) => {
-    // التأكد من وجود مبلغ قبل الإضافة
-    if (currentAmount > 0) {
-      onPaymentMethodAdd(method, currentAmount);
-      onAmountReset(); // تصفير المبلغ بعد الإضافة
+  canFinish}) => {
+  const getPaymentData = (methodName: string) => {
+    return selectedPayments.find(payment => payment.method === methodName);
+  };
+
+  const handleCardClick = (method: string) => {
+    const paymentData = getPaymentData(method);
+    const isCurrentlyActive = paymentData?.isSelected || false;
+    
+    if (!isCurrentlyActive) {
+      // إذا لم تكن مفعلة، قم بتفعيلها أولاً ثم اختيارها للتعديل
+      onPaymentMethodToggle(method);
+      onPaymentMethodSelect(method);
+    } else {
+      // إذا كانت مفعلة، اختارها للتعديل فقط
+      onPaymentMethodSelect(method);
     }
   };
 
-  // البحث عن طريقة دفع موجودة لتحديث مبلغها
-  const getPaymentMethodTotal = (methodName: string) => {
-    return selectedPayments
-      .filter(payment => payment.name === methodName)
-      .reduce((sum, payment) => sum + payment.amount, 0);
+  const handleCheckboxChange = (method: string, event: React.ChangeEvent<HTMLInputElement>) => {
+    // منع تشغيل click الخاص بالكارد
+    event.stopPropagation();
+    
+    // تبديل حالة التفعيل فقط
+    onPaymentMethodToggle(method);
+    
+    const paymentData = getPaymentData(method);
+    const willBeSelected = !(paymentData?.isSelected || false);
+    
+    if (!willBeSelected && selectedPaymentMethod === method) {
+      // إذا تم إلغاء تفعيل الطريقة المحددة حالياً للتعديل، اختر طريقة أخرى
+      const otherActiveMethod = selectedPayments.find(p => 
+        p.method !== method && p.isSelected && p.amount > 0
+      );
+      if (otherActiveMethod) {
+        onPaymentMethodSelect(otherActiveMethod.method);
+      } else {
+        // البحث عن الكاش كخيار احتياطي
+        const cashMethod = selectedPayments.find(p => 
+          (p.method.toLowerCase().includes('كاش') || p.method.toLowerCase().includes('cash')) && 
+          p.method !== method &&
+          p.isSelected
+        );
+        if (cashMethod) {
+          onPaymentMethodSelect(cashMethod.method);
+        }
+      }
+    }
   };
 
-  // التحقق من إمكانية إنهاء الدفع
-  const canFinish = selectedPayments.length > 0;
+  // تحديد إذا كان اسم طريقة الدفع طويل
+  const isLongName = (name: string) => name.length > 15;
 
   if (availablePaymentMethods.length === 0) {
     return (
@@ -75,80 +108,63 @@ const PaymentRight: React.FC<PaymentRightProps> = ({
       </button>
       
       {/* طرق الدفع في عمودين */}
-      <div className={styles.methodGrid}>
+      <div className={styles.methodsList}>
         {availablePaymentMethods.map((method) => {
-          const totalForMethod = getPaymentMethodTotal(method);
-          const hasPayment = totalForMethod > 0;
+          const paymentData = getPaymentData(method);
+          const amount = paymentData?.amount || 0;
+          const isActive = paymentData?.isSelected || false;
+          const isSelectedForEdit = selectedPaymentMethod === method;
+          const hasAmount = amount > 0;
+          const longName = isLongName(method);
           
           return (
-            <button
-              key={method}
-              className={`${styles.methodBtn} ${hasPayment ? styles.hasPayment : ''}`}
-              onClick={() => handleSelect(method)}
-              disabled={currentAmount <= 0} // تعطيل الزر إذا لم يكن هناك مبلغ
+            <div 
+              key={method} 
+              className={`${styles.methodItem} ${isActive ? styles.active : ''} ${isSelectedForEdit ? styles.selectedForEdit : ''} ${hasAmount ? styles.hasAmount : ''} ${longName ? styles.longName : ''}`}
+              onClick={() => handleCardClick(method)}
             >
-              <div className={styles.methodContent}>
-                <span className={styles.methodType}>{method}</span>
-                {hasPayment && (
-                  <span className={styles.methodAmount}>
-                    {totalForMethod.toFixed(2)} جنيه
-                  </span>
-                )}
+              <div className={styles.methodHeader}>
+                <input
+                  type="checkbox"
+                  checked={isActive}
+                  onChange={(e) => handleCheckboxChange(method, e)}
+                  className={styles.methodCheckbox}
+                />
+                <span className={styles.methodName}>{method}</span>
               </div>
-            </button>
+              
+              {hasAmount && (
+                <div className={styles.methodAmount}>
+                  {amount.toFixed(2)} جنيه
+                </div>
+              )}
+              
+              {isSelectedForEdit && (
+                <div className={styles.editIndicator}>
+                  يتم التعديل عليها الآن
+                </div>
+              )}
+            </div>
           );
         })}
       </div>
 
-      {/* عرض ملخص المدفوعات المحددة */}
-      {selectedPayments.length > 0 && (
-        <div className={styles.selectedPayments}>
-          <h4 className={styles.paymentsTitle}>المدفوعات المحددة:</h4>
-          <div className={styles.paymentsList}>
-            {selectedPayments.map((payment) => (
-              <div key={payment.id} className={styles.selectedPayment}>
-                <div className={styles.paymentInfo}>
-                  <span className={styles.paymentMethod}>{payment.name}</span>
-                  <span className={styles.paymentAmount}>{payment.amount.toFixed(2)} جنيه</span>
-                </div>
-                <button 
-                  onClick={() => onPaymentMethodRemove(payment.id)}
-                  className={styles.removeBtn}
-                  title="حذف"
-                >
-                  ×
-                </button>
-              </div>
-            ))}
-          </div>
-          <div className={styles.totalPayments}>
-            <strong>
-              إجمالي المدفوع: {selectedPayments.reduce((sum, payment) => sum + payment.amount, 0).toFixed(2)} جنيه
-            </strong>
-          </div>
-        </div>
-      )}
-
-      {/* عرض معلومات المبلغ المتبقي */}
+      {/* معلومات الدفع */}
       <div className={styles.paymentSummary}>
+        {/* <div className={styles.summaryRow}>
+          <span>إجمالي المدفوع:</span>
+          <span className={styles.totalPaid}>
+            {totalPaidAllMethods.toFixed(2)} جنيه
+          </span>
+        </div> */}
+        
         <div className={styles.summaryRow}>
-          <span>المتبقي للدفع:</span>
-          <span className={styles.remainingAmount}>{remainingAmount.toFixed(2)} جنيه</span>
+          <span>طرق الدفع المستخدمة:</span>
+          <span className={styles.methodsCount}>
+            {selectedPayments.filter(p => p.isSelected && p.amount > 0).length}
+          </span>
         </div>
-        {currentAmount > 0 && (
-          <div className={styles.summaryRow}>
-            <span>المبلغ الحالي:</span>
-            <span className={styles.currentAmount}>{currentAmount.toFixed(2)} جنيه</span>
-          </div>
-        )}
       </div>
-
-      {/* رسالة توضيحية */}
-      {currentAmount <= 0 && (
-        <div className={styles.instructionMessage}>
-          <p>اكتب المبلغ أولاً ثم اختر طريقة الدفع</p>
-        </div>
-      )}
     </div>
   );
 };

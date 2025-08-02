@@ -1,6 +1,6 @@
 // src/Pages/pos/newSales/components/paymentPopup components/PaymentOrderSummary.tsx
 import React from 'react';
-import { OrderSummary as OrderSummaryType, OrderItem, SubItem } from '../../types/PosSystem';
+import { OrderSummary as OrderSummaryType, SubItem } from '../../types/PosSystem';
 import { Customer, CustomerAddress } from 'src/utils/api/pagesApi/customersApi';
 import styles from './styles/PaymentOrderSummary.module.css';
 
@@ -18,10 +18,7 @@ const PaymentOrderSummary: React.FC<PaymentOrderSummaryProps> = ({
   orderSummary,
   selectedCustomer,
   selectedAddress,
-  orderType,
-  deliveryCharge,
-  onGoBack
-}) => {
+  deliveryCharge}) => {
   // حساب الإجمالي النهائي
   const subtotalWithDelivery = orderSummary.subtotal + deliveryCharge;
   const taxAmount = 0;
@@ -201,11 +198,11 @@ const PaymentOrderSummary: React.FC<PaymentOrderSummaryProps> = ({
           <span>{finalTotal.toFixed(2)} <small>EGP</small></span>
         </div>
 
-              <div className={styles.backButtonContainer}>
+              {/* <div className={styles.backButtonContainer}>
         <button className={styles.backButton} onClick={onGoBack}>
           رجوع
         </button>
-      </div>
+      </div> */}
       </div>
     </div>
   );

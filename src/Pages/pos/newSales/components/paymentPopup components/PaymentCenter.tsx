@@ -5,9 +5,9 @@ import styles from './styles/PaymentCenter.module.css';
 interface PaymentCenterProps {
   totalAmount: number;
   paidAmount: string;
-  remainingAmount: number;
-  changeAmount: number;
-  totalPaidFromMethods: number;
+  cashAmount: number; // إضافة مبلغ الكاش منفصل
+  remainingForCustomer: number;
+  selectedPaymentMethod: string | null;
   onAmountChange: (amount: string) => void;
   onQuickAmountSelect: (amount: number) => void;
 }
@@ -15,12 +15,16 @@ interface PaymentCenterProps {
 const PaymentCenter: React.FC<PaymentCenterProps> = ({
   totalAmount,
   paidAmount,
-  remainingAmount,
-  changeAmount,
-  totalPaidFromMethods,
+  cashAmount, // مبلغ الكاش فقط
+  remainingForCustomer,
+  selectedPaymentMethod,
   onAmountChange,
   onQuickAmountSelect
 }) => {
+  // التحقق إذا كانت طريقة الدفع المختارة هي الكاش
+  const isCashSelected = selectedPaymentMethod?.toLowerCase().includes('كاش') || 
+                        selectedPaymentMethod?.toLowerCase().includes('cash');
+
   const handleKeypadClick = (value: string) => {
     if (value === 'c') {
       onAmountChange('0');
@@ -28,21 +32,33 @@ const PaymentCenter: React.FC<PaymentCenterProps> = ({
       const newValue = paidAmount.slice(0, -1);
       onAmountChange(newValue || '0');
     } else if (value === '.') {
-      if (!paidAmount.includes('.')) {
-        onAmountChange(paidAmount === '0' ? '0.' : paidAmount + '.');
+      // إذا كان المبلغ 0 أو 0.00، ابدأ بـ 0.
+      if (paidAmount === '0' || paidAmount === '0.00' || !paidAmount.includes('.')) {
+        onAmountChange(paidAmount === '0' || paidAmount === '0.00' ? '0.' : paidAmount + '.');
       }
     } else {
-      const newValue = paidAmount === '0' ? value : paidAmount + value;
-      onAmountChange(newValue);
+      // إذا كان المبلغ الحالي هو نفس المبلغ الافتراضي، ابدأ من الصفر
+      const currentPaymentAmount = parseFloat(paidAmount) || 0;
+      const isDefaultAmount = !isCashSelected ? currentPaymentAmount === 0 : 
+                             currentPaymentAmount === Math.max(0, totalAmount - getCashlessTotal());
+      
+      if (isDefaultAmount || paidAmount === '0' || paidAmount === '0.00') {
+        onAmountChange(value);
+      } else {
+        onAmountChange(paidAmount + value);
+      }
     }
   };
 
-  // حساب إجمالي المدفوع (من الطرق + النقدي الحالي)
-  const currentInputAmount = parseFloat(paidAmount) || 0;
-  const totalPaidAmount = totalPaidFromMethods + currentInputAmount;
-  
-  // حساب الباقي للعميل (إذا كان المدفوع أكبر من المطلوب)
-  const customerChange = Math.max(0, totalPaidAmount - totalAmount);
+  // دالة للحصول على مجموع طرق الدفع غير الكاش (مؤقتة للاستخدام في المنطق)
+  const getCashlessTotal = () => {
+    // هذه دالة مؤقتة، سيتم تمرير القيمة الفعلية من الـ parent
+    return 0;
+  };
+
+  const handleQuickAmountClick = (amount: number) => {
+    onQuickAmountSelect(amount);
+  };
 
   return (
     <div className={styles.wrapper}>
@@ -52,36 +68,30 @@ const PaymentCenter: React.FC<PaymentCenterProps> = ({
         </h2>
       </div>
 
-      {/* عرض المبلغ المدفوع من طرق أخرى */}
-      {/* {totalPaidFromMethods > 0 && (
-        <div className={styles.paidMethodsRow}>
-          <div className={styles.paidMethodsInfo}>
-            <span className={styles.paidMethodsLabel}>مدفوع بطرق أخرى:</span>
-            <span className={styles.paidMethodsAmount}>{totalPaidFromMethods.toFixed(2)} جنيه</span>
-          </div>
-        </div>
-      )} */}
-
       <div className={styles.fieldsRow}>
         <div className={styles.fieldBlock}>
           <label className={styles.label}>المبلغ المتبقي (كاش)</label>
-          <div className={styles.remainingBox}>{remainingAmount.toFixed(2)}</div>
+          <div className={styles.remainingBox}>
+            {remainingForCustomer.toFixed(2)}
+          </div>
         </div>
 
         <div className={styles.fieldBlock}>
-          <label className={styles.label}>المدفوع نقداً</label>
-          <input 
-            type="text" 
-            readOnly 
-            value={paidAmount} 
-            className={styles.input} 
-          />
+          <label className={styles.label}>المدفوع كاش</label>
+          <div className={styles.cashPaidBox}>
+            {cashAmount.toFixed(2)}
+          </div>
         </div>
       </div>
 
       <div className={styles.quickButtons}>
         {[5, 10, 15, 20].map(val => (
-          <button key={val} className={styles.quickBtn} onClick={() => onQuickAmountSelect(val)}>
+          <button 
+            key={val} 
+            className={`${styles.quickBtn} ${!selectedPaymentMethod ? styles.disabled : ''}`}
+            onClick={() => handleQuickAmountClick(val)}
+            disabled={!selectedPaymentMethod}
+          >
             {val} EGP
           </button>
         ))}
@@ -98,8 +108,9 @@ const PaymentCenter: React.FC<PaymentCenterProps> = ({
             {row.map(key => (
               <button
                 key={key}
-                className={`${styles.keypadBtn} ${['50','100','200'].includes(key) ? styles.gray : ''}`}
-                onClick={() => key === 'erase' ? handleKeypadClick('erase') : handleKeypadClick(key)}
+                className={`${styles.keypadBtn} ${['50','100','200'].includes(key) ? styles.gray : ''} ${!selectedPaymentMethod ? styles.disabled : ''}`}
+                onClick={() => selectedPaymentMethod && (key === 'erase' ? handleKeypadClick('erase') : handleKeypadClick(key))}
+                disabled={!selectedPaymentMethod}
               >
                 {key === 'erase' ? '×' : key === 'c' ? 'C' : key + (['50','100','200'].includes(key) ? ' EGP' : '')}
               </button>
@@ -108,22 +119,24 @@ const PaymentCenter: React.FC<PaymentCenterProps> = ({
         ))}
       </div>
 
-      {/* قسم الباقي للعميل - يظهر دائماً */}
-      <div className={styles.changeSection}>
-        {/* <div className={styles.changeHeader}>
-          <div className={styles.changeSummary}>
-            <span className={styles.summaryLabel}>إجمالي المدفوع:</span>
-            <span className={styles.summaryValue}>{totalPaidAmount.toFixed(2)} جنيه</span>
-          </div>
-        </div> */}
-        
-        <div className={styles.changeDisplay}>
-          <div className={styles.changeLabel}>الباقي للعميل</div>
-          <div className={`${styles.changeAmount} ${customerChange > 0 ? styles.hasChange : styles.noChange}`}>
-            {customerChange.toFixed(2)} جنيه
-          </div>
+      {!selectedPaymentMethod && (
+        <div className={styles.noSelectionMessage}>
+          اختر طريقة دفع من القائمة اليمين لبدء الإدخال
         </div>
-      </div>
+      )}
+
+      {/* {selectedPaymentMethod && (
+        <div className={styles.selectedMethodInfo}>
+          <span className={styles.selectedMethodName}>
+            المبلغ المدفوع بـ {selectedPaymentMethod}: {paidAmount} جنيه
+          </span>
+          {!isCashSelected && (
+            <span className={styles.limitWarning}>
+              الحد الأقصى: {totalAmount.toFixed(2)} جنيه
+            </span>
+          )}
+        </div>
+      )} */}
     </div>
   );
 };

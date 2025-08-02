@@ -1184,6 +1184,8 @@ const [showPaymentPopup, setShowPaymentPopup] = useState(false);
     }
   }, [phoneInput, searchResults.length]);
 
+  const canOpenPayment = orderSummary.items.length > 0;
+
   // معالج Blur للـ input
   const handleInputBlur = useCallback(() => {
     // تأخير إخفاء الـ dropdown للسماح بالنقر على النتائج
@@ -1652,24 +1654,31 @@ const shouldShowPayOnly = orderType === 'Takeaway';
         </div>
 {!readOnly && (
   <div className={`${styles.actionButtons} ${shouldShowPayOnly ? styles.takeawayButtons : ''}`}>
-        {shouldShowAllButtons && (
-          <>
-            <button className={`${styles.actionButton} ${styles.send}`}>
-              <img src="/images/img_tabler_send.svg" alt="Send" />
-              <span>Send</span>
-            </button>
-            <button onClick={() => setShowPaymentPopup(true)} className={`${styles.actionButton} ${styles.print}`}>
-              <img src="/images/img_printer.svg" alt="Print" />
-              <span>Print</span>
-            </button>
-          </>
-        )}
-        <button onClick={() => setShowPaymentPopup(true)} className={`${styles.actionButton} ${styles.pay} ${shouldShowPayOnly ? styles.fullWidth : ''}`}>
-          <img src="/images/img_payment_02.svg" alt="Pay" />
-          <span>Pay</span>
-        </button>
-      </div>
+      {shouldShowAllButtons && (
+        <>
+          <button className={`${styles.actionButton} ${styles.send}`}>
+            <img src="/images/img_tabler_send.svg" alt="Send" />
+            <span>Send</span>
+          </button>
+          <button onClick={() => canOpenPayment && setShowPaymentPopup(true)}
+                  disabled={!canOpenPayment}
+                  className={`${styles.actionButton} ${styles.print} ${!canOpenPayment ? styles.disabledBtn : ''}`}>
+            <img src="/images/img_printer.svg" alt="Print" />
+            <span>Print</span>
+          </button>
+        </>
       )}
+      <button
+        onClick={() => canOpenPayment && setShowPaymentPopup(true)}
+        disabled={!canOpenPayment}
+        className={`${styles.actionButton} ${styles.pay} ${shouldShowPayOnly ? styles.fullWidth : ''} ${!canOpenPayment ? styles.disabledBtn : ''}`}
+        title={!canOpenPayment ? "لا يمكن الدفع بدون إضافة أصناف" : undefined}
+      >
+        <img src="/images/img_payment_02.svg" alt="Pay" />
+        <span>Pay</span>
+      </button>
+  </div>
+)}
 
     </div>
 
@@ -3443,6 +3452,7 @@ import PaymentCenter from './paymentPopup components/PaymentCenter';
 import PaymentRight from './paymentPopup components/PaymentRight';
 import * as posPaymentMethodsApi from '../../../../utils/api/pagesApi/posPaymentMethodsApi';
 import styles from '../styles/PaymentPopup.module.css';
+import { usePosPaymentMethods } from '../hooks/usePosPaymentMethods';
 
 interface PaymentMethod {
   id: string;
@@ -3488,7 +3498,9 @@ const PaymentPopup: React.FC<PaymentPopupProps> = ({
   onPaymentComplete
 }) => {
   const overlayRef = useRef<HTMLDivElement>(null);
-  const [loading, setLoading] = useState(true);
+
+   // استدعاء hook طرق الدفع الموحدة
+  const { paymentMethods, loading, error } = usePosPaymentMethods();
   const [availablePaymentMethods, setAvailablePaymentMethods] = useState<string[]>([]);
   const [selectedPayments, setSelectedPayments] = useState<PaymentMethod[]>([]);
   const [paidAmount, setPaidAmount] = useState('0');
@@ -3511,44 +3523,6 @@ const PaymentPopup: React.FC<PaymentPopupProps> = ({
   // حساب الباقي للعميل (التغيير) - فقط للكاش
   const changeAmount = Math.max(0, currentInputAmount - remainingAmount);
 
-
-
-  const handleAmountReset = () => {
-  setPaidAmount('0');
-};
-
-
-  // تحميل طرق الدفع المتاحة
-useEffect(() => {
-  const loadPaymentMethods = async () => {
-    try {
-      setLoading(true);
-      const methods = await posPaymentMethodsApi.getAll();
-      
-      // عرض طرق الدفع بنفس ترتيب الـ API مع فلترة بسيطة فقط
-      const filteredMethods = methods
-        .filter(method => {
-          // استبعاد طرق الدفع التي لا نريدها في POS فقط
-          const excludedMethods = ['CL', 'ضيافة', 'نقاط'];
-          return !excludedMethods.includes(method.name);
-        })
-        .map(method => method.name); // الحفاظ على الترتيب الأصلي من الـ API
-        
-      console.log('Payment methods loaded:', filteredMethods);
-      setAvailablePaymentMethods(filteredMethods);
-    } catch (error) {
-      console.error('Error loading payment methods:', error);
-      setAvailablePaymentMethods(['كاش', 'فيزا', 'إنستاباي', 'محفظة إلكترونية']);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (isOpen) {
-    loadPaymentMethods();
-  }
-}, [isOpen]);
-
   // إغلاق عند الضغط على الخلفية
   useEffect(() => {
     const handleOverlayClick = (e: MouseEvent) => {
@@ -3566,28 +3540,28 @@ useEffect(() => {
     };
   }, [isOpen, onClose]);
 
-  // Handlers للقسم الأوسط
-  const handleAmountChange = (amount: string) => {
-    setPaidAmount(amount);
-  };
+ // **تهيئة الدفع الافتراضي بالكاش بقيمة الفاتورة**  
+  useEffect(() => {
+    if (!isOpen || !paymentMethods?.length) return;
+    // إذا لا يوجد مدفوعات حالية، اجعل الكاش جاهز وحدد المبلغ افتراضاً.
+    setSelectedPayments([]);
+    setPaidAmount(totalAmount.toFixed(2));
+    // لا نضيف فعليًا PaymentMethod، بل فقط نجهز الـ paidAmount وزر الكاش مفعّل.
+  }, [isOpen, totalAmount, paymentMethods]);
 
-  const handleQuickAmountSelect = (amount: number) => {
-    setPaidAmount(amount.toFixed(2));
-  };
+  // Handlers للقسم الأوسط
+  const handleAmountChange = (amount: string) => setPaidAmount(amount);
+  const handleQuickAmountSelect = (amount: number) => setPaidAmount(amount.toFixed(2));
 
   // Handlers للقسم الأيمن
   const handlePaymentMethodAdd = (method: string, amount: number) => {
     if (amount <= 0) return;
-    
     const newPayment: PaymentMethod = {
       id: Date.now().toString(),
       name: method,
       amount: amount
     };
-    
     setSelectedPayments(prev => [...prev, newPayment]);
-    
-    // إعادة تعيين المبلغ المدخل إلى المبلغ المتبقي الجديد
     const newRemainingAmount = Math.max(0, totalAmount - totalPaidFromMethods - amount);
     setPaidAmount(newRemainingAmount.toFixed(2));
   };
@@ -3596,49 +3570,40 @@ useEffect(() => {
     setSelectedPayments(prev => prev.filter(payment => payment.id !== id));
   };
 
+  const handleAmountReset = () => setPaidAmount('0');
+
   const handleFinishPayment = () => {
-    if (selectedPayments.length > 0 || currentInputAmount > 0) {
-      let finalPayments = [...selectedPayments];
-      
-      // إضافة الكاش إذا كان هناك مبلغ مدخل
-      if (currentInputAmount > 0) {
-        const cashMethod = availablePaymentMethods.find(method => 
-          method.toLowerCase().includes('كاش') || method.toLowerCase().includes('cash')
-        ) || 'كاش';
-        
-        finalPayments.push({
-          id: Date.now().toString(),
-          name: cashMethod,
-          amount: currentInputAmount
-        });
-      }
-      
-      onPaymentComplete(finalPayments);
-      onClose();
+    let finalPayments = [...selectedPayments];
+    if (currentInputAmount > 0) {
+      // أول طريقة دفع = الكاش إن وجدت وإلا أول طريقة متاحة
+      const cashMethod = paymentMethods.find(
+        m => m.id.toLowerCase() === 'cash' || m.name.toLowerCase() === 'كاش'
+      );
+      finalPayments.push({
+        id: Date.now().toString(),
+        name: cashMethod?.name || paymentMethods[0]?.name || 'كاش',
+        amount: currentInputAmount
+      });
     }
+    onPaymentComplete(finalPayments);
+    onClose();
   };
 
   if (!isOpen) return null;
 
+
   return (
     <div className={styles.overlay} ref={overlayRef}>
       <div className={styles.popup}>
-        
-        {/* Header */}
         <div className={styles.header}>
           <div className={styles.logo}>
             <img src="/images/img_foodify_logo_2_78x166.png" alt="Foodify" />
           </div>
           <h2 className={styles.title}>تأكيد الدفع</h2>
-          <button className={styles.closeBtn} onClick={onClose}>
-            ×
-          </button>
+          <button className={styles.closeBtn} onClick={onClose}>×</button>
         </div>
 
-        {/* المحتوى الرئيسي */}
         <div className={styles.content}>
-          
-          {/* الجانب الأيسر - OrderSummary */}
           <div className={styles.leftSection}>
             <PaymentLeft
               orderSummary={orderSummary}
@@ -3648,8 +3613,6 @@ useEffect(() => {
               deliveryCharge={deliveryCharge}
             />
           </div>
-
-          {/* الوسط - المبالغ والكيبورد */}
           <div className={styles.centerSection}>
             <PaymentCenter
               totalAmount={totalAmount}
@@ -3661,33 +3624,32 @@ useEffect(() => {
               onQuickAmountSelect={handleQuickAmountSelect}
             />
           </div>
-
-          {/* الجانب الأيمن - طرق الدفع */}
           <div className={styles.rightSection}>
             {loading ? (
-              <div style={{ 
-                display: 'flex', 
-                justifyContent: 'center', 
-                alignItems: 'center', 
+              <div style={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
                 height: '100%',
                 fontFamily: 'Cairo, sans-serif'
               }}>
                 جاري تحميل طرق الدفع...
               </div>
+            ) : error ? (
+              <div style={{ color: 'red', textAlign: 'center', marginTop: 20 }}>{error}</div>
             ) : (
-<PaymentRight
-  availablePaymentMethods={availablePaymentMethods}
-  selectedPayments={selectedPayments}
-  onPaymentMethodAdd={handlePaymentMethodAdd}
-  onPaymentMethodRemove={handlePaymentMethodRemove}
-  onFinishPayment={handleFinishPayment}
-  currentAmount={currentInputAmount}
-  remainingAmount={remainingAmount}
-  onAmountReset={handleAmountReset} // إضافة هذا السطر
-/>
+              <PaymentRight
+                availablePaymentMethods={paymentMethods.map(m => m.name)}
+                selectedPayments={selectedPayments}
+                onPaymentMethodAdd={handlePaymentMethodAdd}
+                onPaymentMethodRemove={handlePaymentMethodRemove}
+                onFinishPayment={handleFinishPayment}
+                currentAmount={currentInputAmount}
+                remainingAmount={remainingAmount}
+                onAmountReset={handleAmountReset}
+              />
             )}
           </div>
-
         </div>
       </div>
     </div>
@@ -3695,7 +3657,6 @@ useEffect(() => {
 };
 
 export default PaymentPopup;
-
 ===== src/Pages/pos/newSales/components/PriceSelectionPopup.tsx =====
 // src/Pages/pos/newSales/components/PriceSelectionPopup.tsx
 import React, { useEffect, useRef } from 'react';
@@ -4829,6 +4790,93 @@ const searchProducts = useCallback((products: PosProduct[], query: string): PosP
   };
 };
 
+===== src/Pages/pos/newSales/hooks/usePosPaymentMethods.tsx =====
+// src/Pages/pos/newSales/hooks/usePosPaymentMethods.ts
+import { useState, useEffect } from "react";
+import * as posPaymentMethodsApi from 'src/utils/api/pagesApi/posPaymentMethodsApi';
+
+export interface PaymentMethod {
+  id: string;
+  name: string;
+  safeOrAccountID?: string | null;
+  safeOrAccount?: any;
+}
+
+function isUUID(id: string) {
+  // detect uuid-like
+  return !!id && id.length > 20 && id.includes("-");
+}
+
+function isManualMethod(method: PaymentMethod) {
+  // methods added by restaurant (id is uuid)
+  return isUUID(method.id);
+}
+function isDefaultCash(method: PaymentMethod) {
+  return method.id.toLowerCase() === 'cash' || method.name.toLowerCase() === 'كاش';
+}
+function isDefaultVisa(method: PaymentMethod) {
+  return method.id.toLowerCase() === 'visa' || method.name.toLowerCase() === 'فيزا';
+}
+function isDefaultBuiltIn(method: PaymentMethod) {
+  // ids like visa/cash/instapay/wallet/isntapay/etc (not pure uuid)
+  return !isManualMethod(method) && !isDefaultCash(method) && !isDefaultVisa(method);
+}
+
+function sortPaymentMethods(methods: PaymentMethod[]): PaymentMethod[] {
+  const cash = methods.find(isDefaultCash);
+  const visa = methods.find(isDefaultVisa);
+
+  // Exclude cash/visa for building the rest
+  const rest = methods.filter(
+    m => !isDefaultCash(m) && !isDefaultVisa(m)
+  );
+  const builtIn = rest.filter(isDefaultBuiltIn);
+  const manual = rest.filter(isManualMethod);
+
+  const result: PaymentMethod[] = [];
+  if (cash) result.push(cash);
+  if (visa) result.push(visa);
+  result.push(...builtIn);
+  result.push(...manual);
+  return result;
+}
+
+export function usePosPaymentMethods() {
+  const [methods, setMethods] = useState<PaymentMethod[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    async function fetch() {
+      try {
+        setLoading(true);
+        const res = await posPaymentMethodsApi.getAll();
+        const usable = Array.isArray(res)
+          ? res.filter((m) =>
+              !['CL', 'ضيافة', 'نقاط'].includes(m.id)
+            )
+          : [];
+        const sorted = sortPaymentMethods(usable);
+        if (mounted) {
+          setMethods(sorted);
+          setLoading(false);
+        }
+      } catch (err: any) {
+        setError('حدث خطأ أثناء تحميل طرق الدفع');
+        setLoading(false);
+        setMethods([]);
+      }
+    }
+    fetch();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  return { paymentMethods: methods, loading, error };
+}
+
 ===== src/Pages/pos/newSales/hooks/useTableManager.tsx =====
 // src/Pages/pos/newSales/hooks/useTableManager.tsx
 import { useState, useCallback, useEffect } from 'react';
@@ -5662,8 +5710,7 @@ const PosSystem: React.FC = () => {
           selectedAddress={selectedAddress}
           onCustomerSelect={handleCustomerSelect}
           orderType={selectedOrderType}
-          onDeliveryChargeChange={handleDeliveryChargeChange}
-        />
+          onDeliveryChargeChange={handleDeliveryChargeChange} readOnly={false}        />
       </main>
 
       <PriceSelectionPopup
