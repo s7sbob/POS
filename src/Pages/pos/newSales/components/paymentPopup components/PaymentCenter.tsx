@@ -5,21 +5,25 @@ import styles from './styles/PaymentCenter.module.css';
 interface PaymentCenterProps {
   totalAmount: number;
   paidAmount: string;
-  cashAmount: number; // إضافة مبلغ الكاش منفصل
+  cashAmount: number;
   remainingForCustomer: number;
   selectedPaymentMethod: string | null;
   onAmountChange: (amount: string) => void;
   onQuickAmountSelect: (amount: number) => void;
+  isFirstInput: boolean;
+  nonCashTotal: number;
 }
 
 const PaymentCenter: React.FC<PaymentCenterProps> = ({
   totalAmount,
   paidAmount,
-  cashAmount, // مبلغ الكاش فقط
+  cashAmount,
   remainingForCustomer,
   selectedPaymentMethod,
   onAmountChange,
-  onQuickAmountSelect
+  onQuickAmountSelect,
+  isFirstInput,
+  nonCashTotal
 }) => {
   // التحقق إذا كانت طريقة الدفع المختارة هي الكاش
   const isCashSelected = selectedPaymentMethod?.toLowerCase().includes('كاش') || 
@@ -32,28 +36,17 @@ const PaymentCenter: React.FC<PaymentCenterProps> = ({
       const newValue = paidAmount.slice(0, -1);
       onAmountChange(newValue || '0');
     } else if (value === '.') {
-      // إذا كان المبلغ 0 أو 0.00، ابدأ بـ 0.
       if (paidAmount === '0' || paidAmount === '0.00' || !paidAmount.includes('.')) {
         onAmountChange(paidAmount === '0' || paidAmount === '0.00' ? '0.' : paidAmount + '.');
       }
     } else {
-      // إذا كان المبلغ الحالي هو نفس المبلغ الافتراضي، ابدأ من الصفر
-      const currentPaymentAmount = parseFloat(paidAmount) || 0;
-      const isDefaultAmount = !isCashSelected ? currentPaymentAmount === 0 : 
-                             currentPaymentAmount === Math.max(0, totalAmount - getCashlessTotal());
-      
-      if (isDefaultAmount || paidAmount === '0' || paidAmount === '0.00') {
+      // إذا كان الإدخال الأول، ابدأ من الصفر
+      if (isFirstInput || paidAmount === '0' || paidAmount === '0.00') {
         onAmountChange(value);
       } else {
         onAmountChange(paidAmount + value);
       }
     }
-  };
-
-  // دالة للحصول على مجموع طرق الدفع غير الكاش (مؤقتة للاستخدام في المنطق)
-  const getCashlessTotal = () => {
-    // هذه دالة مؤقتة، سيتم تمرير القيمة الفعلية من الـ parent
-    return 0;
   };
 
   const handleQuickAmountClick = (amount: number) => {
@@ -83,6 +76,18 @@ const PaymentCenter: React.FC<PaymentCenterProps> = ({
           </div>
         </div>
       </div>
+
+      {/* عرض معلومات طرق الدفع الأخرى إذا كان الكاش محدد */}
+      {/* {isCashSelected && nonCashTotal > 0 && (
+        <div className={styles.otherPaymentsInfo}>
+          <span className={styles.otherPaymentsText}>
+            طرق الدفع الأخرى: {nonCashTotal.toFixed(2)} جنيه
+          </span>
+          <span className={styles.totalCombined}>
+            الإجمالي: {(cashAmount + nonCashTotal).toFixed(2)} جنيه
+          </span>
+        </div>
+      )} */}
 
       <div className={styles.quickButtons}>
         {[5, 10, 15, 20].map(val => (
@@ -130,9 +135,14 @@ const PaymentCenter: React.FC<PaymentCenterProps> = ({
           <span className={styles.selectedMethodName}>
             المبلغ المدفوع بـ {selectedPaymentMethod}: {paidAmount} جنيه
           </span>
-          {!isCashSelected && (
-            <span className={styles.limitWarning}>
-              الحد الأقصى: {totalAmount.toFixed(2)} جنيه
+          {isCashSelected && (
+            <span className={styles.cashNote}>
+              الكاش يُضاف بجانب طرق الدفع الأخرى
+            </span>
+          )}
+          {isFirstInput && (
+            <span className={styles.firstInputHint}>
+              اكتب من الصفر أو استخدم الأزرار السريعة
             </span>
           )}
         </div>

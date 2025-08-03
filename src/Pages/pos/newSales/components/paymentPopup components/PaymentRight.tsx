@@ -17,6 +17,8 @@ interface PaymentRightProps {
   onFinishPayment: () => void;
   canFinish: boolean;
   totalPaidAllMethods: number;
+  totalAmount: number; // إضافة قيمة الأوردر لحساب المساهمة الفعلية
+  nonCashTotal: number; // إضافة مجموع طرق الدفع غير الكاش
 }
 
 const PaymentRight: React.FC<PaymentRightProps> = ({
@@ -26,44 +28,56 @@ const PaymentRight: React.FC<PaymentRightProps> = ({
   onPaymentMethodSelect,
   onPaymentMethodToggle,
   onFinishPayment,
-  canFinish}) => {
+  canFinish,
+  totalPaidAllMethods,
+  totalAmount,
+  nonCashTotal
+}) => {
   const getPaymentData = (methodName: string) => {
     return selectedPayments.find(payment => payment.method === methodName);
   };
+
+  // دالة لحساب المبلغ الفعلي المساهم في الأوردر لكل طريقة دفع
+const getActualContributionAmount = (method: string, amount: number) => {
+  const isCash = method.toLowerCase().includes('كاش') || 
+                 method.toLowerCase().includes('cash');
+  
+  if (!isCash) {
+    // طرق الدفع غير الكاش تظهر كما هي
+    return amount;
+  } else {
+    // للكاش: اعرض المبلغ الفعلي المساهم في الأوردر فقط
+    const actualCashContribution = Math.max(0, totalAmount - nonCashTotal);
+    return Math.min(amount, actualCashContribution);
+  }
+};
 
   const handleCardClick = (method: string) => {
     const paymentData = getPaymentData(method);
     const isCurrentlyActive = paymentData?.isSelected || false;
     
     if (!isCurrentlyActive) {
-      // إذا لم تكن مفعلة، قم بتفعيلها أولاً ثم اختيارها للتعديل
       onPaymentMethodToggle(method);
       onPaymentMethodSelect(method);
     } else {
-      // إذا كانت مفعلة، اختارها للتعديل فقط
       onPaymentMethodSelect(method);
     }
   };
 
   const handleCheckboxChange = (method: string, event: React.ChangeEvent<HTMLInputElement>) => {
-    // منع تشغيل click الخاص بالكارد
     event.stopPropagation();
-    
-    // تبديل حالة التفعيل فقط
     onPaymentMethodToggle(method);
     
     const paymentData = getPaymentData(method);
     const willBeSelected = !(paymentData?.isSelected || false);
     
     if (!willBeSelected && selectedPaymentMethod === method) {
-      // إذا تم إلغاء تفعيل الطريقة المحددة حالياً للتعديل، اختر طريقة أخرى
       const otherActiveMethod = selectedPayments.find(p => 
         p.method !== method && p.isSelected && p.amount > 0
       );
       if (otherActiveMethod) {
         onPaymentMethodSelect(otherActiveMethod.method);
       } else {
-        // البحث عن الكاش كخيار احتياطي
         const cashMethod = selectedPayments.find(p => 
           (p.method.toLowerCase().includes('كاش') || p.method.toLowerCase().includes('cash')) && 
           p.method !== method &&
@@ -76,7 +90,6 @@ const PaymentRight: React.FC<PaymentRightProps> = ({
     }
   };
 
-  // تحديد إذا كان اسم طريقة الدفع طويل
   const isLongName = (name: string) => name.length > 15;
 
   if (availablePaymentMethods.length === 0) {
@@ -98,7 +111,6 @@ const PaymentRight: React.FC<PaymentRightProps> = ({
 
   return (
     <div className={styles.container}>
-      {/* زر الإنهاء في الأعلى */}
       <button 
         className={`${styles.finishBtn} ${!canFinish ? styles.disabled : ''}`}
         onClick={onFinishPayment}
@@ -107,15 +119,22 @@ const PaymentRight: React.FC<PaymentRightProps> = ({
         إنهاء الدفع
       </button>
       
-      {/* طرق الدفع في عمودين */}
       <div className={styles.methodsList}>
         {availablePaymentMethods.map((method) => {
           const paymentData = getPaymentData(method);
           const amount = paymentData?.amount || 0;
           const isActive = paymentData?.isSelected || false;
           const isSelectedForEdit = selectedPaymentMethod === method;
-          const hasAmount = amount > 0;
           const longName = isLongName(method);
+          
+          // حساب المبلغ الفعلي المساهم في الأوردر
+          const actualContribution = getActualContributionAmount(method, amount);
+          const hasAmount = actualContribution > 0;
+          
+          // التحقق إذا كان كاش وله مبلغ أكبر من المساهمة (أي له فكة)
+          const isCash = method.toLowerCase().includes('كاش') || 
+                         method.toLowerCase().includes('cash');
+          const hasChange = isCash && amount > actualContribution;
           
           return (
             <div 
@@ -133,11 +152,11 @@ const PaymentRight: React.FC<PaymentRightProps> = ({
                 <span className={styles.methodName}>{method}</span>
               </div>
               
-              {hasAmount && (
-                <div className={styles.methodAmount}>
-                  {amount.toFixed(2)} جنيه
-                </div>
-              )}
+{hasAmount && (
+  <div className={styles.methodAmount}>
+    {actualContribution.toFixed(2)} جنيه
+  </div>
+)}
               
               {isSelectedForEdit && (
                 <div className={styles.editIndicator}>
@@ -149,9 +168,15 @@ const PaymentRight: React.FC<PaymentRightProps> = ({
         })}
       </div>
 
-      {/* معلومات الدفع */}
       <div className={styles.paymentSummary}>
         {/* <div className={styles.summaryRow}>
+          <span>قيمة الأوردر:</span>
+          <span className={styles.orderValue}>
+            {totalAmount.toFixed(2)} جنيه
+          </span>
+        </div>
+        
+        <div className={styles.summaryRow}>
           <span>إجمالي المدفوع:</span>
           <span className={styles.totalPaid}>
             {totalPaidAllMethods.toFixed(2)} جنيه
@@ -161,7 +186,7 @@ const PaymentRight: React.FC<PaymentRightProps> = ({
         <div className={styles.summaryRow}>
           <span>طرق الدفع المستخدمة:</span>
           <span className={styles.methodsCount}>
-            {selectedPayments.filter(p => p.isSelected && p.amount > 0).length}
+            {selectedPayments.filter(p => p.isSelected && getActualContributionAmount(p.method, p.amount) > 0).length}
           </span>
         </div>
       </div>
