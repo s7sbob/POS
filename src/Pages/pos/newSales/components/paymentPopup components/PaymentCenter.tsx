@@ -49,8 +49,18 @@ const PaymentCenter: React.FC<PaymentCenterProps> = ({
     }
   };
 
+  // تعديل دالة الأزرار السريعة للجمع
   const handleQuickAmountClick = (amount: number) => {
-    onQuickAmountSelect(amount);
+    const currentAmount = parseFloat(paidAmount) || 0;
+    
+    // إذا كان الإدخال الأول (قيمة تلقائية)، ابدأ من القيمة المضافة فقط
+    if (isFirstInput) {
+      onQuickAmountSelect(amount);
+    } else {
+      // إذا كان مُدخل يدوياً، اجمع على القيمة الحالية
+      const newAmount = currentAmount + amount;
+      onQuickAmountSelect(newAmount);
+    }
   };
 
   return (
@@ -77,18 +87,6 @@ const PaymentCenter: React.FC<PaymentCenterProps> = ({
         </div>
       </div>
 
-      {/* عرض معلومات طرق الدفع الأخرى إذا كان الكاش محدد */}
-      {/* {isCashSelected && nonCashTotal > 0 && (
-        <div className={styles.otherPaymentsInfo}>
-          <span className={styles.otherPaymentsText}>
-            طرق الدفع الأخرى: {nonCashTotal.toFixed(2)} جنيه
-          </span>
-          <span className={styles.totalCombined}>
-            الإجمالي: {(cashAmount + nonCashTotal).toFixed(2)} جنيه
-          </span>
-        </div>
-      )} */}
-
       <div className={styles.quickButtons}>
         {[5, 10, 15, 20].map(val => (
           <button 
@@ -114,10 +112,16 @@ const PaymentCenter: React.FC<PaymentCenterProps> = ({
               <button
                 key={key}
                 className={`${styles.keypadBtn} ${['50','100','200'].includes(key) ? styles.gray : ''} ${!selectedPaymentMethod ? styles.disabled : ''}`}
-                onClick={() => selectedPaymentMethod && (key === 'erase' ? handleKeypadClick('erase') : handleKeypadClick(key))}
+                onClick={() => selectedPaymentMethod && (
+                  key === 'erase' ? handleKeypadClick('erase') : 
+                  ['50','100','200'].includes(key) ? handleQuickAmountClick(parseInt(key)) : 
+                  handleKeypadClick(key)
+                )}
                 disabled={!selectedPaymentMethod}
               >
-                {key === 'erase' ? '×' : key === 'c' ? 'C' : key + (['50','100','200'].includes(key) ? ' EGP' : '')}
+                {key === 'erase' ? '×' : 
+                 key === 'c' ? 'C' : 
+                 ['50','100','200'].includes(key) ? `${key} EGP` : key}
               </button>
             ))}
           </div>
@@ -129,24 +133,6 @@ const PaymentCenter: React.FC<PaymentCenterProps> = ({
           اختر طريقة دفع من القائمة اليمين لبدء الإدخال
         </div>
       )}
-
-      {/* {selectedPaymentMethod && (
-        <div className={styles.selectedMethodInfo}>
-          <span className={styles.selectedMethodName}>
-            المبلغ المدفوع بـ {selectedPaymentMethod}: {paidAmount} جنيه
-          </span>
-          {isCashSelected && (
-            <span className={styles.cashNote}>
-              الكاش يُضاف بجانب طرق الدفع الأخرى
-            </span>
-          )}
-          {isFirstInput && (
-            <span className={styles.firstInputHint}>
-              اكتب من الصفر أو استخدم الأزرار السريعة
-            </span>
-          )}
-        </div>
-      )} */}
     </div>
   );
 };

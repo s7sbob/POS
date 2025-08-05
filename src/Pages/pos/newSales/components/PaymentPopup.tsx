@@ -1,4 +1,3 @@
-// src/Pages/pos/newSales/components/PaymentPopup.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import { OrderSummary as OrderSummaryType } from '../types/PosSystem';
 import { Customer, CustomerAddress } from 'src/utils/api/pagesApi/customersApi';
@@ -7,11 +6,13 @@ import PaymentCenter from './paymentPopup components/PaymentCenter';
 import PaymentRight from './paymentPopup components/PaymentRight';
 import styles from '../styles/PaymentPopup.module.css';
 import { usePosPaymentMethods } from '../hooks/usePosPaymentMethods';
+import { Snackbar, Alert } from '@mui/material';
 
 interface PaymentMethodData {
   method: string;
   amount: number;
   isSelected: boolean;
+  wasModified?: boolean;
 }
 
 interface PaymentPopupProps {
@@ -44,11 +45,28 @@ const PaymentPopup: React.FC<PaymentPopupProps> = ({
 }) => {
   const overlayRef = useRef<HTMLDivElement>(null);
   const { paymentMethods, loading, error } = usePosPaymentMethods();
+  
+  // إضافة state للإشعارات المحلية
+  const [localAlert, setLocalAlert] = useState({
+    open: false,
+    message: '',
+    severity: 'warning' as 'warning' | 'error' | 'success' | 'info'
+  });
+
   const [selectedPayments, setSelectedPayments] = useState<PaymentMethodData[]>([]);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | null>(null);
   const [paidAmount, setPaidAmount] = useState('0');
   const [lastNonCashTotal, setLastNonCashTotal] = useState(0);
-  const [isFirstInput, setIsFirstInput] = useState(true); // لتتبع الإدخال الأول
+  const [isFirstInput, setIsFirstInput] = useState(true);
+
+  // دالة عرض التحذير المحلي
+  const showLocalWarning = (message: string) => {
+    setLocalAlert({
+      open: true,
+      message,
+      severity: 'warning'
+    });
+  };
 
   // حساب المبالغ
   const deliveryCharge = 0;
@@ -61,6 +79,15 @@ const PaymentPopup: React.FC<PaymentPopupProps> = ({
     return paymentMethods.find(
       m => m.name.toLowerCase().includes('كاش') || m.name.toLowerCase().includes('cash')
     );
+  };
+
+  // دالة لحساب طرق الدفع النشطة غير الكاش
+  const getActiveNonCashPayments = () => {
+    return selectedPayments.filter(payment => {
+      const isCash = payment.method.toLowerCase().includes('كاش') || 
+                     payment.method.toLowerCase().includes('cash');
+      return !isCash && payment.isSelected && payment.amount > 0;
+    });
   };
 
   // حساب إجمالي المدفوع بطرق الدفع غير الكاش
@@ -87,16 +114,30 @@ const PaymentPopup: React.FC<PaymentPopupProps> = ({
   // حساب المبلغ المتبقي للعميل (فقط من الكاش)
   const remainingForCustomer = Math.max(0, cashAmount - Math.max(0, totalAmount - nonCashTotal));
 
-  // دالة التبديل مع منع التجاوز
+  // دالة التبديل مع منطق النقل الذكي
   const handlePaymentMethodToggle = (method: string) => {
+    const isCash = method.toLowerCase().includes('كاش') || 
+                   method.toLowerCase().includes('cash');
+    
+    // للطرق غير النقدية: تحقق من العدد المسموح
+    if (!isCash) {
+      const activeNonCashPayments = getActiveNonCashPayments();
+      const isCurrentlyActive = selectedPayments.find(p => p.method === method)?.isSelected || false;
+      
+      // إذا كان يحاول تفعيل طريقة ثالثة غير نقدية
+      if (!isCurrentlyActive && activeNonCashPayments.length >= 2) {
+        showLocalWarning('لا يمكن استخدام أكثر من وسيلتي دفع غير نقدية');
+        return;
+      }
+    }
+
     setSelectedPayments(prevPayments => {
       return prevPayments.map(payment => {
         if (payment.method === method) {
           const newIsSelected = !payment.isSelected;
-          const isCash = method.toLowerCase().includes('كاش') || 
-                         method.toLowerCase().includes('cash');
           
           if (isCash && newIsSelected) {
+            // للكاش: حساب المبلغ المتبقي فقط
             const currentNonCashTotal = prevPayments
               .filter(p => {
                 const isOtherCash = p.method.toLowerCase().includes('كاش') || 
@@ -110,17 +151,108 @@ const PaymentPopup: React.FC<PaymentPopupProps> = ({
             return {
               ...payment,
               isSelected: true,
-              amount: remainingAmount
+              amount: remainingAmount,
+              wasModified: false
             };
-          } else {
+          } else if (!isCash && newIsSelected) {
+            // للطرق غير النقدية الجديدة: تطبيق المنطق الذكي
+            const currentActiveNonCash = prevPayments.find(p => {
+              const isOtherCash = p.method.toLowerCase().includes('كاش') || 
+                               p.method.toLowerCase().includes('cash');
+              return !isOtherCash && p.method !== method && p.isSelected && p.amount > 0;
+            });
+            
+            let amountToAssign = 0;
+            
+            if (currentActiveNonCash) {
+              // إذا كان هناك طريقة نشطة أخرى
+              if (currentActiveNonCash.wasModified) {
+                // إذا تم تعديلها: أخذ المبلغ المتبقي من الكاش
+                const currentCash = prevPayments.find(p => {
+                  const isCashPayment = p.method.toLowerCase().includes('كاش') || 
+                                       p.method.toLowerCase().includes('cash');
+                  return isCashPayment;
+                });
+                amountToAssign = currentCash?.amount || 0;
+              } else {
+                // إذا لم يتم تعديلها: نقل كامل القيمة
+                amountToAssign = currentActiveNonCash.amount;
+              }
+            } else {
+              // لا توجد طريقة نشطة أخرى: أخذ كامل المبلغ
+              amountToAssign = totalAmount;
+            }
+            
             return {
               ...payment,
-              isSelected: newIsSelected,
-              amount: newIsSelected ? payment.amount : 0
+              isSelected: true,
+              amount: amountToAssign,
+              wasModified: false
+            };
+          } else {
+            // إلغاء التفعيل
+            return {
+              ...payment,
+              isSelected: false,
+              amount: 0,
+              wasModified: false
             };
           }
+        } else {
+          // معالجة الطرق الأخرى عند تفعيل طريقة جديدة
+          const newMethodData = prevPayments.find(p => p.method === method);
+          const isNewMethodBeingActivated = newMethodData && !newMethodData.isSelected;
+          
+          if (isNewMethodBeingActivated && !isCash) {
+            const isCash = payment.method.toLowerCase().includes('كاش') || 
+                           payment.method.toLowerCase().includes('cash');
+            const isCurrentNonCash = !(payment.method.toLowerCase().includes('كاش') || 
+                                     payment.method.toLowerCase().includes('cash'));
+            
+            // إذا كانت الطريقة الحالية غير نقدية ونشطة
+            if (isCurrentNonCash && payment.isSelected) {
+              if (payment.wasModified) {
+                // إذا تم تعديلها: احتفظ بها وقلل من الكاش
+                return payment;
+              } else {
+                // إذا لم يتم تعديلها: انقل قيمتها للطريقة الجديدة
+                return {
+                  ...payment,
+                  isSelected: false,
+                  amount: 0,
+                  wasModified: false
+                };
+              }
+            } else if (isCash) {
+              // تحديث الكاش بناءً على الحالة
+              const currentActiveNonCash = prevPayments.find(p => {
+                const isOtherCash = p.method.toLowerCase().includes('كاش') || 
+                                   p.method.toLowerCase().includes('cash');
+                return !isOtherCash && p.method !== method && p.isSelected && p.amount > 0;
+              });
+              
+              if (currentActiveNonCash?.wasModified) {
+                // إذا كانت الطريقة النشطة معدلة: الكاش يفقد قيمته للطريقة الجديدة
+                const newMethodAmount = payment.amount;
+                return {
+                  ...payment,
+                  amount: Math.max(0, payment.amount - newMethodAmount),
+                  isSelected: Math.max(0, payment.amount - newMethodAmount) > 0
+                };
+              } else {
+                // إذا لم تكن معدلة: الكاش يأخذ المبلغ المتبقي
+                const newAmount = Math.max(0, totalAmount - (currentActiveNonCash?.amount || totalAmount));
+                return {
+                  ...payment,
+                  amount: newAmount,
+                  isSelected: newAmount > 0
+                };
+              }
+            }
+          }
+          
+          return payment;
         }
-        return payment;
       });
     });
   };
@@ -153,7 +285,7 @@ const PaymentPopup: React.FC<PaymentPopupProps> = ({
                           selectedPaymentMethod?.toLowerCase().includes('cash');
       if (selectedCash) {
         setPaidAmount(autoCalculatedCashAmount === 0 ? '0' : autoCalculatedCashAmount.toFixed(2));
-        setIsFirstInput(true); // إعادة تعيين حالة الإدخال الأول
+        setIsFirstInput(true);
       }
 
       setLastNonCashTotal(nonCashTotal);
@@ -172,7 +304,8 @@ const PaymentPopup: React.FC<PaymentPopupProps> = ({
       return {
         method: method.name,
         amount: isCash ? totalAmount : 0,
-        isSelected: isCash
+        isSelected: isCash,
+        wasModified: false
       };
     });
     
@@ -181,187 +314,215 @@ const PaymentPopup: React.FC<PaymentPopupProps> = ({
     if (cashMethod) {
       setSelectedPaymentMethod(cashMethod.name);
       setPaidAmount(totalAmount.toFixed(2));
-      setIsFirstInput(true); // تعيين حالة الإدخال الأول
+      setIsFirstInput(true);
     }
     
     setLastNonCashTotal(0);
   }, [isOpen, paymentMethods, totalAmount]);
 
-  // معالج تغيير المبلغ مع منع التجاوز
-const handleAmountChange = (amount: string) => {
-  setIsFirstInput(false);
-  setPaidAmount(amount);
-  
-  if (selectedPaymentMethod) {
-    const numericAmount = parseFloat(amount) || 0;
-    const isCashSelected = selectedPaymentMethod.toLowerCase().includes('كاش') || 
-                          selectedPaymentMethod.toLowerCase().includes('cash');
+  // معالج تغيير المبلغ مع تحديد flag التعديل
+  const handleAmountChange = (amount: string) => {
+    setIsFirstInput(false);
+    setPaidAmount(amount);
     
-    if (!isCashSelected) {
-      // لطرق الدفع غير الكاش: تحديث المبلغ وحساب الكاش المتبقي
-      setSelectedPayments(prevPayments => {
-        return prevPayments.map(payment => {
-          if (payment.method === selectedPaymentMethod) {
-            return {
-              ...payment,
-              amount: numericAmount,
-              isSelected: numericAmount > 0
-            };
-          } else {
-            const isCash = payment.method.toLowerCase().includes('كاش') || 
-                           payment.method.toLowerCase().includes('cash');
-            
-            if (isCash) {
-              // حساب المبلغ المتبقي للكاش
-              const remainingAmount = Math.max(0, totalAmount - numericAmount);
-              return {
-                ...payment,
-                amount: remainingAmount,
-                isSelected: remainingAmount > 0
-              };
-            }
-            return payment;
-          }
-        });
-      });
-    } else {
-      // للكاش: يمكن أن يكون أي مبلغ بدون التأثير على طرق الدفع الأخرى
-      setSelectedPayments(prevPayments => {
-        return prevPayments.map(payment => {
-          if (payment.method === selectedPaymentMethod) {
-            return {
-              ...payment,
-              amount: numericAmount,
-              isSelected: numericAmount > 0
-            };
-          }
-          // لا تغيير على طرق الدفع الأخرى عند كتابة في الكاش
-          return payment;
-        });
-      });
-    }
-  }
-};
-
-
-
-const handleQuickAmountSelect = (amount: number) => {
-  setIsFirstInput(false);
-  
-  if (selectedPaymentMethod) {
-    const isCashSelected = selectedPaymentMethod.toLowerCase().includes('كاش') || 
-                          selectedPaymentMethod.toLowerCase().includes('cash');
-    
-    setPaidAmount(amount.toFixed(2));
-    
-    if (!isCashSelected) {
-      // لطرق الدفع غير الكاش
-      setSelectedPayments(prevPayments => {
-        return prevPayments.map(payment => {
-          if (payment.method === selectedPaymentMethod) {
-            return {
-              ...payment,
-              amount: amount,
-              isSelected: true
-            };
-          } else {
-            const isCash = payment.method.toLowerCase().includes('كاش') || 
-                           payment.method.toLowerCase().includes('cash');
-            
-            if (isCash) {
-              const remainingAmount = Math.max(0, totalAmount - amount);
-              return {
-                ...payment,
-                amount: remainingAmount,
-                isSelected: remainingAmount > 0
-              };
-            }
-            return payment;
-          }
-        });
-      });
-    } else {
-      // للكاش: لا تأثير على طرق الدفع الأخرى
-      setSelectedPayments(prevPayments => {
-        return prevPayments.map(payment => {
-          if (payment.method === selectedPaymentMethod) {
-            return {
-              ...payment,
-              amount: amount,
-              isSelected: true
-            };
-          }
-          // الحفاظ على طرق الدفع الأخرى كما هي
-          return payment;
-        });
-      });
-    }
-  }
-};
-
-const handlePaymentMethodSelect = (method: string) => {
-  setSelectedPaymentMethod(method);
-  
-  const isCashSelected = method.toLowerCase().includes('كاش') || 
-                        method.toLowerCase().includes('cash');
-  
-  if (!isCashSelected) {
-    // حساب المبلغ المتبقي للأوردر
-    const currentNonCashTotal = selectedPayments
-      .filter(payment => {
-        const isCash = payment.method.toLowerCase().includes('كاش') || 
-                       payment.method.toLowerCase().includes('cash');
-        return !isCash && payment.method !== method && payment.amount > 0;
-      })
-      .reduce((sum, payment) => sum + payment.amount, 0);
-    
-    const remainingAmountForOrder = Math.max(0, totalAmount - currentNonCashTotal);
-    
-    // إذا كان هناك مبلغ متبقي، ضعه في الطريقة المختارة
-    if (remainingAmountForOrder > 0) {
-      setSelectedPayments(prevPayments => {
-        return prevPayments.map(payment => {
-          if (payment.method === method) {
-            return {
-              ...payment,
-              amount: remainingAmountForOrder,
-              isSelected: true
-            };
-          } else {
-            const isCash = payment.method.toLowerCase().includes('كاش') || 
-                           payment.method.toLowerCase().includes('cash');
-            
-            if (isCash) {
-              // صفر الكاش إذا تم تغطية الأوردر بالكامل
-              return {
-                ...payment,
-                amount: 0,
-                isSelected: false
-              };
-            }
-            // الحفاظ على طرق الدفع الأخرى كما هي
-            return payment;
-          }
-        });
-      });
+    if (selectedPaymentMethod) {
+      const numericAmount = parseFloat(amount) || 0;
+      const isCashSelected = selectedPaymentMethod.toLowerCase().includes('كاش') || 
+                            selectedPaymentMethod.toLowerCase().includes('cash');
       
-      setPaidAmount(remainingAmountForOrder.toFixed(2));
+      if (!isCashSelected) {
+        // للطرق غير النقدية: منع التجاوز عن المبلغ المتبقي وتحديد wasModified
+        const currentOtherNonCashTotal = selectedPayments
+          .filter(payment => {
+            const isCash = payment.method.toLowerCase().includes('كاش') || 
+                           payment.method.toLowerCase().includes('cash');
+            return !isCash && payment.method !== selectedPaymentMethod && payment.amount > 0;
+          })
+          .reduce((sum, payment) => sum + payment.amount, 0);
+        
+        const maxAllowed = Math.max(0, totalAmount - currentOtherNonCashTotal);
+        const finalAmount = Math.min(numericAmount, maxAllowed);
+        
+        // تحديث المبلغ المدخل إذا تم تقليله
+        if (finalAmount !== numericAmount) {
+          setPaidAmount(finalAmount.toFixed(2));
+        }
+        
+        setSelectedPayments(prevPayments => {
+          return prevPayments.map(payment => {
+            if (payment.method === selectedPaymentMethod) {
+              return {
+                ...payment,
+                amount: finalAmount,
+                isSelected: finalAmount > 0,
+                wasModified: true // تحديد أنه تم التعديل
+              };
+            } else {
+              const isCash = payment.method.toLowerCase().includes('كاش') || 
+                             payment.method.toLowerCase().includes('cash');
+              
+              if (isCash) {
+                const remainingAmount = Math.max(0, totalAmount - currentOtherNonCashTotal - finalAmount);
+                return {
+                  ...payment,
+                  amount: remainingAmount,
+                  isSelected: remainingAmount > 0
+                };
+              }
+              return payment;
+            }
+          });
+        });
+      } else {
+        // للكاش: يمكن أي مبلغ
+        setSelectedPayments(prevPayments => {
+          return prevPayments.map(payment => {
+            if (payment.method === selectedPaymentMethod) {
+              return {
+                ...payment,
+                amount: numericAmount,
+                isSelected: numericAmount > 0,
+                wasModified: true // تحديد أنه تم التعديل
+              };
+            }
+            return payment;
+          });
+        });
+      }
+    }
+  };
+
+  const handleQuickAmountSelect = (amount: number) => {
+    setIsFirstInput(false);
+    
+    if (selectedPaymentMethod) {
+      const isCashSelected = selectedPaymentMethod.toLowerCase().includes('كاش') || 
+                            selectedPaymentMethod.toLowerCase().includes('cash');
+      
+      setPaidAmount(amount.toFixed(2));
+      
+      if (!isCashSelected) {
+        // للطرق غير النقدية: منع التجاوز وتحديد wasModified
+        const currentOtherNonCashTotal = selectedPayments
+          .filter(payment => {
+            const isCash = payment.method.toLowerCase().includes('كاش') || 
+                           payment.method.toLowerCase().includes('cash');
+            return !isCash && payment.method !== selectedPaymentMethod && payment.amount > 0;
+          })
+          .reduce((sum, payment) => sum + payment.amount, 0);
+        
+        const maxAllowed = Math.max(0, totalAmount - currentOtherNonCashTotal);
+        const finalAmount = Math.min(amount, maxAllowed);
+        
+        if (finalAmount !== amount) {
+          setPaidAmount(finalAmount.toFixed(2));
+        }
+        
+        setSelectedPayments(prevPayments => {
+          return prevPayments.map(payment => {
+            if (payment.method === selectedPaymentMethod) {
+              return {
+                ...payment,
+                amount: finalAmount,
+                isSelected: true,
+                wasModified: true // تحديد أنه تم التعديل
+              };
+            } else {
+              const isCash = payment.method.toLowerCase().includes('كاش') || 
+                             payment.method.toLowerCase().includes('cash');
+              
+              if (isCash) {
+                const remainingAmount = Math.max(0, totalAmount - currentOtherNonCashTotal - finalAmount);
+                return {
+                  ...payment,
+                  amount: remainingAmount,
+                  isSelected: remainingAmount > 0
+                };
+              }
+              return payment;
+            }
+          });
+        });
+      } else {
+        // للكاش: لا تأثير على طرق الدفع الأخرى وتحديد wasModified
+        setSelectedPayments(prevPayments => {
+          return prevPayments.map(payment => {
+            if (payment.method === selectedPaymentMethod) {
+              return {
+                ...payment,
+                amount: amount,
+                isSelected: true,
+                wasModified: true // تحديد أنه تم التعديل
+              };
+            }
+            return payment;
+          });
+        });
+      }
+    }
+  };
+
+  const handlePaymentMethodSelect = (method: string) => {
+    setSelectedPaymentMethod(method);
+    
+    const isCashSelected = method.toLowerCase().includes('كاش') || 
+                          method.toLowerCase().includes('cash');
+    
+    if (!isCashSelected) {
+      // حساب المبلغ المتبقي للأوردر
+      const currentNonCashTotal = selectedPayments
+        .filter(payment => {
+          const isCash = payment.method.toLowerCase().includes('كاش') || 
+                         payment.method.toLowerCase().includes('cash');
+          return !isCash && payment.method !== method && payment.amount > 0;
+        })
+        .reduce((sum, payment) => sum + payment.amount, 0);
+      
+      const remainingAmountForOrder = Math.max(0, totalAmount - currentNonCashTotal);
+      
+      // إذا كان هناك مبلغ متبقي، ضعه في الطريقة المختارة
+      if (remainingAmountForOrder > 0) {
+        setSelectedPayments(prevPayments => {
+          return prevPayments.map(payment => {
+            if (payment.method === method) {
+              return {
+                ...payment,
+                amount: remainingAmountForOrder,
+                isSelected: true,
+                wasModified: false // إعادة تعيين عند الاختيار
+              };
+            } else {
+              const isCash = payment.method.toLowerCase().includes('كاش') || 
+                             payment.method.toLowerCase().includes('cash');
+              
+              if (isCash) {
+                // صفر الكاش إذا تم تغطية الأوردر بالكامل
+                return {
+                  ...payment,
+                  amount: 0,
+                  isSelected: false
+                };
+              }
+              return payment;
+            }
+          });
+        });
+        
+        setPaidAmount(remainingAmountForOrder.toFixed(2));
+      } else {
+        const currentPayment = selectedPayments.find(p => p.method === method);
+        const amount = currentPayment?.amount || 0;
+        setPaidAmount(amount === 0 ? '0' : amount.toFixed(2));
+      }
+      
+      setIsFirstInput(true);
     } else {
-      // إذا لم يكن هناك مبلغ متبقي، ابدأ من الصفر
       const currentPayment = selectedPayments.find(p => p.method === method);
       const amount = currentPayment?.amount || 0;
       setPaidAmount(amount === 0 ? '0' : amount.toFixed(2));
+      setIsFirstInput(true);
     }
-    
-    setIsFirstInput(true);
-  } else {
-    // للكاش: لا تغيير - فقط اعرض المبلغ الحالي
-    const currentPayment = selectedPayments.find(p => p.method === method);
-    const amount = currentPayment?.amount || 0;
-    setPaidAmount(amount === 0 ? '0' : amount.toFixed(2));
-    setIsFirstInput(true);
-  }
-};
+  };
 
   const handleFinishPayment = () => {
     const finalPayments = selectedPayments.filter(payment => 
@@ -398,17 +559,17 @@ const handlePaymentMethodSelect = (method: string) => {
             />
           </div>
           <div className={styles.centerSection}>
-<PaymentCenter
-  totalAmount={totalAmount}
-  paidAmount={paidAmount}
-  cashAmount={cashAmount}
-  remainingForCustomer={remainingForCustomer}
-  selectedPaymentMethod={selectedPaymentMethod}
-  onAmountChange={handleAmountChange}
-  onQuickAmountSelect={handleQuickAmountSelect}
-  isFirstInput={isFirstInput} // إضافة المعطى الجديد
-  nonCashTotal={nonCashTotal}
-/>
+            <PaymentCenter
+              totalAmount={totalAmount}
+              paidAmount={paidAmount}
+              cashAmount={cashAmount}
+              remainingForCustomer={remainingForCustomer}
+              selectedPaymentMethod={selectedPaymentMethod}
+              onAmountChange={handleAmountChange}
+              onQuickAmountSelect={handleQuickAmountSelect}
+              isFirstInput={isFirstInput}
+              nonCashTotal={nonCashTotal}
+            />
           </div>
           <div className={styles.rightSection}>
             {loading ? (
@@ -424,21 +585,46 @@ const handlePaymentMethodSelect = (method: string) => {
             ) : error ? (
               <div style={{ color: 'red', textAlign: 'center', marginTop: 20 }}>{error}</div>
             ) : (
-<PaymentRight
-  availablePaymentMethods={paymentMethods.map(m => m.name)}
-  selectedPayments={selectedPayments}
-  selectedPaymentMethod={selectedPaymentMethod}
-  onPaymentMethodSelect={handlePaymentMethodSelect}
-  onPaymentMethodToggle={handlePaymentMethodToggle}
-  onFinishPayment={handleFinishPayment}
-  canFinish={canFinish}
-  totalPaidAllMethods={nonCashTotal + cashAmount}
-  totalAmount={totalAmount} // إضافة قيمة الأوردر
-  nonCashTotal={nonCashTotal} // إضافة مجموع طرق الدفع غير الكاش
-/>
+              <PaymentRight
+                availablePaymentMethods={paymentMethods.map(m => m.name)}
+                selectedPayments={selectedPayments}
+                selectedPaymentMethod={selectedPaymentMethod}
+                onPaymentMethodSelect={handlePaymentMethodSelect}
+                onPaymentMethodToggle={handlePaymentMethodToggle}
+                onFinishPayment={handleFinishPayment}
+                canFinish={canFinish}
+                totalPaidAllMethods={nonCashTotal + cashAmount}
+                totalAmount={totalAmount}
+                nonCashTotal={nonCashTotal}
+                onShowWarning={showLocalWarning}
+              />
             )}
           </div>
         </div>
+
+        {/* إضافة الـ Snackbar المحلي داخل الـ popup */}
+        <Snackbar
+          open={localAlert.open}
+          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+          autoHideDuration={4000}
+          onClose={() => setLocalAlert(prev => ({ ...prev, open: false }))}
+          sx={{ 
+            position: 'absolute', // مهم: نسبي لموضع الـ popup
+            zIndex: 10 // فوق محتوى الـ popup
+          }}
+        >
+          <Alert
+            onClose={() => setLocalAlert(prev => ({ ...prev, open: false }))}
+            severity={localAlert.severity}
+            variant="filled"
+            sx={{ 
+              width: '100%',
+              fontFamily: 'Cairo, sans-serif'
+            }}
+          >
+            {localAlert.message}
+          </Alert>
+        </Snackbar>
       </div>
     </div>
   );

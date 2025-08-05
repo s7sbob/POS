@@ -1,4 +1,3 @@
-// src/Pages/pos/newSales/components/paymentPopup components/PaymentRight.tsx
 import React from 'react';
 import styles from './styles/PaymentRight.module.css';
 
@@ -17,8 +16,9 @@ interface PaymentRightProps {
   onFinishPayment: () => void;
   canFinish: boolean;
   totalPaidAllMethods: number;
-  totalAmount: number; // إضافة قيمة الأوردر لحساب المساهمة الفعلية
-  nonCashTotal: number; // إضافة مجموع طرق الدفع غير الكاش
+  totalAmount: number;
+  nonCashTotal: number;
+  onShowWarning?: (message: string) => void;
 }
 
 const PaymentRight: React.FC<PaymentRightProps> = ({
@@ -31,30 +31,48 @@ const PaymentRight: React.FC<PaymentRightProps> = ({
   canFinish,
   totalPaidAllMethods,
   totalAmount,
-  nonCashTotal
+  nonCashTotal,
+  onShowWarning
 }) => {
   const getPaymentData = (methodName: string) => {
     return selectedPayments.find(payment => payment.method === methodName);
   };
 
   // دالة لحساب المبلغ الفعلي المساهم في الأوردر لكل طريقة دفع
-const getActualContributionAmount = (method: string, amount: number) => {
-  const isCash = method.toLowerCase().includes('كاش') || 
-                 method.toLowerCase().includes('cash');
-  
-  if (!isCash) {
-    // طرق الدفع غير الكاش تظهر كما هي
-    return amount;
-  } else {
-    // للكاش: اعرض المبلغ الفعلي المساهم في الأوردر فقط
-    const actualCashContribution = Math.max(0, totalAmount - nonCashTotal);
-    return Math.min(amount, actualCashContribution);
-  }
-};
+  const getActualContributionAmount = (method: string, amount: number) => {
+    const isCash = method.toLowerCase().includes('كاش') || 
+                   method.toLowerCase().includes('cash');
+    
+    if (!isCash) {
+      // طرق الدفع غير الكاش: عرض المبلغ الفعلي فقط
+      return Math.min(amount, totalAmount);
+    } else {
+      // للكاش: عرض المساهمة الفعلية في الأوردر فقط
+      const actualCashContribution = Math.max(0, totalAmount - nonCashTotal);
+      return Math.min(amount, actualCashContribution);
+    }
+  };
 
+  // دالة النقر على الكارد مع التحقق من الحد الأقصى
   const handleCardClick = (method: string) => {
     const paymentData = getPaymentData(method);
     const isCurrentlyActive = paymentData?.isSelected || false;
+    const isCash = method.toLowerCase().includes('كاش') || 
+                   method.toLowerCase().includes('cash');
+    
+    if (!isCurrentlyActive && !isCash) {
+      // تحقق من عدد الطرق النشطة غير النقدية
+      const activeNonCashCount = selectedPayments.filter(p => {
+        const isNonCash = !(p.method.toLowerCase().includes('كاش') || 
+                           p.method.toLowerCase().includes('cash'));
+        return isNonCash && p.isSelected && p.amount > 0;
+      }).length;
+      
+      if (activeNonCashCount >= 2) {
+        onShowWarning?.('لا يمكن استخدام أكثر من وسيلتي دفع غير نقدية');
+        return;
+      }
+    }
     
     if (!isCurrentlyActive) {
       onPaymentMethodToggle(method);
@@ -64,12 +82,32 @@ const getActualContributionAmount = (method: string, amount: number) => {
     }
   };
 
+  // دالة تغيير الـ checkbox
   const handleCheckboxChange = (method: string, event: React.ChangeEvent<HTMLInputElement>) => {
     event.stopPropagation();
+    
+    const isCash = method.toLowerCase().includes('كاش') || 
+                   method.toLowerCase().includes('cash');
+    const paymentData = getPaymentData(method);
+    const isCurrentlyActive = paymentData?.isSelected || false;
+    
+    if (!isCurrentlyActive && !isCash) {
+      // تحقق من عدد الطرق النشطة غير النقدية
+      const activeNonCashCount = selectedPayments.filter(p => {
+        const isNonCash = !(p.method.toLowerCase().includes('كاش') || 
+                           p.method.toLowerCase().includes('cash'));
+        return isNonCash && p.isSelected && p.amount > 0;
+      }).length;
+      
+      if (activeNonCashCount >= 2) {
+        onShowWarning?.('لا يمكن استخدام أكثر من وسيلتي دفع غير نقدية');
+        return;
+      }
+    }
+    
     onPaymentMethodToggle(method);
     
-    const paymentData = getPaymentData(method);
-    const willBeSelected = !(paymentData?.isSelected || false);
+    const willBeSelected = !isCurrentlyActive;
     
     if (!willBeSelected && selectedPaymentMethod === method) {
       const otherActiveMethod = selectedPayments.find(p => 
@@ -152,11 +190,11 @@ const getActualContributionAmount = (method: string, amount: number) => {
                 <span className={styles.methodName}>{method}</span>
               </div>
               
-{hasAmount && (
-  <div className={styles.methodAmount}>
-    {actualContribution.toFixed(2)} جنيه
-  </div>
-)}
+              {hasAmount && (
+                <div className={styles.methodAmount}>
+                  {actualContribution.toFixed(2)} جنيه
+                </div>
+              )}
               
               {isSelectedForEdit && (
                 <div className={styles.editIndicator}>
@@ -169,26 +207,17 @@ const getActualContributionAmount = (method: string, amount: number) => {
       </div>
 
       <div className={styles.paymentSummary}>
-        {/* <div className={styles.summaryRow}>
-          <span>قيمة الأوردر:</span>
-          <span className={styles.orderValue}>
-            {totalAmount.toFixed(2)} جنيه
-          </span>
-        </div>
-        
-        <div className={styles.summaryRow}>
-          <span>إجمالي المدفوع:</span>
-          <span className={styles.totalPaid}>
-            {totalPaidAllMethods.toFixed(2)} جنيه
-          </span>
-        </div> */}
-        
         <div className={styles.summaryRow}>
           <span>طرق الدفع المستخدمة:</span>
           <span className={styles.methodsCount}>
             {selectedPayments.filter(p => p.isSelected && getActualContributionAmount(p.method, p.amount) > 0).length}
           </span>
         </div>
+        {/* <div className={styles.summaryRow}>
+          <span className={styles.limitText}>
+            الحد الأقصى: وسيلتان غير نقدية + كاش
+          </span>
+        </div> */}
       </div>
     </div>
   );
