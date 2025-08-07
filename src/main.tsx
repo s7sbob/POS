@@ -9,7 +9,6 @@ import { store } from './store/Store';
 import Spinner from './views/spinner/Spinner';
 import ErrorBoundary from './components/ErrorBoundary';
 import './utils/i18n';
-import './_mockApis';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <ErrorBoundary>

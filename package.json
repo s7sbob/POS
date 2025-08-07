@@ -53,6 +53,7 @@
     "axios-mock-adapter": "2.0.0",
     "bidi-js": "^1.0.3",
     "chance": "^1.1.11",
+    "codetxt": "^1.0.1",
     "date-fns": "^2.30.0",
     "dayjs": "^1.11.13",
     "emoji-picker-react": "^4.12.0",
