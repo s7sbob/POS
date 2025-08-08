@@ -14,6 +14,7 @@ import HallCaptainsPage from 'src/Pages/pos/hall-captains/HallCaptainsPage';
 import CustomersPage from 'src/Pages/pos/customers/CustomersPage';
 import OffersPage from 'src/Pages/pos/offers/OffersPage';
 import DeliveryCompaniesPage from 'src/Pages/pos/delivery/companies/DeliveryCompaniesPage';
+import LandingPage from 'src/Pages/landing/LandingPage';
 // import SalesPage from 'src/Pages/pos/sales/SalesPage';
 
 /* ***Layouts**** */
@@ -87,11 +88,21 @@ const ProductBalanceReportPage = createProtectedPage(ProductBalanceReportPageOri
 const PosProductsPage = createProtectedPage(PosProductsPageOriginal, 'POS_PRODUCTS');
 const AdditionProducts = createProtectedPage(AdditionProductsPage, 'ADDITION_PRODUCTS');
 const Router = [
+
   {
-    path: '/',
-    element: <FullLayout />,
-    loader: authLoader,
-    children: [
+  path: "/",
+  element: <LandingPage />,
+  exact: true
+},
+{
+  path: "/landing",
+  element: <LandingPage />,
+},
+{
+  path: '/',
+  element: <FullLayout />,
+  loader: authLoader,
+  children: [
       // Dashboard Routes
       { path: '/', element: <Navigate to="/dashboard" /> },
       { path: '/dashboard', element: <ModernDash /> },

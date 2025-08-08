@@ -1842,5 +1842,267 @@
     "send": "Send",
     "print": "Print", 
     "pay": "Pay"
+  },
+
+
+   "landing": {
+    "nav": {
+      "home": "Home",
+      "features": "Features",
+      "about": "About",
+      "pricing": "Pricing",
+      "contact": "Contact"
+    },
+    "header": {
+      "signIn": "Sign In"
+    },
+    "hero": {
+      "badge": "🎉 New: Version 2.0 is now available",
+      "title": "The Most Advanced POS System",
+      "subtitle": "Manage your store effortlessly with our integrated POS system that helps you increase sales and improve operations",
+      "cta": {
+        "primary": "Start Free Trial",
+        "secondary": "Watch Demo"
+      },
+      "stats": {
+        "users": "Active Users",
+        "stores": "Stores",
+        "uptime": "Uptime"
+      },
+      "growth": "Growth",
+      "support": "Support"
+    },
+    "features": {
+      "title": "Everything You Need to Manage Your Store",
+      "subtitle": "A comprehensive and integrated system that provides all the tools you need to manage your business efficiently",
+      "pos": {
+        "title": "Point of Sale System",
+        "description": "Easy and fast interface for processing sales with support for multiple payment methods"
+      },
+      "inventory": {
+        "title": "Inventory Management",
+        "description": "Real-time inventory tracking with low stock alerts"
+      },
+      "customers": {
+        "title": "Customer Management",
+        "description": "Comprehensive customer database with loyalty programs and discounts"
+      },
+      "analytics": {
+        "title": "Analytics & Reports",
+        "description": "Detailed reports and advanced analytics to help you make the right decisions"
+      },
+      "cloud": {
+        "title": "Cloud Storage",
+        "description": "Your data is securely stored in the cloud with access from anywhere"
+      },
+      "security": {
+        "title": "Advanced Security",
+        "description": "High-level protection for your data with advanced encryption"
+      },
+      "multiplatform": {
+        "title": "Multi-Platform",
+        "description": "Works on all devices - desktop, mobile, and tablet"
+      },
+      "support": {
+        "title": "24/7 Support",
+        "description": "Specialized support team available around the clock to help you"
+      },
+      "customization": {
+        "title": "Customizable",
+        "description": "Customize the system to fit your specific business needs"
+      },
+      "cta": {
+        "title": "Ready to Experience All Features?",
+        "subtitle": "Start your free trial today with no credit card required"
+      }
+    },
+    "about": {
+      "title": "About Us",
+      "description": "We are a team of developers and experts specialized in developing advanced technical solutions for business owners. Our goal is to facilitate business management and increase productivity through modern and innovative technologies.",
+      "values": {
+        "mission": {
+          "title": "Our Mission",
+          "description": "Developing innovative technical solutions that help business owners succeed and grow"
+        },
+        "vision": {
+          "title": "Our Vision",
+          "description": "To be the leaders in POS solutions in the region"
+        },
+        "passion": {
+          "title": "Our Passion",
+          "description": "We are passionate about serving our customers and providing the best technical solutions"
+        }
+      },
+      "achievements": {
+        "title": "Our Achievements",
+        "experience": "Years Experience",
+        "customers": "Satisfied Customers",
+        "uptime": "Guaranteed Uptime"
+      },
+      "story": {
+        "title": "Our Story",
+        "content": "We started our journey in 2019 with the goal of solving the problems faced by store owners in managing their businesses. Today, we are proud to serve thousands of customers worldwide and provide advanced technical solutions that help them succeed."
+      }
+    },
+    "pricing": {
+      "title": "Pricing Plans",
+      "subtitle": "Choose the plan that fits your business size. All plans include a 14-day free trial",
+      "monthly": "Monthly",
+      "yearly": "Yearly",
+      "save20": "Save 20%",
+      "month": "month",
+      "year": "year",
+      "saveAmount": "Save ${{amount}}",
+      "mostPopular": "Most Popular",
+      "getStarted": "Get Started",
+      "contactSales": "Contact Sales",
+      "plans": {
+        "starter": {
+          "name": "Starter",
+          "description": "Perfect for small stores and startups"
+        },
+        "professional": {
+          "name": "Professional",
+          "description": "For medium stores that need advanced features"
+        },
+        "enterprise": {
+          "name": "Enterprise",
+          "description": "For large companies with complex needs"
+        }
+      },
+      "features": {
+        "singleStore": "Single Store",
+        "basicPOS": "Basic POS",
+        "inventory": "Inventory Management",
+        "basicReports": "Basic Reports",
+        "emailSupport": "Email Support",
+        "multiStore": "Multiple Stores",
+        "advancedReports": "Advanced Reports",
+        "api": "API Access",
+        "advancedPOS": "Advanced POS",
+        "fullInventory": "Full Inventory Management",
+        "prioritySupport": "Priority Support",
+        "customization": "Advanced Customization",
+        "unlimitedStores": "Unlimited Stores",
+        "enterprisePOS": "Enterprise POS",
+        "fullSuite": "Full Suite",
+        "customReports": "Custom Reports",
+        "dedicatedSupport": "Dedicated Support",
+        "fullAPI": "Full API Access",
+        "whiteLabel": "White Label",
+        "onPremise": "On-Premise"
+      },
+      "needCustom": {
+        "title": "Need a Custom Solution?",
+        "description": "Contact our sales team to discuss your specific needs and get a custom quote"
+      }
+    },
+    "partners": {
+      "title": "Our Partners",
+      "subtitle": "We partner with the best companies in the world to provide exceptional service",
+      "testimonials": {
+        "title": "What Our Customers Say",
+        "subtitle": "Real experiences from our customers who achieved success using our system",
+        "testimonial1": "Amazing system that helped me improve my store management significantly. The interface is easy and technical support is excellent",
+        "testimonial2": "Best POS system I've used. The analytics helped us increase our sales by 30%",
+        "testimonial3": "The system helped us manage multiple branches efficiently. Highly recommend it"
+      },
+      "stats": {
+        "businesses": "Businesses Trust Us",
+        "processed": "Transactions Processed",
+        "satisfaction": "Customer Satisfaction"
+      }
+    },
+    "contact": {
+      "title": "Contact Us",
+      "subtitle": "Have questions? We're here to help. Contact us through any of the following methods",
+      "getInTouch": "Get in Touch",
+      "description": "Our team is ready to help you and answer all your inquiries. Don't hesitate to contact us",
+      "info": {
+        "email": {
+          "title": "Email",
+          "description": "Send us a message anytime"
+        },
+        "phone": {
+          "title": "Phone",
+          "description": "Call us directly"
+        },
+        "address": {
+          "title": "Address",
+          "value": "Cairo, Egypt",
+          "description": "Visit us at our office"
+        },
+        "hours": {
+          "title": "Business Hours",
+          "value": "Sunday - Thursday: 9 AM - 6 PM",
+          "description": "We're available during these hours"
+        }
+      },
+      "form": {
+        "title": "Send us a Message",
+        "description": "Fill out the form and we'll get back to you as soon as possible",
+        "firstName": "First Name",
+        "lastName": "Last Name",
+        "email": "Email",
+        "phone": "Phone Number",
+        "company": "Company Name",
+        "message": "Message",
+        "send": "Send Message",
+        "sending": "Sending...",
+        "success": "Your message has been sent successfully! We'll get back to you soon",
+        "validation": {
+          "firstNameRequired": "First name is required",
+          "lastNameRequired": "Last name is required",
+          "emailRequired": "Email is required",
+          "emailInvalid": "Email is invalid",
+          "messageRequired": "Message is required"
+        }
+      },
+      "cta": {
+        "title": "Ready to Start Your Journey with Us?",
+        "description": "Book a free call with our team or try the system free for 14 days",
+        "schedule": "Schedule a Call",
+        "demo": "Free Trial"
+      }
+    },
+    "footer": {
+      "description": "We are committed to providing the best POS solutions to help businesses grow and prosper. Trust our expertise and make managing your store easier and more efficient.",
+      "address": "Cairo, Egypt",
+      "product": {
+        "title": "Product",
+        "features": "Features",
+        "pricing": "Pricing",
+        "integrations": "Integrations",
+        "api": "API",
+        "security": "Security"
+      },
+      "company": {
+        "title": "Company",
+        "about": "About",
+        "careers": "Careers",
+        "blog": "Blog",
+        "news": "News",
+        "investors": "Investors"
+      },
+      "support": {
+        "title": "Support",
+        "help": "Help Center",
+        "documentation": "Documentation",
+        "contact": "Contact",
+        "training": "Training",
+        "status": "System Status"
+      },
+      "legal": {
+        "title": "Legal",
+        "privacy": "Privacy Policy",
+        "terms": "Terms of Service",
+        "cookies": "Cookie Policy",
+        "licenses": "Licenses"
+      },
+      "copyright": "All rights reserved by POS System Company",
+      "madeWith": "Made with",
+      "madeIn": "in Egypt"
+    }
   }
+
 }
