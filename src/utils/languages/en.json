@@ -1854,12 +1854,22 @@
       "contact": "Contact"
     },
     "header": {
-      "signIn": "Sign In"
+      "signIn": "Sign In",
+        "mobile": {
+        "signIn": "Sign In",
+        "language": "Language",
+        "theme": "Theme",
+        "description": "The Most Advanced POS System"
+      }
     },
     "hero": {
       "badge": "🎉 New: Version 2.0 is now available",
       "title": "The Most Advanced POS System",
       "subtitle": "Manage your store effortlessly with our integrated POS system that helps you increase sales and improve operations",
+        "mobile": {
+        "hideStats": "Hide Statistics",
+        "showStats": "Show Statistics"
+      },
       "cta": {
         "primary": "Start Free Trial",
         "secondary": "Watch Demo"
@@ -1875,29 +1885,62 @@
     "features": {
       "title": "Everything You Need to Manage Your Store",
       "subtitle": "A comprehensive and integrated system that provides all the tools you need to manage your business efficiently",
+      "mobile": {
+        "clickForDetails": "Click for details"
+      },
       "pos": {
         "title": "Point of Sale System",
-        "description": "Easy and fast interface for processing sales with support for multiple payment methods"
+        "description": "Easy and fast interface for processing sales with support for multiple payment methods",
+        "highlights": {
+          "fast": "Fast Processing",
+          "payment": "Multiple Payment Methods",
+          "easy": "Easy Interface"
+        }
       },
       "inventory": {
         "title": "Inventory Management",
-        "description": "Real-time inventory tracking with low stock alerts"
+        "description": "Real-time inventory tracking with low stock alerts",
+          "highlights": {
+          "realtime": "Real-time Tracking",
+          "alerts": "Smart Alerts",
+          "reports": "Detailed Reports"
+        }
       },
       "customers": {
         "title": "Customer Management",
-        "description": "Comprehensive customer database with loyalty programs and discounts"
+        "description": "Comprehensive customer database with loyalty programs and discounts",
+         "highlights": {
+          "database": "Comprehensive Database",
+          "loyalty": "Loyalty Programs",
+          "discounts": "Smart Discounts"
+        }
       },
       "analytics": {
         "title": "Analytics & Reports",
-        "description": "Detailed reports and advanced analytics to help you make the right decisions"
+        "description": "Detailed reports and advanced analytics to help you make the right decisions",
+           "highlights": {
+          "advanced": "Advanced Analytics",
+          "insights": "Deep Insights",
+          "decisions": "Smart Decisions"
+        }
       },
       "cloud": {
         "title": "Cloud Storage",
-        "description": "Your data is securely stored in the cloud with access from anywhere"
+        "description": "Your data is securely stored in the cloud with access from anywhere",
+            "highlights": {
+          "secure": "Secure Storage",
+          "anywhere": "Access Anywhere",
+          "backup": "Automatic Backups"
+        }
       },
       "security": {
         "title": "Advanced Security",
-        "description": "High-level protection for your data with advanced encryption"
+        "description": "High-level protection for your data with advanced encryption",
+          "highlights": {
+          "encryption": "Advanced Encryption",
+          "protection": "High Protection",
+          "guaranteed": "Guaranteed Security"
+        }
       },
       "multiplatform": {
         "title": "Multi-Platform",
@@ -2018,6 +2061,15 @@
       "subtitle": "Have questions? We're here to help. Contact us through any of the following methods",
       "getInTouch": "Get in Touch",
       "description": "Our team is ready to help you and answer all your inquiries. Don't hesitate to contact us",
+      "mobile": {
+        "sendDetailedMessage": "Send us a detailed message",
+        "workingHoursAndResponse": "Working hours and response",
+        "workingHours": "Working Hours",
+        "messageResponse": "Message Response",
+        "responseTime": "Within 24 hours on business days",
+        "emergencySupport": "Emergency Support",
+        "emergencyAvailability": "Available 24/7 for premium customers"
+      },
       "info": {
         "email": {
           "title": "Email",

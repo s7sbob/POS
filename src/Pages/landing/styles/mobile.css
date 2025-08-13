@@ -1,0 +1,84 @@
+/* File: src/Pages/landing/styles/mobile.css */
+/* Mobile-specific styles for landing page */
+
+.mobile-hero-gradient {
+  background: linear-gradient(
+    180deg, 
+    var(--primary-light) 0%, 
+    var(--background-default) 70%
+  );
+}
+
+/* Touch-friendly buttons */
+.mobile-touch-button {
+  min-height: 44px !important;
+  min-width: 44px !important;
+}
+
+/* Smooth animations for mobile */
+@media (max-width: 768px) {
+  .fade-in-up {
+    animation: mobileSlideUp 0.5s ease-out;
+  }
+  
+  @keyframes mobileSlideUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  /* Reduce motion for performance */
+  .float-animation {
+    animation: mobileFloat 4s ease-in-out infinite;
+  }
+  
+  @keyframes mobileFloat {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+  }
+}
+
+/* Mobile swiper customization */
+.mobile-swiper .swiper-pagination {
+  bottom: 10px !important;
+}
+
+.mobile-swiper .swiper-pagination-bullet {
+  background: var(--primary-main) !important;
+  opacity: 0.3;
+}
+
+.mobile-swiper .swiper-pagination-bullet-active {
+  opacity: 1;
+}
+
+/* Mobile drawer styles */
+.mobile-drawer-header {
+  background: linear-gradient(135deg, var(--primary-main), var(--secondary-main));
+  background-size: 200% 200%;
+  animation: gradientShift 4s ease infinite;
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Mobile form optimization */
+.mobile-form-field input {
+  font-size: 16px !important; /* Prevents zoom on iOS */
+}
+
+/* Mobile card hover effects */
+@media (hover: none) {
+  .mobile-card:active {
+    transform: scale(0.98);
+    transition: transform 0.1s ease;
+  }
+}

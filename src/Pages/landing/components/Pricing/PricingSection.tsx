@@ -182,7 +182,7 @@ const PricingSection: React.FC = () => {
                     icon={<IconStar size={16} />}
                     sx={{
                       position: 'absolute',
-                      top: -12,
+                      top: 5,
                       left: '50%',
                       transform: 'translateX(-50%)',
                       fontWeight: 600,

@@ -24,6 +24,12 @@ interface OrderSummaryProps {
   orderType: string;
   onDeliveryChargeChange: (charge: number) => void;
   readOnly: boolean;
+  onOrderCompleted?: (result: any) => void;
+  selectedTable?: any;
+  selectedDeliveryCompany?: any;
+  // إضافة الـ props المطلوبة لوضع التعديل
+  isEditMode?: boolean;
+  currentInvoiceId?: string | null;
 }
 
 const OrderSummary: React.FC<OrderSummaryProps> = ({
@@ -38,10 +44,15 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
   selectedCustomer,
   selectedAddress,
   onCustomerSelect,
+  onOrderCompleted,
   orderType,
   onDeliveryChargeChange,
-  readOnly = false // إضافة جديدة
-
+  readOnly = false,
+  selectedTable,
+  selectedDeliveryCompany,
+  // استقبال الـ props الجديدة مع قيم افتراضية
+  isEditMode = false,
+  currentInvoiceId = null
 }) => {
   const [selectedSubItemId, setSelectedSubItemId] = useState<string | null>(null);
   const [phoneInput, setPhoneInput] = useState('');
@@ -55,7 +66,8 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
   const [zones, setZones] = useState<any[]>([]);
   const [selectedResultIndex, setSelectedResultIndex] = useState(-1);
   const [searchCache, setSearchCache] = useState<{[key: string]: Customer[]}>({});
-  const [inputHasFocus, setInputHasFocus] = useState(false); // إضافة حالة التركيز
+  const [inputHasFocus, setInputHasFocus] = useState(false);
+  const [showPaymentPopup, setShowPaymentPopup] = useState(false);
   
   // استخدام useRef بدلاً من state للمتغيرات المساعدة
   const searchDebounceTimer = useRef<NodeJS.Timeout | null>(null);
@@ -63,7 +75,6 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
   const lastSearchQuery = useRef<string>('');
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
-const [showPaymentPopup, setShowPaymentPopup] = useState(false);
 
   // تحميل المناطق عند بدء التشغيل
   useEffect(() => {
@@ -274,9 +285,7 @@ const [showPaymentPopup, setShowPaymentPopup] = useState(false);
     }, 200);
   }, []);
 
-  // معالج Enter محسن
-
-    const handleCustomerSelect = useCallback((customer: Customer) => {
+  const handleCustomerSelect = useCallback((customer: Customer) => {
     setSelectedCustomerForDetails(customer);
     setShowCustomerDetails(true);
     setShowDropdown(false);
@@ -284,96 +293,92 @@ const [showPaymentPopup, setShowPaymentPopup] = useState(false);
     setInputHasFocus(false);
   }, []);
 
-const handleKeyDown = useCallback(async (e: React.KeyboardEvent<HTMLInputElement>) => {
-  if (showDropdown && searchResults.length > 0) {
-    switch (e.key) {
-      case 'ArrowDown':
-        e.preventDefault();
-        setSelectedResultIndex(prev => 
-          prev < searchResults.length - 1 ? prev + 1 : prev
-        );
-        break;
-      case 'ArrowUp':
-        e.preventDefault();
-        setSelectedResultIndex(prev => prev > 0 ? prev - 1 : -1);
-        break;
-      case 'Enter':
-        e.preventDefault();
+  const handleKeyDown = useCallback(async (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (showDropdown && searchResults.length > 0) {
+      switch (e.key) {
+        case 'ArrowDown':
+          e.preventDefault();
+          setSelectedResultIndex(prev => 
+            prev < searchResults.length - 1 ? prev + 1 : prev
+          );
+          break;
+        case 'ArrowUp':
+          e.preventDefault();
+          setSelectedResultIndex(prev => prev > 0 ? prev - 1 : -1);
+          break;
+        case 'Enter':
+          e.preventDefault();
+          if (isSearching) {
+            return;
+          }
+          // اختيار فقط إذا كان هناك عنصر محدد بالأسهم
+          if (selectedResultIndex >= 0 && selectedResultIndex < searchResults.length) {
+            handleCustomerSelect(searchResults[selectedResultIndex]);
+          } else {
+            // إذا مفيش اختيار بالأسهم، تحقق من وجود مطابقة تامة
+            const query = phoneInput.trim();
+            const exactMatch = searchResults.find(customer => 
+              customer.phone1 === query || 
+              customer.phone2 === query ||
+              customer.phone3 === query ||
+              customer.phone4 === query
+            );
+            
+            if (!exactMatch) {
+              // مفيش مطابقة تامة، افتح dialog الإضافة
+              setShowCustomerForm(true);
+              setShowDropdown(false);
+            }
+          }
+          break;
+        case 'Escape':
+          setShowDropdown(false);
+          setSelectedResultIndex(-1);
+          inputRef.current?.blur();
+          break;
+      }
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      
+      const query = phoneInput.trim();
+      if (query.length >= 3) {
         if (isSearching) {
           return;
         }
-        // اختيار فقط إذا كان هناك عنصر محدد بالأسهم
-        if (selectedResultIndex >= 0 && selectedResultIndex < searchResults.length) {
-          handleCustomerSelect(searchResults[selectedResultIndex]);
-        } else {
-          // إذا مفيش اختيار بالأسهم، تحقق من وجود مطابقة تامة
-          const query = phoneInput.trim();
-          const exactMatch = searchResults.find(customer => 
-            customer.phone1 === query || 
-            customer.phone2 === query ||
-            customer.phone3 === query ||
-            customer.phone4 === query
-          );
-          
-          if (!exactMatch) {
-            // مفيش مطابقة تامة، افتح dialog الإضافة
-            setShowCustomerForm(true);
-            setShowDropdown(false);
-          }
-        }
-        break;
-      case 'Escape':
-        setShowDropdown(false);
-        setSelectedResultIndex(-1);
-        inputRef.current?.blur();
-        break;
-    }
-  } else if (e.key === 'Enter') {
-    e.preventDefault();
-    
-    const query = phoneInput.trim();
-    if (query.length >= 3) {
-      if (isSearching) {
-        return;
-      }
 
-      setIsSearching(true);
-      try {
-        const results = await searchCustomers(query);
-        
-        if (results.length > 0) {
-          // تحقق من وجود مطابقة تامة
-          const exactMatch = results.find(customer => 
-            customer.phone1 === query || 
-            customer.phone2 === query ||
-            customer.phone3 === query ||
-            customer.phone4 === query
-          );
+        setIsSearching(true);
+        try {
+          const results = await searchCustomers(query);
           
-          setSearchResults(results);
-          setShowDropdown(true);
-          setSelectedResultIndex(-1);
-          
-          // إذا مفيش مطابقة تامة، افتح dialog الإضافة كمان
-          if (!exactMatch) {
-            setShowCustomerForm(true);
+          if (results.length > 0) {
+            // تحقق من وجود مطابقة تامة
+            const exactMatch = results.find(customer => 
+              customer.phone1 === query || 
+              customer.phone2 === query ||
+              customer.phone3 === query ||
+              customer.phone4 === query
+            );
+            
+            setSearchResults(results);
+            setShowDropdown(true);
+            setSelectedResultIndex(-1);
+            
+            // إذا مفيش مطابقة تامة، افتح dialog الإضافة كمان
+            if (!exactMatch) {
+              setShowCustomerForm(true);
+            }
+          } else {
+            setShowCustomerForm(true); // مفيش نتائج، افتح عميل جديد
           }
-        } else {
-          setShowCustomerForm(true); // مفيش نتائج، افتح عميل جديد
+        } catch (error) {
+          console.error('Immediate search failed:', error);
+          setShowCustomerForm(true);
+        } finally {
+          setIsSearching(false);
         }
-      } catch (error) {
-        console.error('Immediate search failed:', error);
-        setShowCustomerForm(true);
-      } finally {
-        setIsSearching(false);
       }
     }
-  }
-}, [showDropdown, searchResults, selectedResultIndex, phoneInput, isSearching, searchCustomers, handleCustomerSelect]);
-
-
-
-
+  }, [showDropdown, searchResults, selectedResultIndex, phoneInput, isSearching, searchCustomers, handleCustomerSelect]);
 
   const handleCustomerDetailsSelect = useCallback((customer: Customer, address: CustomerAddress) => {
     onCustomerSelect(customer, address);
@@ -595,14 +600,18 @@ const handleKeyDown = useCallback(async (e: React.KeyboardEvent<HTMLInputElement
     );
   };
 
-
   const shouldShowAllButtons = orderType !== 'Takeaway';
-const shouldShowPayOnly = orderType === 'Takeaway';
+  const shouldShowPayOnly = orderType === 'Takeaway';
 
   return (
     <aside className={styles.orderSummary}>
       <div className={styles.orderHeader}>
-        <div className={styles.orderNumber}>#123</div>
+        <div className={styles.orderNumber}>
+          {isEditMode && currentInvoiceId ? 
+            `#${currentInvoiceId.substring(0, 8)}...` : 
+            '#123'
+          }
+        </div>
         <div className={styles.orderTotal}>
           <span className={styles.amount}>{finalTotal.toFixed(2)}</span>
           <span className={styles.currency}>EGP</span>
@@ -613,17 +622,17 @@ const shouldShowPayOnly = orderType === 'Takeaway';
         {/* Customer Search Input with Enhanced Dropdown */}
         <div className={styles.customerInputContainer} ref={dropdownRef}>
           <div className={styles.customerInput}>
-<input
-  ref={inputRef}
-  type="text"
-  placeholder="Customer Phone Number - رقم هاتف العميل"
-  value={phoneInput}
-  onChange={handleInputChange}
-  onFocus={handleInputFocus}
-  onBlur={handleInputBlur}
-  onKeyDown={handleKeyDown}
-  className={styles.customerField}
-/>
+            <input
+              ref={inputRef}
+              type="text"
+              placeholder="Customer Phone Number - رقم هاتف العميل"
+              value={phoneInput}
+              onChange={handleInputChange}
+              onFocus={handleInputFocus}
+              onBlur={handleInputBlur}
+              onKeyDown={handleKeyDown}
+              className={styles.customerField}
+            />
             <button 
               className={styles.customerButton}
               onClick={handleAddCustomerClick}
@@ -732,35 +741,35 @@ const shouldShowPayOnly = orderType === 'Takeaway';
           <span>Total</span>
           <span>{finalTotal.toFixed(2)} <small>EGP</small></span>
         </div>
-{!readOnly && (
-  <div className={`${styles.actionButtons} ${shouldShowPayOnly ? styles.takeawayButtons : ''}`}>
-      {shouldShowAllButtons && (
-        <>
-          <button className={`${styles.actionButton} ${styles.send}`}>
-            <img src="/images/img_tabler_send.svg" alt="Send" />
-            <span>Send</span>
-          </button>
-          <button onClick={() => canOpenPayment && setShowPaymentPopup(true)}
-                  disabled={!canOpenPayment}
-                  className={`${styles.actionButton} ${styles.print} ${!canOpenPayment ? styles.disabledBtn : ''}`}>
-            <img src="/images/img_printer.svg" alt="Print" />
-            <span>Print</span>
-          </button>
-        </>
-      )}
-      <button
-        onClick={() => canOpenPayment && setShowPaymentPopup(true)}
-        disabled={!canOpenPayment}
-        className={`${styles.actionButton} ${styles.pay} ${shouldShowPayOnly ? styles.fullWidth : ''} ${!canOpenPayment ? styles.disabledBtn : ''}`}
-        title={!canOpenPayment ? "لا يمكن الدفع بدون إضافة أصناف" : undefined}
-      >
-        <img src="/images/img_payment_02.svg" alt="Pay" />
-        <span>Pay</span>
-      </button>
-  </div>
-)}
 
-    </div>
+        {!readOnly && (
+          <div className={`${styles.actionButtons} ${shouldShowPayOnly ? styles.takeawayButtons : ''}`}>
+            {shouldShowAllButtons && (
+              <>
+                <button className={`${styles.actionButton} ${styles.send}`}>
+                  <img src="/images/img_tabler_send.svg" alt="Send" />
+                  <span>Send</span>
+                </button>
+                <button onClick={() => canOpenPayment && setShowPaymentPopup(true)}
+                        disabled={!canOpenPayment}
+                        className={`${styles.actionButton} ${styles.print} ${!canOpenPayment ? styles.disabledBtn : ''}`}>
+                  <img src="/images/img_printer.svg" alt="Print" />
+                  <span>Print</span>
+                </button>
+              </>
+            )}
+            <button
+              onClick={() => canOpenPayment && setShowPaymentPopup(true)}
+              disabled={!canOpenPayment}
+              className={`${styles.actionButton} ${styles.pay} ${shouldShowPayOnly ? styles.fullWidth : ''} ${!canOpenPayment ? styles.disabledBtn : ''}`}
+              title={!canOpenPayment ? "لا يمكن الدفع بدون إضافة أصناف" : undefined}
+            >
+              <img src="/images/img_payment_02.svg" alt="Pay" />
+              <span>{isEditMode ? 'تحديث' : 'Pay'}</span>
+            </button>
+          </div>
+        )}
+      </div>
 
       {/* Customer Details Popup */}
       <CustomerDetailsPopup
@@ -770,30 +779,41 @@ const shouldShowPayOnly = orderType === 'Takeaway';
         onSelectCustomer={handleCustomerDetailsSelect}
       />
 
-
-<PaymentPopup
-  isOpen={showPaymentPopup}
-  onClose={() => setShowPaymentPopup(false)}
-  orderSummary={orderSummary}
-  customerName={customerName}
-  onCustomerNameChange={onCustomerNameChange}
-  onRemoveOrderItem={onRemoveOrderItem}
-  onRemoveSubItem={onRemoveSubItem}
-  selectedOrderItemId={selectedOrderItemId}
-  onOrderItemSelect={onOrderItemSelect}
-  onOrderItemDoubleClick={onOrderItemDoubleClick}
-  selectedCustomer={selectedCustomer}
-  selectedAddress={selectedAddress}
-  onCustomerSelect={onCustomerSelect}
-  orderType={orderType}
-  onDeliveryChargeChange={onDeliveryChargeChange}
-  onPaymentComplete={(payments) => {
-    console.log('مدفوعات:', payments);
-    setShowPaymentPopup(false);
-    // هنا يمكنك إضافة منطق حفظ الدفع
-  }}
-/>
-
+      {/* Payment Popup مع الـ props المصححة */}
+      <PaymentPopup
+        isOpen={showPaymentPopup}
+        onClose={() => setShowPaymentPopup(false)}
+        orderSummary={orderSummary}
+        customerName={customerName}
+        onCustomerNameChange={onCustomerNameChange}
+        onRemoveOrderItem={onRemoveOrderItem}
+        onRemoveSubItem={onRemoveSubItem}
+        selectedOrderItemId={selectedOrderItemId}
+        onOrderItemSelect={onOrderItemSelect}
+        onOrderItemDoubleClick={onOrderItemDoubleClick}
+        selectedCustomer={selectedCustomer}
+        selectedAddress={selectedAddress}
+        onCustomerSelect={onCustomerSelect}
+        orderType={orderType}
+        onDeliveryChargeChange={onDeliveryChargeChange}
+        selectedTable={selectedTable}
+        selectedDeliveryCompany={selectedDeliveryCompany}
+        isEditMode={isEditMode} // ✅ تمرير صحيح
+        currentInvoiceId={currentInvoiceId} // ✅ تمرير صحيح
+        onPaymentComplete={(result) => {
+          if (result.success) {
+            console.log('تم معالجة الفاتورة بنجاح:', result.invoice);
+            console.log('تفاصيل الدفع:', result.payments);
+            
+            setShowPaymentPopup(false);
+            
+            // إرسال إشارة للصفحة الرئيسية لإعادة التعيين
+            if (onOrderCompleted) {
+              onOrderCompleted(result);
+            }
+          }
+        }}
+      />
 
       {/* Customer Form Popup */}
       {showCustomerForm && (

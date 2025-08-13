@@ -21,6 +21,7 @@ import { useError } from '../../../contexts/ErrorContext';
 import * as deliveryCompaniesApi from '../../../utils/api/pagesApi/deliveryCompaniesApi';
 import { DeliveryCompany } from '../../../utils/api/pagesApi/deliveryCompaniesApi';
 import { Customer, CustomerAddress } from 'src/utils/api/pagesApi/customersApi';
+import { Invoice } from '../../../utils/api/pagesApi/invoicesApi';
 
 const PosSystem: React.FC = () => {
   const [keypadValue, setKeypadValue] = useState('0');
@@ -30,7 +31,7 @@ const PosSystem: React.FC = () => {
   const [selectedChips, setSelectedChips] = useState<string[]>([]);
   const [selectedOrderType, setSelectedOrderType] = useState('Takeaway');
   const [showTablePopup, setShowTablePopup] = useState(false);
-  const { showWarning } = useError();
+const { showWarning, showError } = useError();
   const [deliveryCompanies, setDeliveryCompanies] = useState<DeliveryCompany[]>([]);
   const [selectedDeliveryCompany, setSelectedDeliveryCompany] = useState<DeliveryCompany | null>(null);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
@@ -112,6 +113,9 @@ const PosSystem: React.FC = () => {
   const categories = showingChildren 
     ? currentCategories.find(cat => cat.id === showingChildren)?.children || []
     : rootCategories;
+
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [currentInvoiceId, setCurrentInvoiceId] = useState<string | null>(null);
 
   // تحميل البيانات مرة واحدة
   useEffect(() => {
@@ -457,6 +461,93 @@ const PosSystem: React.FC = () => {
     };
   }, [orderItems, getServiceCharge, deliveryCharge]);
 
+
+  // دالة لتحويل بيانات الفاتورة إلى OrderItems
+const convertInvoiceToOrderItems = useCallback((invoice: any): OrderItem[] => {
+  if (!invoice.items || !Array.isArray(invoice.items)) {
+    return [];
+  }
+
+  return invoice.items.map((item: any) => {
+    // إنشاء منتج وهمي من بيانات الفاتورة
+    const product: PosProduct = {
+      id: item.productId,
+      name: `Product ${item.productId.substring(0, 8)}`, // اسم مؤقت
+      nameArabic: item.posPriceName || 'منتج',
+      image: '/images/img_rectangle_34624462.png',
+      categoryId: 'default',
+      productType: 1,
+      hasMultiplePrices: false,
+      productPrices: [{
+        id: item.productPriceId,
+        name: item.posPriceName,
+        nameArabic: item.posPriceName,
+        price: item.unitPrice,
+        barcode: item.barcode
+      }]
+    };
+
+    const orderItem: OrderItem = {
+      id: item.id,
+      product: product,
+      selectedPrice: {
+        id: item.productPriceId,
+        name: item.posPriceName,
+        nameArabic: item.posPriceName,
+        price: item.unitPrice,
+        barcode: item.barcode
+      },
+      quantity: item.qty,
+      totalPrice: item.subTotal,
+      discountPercentage: item.itemDiscountPercentage,
+      discountAmount: item.itemDiscountValue,
+      notes: item.notes || undefined
+    };
+
+    return orderItem;
+  });
+}, []);
+
+// معالج عرض الطلب من popup
+const handleViewOrderFromPopup = useCallback((invoiceData: any) => {
+  try {
+    // تحويل بيانات الفاتورة إلى حالة الصفحة
+    const convertedItems = convertInvoiceToOrderItems(invoiceData);
+    
+    // إعادة تعيين حالة الصفحة
+    setOrderItems(convertedItems);
+    setIsEditMode(true);
+    setCurrentInvoiceId(invoiceData.id);
+    
+    // تحديد نوع الطلب
+    const orderTypeMap: { [key: number]: string } = {
+      1: 'Takeaway',
+      2: 'Dine-in',
+      3: 'Delivery',
+      4: 'Pickup'
+    };
+    
+    const newOrderType = orderTypeMap[invoiceData.invoiceType] || 'Takeaway';
+    setSelectedOrderType(newOrderType);
+    
+    // إعداد معلومات العميل إذا كانت موجودة
+    if (invoiceData.customerId && invoiceData.customerName) {
+      // يمكنك هنا جلب بيانات العميل الكاملة أو استخدام البيانات المتاحة
+      setCustomerName(invoiceData.customerName);
+    }
+    
+    // إعداد معلومات الطاولة إذا كانت موجودة
+    if (invoiceData.tableId && newOrderType === 'Dine-in') {
+      // يمكنك هنا جلب بيانات الطاولة أو استخدام ID
+    }
+    
+    console.log('تم تحميل الطلب للتعديل:', invoiceData);
+  } catch (error) {
+    console.error('خطأ في تحويل بيانات الطلب:', error);
+    showError('حدث خطأ في تحميل بيانات الطلب');
+  }
+}, [convertInvoiceToOrderItems, setOrderItems, setSelectedOrderType, setCustomerName, showError]);
+
   // حذف منتج من الطلب
   const removeOrderItem = useCallback((itemId: string) => {
     setOrderItems(prev => prev.filter(item => item.id !== itemId));
@@ -579,6 +670,10 @@ const PosSystem: React.FC = () => {
     );
   }, []);
 
+
+
+
+
   const handleResetOrder = useCallback(() => {
     setOrderItems([]);
     setSelectedOrderItemId(null);
@@ -588,7 +683,9 @@ const PosSystem: React.FC = () => {
     setSelectedCustomer(null);
     setSelectedAddress(null);
     setDeliveryCharge(0);
-
+ // إعادة تعيين وضع التعديل
+  setIsEditMode(false);
+  setCurrentInvoiceId(null);
     clearSelectedTable();
 
     setIsExtraMode(false);
@@ -601,6 +698,16 @@ const PosSystem: React.FC = () => {
     
     console.log('Order reset successfully');
   }, [handleBackToMainProducts, clearSelectedTable]);
+
+    const handleOrderCompleted = useCallback((result: any) => {
+  console.log('تم إنهاء الطلب بنجاح:', result);
+  
+  // إعادة تعيين جميع المتغيرات كما لو تم الضغط على Reset
+  handleResetOrder();
+  
+  // يمكنك إضافة أي منطق إضافي هنا مثل عرض رسالة نجاح
+  console.log('تم إعادة تعيين النظام بنجاح');
+}, [handleResetOrder]);
 
   // عرض حالة التحميل
   if (loading) {
@@ -621,6 +728,7 @@ const PosSystem: React.FC = () => {
     );
   }
 
+
   return (
     <div className="pos-system">
       <Header
@@ -634,6 +742,8 @@ const PosSystem: React.FC = () => {
         onDeliveryCompanySelect={setSelectedDeliveryCompany}
         selectedCustomer={selectedCustomer}
         selectedAddress={selectedAddress}
+        onViewOrder={handleViewOrderFromPopup} // إضافة هذا
+
       />
 
       <main className="main-content">
@@ -726,7 +836,12 @@ const PosSystem: React.FC = () => {
           selectedAddress={selectedAddress}
           onCustomerSelect={handleCustomerSelect}
           orderType={selectedOrderType}
-          onDeliveryChargeChange={handleDeliveryChargeChange} readOnly={false}        />
+          onDeliveryChargeChange={handleDeliveryChargeChange} readOnly={false}   onOrderCompleted={handleOrderCompleted} 
+          selectedTable={selectedTable} // ✅ إضافة هذا
+          selectedDeliveryCompany={selectedDeliveryCompany} // ✅ إضافة هذا// إضافة المعالج الجديد
+          isEditMode={isEditMode}
+  currentInvoiceId={currentInvoiceId}
+       />
       </main>
 
       <PriceSelectionPopup
@@ -777,3 +892,4 @@ const PosSystem: React.FC = () => {
 };
 
 export default PosSystem;
+

@@ -19,6 +19,8 @@ interface PaymentRightProps {
   totalAmount: number;
   nonCashTotal: number;
   onShowWarning?: (message: string) => void;
+  // إضافة prop جديد لدعم وضع التعديل
+  isEditMode?: boolean;
 }
 
 const PaymentRight: React.FC<PaymentRightProps> = ({
@@ -29,10 +31,10 @@ const PaymentRight: React.FC<PaymentRightProps> = ({
   onPaymentMethodToggle,
   onFinishPayment,
   canFinish,
-  totalPaidAllMethods,
   totalAmount,
   nonCashTotal,
-  onShowWarning
+  onShowWarning,
+  isEditMode = false // القيمة الافتراضية false
 }) => {
   const getPaymentData = (methodName: string) => {
     return selectedPayments.find(payment => payment.method === methodName);
@@ -130,6 +132,22 @@ const PaymentRight: React.FC<PaymentRightProps> = ({
 
   const isLongName = (name: string) => name.length > 15;
 
+  // تحديد نص الزر بناءً على وضع التعديل
+  const getButtonText = () => {
+    if (isEditMode) {
+      return 'تحديث الطلب';
+    }
+    return 'إنهاء الدفع';
+  };
+
+  // تحديد عنوان القسم بناءً على وضع التعديل
+  const getSectionTitle = () => {
+    if (isEditMode) {
+      return 'تعديل طرق الدفع';
+    }
+    return 'طرق الدفع المتاحة';
+  };
+
   if (availablePaymentMethods.length === 0) {
     return (
       <div className={styles.container}>
@@ -149,12 +167,27 @@ const PaymentRight: React.FC<PaymentRightProps> = ({
 
   return (
     <div className={styles.container}>
+      {/* إضافة عنوان للقسم */}
+      {isEditMode && (
+        <div className={styles.sectionHeader}>
+          <h3 className={styles.sectionTitle}>
+            {getSectionTitle()}
+          </h3>
+        </div>
+      )}
+      
       <button 
-        className={`${styles.finishBtn} ${!canFinish ? styles.disabled : ''}`}
+        className={`${styles.finishBtn} ${!canFinish ? styles.disabled : ''} ${isEditMode ? styles.editMode : ''}`}
         onClick={onFinishPayment}
         disabled={!canFinish}
+        title={isEditMode ? 'تحديث بيانات الطلب مع طرق الدفع الجديدة' : 'إنهاء عملية الدفع'}
       >
-        إنهاء الدفع
+        {getButtonText()}
+        {isEditMode && (
+          <span className={styles.editIcon}>
+            ✏️
+          </span>
+        )}
       </button>
       
       <div className={styles.methodsList}>
@@ -169,15 +202,10 @@ const PaymentRight: React.FC<PaymentRightProps> = ({
           const actualContribution = getActualContributionAmount(method, amount);
           const hasAmount = actualContribution > 0;
           
-          // التحقق إذا كان كاش وله مبلغ أكبر من المساهمة (أي له فكة)
-          const isCash = method.toLowerCase().includes('كاش') || 
-                         method.toLowerCase().includes('cash');
-          const hasChange = isCash && amount > actualContribution;
-          
           return (
             <div 
               key={method} 
-              className={`${styles.methodItem} ${isActive ? styles.active : ''} ${isSelectedForEdit ? styles.selectedForEdit : ''} ${hasAmount ? styles.hasAmount : ''} ${longName ? styles.longName : ''}`}
+              className={`${styles.methodItem} ${isActive ? styles.active : ''} ${isSelectedForEdit ? styles.selectedForEdit : ''} ${hasAmount ? styles.hasAmount : ''} ${longName ? styles.longName : ''} ${isEditMode ? styles.editModeItem : ''}`}
               onClick={() => handleCardClick(method)}
             >
               <div className={styles.methodHeader}>
@@ -193,12 +221,22 @@ const PaymentRight: React.FC<PaymentRightProps> = ({
               {hasAmount && (
                 <div className={styles.methodAmount}>
                   {actualContribution.toFixed(2)} جنيه
+                  {isEditMode && (
+                    <span className={styles.editLabel}>
+                      (قابل للتعديل)
+                    </span>
+                  )}
                 </div>
               )}
               
               {isSelectedForEdit && (
                 <div className={styles.editIndicator}>
-                  يتم التعديل عليها الآن
+                  {isEditMode ? 'يتم تعديلها الآن' : 'يتم التعديل عليها الآن'}
+                  {isEditMode && (
+                    <span className={styles.editingIcon}>
+                      🔄
+                    </span>
+                  )}
                 </div>
               )}
             </div>
@@ -208,16 +246,13 @@ const PaymentRight: React.FC<PaymentRightProps> = ({
 
       <div className={styles.paymentSummary}>
         <div className={styles.summaryRow}>
-          <span>طرق الدفع المستخدمة:</span>
+          <span>
+            {isEditMode ? 'طرق الدفع المحدثة:' : 'طرق الدفع المستخدمة:'}
+          </span>
           <span className={styles.methodsCount}>
             {selectedPayments.filter(p => p.isSelected && getActualContributionAmount(p.method, p.amount) > 0).length}
           </span>
         </div>
-        {/* <div className={styles.summaryRow}>
-          <span className={styles.limitText}>
-            الحد الأقصى: وسيلتان غير نقدية + كاش
-          </span>
-        </div> */}
       </div>
     </div>
   );

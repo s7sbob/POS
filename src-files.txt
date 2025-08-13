@@ -82,7 +82,9 @@ export default ActionButtons;
 import React, { useState, useRef, useEffect } from 'react';
 import { Customer, CustomerAddress } from 'src/utils/api/pagesApi/customersApi';
 import { DeliveryCompany } from '../../../../../utils/api/pagesApi/deliveryCompaniesApi';
+import { Invoice } from '../../../../../utils/api/pagesApi/invoicesApi'; // إضافة استيراد Invoice type
 import '../../styles/Header.css';
+import TodayOrdersPopup from '../TodayOrdersPopup';
 
 interface HeaderProps {
   selectedOrderType: string;
@@ -95,6 +97,8 @@ interface HeaderProps {
   onDeliveryCompanySelect?: (company: DeliveryCompany) => void;
   selectedCustomer?: Customer | null;
   selectedAddress?: CustomerAddress | null;
+  // ✅ إضافة prop مطلوب لعرض الطلب
+  onViewOrder?: (invoiceData: Invoice & { isEditMode: boolean }) => void;
 }
 
 const Header: React.FC<HeaderProps> = ({ 
@@ -107,10 +111,12 @@ const Header: React.FC<HeaderProps> = ({
   selectedDeliveryCompany,
   onDeliveryCompanySelect,
   selectedCustomer,
-  selectedAddress
+  selectedAddress,
+  onViewOrder // ✅ إضافة في destructuring
 }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [showTodayOrders, setShowTodayOrders] = useState(false);
 
   const orderTypes = [
     { id: 1, name: 'Takeaway', displayName: 'Takeaway', icon: '/images/takeaway.png', color: '#28a745', description: 'عميل يأخذ الطلب' },
@@ -128,143 +134,211 @@ const Header: React.FC<HeaderProps> = ({
 
   const activeDeliveryCompanies = deliveryCompanies.filter(company => company.isActive);
 
+  // معالج النقر على زر Today Orders
+  const handleTodayOrdersClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setShowTodayOrders(true);
+  };
+
+  // معالج عرض الطلب - تمرير البيانات للصفحة الرئيسية
+  const handleViewOrder = (invoiceData: Invoice & { isEditMode: boolean }) => {
+    console.log('Header: تم استقبال بيانات الطلب للعرض:', invoiceData);
+    
+    // تمرير البيانات للصفحة الرئيسية
+    if (onViewOrder) {
+      onViewOrder(invoiceData);
+    } else {
+      console.warn('Header: onViewOrder prop غير متوفر');
+    }
+    
+    // إغلاق نافذة Today Orders
+    setShowTodayOrders(false);
+  };
+
+  // إغلاق dropdown عند النقر خارجه
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   return (
-    <header className="pos-header">
-      <div className="header-content">
-        <img src="/images/img_foodify_logo_2_78x166.png" alt="Foodify Logo" className="header-logo" />
-        
-        {/* Customer Info Section */}
-        {selectedCustomer && (
-          <div className="customer-info-section">
-            <div className="customer-info-card">
-              <div className="customer-basic-info">
-                <div className="customer-name">
-                  <span className="customer-icon">👤</span>
-                  <span>{selectedCustomer.name}</span>
-                  {selectedCustomer.isVIP && <span className="vip-badge">VIP</span>}
-                </div>
-                <div className="customer-phone">
-                  <span className="phone-icon">📞</span>
-                  <span>{selectedCustomer.phone1}</span>
-                </div>
-              </div>
-              
-              {selectedAddress && selectedAddress.addressLine && (
-                <div className="customer-address">
-                  <span className="address-icon">📍</span>
-                  <span className="address-text">
-                    {selectedAddress.addressLine}
-                    {selectedAddress.zoneName && ` - ${selectedAddress.zoneName}`}
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-        
-        <nav className="header-nav">
-          <a href="#" className="nav-item active">
-            <img src="/images/img_sending_order.svg" alt="" />
-            <span>Today Orders</span>
-          </a>
-          
-          <a href="#" className="nav-item" onClick={(e) => { e.preventDefault(); if (onTableClick) onTableClick(); }}>
-            <img src="/images/img_table_02.svg" alt="" />
-            <span>{tableDisplayName}</span>
-          </a>
-          
-          <a href="#" className="nav-item">
-            <img src="/images/img_discount_tag_01.svg" alt="" />
-            <span>Discount</span>
-          </a>
-          
-          <a href="#" className="nav-item">
-            <img src="/images/img_delete_01.svg" alt="" />
-            <span>Void</span>
-          </a>
-          
-          <button className="order-type-display clickable" onClick={onResetOrder}>
-            {selectedOrderType}
-          </button>
-          
-          <div className="menu-dropdown-container" ref={dropdownRef}>
-            <button className="menu-button" onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
-              <img src="/images/img_menu_01.svg" alt="Menu" />
-            </button>
-            
-            {isDropdownOpen && (
-              <div className="professional-dropdown">
-                <div className="dropdown-section">
-                  <div className="section-header">
-                    <h3 className="section-title">نوع الطلب</h3>
-                    <div className="section-divider"></div>
+    <>
+      <header className="pos-header">
+        <div className="header-content">
+          <img src="/images/img_foodify_logo_2_78x166.png" alt="Foodify Logo" className="header-logo" />
+
+          {/* Customer Info Section */}
+          {selectedCustomer && (
+            <div className="customer-info-section">
+              <div className="customer-info-card">
+                <div className="customer-basic-info">
+                  <div className="customer-name">
+                    <span className="customer-icon">👤</span>
+                    <span>{selectedCustomer.name}</span>
+                    {selectedCustomer.isVIP && <span className="vip-badge">VIP</span>}
                   </div>
-                  
-                  <div className="order-types-grid">
-                    {orderTypes.map((type) => (
-                      <button
-                        key={type.id}
-                        className={`order-type-card ${selectedOrderType === type.name ? 'selected' : ''}`}
-                        onClick={() => { onOrderTypeChange(type.name); setIsDropdownOpen(false); }}
-                        style={{ '--accent-color': type.color } as React.CSSProperties}
-                      >
-                        <div className="card-icon-container">
-                          <img src={type.icon} alt={type.displayName} className="card-icon" />
-                        </div>
-                        <div className="card-content">
-                          <div className="card-title">{type.displayName}</div>
-                        </div>
-                        <div className="card-check">
-                          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                            <path d="M13 4L6 11L3 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
-                        </div>
-                      </button>
-                    ))}
+                  <div className="customer-phone">
+                    <span className="phone-icon">📞</span>
+                    <span>{selectedCustomer.phone1}</span>
                   </div>
                 </div>
 
-                {activeDeliveryCompanies.length > 0 && (
+                {selectedAddress && selectedAddress.addressLine && (
+                  <div className="customer-address">
+                    <span className="address-icon">📍</span>
+                    <span className="address-text">
+                      {selectedAddress.addressLine}
+                      {selectedAddress.zoneName && ` - ${selectedAddress.zoneName}`}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          <nav className="header-nav">
+            <a
+              href="#"
+              className="nav-item active today-orders-btn"
+              onClick={handleTodayOrdersClick}
+              title="عرض طلبات اليوم"
+            >
+              <img src="/images/img_sending_order.svg" alt="Today Orders" />
+              <span>Today Orders</span>
+            </a>
+
+            <a 
+              href="#" 
+              className="nav-item" 
+              onClick={(e) => { 
+                e.preventDefault(); 
+                if (onTableClick) onTableClick(); 
+              }}
+            >
+              <img src="/images/img_table_02.svg" alt="Table" />
+              <span>{tableDisplayName}</span>
+            </a>
+
+            <a href="#" className="nav-item">
+              <img src="/images/img_discount_tag_01.svg" alt="Discount" />
+              <span>Discount</span>
+            </a>
+
+            <a href="#" className="nav-item">
+              <img src="/images/img_delete_01.svg" alt="Void" />
+              <span>Void</span>
+            </a>
+
+            <button 
+              className="order-type-display clickable" 
+              onClick={onResetOrder}
+            >
+              {selectedOrderType}
+            </button>
+
+            <div className="menu-dropdown-container" ref={dropdownRef}>
+              <button 
+                className="menu-button" 
+                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                aria-expanded={isDropdownOpen}
+                title="القائمة"
+              >
+                <img src="/images/img_menu_01.svg" alt="Menu" />
+              </button>
+
+              {isDropdownOpen && (
+                <div className="professional-dropdown">
                   <div className="dropdown-section">
                     <div className="section-header">
-                      <h3 className="section-title">شركاء التوصيل</h3>
+                      <h3 className="section-title">نوع الطلب</h3>
                       <div className="section-divider"></div>
                     </div>
-                    
-                    <div className="delivery-partners-grid">
-                      {activeDeliveryCompanies.map((company) => (
+
+                    <div className="order-types-grid">
+                      {orderTypes.map((type) => (
                         <button
-                          key={company.id}
-                          className={`delivery-partner-card ${selectedDeliveryCompany?.id === company.id ? 'selected' : ''}`}
-                          onClick={() => handleDeliveryCompanySelect(company)}
-                          style={{ 
-                            '--partner-color': '#0373ed',
-                            '--partner-bg': '#f8f9fa' 
-                          } as React.CSSProperties}
+                          key={type.id}
+                          className={`order-type-card ${selectedOrderType === type.name ? 'selected' : ''}`}
+                          onClick={() => { 
+                            onOrderTypeChange(type.name); 
+                            setIsDropdownOpen(false); 
+                          }}
+                          style={{ '--accent-color': type.color } as React.CSSProperties}
+                          title={type.description}
                         >
-                          <div className="partner-icon-container">
-                            <img src="/images/default-delivery.png" alt={company.name} className="partner-icon" />
+                          <div className="card-icon-container">
+                            <img src={type.icon} alt={type.displayName} className="card-icon" />
                           </div>
-                          <div className="partner-content">
-                            <div className="partner-name">{company.name}</div>
-                            <div className="partner-status">{company.paymentType}</div>
+                          <div className="card-content">
+                            <div className="card-title">{type.displayName}</div>
                           </div>
-                          <div className="partner-badge">
-                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                              <circle cx="6" cy="6" r="6" fill="currentColor"/>
+                          <div className="card-check">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                              <path d="M13 4L6 11L3 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
                           </div>
                         </button>
                       ))}
                     </div>
                   </div>
-                )}
-              </div>
-            )}
-          </div>
-        </nav>
-      </div>
-    </header>
+
+                  {activeDeliveryCompanies.length > 0 && (
+                    <div className="dropdown-section">
+                      <div className="section-header">
+                        <h3 className="section-title">شركاء التوصيل</h3>
+                        <div className="section-divider"></div>
+                      </div>
+
+                      <div className="delivery-partners-grid">
+                        {activeDeliveryCompanies.map((company) => (
+                          <button
+                            key={company.id}
+                            className={`delivery-partner-card ${selectedDeliveryCompany?.id === company.id ? 'selected' : ''}`}
+                            onClick={() => handleDeliveryCompanySelect(company)}
+                            style={{
+                              '--partner-color': '#0373ed',
+                              '--partner-bg': '#f8f9fa'
+                            } as React.CSSProperties}
+                            title={`اختيار ${company.name} - ${company.paymentType}`}
+                          >
+                            <div className="partner-icon-container">
+                              <img src="/images/default-delivery.png" alt={company.name} className="partner-icon" />
+                            </div>
+                            <div className="partner-content">
+                              <div className="partner-name">{company.name}</div>
+                              <div className="partner-status">{company.paymentType}</div>
+                            </div>
+                            <div className="partner-badge">
+                              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                                <circle cx="6" cy="6" r="6" fill="currentColor" />
+                              </svg>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </nav>
+        </div>
+      </header>
+
+      {/* Today Orders Popup */}
+      <TodayOrdersPopup
+        isOpen={showTodayOrders}
+        onClose={() => setShowTodayOrders(false)}
+        currentOrderType={selectedOrderType}
+        onViewOrder={handleViewOrder}
+      />
+    </>
   );
 };
 
@@ -944,6 +1018,12 @@ interface OrderSummaryProps {
   orderType: string;
   onDeliveryChargeChange: (charge: number) => void;
   readOnly: boolean;
+  onOrderCompleted?: (result: any) => void;
+  selectedTable?: any;
+  selectedDeliveryCompany?: any;
+  // إضافة الـ props المطلوبة لوضع التعديل
+  isEditMode?: boolean;
+  currentInvoiceId?: string | null;
 }
 
 const OrderSummary: React.FC<OrderSummaryProps> = ({
@@ -958,10 +1038,15 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
   selectedCustomer,
   selectedAddress,
   onCustomerSelect,
+  onOrderCompleted,
   orderType,
   onDeliveryChargeChange,
-  readOnly = false // إضافة جديدة
-
+  readOnly = false,
+  selectedTable,
+  selectedDeliveryCompany,
+  // استقبال الـ props الجديدة مع قيم افتراضية
+  isEditMode = false,
+  currentInvoiceId = null
 }) => {
   const [selectedSubItemId, setSelectedSubItemId] = useState<string | null>(null);
   const [phoneInput, setPhoneInput] = useState('');
@@ -975,7 +1060,8 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
   const [zones, setZones] = useState<any[]>([]);
   const [selectedResultIndex, setSelectedResultIndex] = useState(-1);
   const [searchCache, setSearchCache] = useState<{[key: string]: Customer[]}>({});
-  const [inputHasFocus, setInputHasFocus] = useState(false); // إضافة حالة التركيز
+  const [inputHasFocus, setInputHasFocus] = useState(false);
+  const [showPaymentPopup, setShowPaymentPopup] = useState(false);
   
   // استخدام useRef بدلاً من state للمتغيرات المساعدة
   const searchDebounceTimer = useRef<NodeJS.Timeout | null>(null);
@@ -983,7 +1069,6 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
   const lastSearchQuery = useRef<string>('');
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
-const [showPaymentPopup, setShowPaymentPopup] = useState(false);
 
   // تحميل المناطق عند بدء التشغيل
   useEffect(() => {
@@ -1194,9 +1279,7 @@ const [showPaymentPopup, setShowPaymentPopup] = useState(false);
     }, 200);
   }, []);
 
-  // معالج Enter محسن
-
-    const handleCustomerSelect = useCallback((customer: Customer) => {
+  const handleCustomerSelect = useCallback((customer: Customer) => {
     setSelectedCustomerForDetails(customer);
     setShowCustomerDetails(true);
     setShowDropdown(false);
@@ -1204,96 +1287,92 @@ const [showPaymentPopup, setShowPaymentPopup] = useState(false);
     setInputHasFocus(false);
   }, []);
 
-const handleKeyDown = useCallback(async (e: React.KeyboardEvent<HTMLInputElement>) => {
-  if (showDropdown && searchResults.length > 0) {
-    switch (e.key) {
-      case 'ArrowDown':
-        e.preventDefault();
-        setSelectedResultIndex(prev => 
-          prev < searchResults.length - 1 ? prev + 1 : prev
-        );
-        break;
-      case 'ArrowUp':
-        e.preventDefault();
-        setSelectedResultIndex(prev => prev > 0 ? prev - 1 : -1);
-        break;
-      case 'Enter':
-        e.preventDefault();
+  const handleKeyDown = useCallback(async (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (showDropdown && searchResults.length > 0) {
+      switch (e.key) {
+        case 'ArrowDown':
+          e.preventDefault();
+          setSelectedResultIndex(prev => 
+            prev < searchResults.length - 1 ? prev + 1 : prev
+          );
+          break;
+        case 'ArrowUp':
+          e.preventDefault();
+          setSelectedResultIndex(prev => prev > 0 ? prev - 1 : -1);
+          break;
+        case 'Enter':
+          e.preventDefault();
+          if (isSearching) {
+            return;
+          }
+          // اختيار فقط إذا كان هناك عنصر محدد بالأسهم
+          if (selectedResultIndex >= 0 && selectedResultIndex < searchResults.length) {
+            handleCustomerSelect(searchResults[selectedResultIndex]);
+          } else {
+            // إذا مفيش اختيار بالأسهم، تحقق من وجود مطابقة تامة
+            const query = phoneInput.trim();
+            const exactMatch = searchResults.find(customer => 
+              customer.phone1 === query || 
+              customer.phone2 === query ||
+              customer.phone3 === query ||
+              customer.phone4 === query
+            );
+            
+            if (!exactMatch) {
+              // مفيش مطابقة تامة، افتح dialog الإضافة
+              setShowCustomerForm(true);
+              setShowDropdown(false);
+            }
+          }
+          break;
+        case 'Escape':
+          setShowDropdown(false);
+          setSelectedResultIndex(-1);
+          inputRef.current?.blur();
+          break;
+      }
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      
+      const query = phoneInput.trim();
+      if (query.length >= 3) {
         if (isSearching) {
           return;
         }
-        // اختيار فقط إذا كان هناك عنصر محدد بالأسهم
-        if (selectedResultIndex >= 0 && selectedResultIndex < searchResults.length) {
-          handleCustomerSelect(searchResults[selectedResultIndex]);
-        } else {
-          // إذا مفيش اختيار بالأسهم، تحقق من وجود مطابقة تامة
-          const query = phoneInput.trim();
-          const exactMatch = searchResults.find(customer => 
-            customer.phone1 === query || 
-            customer.phone2 === query ||
-            customer.phone3 === query ||
-            customer.phone4 === query
-          );
-          
-          if (!exactMatch) {
-            // مفيش مطابقة تامة، افتح dialog الإضافة
-            setShowCustomerForm(true);
-            setShowDropdown(false);
-          }
-        }
-        break;
-      case 'Escape':
-        setShowDropdown(false);
-        setSelectedResultIndex(-1);
-        inputRef.current?.blur();
-        break;
-    }
-  } else if (e.key === 'Enter') {
-    e.preventDefault();
-    
-    const query = phoneInput.trim();
-    if (query.length >= 3) {
-      if (isSearching) {
-        return;
-      }
 
-      setIsSearching(true);
-      try {
-        const results = await searchCustomers(query);
-        
-        if (results.length > 0) {
-          // تحقق من وجود مطابقة تامة
-          const exactMatch = results.find(customer => 
-            customer.phone1 === query || 
-            customer.phone2 === query ||
-            customer.phone3 === query ||
-            customer.phone4 === query
-          );
+        setIsSearching(true);
+        try {
+          const results = await searchCustomers(query);
           
-          setSearchResults(results);
-          setShowDropdown(true);
-          setSelectedResultIndex(-1);
-          
-          // إذا مفيش مطابقة تامة، افتح dialog الإضافة كمان
-          if (!exactMatch) {
-            setShowCustomerForm(true);
+          if (results.length > 0) {
+            // تحقق من وجود مطابقة تامة
+            const exactMatch = results.find(customer => 
+              customer.phone1 === query || 
+              customer.phone2 === query ||
+              customer.phone3 === query ||
+              customer.phone4 === query
+            );
+            
+            setSearchResults(results);
+            setShowDropdown(true);
+            setSelectedResultIndex(-1);
+            
+            // إذا مفيش مطابقة تامة، افتح dialog الإضافة كمان
+            if (!exactMatch) {
+              setShowCustomerForm(true);
+            }
+          } else {
+            setShowCustomerForm(true); // مفيش نتائج، افتح عميل جديد
           }
-        } else {
-          setShowCustomerForm(true); // مفيش نتائج، افتح عميل جديد
+        } catch (error) {
+          console.error('Immediate search failed:', error);
+          setShowCustomerForm(true);
+        } finally {
+          setIsSearching(false);
         }
-      } catch (error) {
-        console.error('Immediate search failed:', error);
-        setShowCustomerForm(true);
-      } finally {
-        setIsSearching(false);
       }
     }
-  }
-}, [showDropdown, searchResults, selectedResultIndex, phoneInput, isSearching, searchCustomers, handleCustomerSelect]);
-
-
-
-
+  }, [showDropdown, searchResults, selectedResultIndex, phoneInput, isSearching, searchCustomers, handleCustomerSelect]);
 
   const handleCustomerDetailsSelect = useCallback((customer: Customer, address: CustomerAddress) => {
     onCustomerSelect(customer, address);
@@ -1515,14 +1594,18 @@ const handleKeyDown = useCallback(async (e: React.KeyboardEvent<HTMLInputElement
     );
   };
 
-
   const shouldShowAllButtons = orderType !== 'Takeaway';
-const shouldShowPayOnly = orderType === 'Takeaway';
+  const shouldShowPayOnly = orderType === 'Takeaway';
 
   return (
     <aside className={styles.orderSummary}>
       <div className={styles.orderHeader}>
-        <div className={styles.orderNumber}>#123</div>
+        <div className={styles.orderNumber}>
+          {isEditMode && currentInvoiceId ? 
+            `#${currentInvoiceId.substring(0, 8)}...` : 
+            '#123'
+          }
+        </div>
         <div className={styles.orderTotal}>
           <span className={styles.amount}>{finalTotal.toFixed(2)}</span>
           <span className={styles.currency}>EGP</span>
@@ -1533,17 +1616,17 @@ const shouldShowPayOnly = orderType === 'Takeaway';
         {/* Customer Search Input with Enhanced Dropdown */}
         <div className={styles.customerInputContainer} ref={dropdownRef}>
           <div className={styles.customerInput}>
-<input
-  ref={inputRef}
-  type="text"
-  placeholder="Customer Phone Number - رقم هاتف العميل"
-  value={phoneInput}
-  onChange={handleInputChange}
-  onFocus={handleInputFocus}
-  onBlur={handleInputBlur}
-  onKeyDown={handleKeyDown}
-  className={styles.customerField}
-/>
+            <input
+              ref={inputRef}
+              type="text"
+              placeholder="Customer Phone Number - رقم هاتف العميل"
+              value={phoneInput}
+              onChange={handleInputChange}
+              onFocus={handleInputFocus}
+              onBlur={handleInputBlur}
+              onKeyDown={handleKeyDown}
+              className={styles.customerField}
+            />
             <button 
               className={styles.customerButton}
               onClick={handleAddCustomerClick}
@@ -1652,35 +1735,35 @@ const shouldShowPayOnly = orderType === 'Takeaway';
           <span>Total</span>
           <span>{finalTotal.toFixed(2)} <small>EGP</small></span>
         </div>
-{!readOnly && (
-  <div className={`${styles.actionButtons} ${shouldShowPayOnly ? styles.takeawayButtons : ''}`}>
-      {shouldShowAllButtons && (
-        <>
-          <button className={`${styles.actionButton} ${styles.send}`}>
-            <img src="/images/img_tabler_send.svg" alt="Send" />
-            <span>Send</span>
-          </button>
-          <button onClick={() => canOpenPayment && setShowPaymentPopup(true)}
-                  disabled={!canOpenPayment}
-                  className={`${styles.actionButton} ${styles.print} ${!canOpenPayment ? styles.disabledBtn : ''}`}>
-            <img src="/images/img_printer.svg" alt="Print" />
-            <span>Print</span>
-          </button>
-        </>
-      )}
-      <button
-        onClick={() => canOpenPayment && setShowPaymentPopup(true)}
-        disabled={!canOpenPayment}
-        className={`${styles.actionButton} ${styles.pay} ${shouldShowPayOnly ? styles.fullWidth : ''} ${!canOpenPayment ? styles.disabledBtn : ''}`}
-        title={!canOpenPayment ? "لا يمكن الدفع بدون إضافة أصناف" : undefined}
-      >
-        <img src="/images/img_payment_02.svg" alt="Pay" />
-        <span>Pay</span>
-      </button>
-  </div>
-)}
 
-    </div>
+        {!readOnly && (
+          <div className={`${styles.actionButtons} ${shouldShowPayOnly ? styles.takeawayButtons : ''}`}>
+            {shouldShowAllButtons && (
+              <>
+                <button className={`${styles.actionButton} ${styles.send}`}>
+                  <img src="/images/img_tabler_send.svg" alt="Send" />
+                  <span>Send</span>
+                </button>
+                <button onClick={() => canOpenPayment && setShowPaymentPopup(true)}
+                        disabled={!canOpenPayment}
+                        className={`${styles.actionButton} ${styles.print} ${!canOpenPayment ? styles.disabledBtn : ''}`}>
+                  <img src="/images/img_printer.svg" alt="Print" />
+                  <span>Print</span>
+                </button>
+              </>
+            )}
+            <button
+              onClick={() => canOpenPayment && setShowPaymentPopup(true)}
+              disabled={!canOpenPayment}
+              className={`${styles.actionButton} ${styles.pay} ${shouldShowPayOnly ? styles.fullWidth : ''} ${!canOpenPayment ? styles.disabledBtn : ''}`}
+              title={!canOpenPayment ? "لا يمكن الدفع بدون إضافة أصناف" : undefined}
+            >
+              <img src="/images/img_payment_02.svg" alt="Pay" />
+              <span>{isEditMode ? 'تحديث' : 'Pay'}</span>
+            </button>
+          </div>
+        )}
+      </div>
 
       {/* Customer Details Popup */}
       <CustomerDetailsPopup
@@ -1690,30 +1773,41 @@ const shouldShowPayOnly = orderType === 'Takeaway';
         onSelectCustomer={handleCustomerDetailsSelect}
       />
 
-
-<PaymentPopup
-  isOpen={showPaymentPopup}
-  onClose={() => setShowPaymentPopup(false)}
-  orderSummary={orderSummary}
-  customerName={customerName}
-  onCustomerNameChange={onCustomerNameChange}
-  onRemoveOrderItem={onRemoveOrderItem}
-  onRemoveSubItem={onRemoveSubItem}
-  selectedOrderItemId={selectedOrderItemId}
-  onOrderItemSelect={onOrderItemSelect}
-  onOrderItemDoubleClick={onOrderItemDoubleClick}
-  selectedCustomer={selectedCustomer}
-  selectedAddress={selectedAddress}
-  onCustomerSelect={onCustomerSelect}
-  orderType={orderType}
-  onDeliveryChargeChange={onDeliveryChargeChange}
-  onPaymentComplete={(payments) => {
-    console.log('مدفوعات:', payments);
-    setShowPaymentPopup(false);
-    // هنا يمكنك إضافة منطق حفظ الدفع
-  }}
-/>
-
+      {/* Payment Popup مع الـ props المصححة */}
+      <PaymentPopup
+        isOpen={showPaymentPopup}
+        onClose={() => setShowPaymentPopup(false)}
+        orderSummary={orderSummary}
+        customerName={customerName}
+        onCustomerNameChange={onCustomerNameChange}
+        onRemoveOrderItem={onRemoveOrderItem}
+        onRemoveSubItem={onRemoveSubItem}
+        selectedOrderItemId={selectedOrderItemId}
+        onOrderItemSelect={onOrderItemSelect}
+        onOrderItemDoubleClick={onOrderItemDoubleClick}
+        selectedCustomer={selectedCustomer}
+        selectedAddress={selectedAddress}
+        onCustomerSelect={onCustomerSelect}
+        orderType={orderType}
+        onDeliveryChargeChange={onDeliveryChargeChange}
+        selectedTable={selectedTable}
+        selectedDeliveryCompany={selectedDeliveryCompany}
+        isEditMode={isEditMode} // ✅ تمرير صحيح
+        currentInvoiceId={currentInvoiceId} // ✅ تمرير صحيح
+        onPaymentComplete={(result) => {
+          if (result.success) {
+            console.log('تم معالجة الفاتورة بنجاح:', result.invoice);
+            console.log('تفاصيل الدفع:', result.payments);
+            
+            setShowPaymentPopup(false);
+            
+            // إرسال إشارة للصفحة الرئيسية لإعادة التعيين
+            if (onOrderCompleted) {
+              onOrderCompleted(result);
+            }
+          }
+        }}
+      />
 
       {/* Customer Form Popup */}
       {showCustomerForm && (
@@ -1751,22 +1845,30 @@ import styles from './styles/PaymentCenter.module.css';
 interface PaymentCenterProps {
   totalAmount: number;
   paidAmount: string;
-  remainingAmount: number;
-  changeAmount: number;
-  totalPaidFromMethods: number;
+  cashAmount: number;
+  remainingForCustomer: number;
+  selectedPaymentMethod: string | null;
   onAmountChange: (amount: string) => void;
   onQuickAmountSelect: (amount: number) => void;
+  isFirstInput: boolean;
+  nonCashTotal: number;
 }
 
 const PaymentCenter: React.FC<PaymentCenterProps> = ({
   totalAmount,
   paidAmount,
-  remainingAmount,
-  changeAmount,
-  totalPaidFromMethods,
+  cashAmount,
+  remainingForCustomer,
+  selectedPaymentMethod,
   onAmountChange,
-  onQuickAmountSelect
+  onQuickAmountSelect,
+  isFirstInput,
+  nonCashTotal
 }) => {
+  // التحقق إذا كانت طريقة الدفع المختارة هي الكاش
+  const isCashSelected = selectedPaymentMethod?.toLowerCase().includes('كاش') || 
+                        selectedPaymentMethod?.toLowerCase().includes('cash');
+
   const handleKeypadClick = (value: string) => {
     if (value === 'c') {
       onAmountChange('0');
@@ -1774,21 +1876,32 @@ const PaymentCenter: React.FC<PaymentCenterProps> = ({
       const newValue = paidAmount.slice(0, -1);
       onAmountChange(newValue || '0');
     } else if (value === '.') {
-      if (!paidAmount.includes('.')) {
-        onAmountChange(paidAmount === '0' ? '0.' : paidAmount + '.');
+      if (paidAmount === '0' || paidAmount === '0.00' || !paidAmount.includes('.')) {
+        onAmountChange(paidAmount === '0' || paidAmount === '0.00' ? '0.' : paidAmount + '.');
       }
     } else {
-      const newValue = paidAmount === '0' ? value : paidAmount + value;
-      onAmountChange(newValue);
+      // إذا كان الإدخال الأول، ابدأ من الصفر
+      if (isFirstInput || paidAmount === '0' || paidAmount === '0.00') {
+        onAmountChange(value);
+      } else {
+        onAmountChange(paidAmount + value);
+      }
     }
   };
 
-  // حساب إجمالي المدفوع (من الطرق + النقدي الحالي)
-  const currentInputAmount = parseFloat(paidAmount) || 0;
-  const totalPaidAmount = totalPaidFromMethods + currentInputAmount;
-  
-  // حساب الباقي للعميل (إذا كان المدفوع أكبر من المطلوب)
-  const customerChange = Math.max(0, totalPaidAmount - totalAmount);
+  // تعديل دالة الأزرار السريعة للجمع
+  const handleQuickAmountClick = (amount: number) => {
+    const currentAmount = parseFloat(paidAmount) || 0;
+    
+    // إذا كان الإدخال الأول (قيمة تلقائية)، ابدأ من القيمة المضافة فقط
+    if (isFirstInput) {
+      onQuickAmountSelect(amount);
+    } else {
+      // إذا كان مُدخل يدوياً، اجمع على القيمة الحالية
+      const newAmount = currentAmount + amount;
+      onQuickAmountSelect(newAmount);
+    }
+  };
 
   return (
     <div className={styles.wrapper}>
@@ -1798,36 +1911,30 @@ const PaymentCenter: React.FC<PaymentCenterProps> = ({
         </h2>
       </div>
 
-      {/* عرض المبلغ المدفوع من طرق أخرى */}
-      {/* {totalPaidFromMethods > 0 && (
-        <div className={styles.paidMethodsRow}>
-          <div className={styles.paidMethodsInfo}>
-            <span className={styles.paidMethodsLabel}>مدفوع بطرق أخرى:</span>
-            <span className={styles.paidMethodsAmount}>{totalPaidFromMethods.toFixed(2)} جنيه</span>
-          </div>
-        </div>
-      )} */}
-
       <div className={styles.fieldsRow}>
         <div className={styles.fieldBlock}>
           <label className={styles.label}>المبلغ المتبقي (كاش)</label>
-          <div className={styles.remainingBox}>{remainingAmount.toFixed(2)}</div>
+          <div className={styles.remainingBox}>
+            {remainingForCustomer.toFixed(2)}
+          </div>
         </div>
 
         <div className={styles.fieldBlock}>
-          <label className={styles.label}>المدفوع نقداً</label>
-          <input 
-            type="text" 
-            readOnly 
-            value={paidAmount} 
-            className={styles.input} 
-          />
+          <label className={styles.label}>المدفوع كاش</label>
+          <div className={styles.cashPaidBox}>
+            {cashAmount.toFixed(2)}
+          </div>
         </div>
       </div>
 
       <div className={styles.quickButtons}>
         {[5, 10, 15, 20].map(val => (
-          <button key={val} className={styles.quickBtn} onClick={() => onQuickAmountSelect(val)}>
+          <button 
+            key={val} 
+            className={`${styles.quickBtn} ${!selectedPaymentMethod ? styles.disabled : ''}`}
+            onClick={() => handleQuickAmountClick(val)}
+            disabled={!selectedPaymentMethod}
+          >
             {val} EGP
           </button>
         ))}
@@ -1844,32 +1951,28 @@ const PaymentCenter: React.FC<PaymentCenterProps> = ({
             {row.map(key => (
               <button
                 key={key}
-                className={`${styles.keypadBtn} ${['50','100','200'].includes(key) ? styles.gray : ''}`}
-                onClick={() => key === 'erase' ? handleKeypadClick('erase') : handleKeypadClick(key)}
+                className={`${styles.keypadBtn} ${['50','100','200'].includes(key) ? styles.gray : ''} ${!selectedPaymentMethod ? styles.disabled : ''}`}
+                onClick={() => selectedPaymentMethod && (
+                  key === 'erase' ? handleKeypadClick('erase') : 
+                  ['50','100','200'].includes(key) ? handleQuickAmountClick(parseInt(key)) : 
+                  handleKeypadClick(key)
+                )}
+                disabled={!selectedPaymentMethod}
               >
-                {key === 'erase' ? '×' : key === 'c' ? 'C' : key + (['50','100','200'].includes(key) ? ' EGP' : '')}
+                {key === 'erase' ? '×' : 
+                 key === 'c' ? 'C' : 
+                 ['50','100','200'].includes(key) ? `${key} EGP` : key}
               </button>
             ))}
           </div>
         ))}
       </div>
 
-      {/* قسم الباقي للعميل - يظهر دائماً */}
-      <div className={styles.changeSection}>
-        {/* <div className={styles.changeHeader}>
-          <div className={styles.changeSummary}>
-            <span className={styles.summaryLabel}>إجمالي المدفوع:</span>
-            <span className={styles.summaryValue}>{totalPaidAmount.toFixed(2)} جنيه</span>
-          </div>
-        </div> */}
-        
-        <div className={styles.changeDisplay}>
-          <div className={styles.changeLabel}>الباقي للعميل</div>
-          <div className={`${styles.changeAmount} ${customerChange > 0 ? styles.hasChange : styles.noChange}`}>
-            {customerChange.toFixed(2)} جنيه
-          </div>
+      {!selectedPaymentMethod && (
+        <div className={styles.noSelectionMessage}>
+          اختر طريقة دفع من القائمة اليمين لبدء الإدخال
         </div>
-      </div>
+      )}
     </div>
   );
 };
@@ -1916,7 +2019,7 @@ export default PaymentLeft;
 ===== src/Pages/pos/newSales/components/paymentPopup components/PaymentOrderSummary.tsx =====
 // src/Pages/pos/newSales/components/paymentPopup components/PaymentOrderSummary.tsx
 import React from 'react';
-import { OrderSummary as OrderSummaryType, OrderItem, SubItem } from '../../types/PosSystem';
+import { OrderSummary as OrderSummaryType, SubItem } from '../../types/PosSystem';
 import { Customer, CustomerAddress } from 'src/utils/api/pagesApi/customersApi';
 import styles from './styles/PaymentOrderSummary.module.css';
 
@@ -1934,10 +2037,7 @@ const PaymentOrderSummary: React.FC<PaymentOrderSummaryProps> = ({
   orderSummary,
   selectedCustomer,
   selectedAddress,
-  orderType,
-  deliveryCharge,
-  onGoBack
-}) => {
+  deliveryCharge}) => {
   // حساب الإجمالي النهائي
   const subtotalWithDelivery = orderSummary.subtotal + deliveryCharge;
   const taxAmount = 0;
@@ -2117,11 +2217,11 @@ const PaymentOrderSummary: React.FC<PaymentOrderSummaryProps> = ({
           <span>{finalTotal.toFixed(2)} <small>EGP</small></span>
         </div>
 
-              <div className={styles.backButtonContainer}>
+              {/* <div className={styles.backButtonContainer}>
         <button className={styles.backButton} onClick={onGoBack}>
           رجوع
         </button>
-      </div>
+      </div> */}
       </div>
     </div>
   );
@@ -2133,50 +2233,152 @@ export default PaymentOrderSummary;
 import React from 'react';
 import styles from './styles/PaymentRight.module.css';
 
-interface PaymentMethod {
-  id: string;
-  name: string;
+interface PaymentMethodData {
+  method: string;
   amount: number;
+  isSelected: boolean;
 }
 
 interface PaymentRightProps {
   availablePaymentMethods: string[];
-  selectedPayments: PaymentMethod[];
-  onPaymentMethodAdd: (method: string, amount: number) => void;
-  onPaymentMethodRemove: (id: string) => void;
+  selectedPayments: PaymentMethodData[];
+  selectedPaymentMethod: string | null;
+  onPaymentMethodSelect: (method: string) => void;
+  onPaymentMethodToggle: (method: string) => void;
   onFinishPayment: () => void;
-  currentAmount: number;
-  remainingAmount: number;
-  onAmountReset: () => void; // إضافة function لتصفير المبلغ
+  canFinish: boolean;
+  totalPaidAllMethods: number;
+  totalAmount: number;
+  nonCashTotal: number;
+  onShowWarning?: (message: string) => void;
+  // إضافة prop جديد لدعم وضع التعديل
+  isEditMode?: boolean;
 }
 
 const PaymentRight: React.FC<PaymentRightProps> = ({
   availablePaymentMethods = [],
   selectedPayments,
-  onPaymentMethodAdd,
-  onPaymentMethodRemove,
+  selectedPaymentMethod,
+  onPaymentMethodSelect,
+  onPaymentMethodToggle,
   onFinishPayment,
-  currentAmount,
-  remainingAmount,
-  onAmountReset
+  canFinish,
+  totalAmount,
+  nonCashTotal,
+  onShowWarning,
+  isEditMode = false // القيمة الافتراضية false
 }) => {
-  const handleSelect = (method: string) => {
-    // التأكد من وجود مبلغ قبل الإضافة
-    if (currentAmount > 0) {
-      onPaymentMethodAdd(method, currentAmount);
-      onAmountReset(); // تصفير المبلغ بعد الإضافة
+  const getPaymentData = (methodName: string) => {
+    return selectedPayments.find(payment => payment.method === methodName);
+  };
+
+  // دالة لحساب المبلغ الفعلي المساهم في الأوردر لكل طريقة دفع
+  const getActualContributionAmount = (method: string, amount: number) => {
+    const isCash = method.toLowerCase().includes('كاش') || 
+                   method.toLowerCase().includes('cash');
+    
+    if (!isCash) {
+      // طرق الدفع غير الكاش: عرض المبلغ الفعلي فقط
+      return Math.min(amount, totalAmount);
+    } else {
+      // للكاش: عرض المساهمة الفعلية في الأوردر فقط
+      const actualCashContribution = Math.max(0, totalAmount - nonCashTotal);
+      return Math.min(amount, actualCashContribution);
     }
   };
 
-  // البحث عن طريقة دفع موجودة لتحديث مبلغها
-  const getPaymentMethodTotal = (methodName: string) => {
-    return selectedPayments
-      .filter(payment => payment.name === methodName)
-      .reduce((sum, payment) => sum + payment.amount, 0);
+  // دالة النقر على الكارد مع التحقق من الحد الأقصى
+  const handleCardClick = (method: string) => {
+    const paymentData = getPaymentData(method);
+    const isCurrentlyActive = paymentData?.isSelected || false;
+    const isCash = method.toLowerCase().includes('كاش') || 
+                   method.toLowerCase().includes('cash');
+    
+    if (!isCurrentlyActive && !isCash) {
+      // تحقق من عدد الطرق النشطة غير النقدية
+      const activeNonCashCount = selectedPayments.filter(p => {
+        const isNonCash = !(p.method.toLowerCase().includes('كاش') || 
+                           p.method.toLowerCase().includes('cash'));
+        return isNonCash && p.isSelected && p.amount > 0;
+      }).length;
+      
+      if (activeNonCashCount >= 2) {
+        onShowWarning?.('لا يمكن استخدام أكثر من وسيلتي دفع غير نقدية');
+        return;
+      }
+    }
+    
+    if (!isCurrentlyActive) {
+      onPaymentMethodToggle(method);
+      onPaymentMethodSelect(method);
+    } else {
+      onPaymentMethodSelect(method);
+    }
   };
 
-  // التحقق من إمكانية إنهاء الدفع
-  const canFinish = selectedPayments.length > 0;
+  // دالة تغيير الـ checkbox
+  const handleCheckboxChange = (method: string, event: React.ChangeEvent<HTMLInputElement>) => {
+    event.stopPropagation();
+    
+    const isCash = method.toLowerCase().includes('كاش') || 
+                   method.toLowerCase().includes('cash');
+    const paymentData = getPaymentData(method);
+    const isCurrentlyActive = paymentData?.isSelected || false;
+    
+    if (!isCurrentlyActive && !isCash) {
+      // تحقق من عدد الطرق النشطة غير النقدية
+      const activeNonCashCount = selectedPayments.filter(p => {
+        const isNonCash = !(p.method.toLowerCase().includes('كاش') || 
+                           p.method.toLowerCase().includes('cash'));
+        return isNonCash && p.isSelected && p.amount > 0;
+      }).length;
+      
+      if (activeNonCashCount >= 2) {
+        onShowWarning?.('لا يمكن استخدام أكثر من وسيلتي دفع غير نقدية');
+        return;
+      }
+    }
+    
+    onPaymentMethodToggle(method);
+    
+    const willBeSelected = !isCurrentlyActive;
+    
+    if (!willBeSelected && selectedPaymentMethod === method) {
+      const otherActiveMethod = selectedPayments.find(p => 
+        p.method !== method && p.isSelected && p.amount > 0
+      );
+      if (otherActiveMethod) {
+        onPaymentMethodSelect(otherActiveMethod.method);
+      } else {
+        const cashMethod = selectedPayments.find(p => 
+          (p.method.toLowerCase().includes('كاش') || p.method.toLowerCase().includes('cash')) && 
+          p.method !== method &&
+          p.isSelected
+        );
+        if (cashMethod) {
+          onPaymentMethodSelect(cashMethod.method);
+        }
+      }
+    }
+  };
+
+  const isLongName = (name: string) => name.length > 15;
+
+  // تحديد نص الزر بناءً على وضع التعديل
+  const getButtonText = () => {
+    if (isEditMode) {
+      return 'تحديث الطلب';
+    }
+    return 'إنهاء الدفع';
+  };
+
+  // تحديد عنوان القسم بناءً على وضع التعديل
+  const getSectionTitle = () => {
+    if (isEditMode) {
+      return 'تعديل طرق الدفع';
+    }
+    return 'طرق الدفع المتاحة';
+  };
 
   if (availablePaymentMethods.length === 0) {
     return (
@@ -2197,90 +2399,93 @@ const PaymentRight: React.FC<PaymentRightProps> = ({
 
   return (
     <div className={styles.container}>
-      {/* زر الإنهاء في الأعلى */}
+      {/* إضافة عنوان للقسم */}
+      {isEditMode && (
+        <div className={styles.sectionHeader}>
+          <h3 className={styles.sectionTitle}>
+            {getSectionTitle()}
+          </h3>
+        </div>
+      )}
+      
       <button 
-        className={`${styles.finishBtn} ${!canFinish ? styles.disabled : ''}`}
+        className={`${styles.finishBtn} ${!canFinish ? styles.disabled : ''} ${isEditMode ? styles.editMode : ''}`}
         onClick={onFinishPayment}
         disabled={!canFinish}
+        title={isEditMode ? 'تحديث بيانات الطلب مع طرق الدفع الجديدة' : 'إنهاء عملية الدفع'}
       >
-        إنهاء الدفع
+        {getButtonText()}
+        {isEditMode && (
+          <span className={styles.editIcon}>
+            ✏️
+          </span>
+        )}
       </button>
       
-      {/* طرق الدفع في عمودين */}
-      <div className={styles.methodGrid}>
+      <div className={styles.methodsList}>
         {availablePaymentMethods.map((method) => {
-          const totalForMethod = getPaymentMethodTotal(method);
-          const hasPayment = totalForMethod > 0;
+          const paymentData = getPaymentData(method);
+          const amount = paymentData?.amount || 0;
+          const isActive = paymentData?.isSelected || false;
+          const isSelectedForEdit = selectedPaymentMethod === method;
+          const longName = isLongName(method);
+          
+          // حساب المبلغ الفعلي المساهم في الأوردر
+          const actualContribution = getActualContributionAmount(method, amount);
+          const hasAmount = actualContribution > 0;
           
           return (
-            <button
-              key={method}
-              className={`${styles.methodBtn} ${hasPayment ? styles.hasPayment : ''}`}
-              onClick={() => handleSelect(method)}
-              disabled={currentAmount <= 0} // تعطيل الزر إذا لم يكن هناك مبلغ
+            <div 
+              key={method} 
+              className={`${styles.methodItem} ${isActive ? styles.active : ''} ${isSelectedForEdit ? styles.selectedForEdit : ''} ${hasAmount ? styles.hasAmount : ''} ${longName ? styles.longName : ''} ${isEditMode ? styles.editModeItem : ''}`}
+              onClick={() => handleCardClick(method)}
             >
-              <div className={styles.methodContent}>
-                <span className={styles.methodType}>{method}</span>
-                {hasPayment && (
-                  <span className={styles.methodAmount}>
-                    {totalForMethod.toFixed(2)} جنيه
-                  </span>
-                )}
+              <div className={styles.methodHeader}>
+                <input
+                  type="checkbox"
+                  checked={isActive}
+                  onChange={(e) => handleCheckboxChange(method, e)}
+                  className={styles.methodCheckbox}
+                />
+                <span className={styles.methodName}>{method}</span>
               </div>
-            </button>
+              
+              {hasAmount && (
+                <div className={styles.methodAmount}>
+                  {actualContribution.toFixed(2)} جنيه
+                  {isEditMode && (
+                    <span className={styles.editLabel}>
+                      (قابل للتعديل)
+                    </span>
+                  )}
+                </div>
+              )}
+              
+              {isSelectedForEdit && (
+                <div className={styles.editIndicator}>
+                  {isEditMode ? 'يتم تعديلها الآن' : 'يتم التعديل عليها الآن'}
+                  {isEditMode && (
+                    <span className={styles.editingIcon}>
+                      🔄
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
           );
         })}
       </div>
 
-      {/* عرض ملخص المدفوعات المحددة */}
-      {selectedPayments.length > 0 && (
-        <div className={styles.selectedPayments}>
-          <h4 className={styles.paymentsTitle}>المدفوعات المحددة:</h4>
-          <div className={styles.paymentsList}>
-            {selectedPayments.map((payment) => (
-              <div key={payment.id} className={styles.selectedPayment}>
-                <div className={styles.paymentInfo}>
-                  <span className={styles.paymentMethod}>{payment.name}</span>
-                  <span className={styles.paymentAmount}>{payment.amount.toFixed(2)} جنيه</span>
-                </div>
-                <button 
-                  onClick={() => onPaymentMethodRemove(payment.id)}
-                  className={styles.removeBtn}
-                  title="حذف"
-                >
-                  ×
-                </button>
-              </div>
-            ))}
-          </div>
-          <div className={styles.totalPayments}>
-            <strong>
-              إجمالي المدفوع: {selectedPayments.reduce((sum, payment) => sum + payment.amount, 0).toFixed(2)} جنيه
-            </strong>
-          </div>
-        </div>
-      )}
-
-      {/* عرض معلومات المبلغ المتبقي */}
       <div className={styles.paymentSummary}>
         <div className={styles.summaryRow}>
-          <span>المتبقي للدفع:</span>
-          <span className={styles.remainingAmount}>{remainingAmount.toFixed(2)} جنيه</span>
+          <span>
+            {isEditMode ? 'طرق الدفع المحدثة:' : 'طرق الدفع المستخدمة:'}
+          </span>
+          <span className={styles.methodsCount}>
+            {selectedPayments.filter(p => p.isSelected && getActualContributionAmount(p.method, p.amount) > 0).length}
+          </span>
         </div>
-        {currentAmount > 0 && (
-          <div className={styles.summaryRow}>
-            <span>المبلغ الحالي:</span>
-            <span className={styles.currentAmount}>{currentAmount.toFixed(2)} جنيه</span>
-          </div>
-        )}
       </div>
-
-      {/* رسالة توضيحية */}
-      {currentAmount <= 0 && (
-        <div className={styles.instructionMessage}>
-          <p>اكتب المبلغ أولاً ثم اختر طريقة الدفع</p>
-        </div>
-      )}
     </div>
   );
 };
@@ -2299,7 +2504,7 @@ export default PaymentRight;
   box-sizing: border-box;
   font-family: "Cairo", sans-serif;
   overflow: hidden;
-  gap: 0.6rem; /* مسافة صغيرة ثابتة */
+  gap: 0.6rem;
 }
 
 .headerRow {
@@ -2307,7 +2512,7 @@ export default PaymentRight;
   justify-content: center;
   align-items: center;
   flex-shrink: 0;
-  height: 50px; /* ارتفاع ثابت */
+  height: 50px;
 }
 
 .balanceTitle {
@@ -2318,40 +2523,13 @@ export default PaymentRight;
   text-align: center;
 }
 
-.paidMethodsRow {
-  background: #f8f9fa;
-  border-radius: 8px;
-  padding: 0.6rem;
-  border-left: 4px solid #28a745;
-  flex-shrink: 0;
-  min-height: 40px; /* حد أدنى للارتفاع */
-}
-
-.paidMethodsInfo {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.paidMethodsLabel {
-  font-size: 0.9rem;
-  color: #333;
-  font-weight: 600;
-}
-
-.paidMethodsAmount {
-  font-size: 1rem;
-  color: #28a745;
-  font-weight: 700;
-}
-
 .fieldsRow {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 0.8rem;
   flex-shrink: 0;
-  height: 80px; /* ارتفاع ثابت */
+  height: 80px;
 }
 
 .fieldBlock {
@@ -2371,7 +2549,7 @@ export default PaymentRight;
   flex-shrink: 0;
 }
 
-.input, .remainingBox {
+.remainingBox, .totalPaidBox {
   padding: 0.6rem;
   font-size: 1.1rem;
   text-align: center;
@@ -2383,14 +2561,41 @@ export default PaymentRight;
   justify-content: center;
 }
 
-.input {
-  border: 1px solid #ccc;
-  background: #fff;
+.remainingBox {
+  background-color: #28a745;
+  color: white;
 }
 
-.remainingBox {
+.totalPaidBox {
   background-color: #0373ed;
   color: white;
+}
+
+.selectedMethodRow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  flex-shrink: 0;
+  height: 70px;
+}
+
+.selectedMethodLabel {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #0373ed;
+  direction: rtl;
+  text-align: right;
+}
+
+.selectedMethodInput {
+  padding: 0.6rem;
+  font-size: 1.1rem;
+  text-align: center;
+  border-radius: 8px;
+  font-weight: 600;
+  border: 2px solid #0373ed;
+  background: #f8f9ff;
+  flex: 1;
 }
 
 .quickButtons {
@@ -2398,7 +2603,7 @@ export default PaymentRight;
   justify-content: space-between;
   gap: 0.6rem;
   flex-shrink: 0;
-  height: 45px; /* ارتفاع ثابت */
+  height: 45px;
 }
 
 .quickBtn {
@@ -2413,15 +2618,21 @@ export default PaymentRight;
   height: 100%;
 }
 
-.quickBtn:hover {
+.quickBtn:hover:not(:disabled) {
   background-color: #c8c8c8;
+}
+
+.quickBtn:disabled {
+  background-color: #f0f0f0;
+  color: #999;
+  cursor: not-allowed;
 }
 
 .keypad {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  flex: 1; /* يأخذ المساحة المتبقية */
+  flex: 1;
   min-height: 0;
   overflow: hidden;
 }
@@ -2430,13 +2641,13 @@ export default PaymentRight;
   display: flex;
   justify-content: space-between;
   gap: 0.5rem;
-  flex: 1; /* توزيع متساوي */
+  flex: 1;
   min-height: 0;
 }
 
 .keypadBtn {
   flex: 1;
-  font-size: 1rem;
+  font-size: 1.5rem;
   font-weight: 700;
   background-color: #fff;
   border: 1px solid #ccc;
@@ -2453,132 +2664,77 @@ export default PaymentRight;
   background-color: #d9d9d9;
 }
 
-.keypadBtn:hover {
+.keypadBtn:hover:not(.disabled) {
   background-color: #f0f0f0;
 }
 
-.keypadBtn:active {
+.keypadBtn:active:not(.disabled) {
   transform: scale(0.96);
 }
 
-.changeSection {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-  padding: 0.8rem;
-  background: linear-gradient(135deg, #e3f2fd, #bbdefb);
-  border: 2px solid #2196f3;
-  border-radius: 10px;
-  flex-shrink: 0;
-  height: 100px; /* ارتفاع ثابت */
-  overflow: hidden;
+.keypadBtn.disabled {
+  background-color: #f5f5f5;
+  color: #999;
+  cursor: not-allowed;
+  border-color: #e0e0e0;
 }
 
-.changeHeader {
+.noSelectionMessage {
   display: flex;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.changeSummary {
-  display: flex;
-  gap: 0.8rem;
   align-items: center;
-  direction: rtl;
-}
-
-.summaryLabel {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: #1976d2;
-}
-
-.summaryValue {
+  justify-content: center;
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  color: #666;
   font-size: 0.9rem;
-  font-weight: 700;
-  color: #0d47a1;
+  direction: rtl;
+  text-align: center;
+  flex-shrink: 0;
 }
 
-.changeDisplay {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.2rem;
-  flex: 1;
-  justify-content: center;
-}
 
-.changeLabel {
-  font-size: 0.95rem;
+
+/* إضافة في PaymentCenter.module.css */
+
+.cashPaidBox {
+  padding: 0.6rem;
+  font-size: 1.1rem;
+  text-align: center;
+  border-radius: 8px;
   font-weight: 600;
-  color: #1976d2;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #0373ed;
+  color: white;
+}
+
+.selectedMethodInfo {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 0.6rem;
+  text-align: center;
+  flex-shrink: 0;
   direction: rtl;
 }
 
-.changeAmount {
-  font-size: 1.4rem;
-  font-weight: 800;
-  letter-spacing: 1px;
-  padding: 0.3rem 0.6rem;
-  border-radius: 6px;
-  transition: all 0.3s ease;
+.selectedMethodName {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 0.2rem;
 }
 
-.hasChange {
-  background: linear-gradient(135deg, #28a745, #20c95e);
-  color: white;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.2);
-  box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
-}
-
-.noChange {
-  background: #f8f9fa;
-  color: #6c757d;
-  border: 2px dashed #dee2e6;
-}
-
-/* تكيف مع دقة 1920x1080 مع zoom 125% */
-@media screen and (width: 1536px) and (height: 864px) {
-  .wrapper {
-    padding: 0.6rem;
-    gap: 0.5rem;
-  }
-  
-  .headerRow {
-    height: 45px;
-  }
-  
-  .balanceTitle {
-    font-size: 1.3rem;
-  }
-  
-  .fieldsRow {
-    height: 70px;
-  }
-  
-  .quickButtons {
-    height: 40px;
-  }
-  
-  .changeSection {
-    height: 85px;
-    padding: 0.6rem;
-  }
-  
-  .changeAmount {
-    font-size: 1.2rem;
-  }
-}
-
-/* للشاشات عالية الدقة مع zoom */
-@media screen and (min-width: 1400px) and (max-width: 1600px) {
-  .wrapper {
-    gap: 0.5rem;
-  }
-  
-  .keypadBtn {
-    font-size: 0.95rem;
-  }
+.limitWarning {
+  display: block;
+  font-size: 0.8rem;
+  color: #dc3545;
+  font-weight: 500;
 }
 
 ===== src/Pages/pos/newSales/components/paymentPopup components/styles/PaymentLeft.module.css =====
@@ -3223,7 +3379,7 @@ export default PaymentRight;
 
 .finishBtn {
   width: 100%;
-  height: 50px; /* ارتفاع ثابت */
+  height: 50px;
   font-size: 1.2rem;
   font-weight: 700;
   background: #28a745;
@@ -3248,156 +3404,119 @@ export default PaymentRight;
   cursor: not-allowed;
 }
 
-.methodGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.6rem;
+.methodsList {
   flex: 1;
   overflow-y: auto;
   padding-right: 0.2rem;
-  min-height: 0;
-  align-content: start; /* محاذاة للأعلى */
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+  align-content: start;
 }
 
-.methodBtn {
-  padding: 0.8rem;
-  background: #f8f9fa;
+.methodItem {
   border: 2px solid #e9ecef;
-  border-radius: 10px;
+  border-radius: 8px;
+  padding: 0.6rem;
+  background: #f8f9fa;
+  transition: all 0.3s ease;
   cursor: pointer;
-  transition: all 0.2s ease;
-  direction: rtl;
-  height: 65px; /* ارتفاع ثابت */
-  display: flex;
-  align-items: center;
-}
-
-.methodBtn:hover:not(:disabled) {
-  background: #e9ecef;
-  border-color: #0373ed;
-}
-
-.methodBtn:disabled {
-  background: #f5f5f5;
-  color: #999;
-  cursor: not-allowed;
-  border-color: #ddd;
-}
-
-.methodBtn.hasPayment {
-  background: #e8f5e8;
-  border-color: #28a745;
-  color: #155724;
-}
-
-.methodBtn.hasPayment:hover {
-  background: #d4edda;
-}
-
-.methodContent {
-  width: 100%;
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
-  gap: 0.2rem;
+  min-height: 60px;
+  position: relative;
+  user-select: none; /* منع تحديد النص */
 }
 
-.methodType {
-  font-size: 0.95rem;
-  font-weight: 600;
+.methodItem:hover {
+  background: #e9ecef;
+  border-color: #dee2e6;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* طريقة الدفع المفعلة */
+.methodItem.active {
+  background: #e8f5e8;
+  border-color: #28a745;
+}
+
+.methodItem.active:hover {
+  background: #d4edda;
+  border-color: #1e7e34;
+}
+
+/* طريقة الدفع المحددة للتعديل */
+.methodItem.selectedForEdit {
+  background: #e8f4fd;
+  border-color: #0373ed;
+  box-shadow: 0 0 0 2px rgba(3, 115, 237, 0.2);
+}
+
+.methodItem.selectedForEdit:hover {
+  background: #d1ecf1;
+}
+
+/* طريقة الدفع المفعلة والمحددة للتعديل */
+.methodItem.active.selectedForEdit {
+  background: #d4edda;
+  border-color: #0373ed;
+  box-shadow: 0 0 0 2px rgba(3, 115, 237, 0.3);
+}
+
+/* طريقة دفع بها مبلغ */
+.methodItem.hasAmount {
+  border-width: 3px;
+}
+
+.methodHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  direction: rtl;
+  margin-bottom: 0.3rem;
+}
+
+.methodCheckbox {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #28a745;
+  flex-shrink: 0;
+}
+
+.methodName {
+  font-size: 0.9rem;
+  color: #333;
+  flex: 1;
   text-align: right;
+  line-height: 1.2;
+  word-break: break-word;
+  font-weight: 600;
 }
 
 .methodAmount {
   font-size: 0.8rem;
-  font-weight: 700;
   color: #28a745;
-}
-
-.selectedPayments {
-  border-top: 1px solid #e9ecef;
-  padding-top: 0.6rem;
-  flex-shrink: 0;
-  max-height: 150px;
-  overflow-y: auto;
-}
-
-.paymentsTitle {
-  font-size: 1rem;
   font-weight: 700;
-  margin-bottom: 0.5rem;
-  direction: rtl;
-  color: #333;
+  background: rgba(40, 167, 69, 0.15);
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  text-align: center;
+  margin-top: 0.2rem;
+  border: 1px solid rgba(40, 167, 69, 0.3);
 }
 
-.paymentsList {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-  margin-bottom: 0.5rem;
-}
-
-.selectedPayment {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.4rem;
-  background: #f8f9fa;
-  border-radius: 6px;
-  border-right: 3px solid #0373ed;
-  min-height: 40px;
-}
-
-.paymentInfo {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-  flex: 1;
-  direction: rtl;
-  text-align: right;
-}
-
-.paymentMethod {
-  font-weight: 600;
-  color: #333;
-  font-size: 0.9rem;
-}
-
-.paymentAmount {
-  font-size: 0.8rem;
+.editIndicator {
+  font-size: 0.7rem;
   color: #0373ed;
   font-weight: 600;
-}
-
-.removeBtn {
-  background: #dc3545;
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 22px;
-  height: 22px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  font-weight: bold;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-  flex-shrink: 0;
-}
-
-.removeBtn:hover {
-  background: #c82333;
-}
-
-.totalPayments {
-  padding: 0.6rem;
-  background: #e9ecef;
-  border-radius: 6px;
+  background: rgba(3, 115, 237, 0.1);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
   text-align: center;
-  direction: rtl;
-  color: #333;
-  font-size: 0.9rem;
+  margin-top: 0.2rem;
+  border: 1px solid rgba(3, 115, 237, 0.2);
 }
 
 .paymentSummary {
@@ -3415,54 +3534,97 @@ export default PaymentRight;
   font-size: 0.9rem;
 }
 
-.remainingAmount {
+.totalPaid {
+  color: #28a745;
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.methodsCount {
   color: #0373ed;
-  font-weight: 700;
-}
-
-.currentAmount {
-  color: #ff6b35;
-  font-weight: 700;
-}
-
-.instructionMessage {
-  background: #fff3cd;
-  border: 1px solid #ffeaa7;
-  border-radius: 8px;
-  padding: 0.8rem;
-  text-align: center;
-  direction: rtl;
-  color: #856404;
   font-weight: 600;
-  flex-shrink: 0;
-  font-size: 0.9rem;
 }
 
-.instructionMessage p {
-  margin: 0;
+/* تحسينات للشاشات الصغيرة */
+@media (max-width: 768px) {
+  .methodsList {
+    grid-template-columns: 1fr;
+  }
+  
+  .methodName {
+    font-size: 0.85rem;
+  }
+  
+  .methodAmount {
+    font-size: 0.75rem;
+  }
+}
+
+/* تحسين للشاشات الواسعة جداً */
+@media (min-width: 1400px) {
+  .methodsList {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}
+
+/* أنماط للأسماء الطويلة */
+.methodItem.longName .methodName {
+  font-size: 0.8rem;
+  line-height: 1.1;
+}
+
+/* تحسين التمرير */
+.methodsList {
+  scrollbar-width: thin;
+  scrollbar-color: #ccc #f1f1f1;
+}
+
+.methodsList::-webkit-scrollbar {
+  width: 6px;
+}
+
+.methodsList::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.methodsList::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 3px;
+}
+
+.methodsList::-webkit-scrollbar-thumb:hover {
+  background: #999;
 }
 
 ===== src/Pages/pos/newSales/components/PaymentPopup.tsx =====
-// src/Pages/pos/newSales/components/PaymentPopup.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import { OrderSummary as OrderSummaryType } from '../types/PosSystem';
 import { Customer, CustomerAddress } from 'src/utils/api/pagesApi/customersApi';
 import PaymentLeft from './paymentPopup components/PaymentLeft';
 import PaymentCenter from './paymentPopup components/PaymentCenter';
 import PaymentRight from './paymentPopup components/PaymentRight';
-import * as posPaymentMethodsApi from '../../../../utils/api/pagesApi/posPaymentMethodsApi';
 import styles from '../styles/PaymentPopup.module.css';
 import { usePosPaymentMethods } from '../hooks/usePosPaymentMethods';
+import { Snackbar, Alert } from '@mui/material';
+import * as invoicesApi from 'src/utils/api/pagesApi/invoicesApi';
 
-interface PaymentMethod {
-  id: string;
-  name: string;
+interface PaymentMethodData {
+  method: string;
   amount: number;
+  isSelected: boolean;
+  wasModified?: boolean;
 }
 
 interface PaymentPopupProps {
   isOpen: boolean;
   onClose: () => void;
+  onPaymentComplete: (result: {
+    success: boolean;
+    invoice?: any;
+    payments: PaymentMethodData[];
+    error?: string;
+  }) => void;
   orderSummary: OrderSummaryType;
   customerName: string;
   onCustomerNameChange: (name: string) => void;
@@ -3476,7 +3638,11 @@ interface PaymentPopupProps {
   onCustomerSelect: (customer: Customer, address: CustomerAddress) => void;
   orderType: string;
   onDeliveryChargeChange: (charge: number) => void;
-  onPaymentComplete: (payments: PaymentMethod[]) => void;
+  selectedTable?: any;
+  selectedDeliveryCompany?: any;
+  // إضافة props جديدة لدعم وضع التعديل
+  isEditMode?: boolean;
+  currentInvoiceId?: string | null;
 }
 
 const PaymentPopup: React.FC<PaymentPopupProps> = ({
@@ -3495,102 +3661,604 @@ const PaymentPopup: React.FC<PaymentPopupProps> = ({
   onCustomerSelect,
   orderType,
   onDeliveryChargeChange,
-  onPaymentComplete
+  onPaymentComplete,
+  selectedTable,
+  selectedDeliveryCompany,
+  isEditMode = false, // القيمة الافتراضية false
+  currentInvoiceId = null // القيمة الافتراضية null
 }) => {
   const overlayRef = useRef<HTMLDivElement>(null);
-
-   // استدعاء hook طرق الدفع الموحدة
   const { paymentMethods, loading, error } = usePosPaymentMethods();
-  const [availablePaymentMethods, setAvailablePaymentMethods] = useState<string[]>([]);
-  const [selectedPayments, setSelectedPayments] = useState<PaymentMethod[]>([]);
+  
+  // إضافة state للإشعارات المحلية
+  const [localAlert, setLocalAlert] = useState({
+    open: false,
+    message: '',
+    severity: 'warning' as 'warning' | 'error' | 'success' | 'info'
+  });
+
+  const [selectedPayments, setSelectedPayments] = useState<PaymentMethodData[]>([]);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | null>(null);
   const [paidAmount, setPaidAmount] = useState('0');
+  const [lastNonCashTotal, setLastNonCashTotal] = useState(0);
+  const [isFirstInput, setIsFirstInput] = useState(true);
+
+  // دوال عرض الرسائل المحلية
+  const showLocalSuccess = (message: string) => {
+    setLocalAlert({
+      open: true,
+      message,
+      severity: 'success'
+    });
+  };
+
+  const showLocalWarning = (message: string) => {
+    setLocalAlert({
+      open: true,
+      message,
+      severity: 'warning'
+    });
+  };
+
+  const showLocalError = (message: string) => {
+    setLocalAlert({
+      open: true,
+      message,
+      severity: 'error'
+    });
+  };
 
   // حساب المبالغ
-  const deliveryCharge = 0; // يمكن تمريره من props
+  const deliveryCharge = 0;
   const subtotalWithDelivery = orderSummary.subtotal + deliveryCharge;
   const taxAmount = 0;
   const totalAmount = subtotalWithDelivery + taxAmount - orderSummary.discount;
-  
-  // حساب المبلغ المدفوع من طرق الدفع المحددة
-  const totalPaidFromMethods = selectedPayments.reduce((sum, payment) => sum + payment.amount, 0);
-  
-  // حساب المبلغ المتبقي (يجب أن يُدفع نقداً)
-  const remainingAmount = Math.max(0, totalAmount - totalPaidFromMethods);
-  
-  // المبلغ الحالي من الكيبورد
-  const currentInputAmount = parseFloat(paidAmount) || 0;
-  
-  // حساب الباقي للعميل (التغيير) - فقط للكاش
-  const changeAmount = Math.max(0, currentInputAmount - remainingAmount);
 
-  // إغلاق عند الضغط على الخلفية
-  useEffect(() => {
-    const handleOverlayClick = (e: MouseEvent) => {
-      if (overlayRef.current && e.target === overlayRef.current) {
-        onClose();
+  // العثور على طريقة دفع الكاش
+  const getCashMethod = () => {
+    return paymentMethods.find(
+      m => m.name.toLowerCase().includes('كاش') || m.name.toLowerCase().includes('cash')
+    );
+  };
+
+  // دالة لحساب طرق الدفع النشطة غير الكاش
+  const getActiveNonCashPayments = () => {
+    return selectedPayments.filter(payment => {
+      const isCash = payment.method.toLowerCase().includes('كاش') || 
+                     payment.method.toLowerCase().includes('cash');
+      return !isCash && payment.isSelected && payment.amount > 0;
+    });
+  };
+
+  // حساب إجمالي المدفوع بطرق الدفع غير الكاش
+  const nonCashTotal = selectedPayments
+    .filter(payment => {
+      const isCash = payment.method.toLowerCase().includes('كاش') || 
+                     payment.method.toLowerCase().includes('cash');
+      return !isCash && payment.amount > 0;
+    })
+    .reduce((sum, payment) => sum + payment.amount, 0);
+
+  // الحصول على مبلغ الكاش الحالي
+  const getCurrentCashAmount = () => {
+    const cashPayment = selectedPayments.find(payment => {
+      const isCash = payment.method.toLowerCase().includes('كاش') || 
+                     payment.method.toLowerCase().includes('cash');
+      return isCash;
+    });
+    return cashPayment?.amount || 0;
+  };
+
+  const cashAmount = getCurrentCashAmount();
+  
+  // حساب المبلغ المتبقي للعميل (فقط من الكاش)
+  const remainingForCustomer = Math.max(0, cashAmount - Math.max(0, totalAmount - nonCashTotal));
+
+  // دالة التبديل مع منطق النقل الذكي
+  const handlePaymentMethodToggle = (method: string) => {
+    const isCash = method.toLowerCase().includes('كاش') || 
+                   method.toLowerCase().includes('cash');
+    
+    // للطرق غير النقدية: تحقق من العدد المسموح
+    if (!isCash) {
+      const activeNonCashPayments = getActiveNonCashPayments();
+      const isCurrentlyActive = selectedPayments.find(p => p.method === method)?.isSelected || false;
+      
+      // إذا كان يحاول تفعيل طريقة ثالثة غير نقدية
+      if (!isCurrentlyActive && activeNonCashPayments.length >= 2) {
+        showLocalWarning('لا يمكن استخدام أكثر من وسيلتي دفع غير نقدية');
+        return;
       }
-    };
-
-    if (isOpen) {
-      document.addEventListener('mousedown', handleOverlayClick);
     }
 
-    return () => {
-      document.removeEventListener('mousedown', handleOverlayClick);
-    };
-  }, [isOpen, onClose]);
+    setSelectedPayments(prevPayments => {
+      return prevPayments.map(payment => {
+        if (payment.method === method) {
+          const newIsSelected = !payment.isSelected;
+          
+          if (isCash && newIsSelected) {
+            // للكاش: حساب المبلغ المتبقي فقط
+            const currentNonCashTotal = prevPayments
+              .filter(p => {
+                const isOtherCash = p.method.toLowerCase().includes('كاش') || 
+                                 p.method.toLowerCase().includes('cash');
+                return !isOtherCash && p.isSelected && p.amount > 0;
+              })
+              .reduce((sum, p) => sum + p.amount, 0);
+            
+            const remainingAmount = Math.max(0, totalAmount - currentNonCashTotal);
+            
+            return {
+              ...payment,
+              isSelected: true,
+              amount: remainingAmount,
+              wasModified: false
+            };
+          } else if (!isCash && newIsSelected) {
+            // للطرق غير النقدية الجديدة: تطبيق المنطق الذكي
+            const currentActiveNonCash = prevPayments.find(p => {
+              const isOtherCash = p.method.toLowerCase().includes('كاش') || 
+                               p.method.toLowerCase().includes('cash');
+              return !isOtherCash && p.method !== method && p.isSelected && p.amount > 0;
+            });
+            
+            let amountToAssign = 0;
+            
+            if (currentActiveNonCash) {
+              // إذا كان هناك طريقة نشطة أخرى
+              if (currentActiveNonCash.wasModified) {
+                // إذا تم تعديلها: أخذ المبلغ المتبقي من الكاش
+                const currentCash = prevPayments.find(p => {
+                  const isCashPayment = p.method.toLowerCase().includes('كاش') || 
+                                       p.method.toLowerCase().includes('cash');
+                  return isCashPayment;
+                });
+                amountToAssign = currentCash?.amount || 0;
+              } else {
+                // إذا لم يتم تعديلها: نقل كامل القيمة
+                amountToAssign = currentActiveNonCash.amount;
+              }
+            } else {
+              // لا توجد طريقة نشطة أخرى: أخذ كامل المبلغ
+              amountToAssign = totalAmount;
+            }
+            
+            return {
+              ...payment,
+              isSelected: true,
+              amount: amountToAssign,
+              wasModified: false
+            };
+          } else {
+            // إلغاء التفعيل
+            return {
+              ...payment,
+              isSelected: false,
+              amount: 0,
+              wasModified: false
+            };
+          }
+        } else {
+          // معالجة الطرق الأخرى عند تفعيل طريقة جديدة
+          const newMethodData = prevPayments.find(p => p.method === method);
+          const isNewMethodBeingActivated = newMethodData && !newMethodData.isSelected;
+          
+          if (isNewMethodBeingActivated && !isCash) {
+            const isCash = payment.method.toLowerCase().includes('كاش') || 
+                           payment.method.toLowerCase().includes('cash');
+            const isCurrentNonCash = !(payment.method.toLowerCase().includes('كاش') || 
+                                     payment.method.toLowerCase().includes('cash'));
+            
+            // إذا كانت الطريقة الحالية غير نقدية ونشطة
+            if (isCurrentNonCash && payment.isSelected) {
+              if (payment.wasModified) {
+                // إذا تم تعديلها: احتفظ بها وقلل من الكاش
+                return payment;
+              } else {
+                // إذا لم يتم تعديلها: انقل قيمتها للطريقة الجديدة
+                return {
+                  ...payment,
+                  isSelected: false,
+                  amount: 0,
+                  wasModified: false
+                };
+              }
+            } else if (isCash) {
+              // تحديث الكاش بناءً على الحالة
+              const currentActiveNonCash = prevPayments.find(p => {
+                const isOtherCash = p.method.toLowerCase().includes('كاش') || 
+                                   p.method.toLowerCase().includes('cash');
+                return !isOtherCash && p.method !== method && p.isSelected && p.amount > 0;
+              });
+              
+              if (currentActiveNonCash?.wasModified) {
+                // إذا كانت الطريقة النشطة معدلة: الكاش يفقد قيمته للطريقة الجديدة
+                const newMethodAmount = payment.amount;
+                return {
+                  ...payment,
+                  amount: Math.max(0, payment.amount - newMethodAmount),
+                  isSelected: Math.max(0, payment.amount - newMethodAmount) > 0
+                };
+              } else {
+                // إذا لم تكن معدلة: الكاش يأخذ المبلغ المتبقي
+                const newAmount = Math.max(0, totalAmount - (currentActiveNonCash?.amount || totalAmount));
+                return {
+                  ...payment,
+                  amount: newAmount,
+                  isSelected: newAmount > 0
+                };
+              }
+            }
+          }
+          
+          return payment;
+        }
+      });
+    });
+  };
 
- // **تهيئة الدفع الافتراضي بالكاش بقيمة الفاتورة**  
+  // تحديث مبلغ الكاش تلقائياً عند تغيير طرق الدفع غير الكاش
+  useEffect(() => {
+    const cashMethod = getCashMethod();
+    if (!cashMethod) return;
+
+    if (nonCashTotal !== lastNonCashTotal) {
+      const autoCalculatedCashAmount = Math.max(0, totalAmount - nonCashTotal);
+
+      setSelectedPayments(prevPayments => {
+        return prevPayments.map(payment => {
+          const isCash = payment.method.toLowerCase().includes('كاش') || 
+                         payment.method.toLowerCase().includes('cash');
+          
+          if (isCash) {
+            return {
+              ...payment,
+              amount: autoCalculatedCashAmount,
+              isSelected: autoCalculatedCashAmount > 0
+            };
+          }
+          return payment;
+        });
+      });
+
+      const selectedCash = selectedPaymentMethod?.toLowerCase().includes('كاش') || 
+                          selectedPaymentMethod?.toLowerCase().includes('cash');
+      if (selectedCash) {
+        setPaidAmount(autoCalculatedCashAmount === 0 ? '0' : autoCalculatedCashAmount.toFixed(2));
+        setIsFirstInput(true);
+      }
+
+      setLastNonCashTotal(nonCashTotal);
+    }
+  }, [nonCashTotal, totalAmount, selectedPaymentMethod, lastNonCashTotal]);
+
+  // تهيئة طرق الدفع
   useEffect(() => {
     if (!isOpen || !paymentMethods?.length) return;
-    // إذا لا يوجد مدفوعات حالية، اجعل الكاش جاهز وحدد المبلغ افتراضاً.
-    setSelectedPayments([]);
-    setPaidAmount(totalAmount.toFixed(2));
-    // لا نضيف فعليًا PaymentMethod، بل فقط نجهز الـ paidAmount وزر الكاش مفعّل.
-  }, [isOpen, totalAmount, paymentMethods]);
-
-  // Handlers للقسم الأوسط
-  const handleAmountChange = (amount: string) => setPaidAmount(amount);
-  const handleQuickAmountSelect = (amount: number) => setPaidAmount(amount.toFixed(2));
-
-  // Handlers للقسم الأيمن
-  const handlePaymentMethodAdd = (method: string, amount: number) => {
-    if (amount <= 0) return;
-    const newPayment: PaymentMethod = {
-      id: Date.now().toString(),
-      name: method,
-      amount: amount
-    };
-    setSelectedPayments(prev => [...prev, newPayment]);
-    const newRemainingAmount = Math.max(0, totalAmount - totalPaidFromMethods - amount);
-    setPaidAmount(newRemainingAmount.toFixed(2));
-  };
-
-  const handlePaymentMethodRemove = (id: string) => {
-    setSelectedPayments(prev => prev.filter(payment => payment.id !== id));
-  };
-
-  const handleAmountReset = () => setPaidAmount('0');
-
-  const handleFinishPayment = () => {
-    let finalPayments = [...selectedPayments];
-    if (currentInputAmount > 0) {
-      // أول طريقة دفع = الكاش إن وجدت وإلا أول طريقة متاحة
-      const cashMethod = paymentMethods.find(
-        m => m.id.toLowerCase() === 'cash' || m.name.toLowerCase() === 'كاش'
-      );
-      finalPayments.push({
-        id: Date.now().toString(),
-        name: cashMethod?.name || paymentMethods[0]?.name || 'كاش',
-        amount: currentInputAmount
-      });
+    
+    const cashMethod = getCashMethod();
+    const initialPayments = paymentMethods.map(method => {
+      const isCash = method.name.toLowerCase().includes('كاش') || 
+                     method.name.toLowerCase().includes('cash');
+      
+      return {
+        method: method.name,
+        amount: isCash ? totalAmount : 0,
+        isSelected: isCash,
+        wasModified: false
+      };
+    });
+    
+    setSelectedPayments(initialPayments);
+    
+    if (cashMethod) {
+      setSelectedPaymentMethod(cashMethod.name);
+      setPaidAmount(totalAmount.toFixed(2));
+      setIsFirstInput(true);
     }
-    onPaymentComplete(finalPayments);
-    onClose();
+    
+    setLastNonCashTotal(0);
+  }, [isOpen, paymentMethods, totalAmount]);
+
+  // معالج تغيير المبلغ مع تحديد flag التعديل
+  const handleAmountChange = (amount: string) => {
+    setIsFirstInput(false);
+    setPaidAmount(amount);
+    
+    if (selectedPaymentMethod) {
+      const numericAmount = parseFloat(amount) || 0;
+      const isCashSelected = selectedPaymentMethod.toLowerCase().includes('كاش') || 
+                            selectedPaymentMethod.toLowerCase().includes('cash');
+      
+      if (!isCashSelected) {
+        // للطرق غير النقدية: منع التجاوز عن المبلغ المتبقي وتحديد wasModified
+        const currentOtherNonCashTotal = selectedPayments
+          .filter(payment => {
+            const isCash = payment.method.toLowerCase().includes('كاش') || 
+                           payment.method.toLowerCase().includes('cash');
+            return !isCash && payment.method !== selectedPaymentMethod && payment.amount > 0;
+          })
+          .reduce((sum, payment) => sum + payment.amount, 0);
+        
+        const maxAllowed = Math.max(0, totalAmount - currentOtherNonCashTotal);
+        const finalAmount = Math.min(numericAmount, maxAllowed);
+        
+        // تحديث المبلغ المدخل إذا تم تقليله
+        if (finalAmount !== numericAmount) {
+          setPaidAmount(finalAmount.toFixed(2));
+        }
+        
+        setSelectedPayments(prevPayments => {
+          return prevPayments.map(payment => {
+            if (payment.method === selectedPaymentMethod) {
+              return {
+                ...payment,
+                amount: finalAmount,
+                isSelected: finalAmount > 0,
+                wasModified: true // تحديد أنه تم التعديل
+              };
+            } else {
+              const isCash = payment.method.toLowerCase().includes('كاش') || 
+                             payment.method.toLowerCase().includes('cash');
+              
+              if (isCash) {
+                const remainingAmount = Math.max(0, totalAmount - currentOtherNonCashTotal - finalAmount);
+                return {
+                  ...payment,
+                  amount: remainingAmount,
+                  isSelected: remainingAmount > 0
+                };
+              }
+              return payment;
+            }
+          });
+        });
+      } else {
+        // للكاش: يمكن أي مبلغ
+        setSelectedPayments(prevPayments => {
+          return prevPayments.map(payment => {
+            if (payment.method === selectedPaymentMethod) {
+              return {
+                ...payment,
+                amount: numericAmount,
+                isSelected: numericAmount > 0,
+                wasModified: true // تحديد أنه تم التعديل
+              };
+            }
+            return payment;
+          });
+        });
+      }
+    }
   };
+
+  const handleQuickAmountSelect = (amount: number) => {
+    setIsFirstInput(false);
+    
+    if (selectedPaymentMethod) {
+      const isCashSelected = selectedPaymentMethod.toLowerCase().includes('كاش') || 
+                            selectedPaymentMethod.toLowerCase().includes('cash');
+      
+      setPaidAmount(amount.toFixed(2));
+      
+      if (!isCashSelected) {
+        // للطرق غير النقدية: منع التجاوز وتحديد wasModified
+        const currentOtherNonCashTotal = selectedPayments
+          .filter(payment => {
+            const isCash = payment.method.toLowerCase().includes('كاش') || 
+                           payment.method.toLowerCase().includes('cash');
+            return !isCash && payment.method !== selectedPaymentMethod && payment.amount > 0;
+          })
+          .reduce((sum, payment) => sum + payment.amount, 0);
+        
+        const maxAllowed = Math.max(0, totalAmount - currentOtherNonCashTotal);
+        const finalAmount = Math.min(amount, maxAllowed);
+        
+        if (finalAmount !== amount) {
+          setPaidAmount(finalAmount.toFixed(2));
+        }
+        
+        setSelectedPayments(prevPayments => {
+          return prevPayments.map(payment => {
+            if (payment.method === selectedPaymentMethod) {
+              return {
+                ...payment,
+                amount: finalAmount,
+                isSelected: true,
+                wasModified: true // تحديد أنه تم التعديل
+              };
+            } else {
+              const isCash = payment.method.toLowerCase().includes('كاش') || 
+                             payment.method.toLowerCase().includes('cash');
+              
+              if (isCash) {
+                const remainingAmount = Math.max(0, totalAmount - currentOtherNonCashTotal - finalAmount);
+                return {
+                  ...payment,
+                  amount: remainingAmount,
+                  isSelected: remainingAmount > 0
+                };
+              }
+              return payment;
+            }
+          });
+        });
+      } else {
+        // للكاش: لا تأثير على طرق الدفع الأخرى وتحديد wasModified
+        setSelectedPayments(prevPayments => {
+          return prevPayments.map(payment => {
+            if (payment.method === selectedPaymentMethod) {
+              return {
+                ...payment,
+                amount: amount,
+                isSelected: true,
+                wasModified: true // تحديد أنه تم التعديل
+              };
+            }
+            return payment;
+          });
+        });
+      }
+    }
+  };
+
+  const handlePaymentMethodSelect = (method: string) => {
+    setSelectedPaymentMethod(method);
+    
+    const isCashSelected = method.toLowerCase().includes('كاش') || 
+                          method.toLowerCase().includes('cash');
+    
+    if (!isCashSelected) {
+      // حساب المبلغ المتبقي للأوردر
+      const currentNonCashTotal = selectedPayments
+        .filter(payment => {
+          const isCash = payment.method.toLowerCase().includes('كاش') || 
+                         payment.method.toLowerCase().includes('cash');
+          return !isCash && payment.method !== method && payment.amount > 0;
+        })
+        .reduce((sum, payment) => sum + payment.amount, 0);
+      
+      const remainingAmountForOrder = Math.max(0, totalAmount - currentNonCashTotal);
+      
+      // إذا كان هناك مبلغ متبقي، ضعه في الطريقة المختارة
+      if (remainingAmountForOrder > 0) {
+        setSelectedPayments(prevPayments => {
+          return prevPayments.map(payment => {
+            if (payment.method === method) {
+              return {
+                ...payment,
+                amount: remainingAmountForOrder,
+                isSelected: true,
+                wasModified: false // إعادة تعيين عند الاختيار
+              };
+            } else {
+              const isCash = payment.method.toLowerCase().includes('كاش') || 
+                             payment.method.toLowerCase().includes('cash');
+              
+              if (isCash) {
+                // صفر الكاش إذا تم تغطية الأوردر بالكامل
+                return {
+                  ...payment,
+                  amount: 0,
+                  isSelected: false
+                };
+              }
+              return payment;
+            }
+          });
+        });
+        
+        setPaidAmount(remainingAmountForOrder.toFixed(2));
+      } else {
+        const currentPayment = selectedPayments.find(p => p.method === method);
+        const amount = currentPayment?.amount || 0;
+        setPaidAmount(amount === 0 ? '0' : amount.toFixed(2));
+      }
+      
+      setIsFirstInput(true);
+    } else {
+      const currentPayment = selectedPayments.find(p => p.method === method);
+      const amount = currentPayment?.amount || 0;
+      setPaidAmount(amount === 0 ? '0' : amount.toFixed(2));
+      setIsFirstInput(true);
+    }
+  };
+
+  // الدالة المحدثة للتعامل مع إنهاء الدفع
+  const handleFinishPayment = async () => {
+    const finalPayments = selectedPayments.filter(payment => 
+      payment.amount > 0
+    );
+    
+    try {
+      // تحضير بيانات الفاتورة الأساسية
+      const baseInvoiceData = {
+        InvoiceType: orderType === 'Takeaway' ? 1 : 
+                     orderType === 'Dine-in' ? 2 : 
+                     orderType === 'Delivery' ? 3 : 
+                     orderType === 'Pickup' ? 4 : 1,
+        InvoiceStatus: 1,
+        WareHouseId: localStorage.getItem('warehouse_id') || 'e81866c0-791d-449f-bc04-c5d65bb3820c',
+        RawBranchId: localStorage.getItem('branch_id') || 'branch_1',
+        CustomerId: selectedCustomer?.id || null,
+        TableId: selectedTable?.table?.id || null,
+        HallCaptainId: null,
+        DeliveryCompanyId: selectedDeliveryCompany?.id || null,
+        DeliveryAgentId: null,
+        TaxPercentage: 14,
+        ServicePercentage: selectedTable?.section?.serviceCharge || 10,
+        HeaderDiscountPercentage: 5,
+        PreparedAt: new Date().toISOString(),
+        CompletedAt: new Date().toISOString(),
+        Notes: selectedTable ? `طلب صالة - طاولة ${selectedTable.table.name}` : `طلب ${orderType}`,
+        Items: orderSummary.items.map(item => ({
+          ProductId: item.product.id,
+          ProductPriceId: item.selectedPrice.id,
+          Barcode: item.selectedPrice.barcode || '1234567890123',
+          UnitId: null,
+          PosPriceName: item.selectedPrice.nameArabic,
+          UnitFactor: 1,
+          Qty: item.quantity,
+          UnitPrice: item.selectedPrice.price,
+          UnitCost: 45,
+          ItemDiscountPercentage: item.discountPercentage || 0,
+          ItemTaxPercentage: 14,
+          ServicePercentage: selectedTable?.section?.serviceCharge || 10,
+          WareHouseId: localStorage.getItem('warehouse_id') || 'e81866c0-791d-449f-bc04-c5d65bb3820c',
+          Components: []
+        })),
+        Payments: finalPayments.map(payment => ({
+          Amount: payment.amount,
+          PaymentMethodId: payment.method.toLowerCase().includes('كاش') || 
+                          payment.method.toLowerCase().includes('cash') ? 'cash' : 
+                          payment.method.toLowerCase().replace(/\s+/g, '_')
+        }))
+      };
+
+      let result;
+      
+      // تحديد ما إذا كان الوضع للتعديل أم الإنشاء
+      if (isEditMode && currentInvoiceId) {
+        // وضع التعديل - استخدام UpdateInvoice API
+        const updateData = {
+          invoiceId: currentInvoiceId,
+          ...baseInvoiceData
+        };
+        
+        result = await invoicesApi.updateInvoice(updateData);
+        console.log('تم تحديث الفاتورة بنجاح:', result);
+        
+        showLocalSuccess(`تم تحديث الفاتورة رقم ${result.invoiceNumber || currentInvoiceId.substring(0, 8)} بنجاح!`);
+      } else {
+        // وضع الإنشاء الجديد - استخدام AddInvoice API
+        const invoiceData: invoicesApi.CreateInvoiceRequest = baseInvoiceData;
+        
+        result = await invoicesApi.addInvoice(invoiceData);
+        console.log('تم إنشاء الفاتورة بنجاح:', result);
+        
+        showLocalSuccess(`تم إنشاء الفاتورة رقم ${result.invoiceNumber || 'جديد'} بنجاح!`);
+      }
+      
+      // انتظار ثانيتين لعرض الرسالة
+      setTimeout(() => {
+        onPaymentComplete({
+          success: true,
+          invoice: result,
+          payments: finalPayments
+        });
+        
+        onClose();
+      }, 2000);
+      
+    } catch (error) {
+      console.error('فشل في معالجة الفاتورة:', error);
+      showLocalError('حدث خطأ أثناء معالجة الفاتورة. يرجى المحاولة مرة أخرى.');
+    }
+  };
+
+  const canFinish = (nonCashTotal + cashAmount) >= totalAmount;
 
   if (!isOpen) return null;
-
 
   return (
     <div className={styles.overlay} ref={overlayRef}>
@@ -3599,7 +4267,9 @@ const PaymentPopup: React.FC<PaymentPopupProps> = ({
           <div className={styles.logo}>
             <img src="/images/img_foodify_logo_2_78x166.png" alt="Foodify" />
           </div>
-          <h2 className={styles.title}>تأكيد الدفع</h2>
+          <h2 className={styles.title}>
+            {isEditMode ? 'تعديل الطلب' : 'تأكيد الدفع'}
+          </h2>
           <button className={styles.closeBtn} onClick={onClose}>×</button>
         </div>
 
@@ -3617,11 +4287,13 @@ const PaymentPopup: React.FC<PaymentPopupProps> = ({
             <PaymentCenter
               totalAmount={totalAmount}
               paidAmount={paidAmount}
-              remainingAmount={remainingAmount}
-              changeAmount={changeAmount}
-              totalPaidFromMethods={totalPaidFromMethods}
+              cashAmount={cashAmount}
+              remainingForCustomer={remainingForCustomer}
+              selectedPaymentMethod={selectedPaymentMethod}
               onAmountChange={handleAmountChange}
               onQuickAmountSelect={handleQuickAmountSelect}
+              isFirstInput={isFirstInput}
+              nonCashTotal={nonCashTotal}
             />
           </div>
           <div className={styles.rightSection}>
@@ -3641,22 +4313,51 @@ const PaymentPopup: React.FC<PaymentPopupProps> = ({
               <PaymentRight
                 availablePaymentMethods={paymentMethods.map(m => m.name)}
                 selectedPayments={selectedPayments}
-                onPaymentMethodAdd={handlePaymentMethodAdd}
-                onPaymentMethodRemove={handlePaymentMethodRemove}
+                selectedPaymentMethod={selectedPaymentMethod}
+                onPaymentMethodSelect={handlePaymentMethodSelect}
+                onPaymentMethodToggle={handlePaymentMethodToggle}
                 onFinishPayment={handleFinishPayment}
-                currentAmount={currentInputAmount}
-                remainingAmount={remainingAmount}
-                onAmountReset={handleAmountReset}
+                canFinish={canFinish}
+                totalPaidAllMethods={nonCashTotal + cashAmount}
+                totalAmount={totalAmount}
+                nonCashTotal={nonCashTotal}
+                onShowWarning={showLocalWarning}
+                isEditMode={isEditMode} // تمرير معلومة وضع التعديل
               />
             )}
           </div>
         </div>
+
+        {/* إضافة الـ Snackbar المحلي داخل الـ popup */}
+        <Snackbar
+          open={localAlert.open}
+          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+          autoHideDuration={4000}
+          onClose={() => setLocalAlert(prev => ({ ...prev, open: false }))}
+          sx={{ 
+            position: 'absolute', // مهم: نسبي لموضع الـ popup
+            zIndex: 10 // فوق محتوى الـ popup
+          }}
+        >
+          <Alert
+            onClose={() => setLocalAlert(prev => ({ ...prev, open: false }))}
+            severity={localAlert.severity}
+            variant="filled"
+            sx={{ 
+              width: '100%',
+              fontFamily: 'Cairo, sans-serif'
+            }}
+          >
+            {localAlert.message}
+          </Alert>
+        </Snackbar>
       </div>
     </div>
   );
 };
 
 export default PaymentPopup;
+
 ===== src/Pages/pos/newSales/components/PriceSelectionPopup.tsx =====
 // src/Pages/pos/newSales/components/PriceSelectionPopup.tsx
 import React, { useEffect, useRef } from 'react';
@@ -3674,7 +4375,6 @@ interface PriceSelectionPopupProps {
 
 const PriceSelectionPopup: React.FC<PriceSelectionPopupProps> = ({
   product,
-  quantity,
   isOpen,
   onClose,
   onSelectPrice
@@ -4274,6 +4974,446 @@ const TableSelectionPopup: React.FC<TableSelectionPopupProps> = ({
 
 export default TableSelectionPopup;
 
+===== src/Pages/pos/newSales/components/TodayOrdersPopup.tsx =====
+// src/Pages/pos/newSales/components/TodayOrdersPopup.tsx
+import React, { useState, useEffect, useMemo } from 'react';
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  IconButton,
+  TextField,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Chip,
+  Box,
+  Typography,
+  CircularProgress,
+  Alert,
+  Pagination
+} from '@mui/material';
+import {
+  Visibility as VisibilityIcon,
+  Close as CloseIcon,
+  FilterList as FilterIcon,
+  Clear as ClearIcon
+} from '@mui/icons-material';
+import {
+  getAllInvoices,
+  getInvoiceById, // ✅ إضافة الاستيراد المفقود
+  getInvoiceTypeText,
+  getInvoiceStatusText,
+  formatDate,
+  Invoice,
+  InvoicesResponse
+} from '../../../../utils/api/pagesApi/invoicesApi';
+import styles from '../styles/TodayOrdersPopup.module.css';
+
+interface TodayOrdersPopupProps {
+  isOpen: boolean;
+  onClose: () => void;
+  currentOrderType: string; // للفلترة حسب نوع الطلب الحالي
+  onViewOrder: (invoice: Invoice & { isEditMode: boolean }) => void; // لعرض الطلب في الصفحة الرئيسية
+}
+
+const TodayOrdersPopup: React.FC<TodayOrdersPopupProps> = ({
+  isOpen,
+  onClose,
+  currentOrderType,
+  onViewOrder
+}) => {
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const pageSize = 20;
+
+  // States للفلاتر
+  const [statusFilter, setStatusFilter] = useState<number | ''>('');
+  const [searchFilter, setSearchFilter] = useState('');
+  const [typeFilter, setTypeFilter] = useState<number | ''>('');
+
+  // تحميل البيانات
+  const loadInvoices = async (pageNumber: number = 1) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const response: InvoicesResponse = await getAllInvoices(pageNumber, pageSize);
+      
+      setInvoices(response.data);
+      setTotalPages(response.pageCount);
+      setTotalCount(response.totalCount);
+      setPage(pageNumber);
+    } catch (err: any) {
+      setError(err.message || 'حدث خطأ في تحميل البيانات');
+      console.error('Error loading invoices:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // تحميل البيانات عند فتح النافذة
+  useEffect(() => {
+    if (isOpen) {
+      loadInvoices(1);
+      
+      // تطبيق فلتر نوع الطلب الحالي
+      const orderTypeMap: { [key: string]: number } = {
+        'Takeaway': 1,
+        'Dine-in': 2,
+        'Delivery': 3,
+        'Pickup': 4
+      };
+      
+      if (currentOrderType && orderTypeMap[currentOrderType]) {
+        setTypeFilter(orderTypeMap[currentOrderType]);
+      } else {
+        setTypeFilter('');
+      }
+    }
+  }, [isOpen, currentOrderType]);
+
+  // فلترة البيانات
+  const filteredInvoices = useMemo(() => {
+    return invoices.filter(invoice => {
+      // فلتر نوع الطلب
+      if (typeFilter !== '' && invoice.invoiceType !== typeFilter) {
+        return false;
+      }
+      
+      // فلتر الحالة
+      if (statusFilter !== '' && invoice.invoiceStatus !== statusFilter) {
+        return false;
+      }
+      
+      // فلتر البحث (في الملاحظات أو ID)
+      if (searchFilter.trim() !== '') {
+        const searchTerm = searchFilter.toLowerCase();
+        const searchInNotes = invoice.notes?.toLowerCase().includes(searchTerm) || false;
+        const searchInId = invoice.id.toLowerCase().includes(searchTerm);
+        const searchInCustomer = invoice.customerName?.toLowerCase().includes(searchTerm) || false;
+        
+        if (!searchInNotes && !searchInId && !searchInCustomer) {
+          return false;
+        }
+      }
+      
+      return true;
+    });
+  }, [invoices, typeFilter, statusFilter, searchFilter]);
+
+  // إعادة تعيين الفلاتر
+  const clearFilters = () => {
+    setStatusFilter('');
+    setSearchFilter('');
+    setTypeFilter('');
+  };
+
+  // معالج تغيير الصفحة
+  const handlePageChange = (event: React.ChangeEvent<unknown>, value: number) => {
+    loadInvoices(value);
+  };
+
+  // معالج عرض الطلب مع معالجة أفضل للأخطاء
+  const handleViewOrder = async (invoice: Invoice) => {
+    try {
+      setLoading(true);
+      setError(null); // مسح الأخطاء السابقة
+      
+      // جلب تفاصيل الفاتورة الكاملة
+      const fullInvoiceData = await getInvoiceById(invoice.id);
+      
+      // تمرير البيانات للصفحة الرئيسية مع إشارة أنها للتعديل
+      onViewOrder({
+        ...fullInvoiceData,
+        isEditMode: true // إضافة علامة التعديل
+      });
+      
+      onClose();
+    } catch (error: any) {
+      const errorMessage = error.message || 'حدث خطأ في تحميل بيانات الطلب';
+      setError(errorMessage);
+      console.error('Error loading invoice details:', error);
+      
+      // عدم إغلاق النافذة في حالة الخطأ للسماح للمستخدم برؤية رسالة الخطأ
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // الحصول على معلومات إضافية حسب نوع الطلب
+  const getAdditionalInfo = (invoice: Invoice) => {
+    switch (invoice.invoiceType) {
+      case 2: // Dine-in
+        return {
+          label: 'الطاولة',
+          value: invoice.tableId ? `طاولة ${invoice.tableId.substring(0, 8)}...` : '--'
+        };
+      case 3: // Delivery
+        return {
+          label: 'شركة التوصيل',
+          value: invoice.deliveryCompanyId ? `شركة ${invoice.deliveryCompanyId.substring(0, 8)}...` : '--'
+        };
+      default:
+        return null;
+    }
+  };
+
+  // دالة لتحديد ما إذا كانت الفاتورة قابلة للتعديل
+  const canEditInvoice = (invoice: Invoice) => {
+    // يمكن تعديل الفواتير المكتملة والمعلقة فقط، ليس الملغاة
+    return invoice.invoiceStatus === 1 || invoice.invoiceStatus === 2;
+  };
+
+  return (
+    <Dialog
+      open={isOpen}
+      onClose={onClose}
+      maxWidth="lg"
+      fullWidth
+      PaperProps={{
+        className: styles.dialogPaper
+      }}
+    >
+      <DialogTitle className={styles.dialogTitle}>
+        <Box display="flex" justifyContent="space-between" alignItems="center">
+          <Typography variant="h6" component="div">
+            طلبات اليوم ({totalCount} طلب)
+          </Typography>
+          <IconButton onClick={onClose} size="small">
+            <CloseIcon />
+          </IconButton>
+        </Box>
+      </DialogTitle>
+
+      <DialogContent className={styles.dialogContent}>
+        {/* شريط الفلاتر */}
+        <Box className={styles.filtersBar}>
+          <TextField
+            label="البحث"
+            variant="outlined"
+            size="small"
+            value={searchFilter}
+            onChange={(e) => setSearchFilter(e.target.value)}
+            placeholder="البحث في الملاحظات أو رقم الطلب..."
+            className={styles.searchField}
+          />
+          
+          <FormControl size="small" className={styles.filterSelect}>
+            <InputLabel>نوع الطلب</InputLabel>
+            <Select
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value as number | '')}
+              label="نوع الطلب"
+            >
+              <MenuItem value="">الكل</MenuItem>
+              <MenuItem value={1}>Takeaway</MenuItem>
+              <MenuItem value={2}>Dine-in</MenuItem>
+              <MenuItem value={3}>Delivery</MenuItem>
+              <MenuItem value={4}>Pickup</MenuItem>
+            </Select>
+          </FormControl>
+
+          <FormControl size="small" className={styles.filterSelect}>
+            <InputLabel>الحالة</InputLabel>
+            <Select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as number | '')}
+              label="الحالة"
+            >
+              <MenuItem value="">الكل</MenuItem>
+              <MenuItem value={1}>مكتملة</MenuItem>
+              <MenuItem value={2}>معلقة</MenuItem>
+              <MenuItem value={3}>ملغية</MenuItem>
+            </Select>
+          </FormControl>
+
+          <Button
+            startIcon={<ClearIcon />}
+            onClick={clearFilters}
+            variant="outlined"
+            size="small"
+          >
+            مسح الفلاتر
+          </Button>
+        </Box>
+
+        {/* عرض رسالة الخطأ */}
+        {error && (
+          <Alert 
+            severity="error" 
+            className={styles.errorAlert}
+            onClose={() => setError(null)}
+          >
+            {error}
+          </Alert>
+        )}
+
+        {/* الجدول */}
+        <TableContainer component={Paper} className={styles.tableContainer}>
+          <Table stickyHeader>
+            <TableHead>
+              <TableRow>
+                <TableCell>كود الفاتورة</TableCell>
+                <TableCell>النوع</TableCell>
+                <TableCell>الحالة</TableCell>
+                <TableCell>تاريخ الإنشاء</TableCell>
+                <TableCell>آخر تحديث</TableCell>
+                <TableCell>المبلغ الإجمالي</TableCell>
+                <TableCell>العميل</TableCell>
+                <TableCell>معلومات إضافية</TableCell>
+                <TableCell align="center">إجراءات</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={9} align="center" className={styles.loadingCell}>
+                    <CircularProgress size={40} />
+                    <Typography variant="body2" sx={{ mt: 1 }}>
+                      جاري تحميل البيانات...
+                    </Typography>
+                  </TableCell>
+                </TableRow>
+              ) : filteredInvoices.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={9} align="center" className={styles.emptyCell}>
+                    <Typography variant="body1" color="text.secondary">
+                      لا توجد طلبات للعرض
+                    </Typography>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredInvoices.map((invoice) => {
+                  const additionalInfo = getAdditionalInfo(invoice);
+                  const isEditable = canEditInvoice(invoice);
+                  
+                  return (
+                    <TableRow key={invoice.id} className={styles.tableRow}>
+                      <TableCell>
+                        <Typography variant="body2" className={styles.invoiceId}>
+                          {invoice.id.substring(0, 8)}...
+                        </Typography>
+                      </TableCell>
+                      
+                      <TableCell>
+                        <Chip
+                          label={getInvoiceTypeText(invoice.invoiceType)}
+                          size="small"
+                          color={invoice.invoiceType === 1 ? 'success' : 
+                                 invoice.invoiceType === 2 ? 'primary' : 
+                                 invoice.invoiceType === 3 ? 'warning' : 'info'}
+                        />
+                      </TableCell>
+                      
+                      <TableCell>
+                        <Chip
+                          label={getInvoiceStatusText(invoice.invoiceStatus)}
+                          size="small"
+                          color={invoice.invoiceStatus === 1 ? 'success' : 
+                                 invoice.invoiceStatus === 2 ? 'warning' : 'error'}
+                        />
+                      </TableCell>
+                      
+                      <TableCell>
+                        <Typography variant="body2">
+                          {formatDate(invoice.createdAt)}
+                        </Typography>
+                      </TableCell>
+                      
+                      <TableCell>
+                        <Typography variant="body2">
+                          {formatDate(invoice.completedAt)}
+                        </Typography>
+                      </TableCell>
+                      
+                      <TableCell>
+                        <Typography variant="body2" className={styles.totalAmount}>
+                          {invoice.totalAfterTaxAndService.toFixed(2)} جنيه
+                        </Typography>
+                      </TableCell>
+                      
+                      <TableCell>
+                        <Typography variant="body2">
+                          {invoice.customerName || '--'}
+                        </Typography>
+                      </TableCell>
+                      
+                      <TableCell>
+                        {additionalInfo ? (
+                          <Box>
+                            <Typography variant="caption" color="text.secondary">
+                              {additionalInfo.label}:
+                            </Typography>
+                            <Typography variant="body2">
+                              {additionalInfo.value}
+                            </Typography>
+                          </Box>
+                        ) : (
+                          '--'
+                        )}
+                      </TableCell>
+                      
+                      <TableCell align="center">
+                        <IconButton
+                          size="small"
+                          onClick={() => handleViewOrder(invoice)}
+                          className={`${styles.viewButton} ${!isEditable ? styles.disabledViewButton : ''}`}
+                          title={isEditable ? "عرض وتعديل الطلب" : "عرض الطلب (غير قابل للتعديل)"}
+                          disabled={loading}
+                        >
+                          <VisibilityIcon />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+
+        {/* عرض الصفحات */}
+        {totalPages > 1 && (
+          <Box className={styles.paginationContainer}>
+            <Pagination
+              count={totalPages}
+              page={page}
+              onChange={handlePageChange}
+              color="primary"
+              showFirstButton
+              showLastButton
+              disabled={loading}
+            />
+          </Box>
+        )}
+      </DialogContent>
+
+      <DialogActions className={styles.dialogActions}>
+        <Button onClick={onClose} variant="outlined">
+          إغلاق
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
+
+export default TodayOrdersPopup;
+
 ===== src/Pages/pos/newSales/components/ui/Button.tsx =====
 import React from 'react';
 
@@ -4790,6 +5930,141 @@ const searchProducts = useCallback((products: PosProduct[], query: string): PosP
   };
 };
 
+===== src/Pages/pos/newSales/hooks/useInvoiceManager.tsx =====
+// File: src/Pages/pos/newSales/hooks/useInvoiceManager.tsx
+import { useState } from 'react';
+import { OrderSummary, OrderItem } from '../types/PosSystem';
+import { Customer, CustomerAddress } from 'src/utils/api/pagesApi/customersApi';
+import { DeliveryCompany } from 'src/utils/api/pagesApi/deliveryCompaniesApi';
+import { TableSelection } from '../types/TableSystem';
+import * as invoicesApi from '../../../../utils/api/pagesApi/invoicesApi';
+import { useError } from '../../../../contexts/ErrorContext';
+
+interface PaymentMethodData {
+  method: string;
+  amount: number;
+  isSelected: boolean;
+}
+
+export const useInvoiceManager = () => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { showSuccess, showError } = useError();
+
+  const getInvoiceType = (orderType: string): number => {
+    // حسب نوع الطلب
+    switch (orderType) {
+      case 'Takeaway': return 1;
+      case 'Dine-in': return 2;
+      case 'Delivery': return 3;
+      case 'Pickup': return 4;
+      default: return 1;
+    }
+  };
+
+  const getWareHouseId = (): string => {
+    // يمكن الحصول عليه من الإعدادات أو localStorage
+    return localStorage.getItem('warehouse_id') || 'e81866c0-791d-449f-bc04-c5d65bb3820c';
+  };
+
+  const getRawBranchId = (): string => {
+    return localStorage.getItem('branch_id') || 'branch_1';
+  };
+
+  const convertOrderItemToInvoiceItem = (item: OrderItem): invoicesApi.InvoiceItem => {
+    return {
+      ProductId: item.product.id,
+      ProductPriceId: item.selectedPrice.id,
+      Barcode: item.selectedPrice.barcode,
+      UnitId: null,
+      PosPriceName: item.selectedPrice.nameArabic,
+      UnitFactor: 1,
+      Qty: item.quantity,
+      UnitPrice: item.selectedPrice.price,
+      UnitCost: 0, // يمكن الحصول عليه من المنتج إذا كان متوفراً
+      ItemDiscountPercentage: item.discountPercentage || 0,
+      ItemTaxPercentage: 14, // يمكن جعله قابل للتخصيص
+      ServicePercentage: 10, // يمكن جعله قابل للتخصيص
+      WareHouseId: getWareHouseId(),
+      Components: []
+    };
+  };
+
+  const convertPaymentsToInvoicePayments = (payments: PaymentMethodData[]): invoicesApi.InvoicePayment[] => {
+    return payments
+      .filter(payment => payment.isSelected && payment.amount > 0)
+      .map(payment => ({
+        Amount: payment.amount,
+        PaymentMethodId: payment.method.toLowerCase().includes('كاش') || 
+                        payment.method.toLowerCase().includes('cash') ? 'cash' : 
+                        payment.method.toLowerCase()
+      }));
+  };
+
+  const createInvoice = async (
+    orderSummary: OrderSummary,
+    orderType: string,
+    payments: PaymentMethodData[],
+    selectedCustomer?: Customer | null,
+    selectedAddress?: CustomerAddress | null,
+    selectedDeliveryCompany?: DeliveryCompany | null,
+    selectedTable?: TableSelection | null,
+    servicePercentage: number = 0,
+    taxPercentage: number = 0,
+    discountPercentage: number = 0,
+    notes?: string
+  ): Promise<invoicesApi.InvoiceResponse> => {
+    setIsSubmitting(true);
+    
+    try {
+      const invoiceData: invoicesApi.CreateInvoiceRequest = {
+        InvoiceType: getInvoiceType(orderType),
+        InvoiceStatus: 1, // حالة نشطة
+        WareHouseId: getWareHouseId(),
+        RawBranchId: getRawBranchId(),
+        CustomerId: selectedCustomer?.id || null,
+        TableId: selectedTable?.table.id || null,
+        HallCaptainId: null, // يمكن إضافته لاحقاً
+        DeliveryCompanyId: selectedDeliveryCompany?.id || null,
+        DeliveryAgentId: null, // يمكن إضافته لاحقاً
+        TaxPercentage: taxPercentage,
+        ServicePercentage: servicePercentage,
+        HeaderDiscountPercentage: discountPercentage,
+        PreparedAt: new Date().toISOString(),
+        CompletedAt: new Date().toISOString(),
+        Notes: notes || `طلب ${orderType}`,
+        Items: orderSummary.items.map(convertOrderItemToInvoiceItem),
+        Payments: convertPaymentsToInvoicePayments(payments)
+      };
+
+      const result = await invoicesApi.addInvoice(invoiceData);
+      
+      showSuccess(`تم إنشاء الفاتورة رقم ${result.invoiceNumber} بنجاح`);
+      
+      return result;
+    } catch (error: any) {
+      console.error('Error creating invoice:', error);
+      
+      let errorMessage = 'حدث خطأ أثناء إنشاء الفاتورة';
+      
+      if (error.isApiValidationError && error.errors) {
+        errorMessage = error.errors.map((err: any) => err.errorMessage).join(', ');
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      showError(errorMessage);
+      throw error;
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return {
+    createInvoice,
+    isSubmitting
+  };
+};
+
 ===== src/Pages/pos/newSales/hooks/usePosPaymentMethods.tsx =====
 // src/Pages/pos/newSales/hooks/usePosPaymentMethods.ts
 import { useState, useEffect } from "react";
@@ -4981,6 +6256,58 @@ const loadTableSections = useCallback(async () => {
 
 
 
+===== src/Pages/pos/newSales/hooks/useTodayOrders.ts =====
+// src/Pages/pos/newSales/hooks/useTodayOrders.ts
+import { useState, useEffect, useCallback } from 'react';
+import {
+  getAllInvoices,
+  Invoice,
+  InvoicesResponse
+} from '../../../../utils/api/pagesApi/invoicesApi';
+
+export const useTodayOrders = () => {
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+
+  const loadInvoices = useCallback(async (page: number = 1, pageSize: number = 50) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const response: InvoicesResponse = await getAllInvoices(page, pageSize);
+      
+      setInvoices(response.data);
+      setTotalCount(response.totalCount);
+      setTotalPages(response.pageCount);
+      
+      return response;
+    } catch (err: any) {
+      const errorMessage = err.message || 'حدث خطأ في تحميل البيانات';
+      setError(errorMessage);
+      throw new Error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const refreshInvoices = useCallback(() => {
+    return loadInvoices(1);
+  }, [loadInvoices]);
+
+  return {
+    invoices,
+    loading,
+    error,
+    totalCount,
+    totalPages,
+    loadInvoices,
+    refreshInvoices
+  };
+};
+
 ===== src/Pages/pos/newSales/index.tsx =====
 // src/Pages/pos/newSales/index.tsx
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
@@ -5005,6 +6332,7 @@ import { useError } from '../../../contexts/ErrorContext';
 import * as deliveryCompaniesApi from '../../../utils/api/pagesApi/deliveryCompaniesApi';
 import { DeliveryCompany } from '../../../utils/api/pagesApi/deliveryCompaniesApi';
 import { Customer, CustomerAddress } from 'src/utils/api/pagesApi/customersApi';
+import { Invoice } from '../../../utils/api/pagesApi/invoicesApi';
 
 const PosSystem: React.FC = () => {
   const [keypadValue, setKeypadValue] = useState('0');
@@ -5014,7 +6342,7 @@ const PosSystem: React.FC = () => {
   const [selectedChips, setSelectedChips] = useState<string[]>([]);
   const [selectedOrderType, setSelectedOrderType] = useState('Takeaway');
   const [showTablePopup, setShowTablePopup] = useState(false);
-  const { showWarning } = useError();
+const { showWarning, showError } = useError();
   const [deliveryCompanies, setDeliveryCompanies] = useState<DeliveryCompany[]>([]);
   const [selectedDeliveryCompany, setSelectedDeliveryCompany] = useState<DeliveryCompany | null>(null);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
@@ -5096,6 +6424,9 @@ const PosSystem: React.FC = () => {
   const categories = showingChildren 
     ? currentCategories.find(cat => cat.id === showingChildren)?.children || []
     : rootCategories;
+
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [currentInvoiceId, setCurrentInvoiceId] = useState<string | null>(null);
 
   // تحميل البيانات مرة واحدة
   useEffect(() => {
@@ -5441,6 +6772,93 @@ const PosSystem: React.FC = () => {
     };
   }, [orderItems, getServiceCharge, deliveryCharge]);
 
+
+  // دالة لتحويل بيانات الفاتورة إلى OrderItems
+const convertInvoiceToOrderItems = useCallback((invoice: any): OrderItem[] => {
+  if (!invoice.items || !Array.isArray(invoice.items)) {
+    return [];
+  }
+
+  return invoice.items.map((item: any) => {
+    // إنشاء منتج وهمي من بيانات الفاتورة
+    const product: PosProduct = {
+      id: item.productId,
+      name: `Product ${item.productId.substring(0, 8)}`, // اسم مؤقت
+      nameArabic: item.posPriceName || 'منتج',
+      image: '/images/img_rectangle_34624462.png',
+      categoryId: 'default',
+      productType: 1,
+      hasMultiplePrices: false,
+      productPrices: [{
+        id: item.productPriceId,
+        name: item.posPriceName,
+        nameArabic: item.posPriceName,
+        price: item.unitPrice,
+        barcode: item.barcode
+      }]
+    };
+
+    const orderItem: OrderItem = {
+      id: item.id,
+      product: product,
+      selectedPrice: {
+        id: item.productPriceId,
+        name: item.posPriceName,
+        nameArabic: item.posPriceName,
+        price: item.unitPrice,
+        barcode: item.barcode
+      },
+      quantity: item.qty,
+      totalPrice: item.subTotal,
+      discountPercentage: item.itemDiscountPercentage,
+      discountAmount: item.itemDiscountValue,
+      notes: item.notes || undefined
+    };
+
+    return orderItem;
+  });
+}, []);
+
+// معالج عرض الطلب من popup
+const handleViewOrderFromPopup = useCallback((invoiceData: any) => {
+  try {
+    // تحويل بيانات الفاتورة إلى حالة الصفحة
+    const convertedItems = convertInvoiceToOrderItems(invoiceData);
+    
+    // إعادة تعيين حالة الصفحة
+    setOrderItems(convertedItems);
+    setIsEditMode(true);
+    setCurrentInvoiceId(invoiceData.id);
+    
+    // تحديد نوع الطلب
+    const orderTypeMap: { [key: number]: string } = {
+      1: 'Takeaway',
+      2: 'Dine-in',
+      3: 'Delivery',
+      4: 'Pickup'
+    };
+    
+    const newOrderType = orderTypeMap[invoiceData.invoiceType] || 'Takeaway';
+    setSelectedOrderType(newOrderType);
+    
+    // إعداد معلومات العميل إذا كانت موجودة
+    if (invoiceData.customerId && invoiceData.customerName) {
+      // يمكنك هنا جلب بيانات العميل الكاملة أو استخدام البيانات المتاحة
+      setCustomerName(invoiceData.customerName);
+    }
+    
+    // إعداد معلومات الطاولة إذا كانت موجودة
+    if (invoiceData.tableId && newOrderType === 'Dine-in') {
+      // يمكنك هنا جلب بيانات الطاولة أو استخدام ID
+    }
+    
+    console.log('تم تحميل الطلب للتعديل:', invoiceData);
+  } catch (error) {
+    console.error('خطأ في تحويل بيانات الطلب:', error);
+    showError('حدث خطأ في تحميل بيانات الطلب');
+  }
+}, [convertInvoiceToOrderItems, setOrderItems, setSelectedOrderType, setCustomerName, showError]);
+
   // حذف منتج من الطلب
   const removeOrderItem = useCallback((itemId: string) => {
     setOrderItems(prev => prev.filter(item => item.id !== itemId));
@@ -5563,6 +6981,10 @@ const PosSystem: React.FC = () => {
     );
   }, []);
 
+
+
+
+
   const handleResetOrder = useCallback(() => {
     setOrderItems([]);
     setSelectedOrderItemId(null);
@@ -5572,7 +6994,9 @@ const PosSystem: React.FC = () => {
     setSelectedCustomer(null);
     setSelectedAddress(null);
     setDeliveryCharge(0);
-
+ // إعادة تعيين وضع التعديل
+  setIsEditMode(false);
+  setCurrentInvoiceId(null);
     clearSelectedTable();
 
     setIsExtraMode(false);
@@ -5585,6 +7009,16 @@ const PosSystem: React.FC = () => {
     
     console.log('Order reset successfully');
   }, [handleBackToMainProducts, clearSelectedTable]);
+
+    const handleOrderCompleted = useCallback((result: any) => {
+  console.log('تم إنهاء الطلب بنجاح:', result);
+  
+  // إعادة تعيين جميع المتغيرات كما لو تم الضغط على Reset
+  handleResetOrder();
+  
+  // يمكنك إضافة أي منطق إضافي هنا مثل عرض رسالة نجاح
+  console.log('تم إعادة تعيين النظام بنجاح');
+}, [handleResetOrder]);
 
   // عرض حالة التحميل
   if (loading) {
@@ -5605,6 +7039,7 @@ const PosSystem: React.FC = () => {
     );
   }
 
+
   return (
     <div className="pos-system">
       <Header
@@ -5618,6 +7053,8 @@ const PosSystem: React.FC = () => {
         onDeliveryCompanySelect={setSelectedDeliveryCompany}
         selectedCustomer={selectedCustomer}
         selectedAddress={selectedAddress}
+        onViewOrder={handleViewOrderFromPopup} // إضافة هذا
+
       />
 
       <main className="main-content">
@@ -5710,7 +7147,12 @@ const PosSystem: React.FC = () => {
           selectedAddress={selectedAddress}
           onCustomerSelect={handleCustomerSelect}
           orderType={selectedOrderType}
-          onDeliveryChargeChange={handleDeliveryChargeChange} readOnly={false}        />
+          onDeliveryChargeChange={handleDeliveryChargeChange} readOnly={false}   onOrderCompleted={handleOrderCompleted} 
+          selectedTable={selectedTable} // ✅ إضافة هذا
+          selectedDeliveryCompany={selectedDeliveryCompany} // ✅ إضافة هذا// إضافة المعالج الجديد
+          isEditMode={isEditMode}
+  currentInvoiceId={currentInvoiceId}
+       />
       </main>
 
       <PriceSelectionPopup
@@ -5761,6 +7203,7 @@ const PosSystem: React.FC = () => {
 };
 
 export default PosSystem;
+
 
 ===== src/Pages/pos/newSales/srcdhiwise/component-tagger.tsx =====
 import React, { useMemo } from 'react';
@@ -7102,6 +8545,15 @@ export default react;
     max-width: 150px;
   }
 }
+
+
+
+
+
+
+
+
+
 
 ===== src/Pages/pos/newSales/styles/OrderItemDetailsPopup.module.css =====
 /* src/Pages/pos/newSales/components/OrderItemDetailsPopup.module.css */
@@ -9100,6 +10552,34 @@ export default react;
 }
 
 
+.loadingOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  border-radius: inherit;
+}
+
+.loadingContent {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.loadingContent p {
+  margin-top: 1rem;
+  font-family: 'Cairo', sans-serif;
+  font-size: 1.1rem;
+  color: #333;
+}
 
 ===== src/Pages/pos/newSales/styles/popup.css =====
 /* src/Pages/pos/newSales/styles/popup.css */
@@ -12593,6 +14073,211 @@ body {
     color: var(--text-blue);
   }
 }
+===== src/Pages/pos/newSales/styles/TodayOrdersPopup.module.css =====
+/* src/Pages/pos/newSales/styles/TodayOrdersPopup.module.css */
+.dialogPaper {
+  max-height: 90vh;
+  margin: 20px;
+  border-radius: 12px !important;
+}
+
+.dialogTitle {
+  background: linear-gradient(135deg, #0373ed 0%, #025bb5 100%);
+  color: white !important;
+  padding: 16px 24px !important;
+  border-radius: 12px 12px 0 0 !important;
+}
+
+.dialogTitle .MuiTypography-root {
+  font-weight: 600;
+  font-family: 'Cairo', sans-serif;
+}
+
+.dialogContent {
+  padding: 24px !important;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.filtersBar {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  flex-wrap: wrap;
+}
+
+.searchField {
+  flex: 1;
+  min-width: 250px;
+}
+
+.filterSelect {
+  min-width: 150px;
+}
+
+.errorAlert {
+  margin-bottom: 16px;
+}
+
+.tableContainer {
+  flex: 1;
+  max-height: 50vh;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.tableContainer .MuiTableHead-root {
+  background: #f5f5f5;
+}
+
+.tableContainer .MuiTableCell-head {
+  font-weight: 600;
+  font-family: 'Cairo', sans-serif;
+  background: #f5f5f5;
+  border-bottom: 2px solid #dee2e6;
+  padding: 12px 16px;
+}
+
+.tableRow {
+  transition: background-color 0.2s ease;
+}
+
+.tableRow:hover {
+  background-color: #f8f9fa;
+}
+
+.tableRow .MuiTableCell-root {
+  padding: 12px 16px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.invoiceId {
+  font-family: 'Courier New', monospace;
+  font-weight: 600;
+  color: #495057;
+}
+
+.totalAmount {
+  font-weight: 600;
+  color: #28a745;
+}
+
+.viewButton {
+  color: #0373ed;
+  transition: all 0.2s ease;
+}
+
+.viewButton:hover {
+  background-color: rgba(3, 115, 237, 0.1);
+  transform: scale(1.1);
+}
+
+.loadingCell,
+.emptyCell {
+  padding: 40px 16px !important;
+}
+
+.paginationContainer {
+  display: flex;
+  justify-content: center;
+  padding: 16px 0;
+  border-top: 1px solid #e9ecef;
+  margin-top: 16px;
+}
+
+.dialogActions {
+  padding: 16px 24px !important;
+  border-top: 1px solid #e9ecef;
+  background: #f8f9fa;
+  border-radius: 0 0 12px 12px;
+}
+
+/* تحسينات للشاشات الصغيرة */
+@media (max-width: 768px) {
+  .dialogPaper {
+    margin: 8px;
+    max-height: 95vh;
+  }
+  
+  .filtersBar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .searchField,
+  .filterSelect {
+    min-width: auto;
+    width: 100%;
+  }
+  
+  .tableContainer {
+    max-height: 40vh;
+  }
+  
+  .tableContainer .MuiTableCell-head,
+  .tableContainer .MuiTableCell-body {
+    padding: 8px 12px;
+    font-size: 0.875rem;
+  }
+}
+
+/* تحسينات للأجهزة اللوحية */
+@media (max-width: 1024px) {
+  .tableContainer {
+    max-height: 45vh;
+  }
+  
+  .filtersBar {
+    gap: 12px;
+  }
+}
+
+/* تأثيرات التحميل */
+.loadingCell {
+  text-align: center;
+}
+
+.loadingCell .MuiCircularProgress-root {
+  color: #0373ed;
+}
+
+/* تأثيرات الـ Chips */
+.tableRow .MuiChip-root {
+  font-weight: 500;
+  font-size: 0.75rem;
+}
+
+/* تحسين عرض المعلومات الإضافية */
+.tableRow .MuiBox-root {
+  min-width: 120px;
+}
+
+.tableRow .MuiTypography-caption {
+  display: block;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+/* تحسين شريط الفلاتر */
+.filtersBar .MuiButton-root {
+  white-space: nowrap;
+  min-width: auto;
+}
+
+/* تحسين العنوان */
+.dialogTitle .MuiIconButton-root {
+  color: white;
+}
+
+.dialogTitle .MuiIconButton-root:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
 ===== src/Pages/pos/newSales/types/PosSystem.tsx =====
 // src/Pages/pos/newSales/types/PosSystem.tsx
 export interface PosProduct {

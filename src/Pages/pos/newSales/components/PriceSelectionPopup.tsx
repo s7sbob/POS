@@ -14,7 +14,6 @@ interface PriceSelectionPopupProps {
 
 const PriceSelectionPopup: React.FC<PriceSelectionPopupProps> = ({
   product,
-  quantity,
   isOpen,
   onClose,
   onSelectPrice
