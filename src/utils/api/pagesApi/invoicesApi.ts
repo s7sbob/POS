@@ -2,6 +2,7 @@
 import api from '../../axios';
 
 export interface InvoiceItem {
+  notes: any;
   id: string;
   productId: string;
   productPriceId: string;

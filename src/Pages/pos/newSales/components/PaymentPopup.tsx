@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { OrderSummary as OrderSummaryType } from '../types/PosSystem';
 import { Customer, CustomerAddress } from 'src/utils/api/pagesApi/customersApi';
 import PaymentLeft from './paymentPopup components/PaymentLeft';
@@ -8,6 +8,7 @@ import styles from '../styles/PaymentPopup.module.css';
 import { usePosPaymentMethods } from '../hooks/usePosPaymentMethods';
 import { Snackbar, Alert } from '@mui/material';
 import * as invoicesApi from 'src/utils/api/pagesApi/invoicesApi';
+import { useInvoiceManager } from '../hooks/useInvoiceManager';
 
 interface PaymentMethodData {
   method: string;
@@ -43,6 +44,8 @@ interface PaymentPopupProps {
   // إضافة props جديدة لدعم وضع التعديل
   isEditMode?: boolean;
   currentInvoiceId?: string | null;
+  actionType?: 'send' | 'print' | 'pay'; // ✅ إضافة جديدة
+
 }
 
 const PaymentPopup: React.FC<PaymentPopupProps> = ({
@@ -65,7 +68,8 @@ const PaymentPopup: React.FC<PaymentPopupProps> = ({
   selectedTable,
   selectedDeliveryCompany,
   isEditMode = false, // القيمة الافتراضية false
-  currentInvoiceId = null // القيمة الافتراضية null
+  currentInvoiceId = null, // القيمة الافتراضية null
+  actionType = 'pay' // ✅ إضافة جديدة
 }) => {
   const overlayRef = useRef<HTMLDivElement>(null);
   const { paymentMethods, loading, error } = usePosPaymentMethods();
@@ -82,6 +86,8 @@ const PaymentPopup: React.FC<PaymentPopupProps> = ({
   const [paidAmount, setPaidAmount] = useState('0');
   const [lastNonCashTotal, setLastNonCashTotal] = useState(0);
   const [isFirstInput, setIsFirstInput] = useState(true);
+  const { saveInvoice, isSubmitting: isInvoiceSubmitting } = useInvoiceManager();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // دوال عرض الرسائل المحلية
   const showLocalSuccess = (message: string) => {
@@ -107,6 +113,34 @@ const PaymentPopup: React.FC<PaymentPopupProps> = ({
       severity: 'error'
     });
   };
+
+  const getInvoiceStatus = (): number => {
+  switch (actionType) {
+    case 'send': return 1;
+    case 'print': return 2;
+    case 'pay': return 3;
+    default: return 3;
+  }
+};
+
+
+const getSuccessMessage = (invoiceNumber: string): string => {
+  if (isEditMode) {
+    switch (actionType) {
+      case 'send': return 'تم تحديث وإرسال الطلب بنجاح!';
+      case 'print': return 'تم تحديث وطباعة الطلب بنجاح!';
+      case 'pay': return 'تم تحديث ودفع الطلب بنجاح!';
+      default: return 'تم تحديث الطلب بنجاح!';
+    }
+  } else {
+    switch (actionType) {
+      case 'send': return `تم إرسال الطلب بنجاح! رقم الفاتورة: ${invoiceNumber}`;
+      case 'print': return `تم طباعة الطلب بنجاح! رقم الفاتورة: ${invoiceNumber}`;
+      case 'pay': return `تم دفع الطلب بنجاح! رقم الفاتورة: ${invoiceNumber}`;
+      default: return `تم إنشاء الطلب بنجاح! رقم الفاتورة: ${invoiceNumber}`;
+    }
+  }
+};
 
   // حساب المبالغ
   const deliveryCharge = 0;
@@ -563,100 +597,78 @@ const PaymentPopup: React.FC<PaymentPopupProps> = ({
       setIsFirstInput(true);
     }
   };
+  const canFinish = (nonCashTotal + cashAmount) >= totalAmount;
 
   // الدالة المحدثة للتعامل مع إنهاء الدفع
-  const handleFinishPayment = async () => {
-    const finalPayments = selectedPayments.filter(payment => 
-      payment.amount > 0
-    );
-    
-    try {
-      // تحضير بيانات الفاتورة الأساسية
-      const baseInvoiceData = {
-        InvoiceType: orderType === 'Takeaway' ? 1 : 
-                     orderType === 'Dine-in' ? 2 : 
-                     orderType === 'Delivery' ? 3 : 
-                     orderType === 'Pickup' ? 4 : 1,
-        InvoiceStatus: 1,
-        WareHouseId: localStorage.getItem('warehouse_id') || 'e81866c0-791d-449f-bc04-c5d65bb3820c',
-        RawBranchId: localStorage.getItem('branch_id') || 'branch_1',
-        CustomerId: selectedCustomer?.id || null,
-        TableId: selectedTable?.table?.id || null,
-        HallCaptainId: null,
-        DeliveryCompanyId: selectedDeliveryCompany?.id || null,
-        DeliveryAgentId: null,
-        TaxPercentage: 14,
-        ServicePercentage: selectedTable?.section?.serviceCharge || 10,
-        HeaderDiscountPercentage: 5,
-        PreparedAt: new Date().toISOString(),
-        CompletedAt: new Date().toISOString(),
-        Notes: selectedTable ? `طلب صالة - طاولة ${selectedTable.table.name}` : `طلب ${orderType}`,
-        Items: orderSummary.items.map(item => ({
-          ProductId: item.product.id,
-          ProductPriceId: item.selectedPrice.id,
-          Barcode: item.selectedPrice.barcode || '1234567890123',
-          UnitId: null,
-          PosPriceName: item.selectedPrice.nameArabic,
-          UnitFactor: 1,
-          Qty: item.quantity,
-          UnitPrice: item.selectedPrice.price,
-          UnitCost: 45,
-          ItemDiscountPercentage: item.discountPercentage || 0,
-          ItemTaxPercentage: 14,
-          ServicePercentage: selectedTable?.section?.serviceCharge || 10,
-          WareHouseId: localStorage.getItem('warehouse_id') || 'e81866c0-791d-449f-bc04-c5d65bb3820c',
-          Components: []
-        })),
-        Payments: finalPayments.map(payment => ({
-          Amount: payment.amount,
-          PaymentMethodId: payment.method.toLowerCase().includes('كاش') || 
-                          payment.method.toLowerCase().includes('cash') ? 'cash' : 
-                          payment.method.toLowerCase().replace(/\s+/g, '_')
-        }))
-      };
+const handleFinishPayment = useCallback(async () => {
+  if (isSubmitting) return; // منع التنفيذ المتكرر
+  if (!canFinish) return;
 
-      let result;
-      
-      // تحديد ما إذا كان الوضع للتعديل أم الإنشاء
-      if (isEditMode && currentInvoiceId) {
-        // وضع التعديل - استخدام UpdateInvoice API
-        const updateData = {
-          invoiceId: currentInvoiceId,
-          ...baseInvoiceData
-        };
+  try {
+    setIsSubmitting(true);
+
+    // استخدام الـ hook الجديد
+    const invoiceResult = await saveInvoice(
+      orderSummary,
+      orderType,
+      selectedPayments,
+      getInvoiceStatus(), // ✅ إضافة هذا البرامتر
+      {
+        isEditMode,
+        invoiceId: currentInvoiceId,
+        selectedCustomer,
+        selectedAddress,
+        selectedDeliveryCompany,
+        selectedTable,
+        servicePercentage: 0, // يمكن تخصيصه
+        taxPercentage: 0, // يمكن تخصيصه
+        discountPercentage: 0, // يمكن تخصيصه
+        notes: customerName,
         
-        result = await invoicesApi.updateInvoice(updateData);
-        console.log('تم تحديث الفاتورة بنجاح:', result);
-        
-        showLocalSuccess(`تم تحديث الفاتورة رقم ${result.invoiceNumber || currentInvoiceId.substring(0, 8)} بنجاح!`);
-      } else {
-        // وضع الإنشاء الجديد - استخدام AddInvoice API
-        const invoiceData: invoicesApi.CreateInvoiceRequest = baseInvoiceData;
-        
-        result = await invoicesApi.addInvoice(invoiceData);
-        console.log('تم إنشاء الفاتورة بنجاح:', result);
-        
-        showLocalSuccess(`تم إنشاء الفاتورة رقم ${result.invoiceNumber || 'جديد'} بنجاح!`);
       }
-      
-      // انتظار ثانيتين لعرض الرسالة
-      setTimeout(() => {
-        onPaymentComplete({
-          success: true,
-          invoice: result,
-          payments: finalPayments
-        });
-        
-        onClose();
-      }, 2000);
-      
-    } catch (error) {
-      console.error('فشل في معالجة الفاتورة:', error);
-      showLocalError('حدث خطأ أثناء معالجة الفاتورة. يرجى المحاولة مرة أخرى.');
-    }
-  };
+    );
 
-  const canFinish = (nonCashTotal + cashAmount) >= totalAmount;
+    showLocalSuccess(
+      isEditMode 
+        ? `تم تحديث الطلب بنجاح!`
+        : `تم إنشاء الطلب بنجاح! رقم الفاتورة: ${invoiceResult.invoiceNumber}`
+    );
+
+    // إرسال النتيجة للمكون الأصلي
+    onPaymentComplete({
+      success: true,
+      invoice: invoiceResult,
+      payments: selectedPayments.filter(p => p.isSelected && p.amount > 0)
+    });
+
+  } catch (error: any) {
+    console.error('Error processing payment:', error);
+    showLocalError(error.message || 'حدث خطأ في معالجة الدفع');
+    
+    onPaymentComplete({
+      success: false,
+      payments: selectedPayments,
+      error: error.message || 'حدث خطأ في معالجة الدفع'
+    });
+  } finally {
+    setIsSubmitting(false);
+  }
+}, [
+  canFinish,
+  orderSummary,
+  orderType,
+  selectedPayments,
+  selectedCustomer,
+  selectedAddress,
+  selectedDeliveryCompany,
+  selectedTable,
+  customerName,
+  isEditMode,
+  currentInvoiceId,
+  saveInvoice,
+  onPaymentComplete
+]);
+
 
   if (!isOpen) return null;
 
@@ -723,6 +735,8 @@ const PaymentPopup: React.FC<PaymentPopupProps> = ({
                 nonCashTotal={nonCashTotal}
                 onShowWarning={showLocalWarning}
                 isEditMode={isEditMode} // تمرير معلومة وضع التعديل
+                  isSubmitting={isInvoiceSubmitting} // إضافة جديدة
+
               />
             )}
           </div>

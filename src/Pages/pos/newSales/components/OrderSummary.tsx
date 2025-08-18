@@ -8,6 +8,7 @@ import CustomerDetailsPopup from './CustomerDetailsPopup';
 import CustomerForm from '../../customers/components/CustomerForm';
 import styles from '../styles/OrderSummary.module.css';
 import PaymentPopup from './PaymentPopup';
+import { useInvoiceManager } from '../hooks/useInvoiceManager';
 
 interface OrderSummaryProps {
   orderSummary: OrderSummaryType;
@@ -30,6 +31,12 @@ interface OrderSummaryProps {
   // إضافة الـ props المطلوبة لوضع التعديل
   isEditMode?: boolean;
   currentInvoiceId?: string | null;
+}
+
+export enum InvoiceStatus {
+  SENT = 1,
+  PRINTED = 2,
+  PAID = 3
 }
 
 const OrderSummary: React.FC<OrderSummaryProps> = ({
@@ -68,13 +75,16 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
   const [searchCache, setSearchCache] = useState<{[key: string]: Customer[]}>({});
   const [inputHasFocus, setInputHasFocus] = useState(false);
   const [showPaymentPopup, setShowPaymentPopup] = useState(false);
-  
+  const [pendingEnterAction, setPendingEnterAction] = useState<string | null>(null);
+const { saveInvoice, isSubmitting } = useInvoiceManager();
+
   // استخدام useRef بدلاً من state للمتغيرات المساعدة
   const searchDebounceTimer = useRef<NodeJS.Timeout | null>(null);
   const searchAbortController = useRef<AbortController | null>(null);
   const lastSearchQuery = useRef<string>('');
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+const [selectedActionType, setSelectedActionType] = useState<'send' | 'print' | 'pay'>('pay');
 
   // تحميل المناطق عند بدء التشغيل
   useEffect(() => {
@@ -89,6 +99,9 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
     
     loadZones();
   }, []);
+
+
+
 
   // حساب رسوم التوصيل عند تغيير العنوان أو نوع الطلب
   useEffect(() => {
@@ -277,6 +290,23 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
 
   const canOpenPayment = orderSummary.items.length > 0;
 
+
+const handleActionButtonClick = useCallback(async (actionType: 'send' | 'print' | 'pay') => {
+  if (!canOpenPayment) return;
+  
+  if (actionType === 'pay') {
+    // فقط Pay يفتح payment popup
+    setSelectedActionType(actionType);
+    setShowPaymentPopup(true);
+  } else {
+    // Send و Print يحفظوا مباشرة بدون popup
+    await handleDirectSave(actionType);
+  }
+}, [canOpenPayment]);
+
+
+
+
   // معالج Blur للـ input
   const handleInputBlur = useCallback(() => {
     // تأخير إخفاء الـ dropdown للسماح بالنقر على النتائج
@@ -293,93 +323,209 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
     setInputHasFocus(false);
   }, []);
 
-  const handleKeyDown = useCallback(async (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (showDropdown && searchResults.length > 0) {
-      switch (e.key) {
-        case 'ArrowDown':
-          e.preventDefault();
-          setSelectedResultIndex(prev => 
-            prev < searchResults.length - 1 ? prev + 1 : prev
-          );
-          break;
-        case 'ArrowUp':
-          e.preventDefault();
-          setSelectedResultIndex(prev => prev > 0 ? prev - 1 : -1);
-          break;
-        case 'Enter':
-          e.preventDefault();
-          if (isSearching) {
-            return;
-          }
-          // اختيار فقط إذا كان هناك عنصر محدد بالأسهم
-          if (selectedResultIndex >= 0 && selectedResultIndex < searchResults.length) {
-            handleCustomerSelect(searchResults[selectedResultIndex]);
-          } else {
-            // إذا مفيش اختيار بالأسهم، تحقق من وجود مطابقة تامة
-            const query = phoneInput.trim();
-            const exactMatch = searchResults.find(customer => 
-              customer.phone1 === query || 
-              customer.phone2 === query ||
-              customer.phone3 === query ||
-              customer.phone4 === query
-            );
-            
-            if (!exactMatch) {
-              // مفيش مطابقة تامة، افتح dialog الإضافة
-              setShowCustomerForm(true);
-              setShowDropdown(false);
-            }
-          }
-          break;
-        case 'Escape':
-          setShowDropdown(false);
-          setSelectedResultIndex(-1);
-          inputRef.current?.blur();
-          break;
-      }
-    } else if (e.key === 'Enter') {
-      e.preventDefault();
-      
-      const query = phoneInput.trim();
-      if (query.length >= 3) {
-        if (isSearching) {
-          return;
-        }
 
-        setIsSearching(true);
-        try {
-          const results = await searchCustomers(query);
+const handleKeyDown = useCallback(async (e: React.KeyboardEvent<HTMLInputElement>) => {
+  if (showDropdown && searchResults.length > 0) {
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        setSelectedResultIndex(prev => 
+          prev < searchResults.length - 1 ? prev + 1 : prev
+        );
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        setSelectedResultIndex(prev => prev > 0 ? prev - 1 : -1);
+        break;
+      case 'Enter':
+        e.preventDefault();
+        
+        // اختيار فقط إذا كان هناك عنصر محدد بالأسهم
+        if (selectedResultIndex >= 0 && selectedResultIndex < searchResults.length) {
+          handleCustomerSelect(searchResults[selectedResultIndex]);
+        } else {
+          // تحقق من وجود مطابقة تامة للرقم الكامل
+          const query = phoneInput.trim();
+          const exactMatch = searchResults.find(customer => 
+            customer.phone1 === query || 
+            customer.phone2 === query ||
+            customer.phone3 === query ||
+            customer.phone4 === query
+          );
           
-          if (results.length > 0) {
-            // تحقق من وجود مطابقة تامة
-            const exactMatch = results.find(customer => 
-              customer.phone1 === query || 
-              customer.phone2 === query ||
-              customer.phone3 === query ||
-              customer.phone4 === query
-            );
-            
-            setSearchResults(results);
-            setShowDropdown(true);
-            setSelectedResultIndex(-1);
-            
-            // إذا مفيش مطابقة تامة، افتح dialog الإضافة كمان
-            if (!exactMatch) {
-              setShowCustomerForm(true);
-            }
-          } else {
-            setShowCustomerForm(true); // مفيش نتائج، افتح عميل جديد
+          if (exactMatch) {
+            handleCustomerSelect(exactMatch);
+          } else if (!isSearching) {
+            // مفيش مطابقة تامة وانتهى البحث، افتح dialog الإضافة
+            setShowCustomerForm(true);
+            setShowDropdown(false);
           }
-        } catch (error) {
-          console.error('Immediate search failed:', error);
-          setShowCustomerForm(true);
-        } finally {
-          setIsSearching(false);
         }
+        break;
+      case 'Escape':
+        setShowDropdown(false);
+        setSelectedResultIndex(-1);
+        inputRef.current?.blur();
+        break;
+    }
+  } else if (e.key === 'Enter') {
+    e.preventDefault();
+    
+    const query = phoneInput.trim();
+    if (query.length >= 3) {
+      // إذا البحث لسه شغال، احفظ الإجراء المطلوب وانتظر
+      if (isSearching) {
+        setPendingEnterAction(query);
+        return;
+      }
+
+      // إذا البحث خلص، تعامل مع الطلب
+      await handleEnterAction(query);
+    }
+  }
+}, [showDropdown, searchResults, selectedResultIndex, phoneInput, isSearching, searchCustomers, handleCustomerSelect]);
+
+// أضف دالة جديدة للتعامل مع Enter:
+const handleEnterAction = useCallback(async (query: string) => {
+  try {
+    setIsSearching(true);
+    const results = await searchCustomers(query);
+    
+    if (results.length > 0) {
+      // تحقق من وجود مطابقة تامة للرقم الكامل
+      const exactMatch = results.find(customer => 
+        customer.phone1 === query || 
+        customer.phone2 === query ||
+        customer.phone3 === query ||
+        customer.phone4 === query
+      );
+      
+      setSearchResults(results);
+      setShowDropdown(true);
+      setSelectedResultIndex(-1);
+      
+      if (exactMatch) {
+        // إذا وجدت مطابقة تامة، اختارها مباشرة
+        handleCustomerSelect(exactMatch);
+      } else {
+        // إذا مفيش مطابقة تامة، أظهر النتائج فقط
+        // المستخدم يختار بنفسه أو يضيف عميل جديد من الزر
+      }
+    } else {
+      // مفيش نتائج، افتح عميل جديد
+      setShowCustomerForm(true);
+    }
+  } catch (error) {
+    console.error('Search failed:', error);
+    setShowCustomerForm(true);
+  } finally {
+    setIsSearching(false);
+  }
+}, [searchCustomers, handleCustomerSelect]);
+
+// أضف useEffect للتعامل مع الإجراءات المعلقة:
+useEffect(() => {
+  // إذا كان هناك إجراء معلق والبحث انتهى
+  if (pendingEnterAction && !isSearching) {
+    const query = pendingEnterAction;
+    setPendingEnterAction(null);
+    
+    // تنفيذ الإجراء المعلق
+    handleEnterAction(query);
+  }
+}, [isSearching, pendingEnterAction, handleEnterAction]);
+
+// عدل useEffect الخاص بالبحث ليمنع الإجراءات أثناء البحث:
+useEffect(() => {
+  // إلغاء المؤقت السابق
+  if (searchDebounceTimer.current) {
+    clearTimeout(searchDebounceTimer.current);
+  }
+
+  const query = phoneInput.trim();
+  
+  // إذا النص فاضي، امسح النتائج ولكن لا تُخفي الـ dropdown إذا كان الـ input له focus
+  if (!query) {
+    setSearchResults([]);
+    if (!inputHasFocus) {
+      setShowDropdown(false);
+    }
+    setSelectedResultIndex(-1);
+    setIsSearching(false);
+    // إلغاء أي إجراء معلق
+    setPendingEnterAction(null);
+    return;
+  }
+
+  // إذا النص أقل من 3 أحرف، ما تبحثش ولكن أظهر رسالة
+  if (query.length < 3) {
+    setSearchResults([]);
+    setSelectedResultIndex(-1);
+    setPendingEnterAction(null);
+    // أظهر الـ dropdown مع رسالة "اكتب 3 أحرف على الأقل" إذا كان الـ input له focus
+    if (inputHasFocus) {
+      setShowDropdown(true);
+    }
+    return;
+  }
+
+  // إذا هو نفس البحث السابق والنتائج موجودة، أظهر النتائج فقط
+  if (query === lastSearchQuery.current && searchResults.length >= 0) {
+    if (inputHasFocus) {
+      setShowDropdown(true);
+    }
+    return;
+  }
+
+  // بدء البحث مع تأخير
+  const performSearch = async () => {
+    // التأكد إن النص لسه نفسه (مش اتغير أثناء التأخير)
+    if (phoneInput.trim() !== query) {
+      return;
+    }
+
+    setIsSearching(true);
+    lastSearchQuery.current = query;
+    
+    try {
+      const results = await searchCustomers(query);
+      
+      // التأكد إن النص لسه نفسه بعد البحث
+      if (phoneInput.trim() === query) {
+        setSearchResults(results);
+        // أظهر الـ dropdown فقط إذا كان الـ input له focus أو كان مفتوح من قبل
+        if (inputHasFocus || showDropdown) {
+          setShowDropdown(true);
+        }
+        setSelectedResultIndex(-1);
+      }
+    } catch (error: any) {
+      if (error.name !== 'AbortError') {
+        console.error('Search failed:', error);
+        // عرض النتائج الفارغة فقط إذا النص لسه نفسه والـ input له focus
+        if (phoneInput.trim() === query && inputHasFocus) {
+          setSearchResults([]);
+          setShowDropdown(true);
+        }
+      }
+    } finally {
+      // إيقاف مؤشر التحميل فقط إذا النص لسه نفسه
+      if (phoneInput.trim() === query) {
+        setIsSearching(false);
       }
     }
-  }, [showDropdown, searchResults, selectedResultIndex, phoneInput, isSearching, searchCustomers, handleCustomerSelect]);
+  };
 
+  // تأخير البحث 500ms
+  searchDebounceTimer.current = setTimeout(performSearch, 500);
+
+  // تنظيف المؤقت عند التغيير
+  return () => {
+    if (searchDebounceTimer.current) {
+      clearTimeout(searchDebounceTimer.current);
+    }
+  };
+}, [phoneInput, searchCustomers, inputHasFocus, showDropdown, searchResults.length]);
   const handleCustomerDetailsSelect = useCallback((customer: Customer, address: CustomerAddress) => {
     onCustomerSelect(customer, address);
     
@@ -447,10 +593,66 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
   const taxAmount = 0;
   const finalTotal = subtotalWithDelivery + taxAmount - orderSummary.discount;
 
+
+  // دالة جديدة للحفظ المباشر لـ Send و Print
+const handleDirectSave = useCallback(async (actionType: 'send' | 'print') => {
+  try {
+    console.log(`بدء معالجة ${actionType}...`);
+    
+    // ✅ إنشاء طرق دفع افتراضية فارغة للـ Send و Print
+const defaultPayments: { method: string; amount: number; isSelected: boolean }[] = [];
+    
+    // تحديد الحالة
+    const invoiceStatus = actionType === 'send' ? 1 : 2;
+    
+    // ✅ حفظ الفاتورة بدون طرق دفع
+    const result = await saveInvoice(
+      orderSummary,
+      orderType,
+      defaultPayments, // ✅ مصفوفة فارغة
+      invoiceStatus,
+      {
+        isEditMode,
+        invoiceId: currentInvoiceId,
+        selectedCustomer,
+        selectedAddress,
+        selectedDeliveryCompany,
+        selectedTable,
+        servicePercentage: 0,
+        taxPercentage: 0,
+        discountPercentage: 0,
+        notes: customerName
+      }
+    );
+    
+    const actionName = actionType === 'send' ? 'إرسال' : 'طباعة';
+    console.log(`تم ${actionName} الطلب بنجاح! رقم الفاتورة: ${result.invoiceNumber}`);
+    
+    // إعادة تعيين النظام
+    if (onOrderCompleted) {
+      onOrderCompleted({
+        success: true,
+        invoice: result,
+        actionType: actionType
+      });
+    }
+    
+  } catch (error) {
+    console.error(`خطأ في ${actionType}:`, error);
+    // يمكن عرض رسالة خطأ للمستخدم هنا
+  }
+}, [saveInvoice, orderSummary, orderType, isEditMode, currentInvoiceId, 
+    selectedCustomer, selectedAddress, selectedDeliveryCompany, selectedTable, 
+    customerName, onOrderCompleted]);
+
+
+
+
   // دوال العرض
   const renderSubItem = (subItem: SubItem, orderItemId: string) => {
     const canDelete = subItem.type === 'extra' || subItem.type === 'without';
     const isSelected = selectedSubItemId === subItem.id && canDelete;
+    
     
     return (
       <div 
@@ -746,27 +948,32 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
           <div className={`${styles.actionButtons} ${shouldShowPayOnly ? styles.takeawayButtons : ''}`}>
             {shouldShowAllButtons && (
               <>
-                <button className={`${styles.actionButton} ${styles.send}`}>
-                  <img src="/images/img_tabler_send.svg" alt="Send" />
-                  <span>Send</span>
-                </button>
-                <button onClick={() => canOpenPayment && setShowPaymentPopup(true)}
-                        disabled={!canOpenPayment}
-                        className={`${styles.actionButton} ${styles.print} ${!canOpenPayment ? styles.disabledBtn : ''}`}>
-                  <img src="/images/img_printer.svg" alt="Print" />
-                  <span>Print</span>
-                </button>
+<button 
+  className={`${styles.actionButton} ${styles.send}`}
+  onClick={() => handleActionButtonClick('send')}
+  disabled={!canOpenPayment || isSubmitting}
+>
+  <img src="/images/img_tabler_send.svg" alt="Send" />
+  <span>{isSubmitting ? 'جاري الإرسال...' : 'Send'}</span>
+</button>
+<button 
+  className={`${styles.actionButton} ${styles.print}`}
+  onClick={() => handleActionButtonClick('print')}
+  disabled={!canOpenPayment || isSubmitting}
+>
+  <img src="/images/img_printer.svg" alt="Print" />
+  <span>{isSubmitting ? 'جاري الطباعة...' : 'Print'}</span>
+</button>
               </>
             )}
-            <button
-              onClick={() => canOpenPayment && setShowPaymentPopup(true)}
-              disabled={!canOpenPayment}
-              className={`${styles.actionButton} ${styles.pay} ${shouldShowPayOnly ? styles.fullWidth : ''} ${!canOpenPayment ? styles.disabledBtn : ''}`}
-              title={!canOpenPayment ? "لا يمكن الدفع بدون إضافة أصناف" : undefined}
-            >
-              <img src="/images/img_payment_02.svg" alt="Pay" />
-              <span>{isEditMode ? 'تحديث' : 'Pay'}</span>
-            </button>
+<button
+  onClick={() => handleActionButtonClick('pay')}
+  disabled={!canOpenPayment}
+  className={`${styles.actionButton} ${styles.pay} ${shouldShowPayOnly ? styles.fullWidth : ''} ${!canOpenPayment ? styles.disabledBtn : ''}`}
+>
+  <img src="/images/img_payment_02.svg" alt="Pay" />
+  <span>{isEditMode ? 'تحديث' : 'Pay'}</span>
+</button>
           </div>
         )}
       </div>
@@ -797,6 +1004,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
         orderType={orderType}
         onDeliveryChargeChange={onDeliveryChargeChange}
         selectedTable={selectedTable}
+        actionType={selectedActionType} // ✅ إضافة جديدة
         selectedDeliveryCompany={selectedDeliveryCompany}
         isEditMode={isEditMode} // ✅ تمرير صحيح
         currentInvoiceId={currentInvoiceId} // ✅ تمرير صحيح

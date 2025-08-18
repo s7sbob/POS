@@ -1,7 +1,11 @@
 // src/Pages/pos/newSales/components/TableSelectionPopup.tsx
 import React, { useState, useEffect } from 'react';
 import { TableSection, Table, TableSelection } from '../types/TableSystem';
+import { UnclosedTableInvoice } from '../../../../utils/api/pagesApi/unclosedTablesApi';
+import * as unclosedTablesApi from '../../../../utils/api/pagesApi/unclosedTablesApi';
 import CloseIcon from '@mui/icons-material/Close';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import styles from '../styles/TableSelectionPopup.module.css';
 
 interface TableSelectionPopupProps {
@@ -9,15 +13,68 @@ interface TableSelectionPopupProps {
   onClose: () => void;
   onSelectTable: (selection: TableSelection) => void;
   tableSections: TableSection[];
+  onViewOrder?: (invoiceData: any) => void; // إضافة جديدة لمعاينة الطلب
 }
 
 const TableSelectionPopup: React.FC<TableSelectionPopupProps> = ({
   isOpen,
   onClose,
   onSelectTable,
-  tableSections
+  tableSections,
+  onViewOrder
 }) => {
   const [selectedSection, setSelectedSection] = useState<TableSection | null>(null);
+  const [unclosedTables, setUnclosedTables] = useState<UnclosedTableInvoice[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [openDurations, setOpenDurations] = useState<{[key: string]: string}>({});
+
+  // تحديث حالة الطاولات كل دقيقة
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const loadUnclosedTables = async () => {
+      try {
+        setLoading(true);
+        const response = await unclosedTablesApi.getBranchUnclosedTables();
+        setUnclosedTables(response.data);
+      } catch (error) {
+        console.error('Error loading unclosed tables:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadUnclosedTables();
+    
+    // تحديث كل دقيقة
+    const interval = setInterval(loadUnclosedTables, 60000);
+    
+    return () => clearInterval(interval);
+  }, [isOpen]);
+
+  // تحديث عدادات الوقت كل ثانية
+useEffect(() => {
+  const updateDurations = () => {
+    const newDurations: {[key: string]: string} = {};
+    unclosedTables.forEach(invoice => {
+      if (invoice.tableDTO?.id) {
+        // ✅ استخدام createdAt إذا كان موجود، وإلا preparedAt
+        const timeToUse = invoice.createdAt !== '0001-01-01T00:00:00' && invoice.createdAt 
+          ? invoice.createdAt 
+          : invoice.preparedAt || invoice.completedAt;
+          
+        newDurations[invoice.tableDTO.id] = unclosedTablesApi.calculateTableOpenDuration(timeToUse);
+      }
+    });
+    setOpenDurations(newDurations);
+  };
+
+  updateDurations();
+  const interval = setInterval(updateDurations, 1000); // كل ثانية لتحديث مباشر
+  
+  return () => clearInterval(interval);
+}, [unclosedTables]);
+
 
   useEffect(() => {
     if (isOpen && tableSections.length > 0) {
@@ -31,15 +88,38 @@ const TableSelectionPopup: React.FC<TableSelectionPopupProps> = ({
     setSelectedSection(section);
   };
 
-  const handleTableClick = (table: Table) => {
-    if (selectedSection && !table.isOccupied) {
-      onSelectTable({
-        section: selectedSection,
-        table: table
-      });
-    }
+  const getTableInvoice = (tableId: string) => {
+    return unclosedTables.find(invoice => invoice.tableDTO?.id === tableId);
   };
 
+  const isTableOccupied = (tableId: string) => {
+    return !!getTableInvoice(tableId);
+  };
+
+const handleTableClick = (table: Table) => {
+  if (!selectedSection) return;
+
+  const invoice = getTableInvoice(table.id || '');
+  
+  if (invoice) {
+    // ✅ إذا كانت الطاولة مشغولة: اختارها أولاً ثم اعرض الطلب
+    onSelectTable({
+      section: selectedSection,
+      table: table
+    });
+    
+    // ثم اعرض محتويات الطلب
+    if (onViewOrder) {
+      onViewOrder(invoice);
+    }
+  } else {
+    // إذا كانت الطاولة فارغة، اختيارها فقط
+    onSelectTable({
+      section: selectedSection,
+      table: table
+    });
+  }
+};
   const displayedTables = selectedSection?.tables || [];
 
   return (
@@ -55,57 +135,112 @@ const TableSelectionPopup: React.FC<TableSelectionPopupProps> = ({
           <main className={styles.mainContent}>
             {/* قسم الطاولات */}
             <section className={styles.productsSection}>
+              {loading && (
+                <div className={styles.loadingMessage}>
+                  جاري تحديث حالة الطاولات...
+                </div>
+              )}
+              
               <div className={styles.productGrid}>
-                {displayedTables.map((table) => (
-                  <div
-                    key={table.id}
-                    className={`${styles.productItem} ${table.isOccupied ? styles.occupied : ''}`}
-                    onClick={() => handleTableClick(table)}
-                  >
-                    <div className={styles.productImage}>
-                      <img 
-                        src="/images/default-table.png" 
-                        alt={table.name}
-                        onError={(e) => {
-                          e.currentTarget.src = '/images/placeholder.png';
-                        }}
-                      />
-                    </div>
-                    <div className={styles.productName}>
-                      <span>{table.name}</span>
-                      <small>{table.capacity} أشخاص</small>
-                      <div className={`${styles.status} ${table.isOccupied ? styles.occupied : styles.available}`}>
-                        {table.isOccupied ? 'مشغولة' : 'متاحة'}
+                {displayedTables.map((table) => {
+                  const occupied = isTableOccupied(table.id || '');
+                  const invoice = getTableInvoice(table.id || '');
+                  const duration = openDurations[table.id || ''] || '00:00';
+                  
+                  return (
+                    <div
+                      key={table.id}
+                      className={`${styles.productItem} ${occupied ? styles.occupied : styles.available}`}
+                      onClick={() => handleTableClick(table)}
+                    >
+                      <div className={styles.productImage}>
+                        <img 
+                          src="/images/default-table.png" 
+                          alt={table.name}
+                          onError={(e) => {
+                            e.currentTarget.src = '/images/placeholder.png';
+                          }}
+                        />
+                        
+                        {/* أيقونة الحالة */}
+                        <div className={`${styles.statusIcon} ${occupied ? styles.occupiedIcon : styles.availableIcon}`}>
+                          {occupied ? '🔴' : '🟢'}
+                        </div>
+                        
+                        {/* أيقونة العرض للطاولات المشغولة */}
+                        {occupied && (
+                          <div className={styles.viewIcon}>
+                            <VisibilityIcon />
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className={styles.productName}>
+                        <span>{table.name}</span>
+                        <small>{table.capacity} أشخاص</small>
+                        
+                        <div className={`${styles.status} ${occupied ? styles.occupied : styles.available}`}>
+                          {occupied ? 'مشغولة' : 'متاحة'}
+                        </div>
+                        
+                        {/* معلومات إضافية للطاولات المشغولة */}
+                        {occupied && invoice && (
+                          <div className={styles.occupiedInfo}>
+                            <div className={styles.orderTotal}>
+                              {invoice.totalAfterTaxAndService.toFixed(2)} جنيه
+                            </div>
+                            
+                            <div className={styles.openDuration}>
+                              <AccessTimeIcon style={{ fontSize: 14 }} />
+                              <span>{duration}</span>
+                            </div>
+                            
+                            <div className={styles.itemsCount}>
+                              {invoice.items?.length || 0} صنف
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </section>
 
             {/* الشريط الجانبي للأقسام */}
             <aside className={styles.categoriesSidebar}>
               <div className={styles.categoriesList}>
-                {tableSections.map((section) => (
-                  <div
-                    key={section.id}
-                    className={`${styles.categoryItem} ${selectedSection?.id === section.id ? styles.active : ''}`}
-                    onClick={() => handleSectionClick(section)}
-                  >
-                    <img 
-                      src="/images/default-section.png" 
-                      alt={section.name}
-                      onError={(e) => {
-                        e.currentTarget.src = '/images/placeholder.png';
-                      }}
-                    />
-                    <div>
-                      <span>{section.name}</span>
-                      <br />
-                      <small>{section.serviceCharge}% خدمة</small>
+                {tableSections.map((section) => {
+                  // حساب عدد الطاولات المشغولة في هذا القسم
+                  const occupiedCount = section.tables.filter(table => 
+                    isTableOccupied(table.id || '')
+                  ).length;
+                  
+                  return (
+                    <div
+                      key={section.id}
+                      className={`${styles.categoryItem} ${selectedSection?.id === section.id ? styles.active : ''}`}
+                      onClick={() => handleSectionClick(section)}
+                    >
+                      <img 
+                        src="/images/default-section.png" 
+                        alt={section.name}
+                        onError={(e) => {
+                          e.currentTarget.src = '/images/placeholder.png';
+                        }}
+                      />
+                      <div>
+                        <span>{section.name}</span>
+                        <br />
+                        <small>{section.serviceCharge}% خدمة</small>
+                        <br />
+                        <small className={styles.occupiedStats}>
+                          {occupiedCount}/{section.tables.length} مشغول
+                        </small>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </aside>
           </main>

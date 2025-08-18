@@ -21,7 +21,7 @@ import { useError } from '../../../contexts/ErrorContext';
 import * as deliveryCompaniesApi from '../../../utils/api/pagesApi/deliveryCompaniesApi';
 import { DeliveryCompany } from '../../../utils/api/pagesApi/deliveryCompaniesApi';
 import { Customer, CustomerAddress } from 'src/utils/api/pagesApi/customersApi';
-import { Invoice } from '../../../utils/api/pagesApi/invoicesApi';
+import InvoiceDataConverter from '../../../utils/invoiceDataConverter';
 
 const PosSystem: React.FC = () => {
   const [keypadValue, setKeypadValue] = useState('0');
@@ -72,11 +72,6 @@ const { showWarning, showError } = useError();
     return 0;
   }, [selectedOrderType, selectedAddress]);
 
-  const handleCustomerSelect = useCallback((customer: Customer, address: CustomerAddress) => {
-    setSelectedCustomer(customer);
-    setSelectedAddress(address);
-    setCustomerName(`${customer.name} - ${customer.phone1}`);
-  }, []);
 
   const handleDeliveryChargeChange = useCallback((charge: number) => {
     setDeliveryCharge(charge);
@@ -116,6 +111,7 @@ const { showWarning, showError } = useError();
 
   const [isEditMode, setIsEditMode] = useState(false);
   const [currentInvoiceId, setCurrentInvoiceId] = useState<string | null>(null);
+const [isLoadingOrder, setIsLoadingOrder] = useState(false);
 
   // تحميل البيانات مرة واحدة
   useEffect(() => {
@@ -395,10 +391,13 @@ const { showWarning, showError } = useError();
   }, [addToOrder, showWarning, hasProductOptions, selectedOrderType, canAddProduct]);
 
   // إضافة معالج اختيار الطاولة
-  const handleTableSelect = useCallback((selection: TableSelection) => {
-    selectTable(selection);
-    setShowTablePopup(false);
-  }, [selectTable]);
+const handleTableSelect = useCallback((selection: TableSelection) => {
+  selectTable(selection);
+  setShowTablePopup(false);
+}, [selectTable]);
+
+
+
 
   // إضافة معالج فتح popup الطاولة
   const handleTableClick = useCallback(() => {
@@ -462,67 +461,36 @@ const { showWarning, showError } = useError();
   }, [orderItems, getServiceCharge, deliveryCharge]);
 
 
-  // دالة لتحويل بيانات الفاتورة إلى OrderItems
-const convertInvoiceToOrderItems = useCallback((invoice: any): OrderItem[] => {
-  if (!invoice.items || !Array.isArray(invoice.items)) {
-    return [];
-  }
-
-  return invoice.items.map((item: any) => {
-    // إنشاء منتج وهمي من بيانات الفاتورة
-    const product: PosProduct = {
-      id: item.productId,
-      name: `Product ${item.productId.substring(0, 8)}`, // اسم مؤقت
-      nameArabic: item.posPriceName || 'منتج',
-      image: '/images/img_rectangle_34624462.png',
-      categoryId: 'default',
-      productType: 1,
-      hasMultiplePrices: false,
-      productPrices: [{
-        id: item.productPriceId,
-        name: item.posPriceName,
-        nameArabic: item.posPriceName,
-        price: item.unitPrice,
-        barcode: item.barcode
-      }]
-    };
-
-    const orderItem: OrderItem = {
-      id: item.id,
-      product: product,
-      selectedPrice: {
-        id: item.productPriceId,
-        name: item.posPriceName,
-        nameArabic: item.posPriceName,
-        price: item.unitPrice,
-        barcode: item.barcode
-      },
-      quantity: item.qty,
-      totalPrice: item.subTotal,
-      discountPercentage: item.itemDiscountPercentage,
-      discountAmount: item.itemDiscountValue,
-      notes: item.notes || undefined
-    };
-
-    return orderItem;
-  });
-}, []);
 
 // معالج عرض الطلب من popup
-const handleViewOrderFromPopup = useCallback((invoiceData: any) => {
+const handleViewOrderFromPopup = useCallback(async (invoiceData: any) => {
+  console.log('🔄 بدء معالجة الطلب للعرض:', invoiceData);
+  
   try {
-    // تحويل بيانات الفاتورة إلى حالة الصفحة
-    const convertedItems = convertInvoiceToOrderItems(invoiceData);
+    setIsLoadingOrder(true); // ✅ استبدل setLoading بـ setIsLoadingOrder
     
-    // إعادة تعيين حالة الصفحة
-    setOrderItems(convertedItems);
-    setIsEditMode(true);
-    setCurrentInvoiceId(invoiceData.id);
+    // استخدام المحول الجديد
+    const convertedData = await InvoiceDataConverter.convertInvoiceForEdit(invoiceData);
     
-    // تحديد نوع الطلب
+    // تطبيق البيانات على الواجهة
+    setOrderItems(convertedData.orderItems);
+    setDeliveryCharge(convertedData.deliveryCharge);
+    
+    // تطبيق بيانات العميل
+    if (convertedData.selectedCustomer) {
+      setSelectedCustomer(convertedData.selectedCustomer);
+      setCustomerName(`${convertedData.selectedCustomer.name} - ${convertedData.selectedCustomer.phone1}`);
+      
+      // تطبيق أول عنوان إذا كان متوفر
+      if (convertedData.selectedCustomer.addresses.length > 0) {
+        setSelectedAddress(convertedData.selectedCustomer.addresses[0]);
+      }
+    }
+    
+    // تطبيق نوع الطلب
     const orderTypeMap: { [key: number]: string } = {
       1: 'Takeaway',
-      2: 'Dine-in',
+      2: 'Dine-in', 
       3: 'Delivery',
       4: 'Pickup'
     };
@@ -530,23 +498,45 @@ const handleViewOrderFromPopup = useCallback((invoiceData: any) => {
     const newOrderType = orderTypeMap[invoiceData.invoiceType] || 'Takeaway';
     setSelectedOrderType(newOrderType);
     
-    // إعداد معلومات العميل إذا كانت موجودة
-    if (invoiceData.customerId && invoiceData.customerName) {
-      // يمكنك هنا جلب بيانات العميل الكاملة أو استخدام البيانات المتاحة
-      setCustomerName(invoiceData.customerName);
-    }
+    // تفعيل وضع التعديل
+    setIsEditMode(true);
+    setCurrentInvoiceId(invoiceData.id);
     
-    // إعداد معلومات الطاولة إذا كانت موجودة
-    if (invoiceData.tableId && newOrderType === 'Dine-in') {
-      // يمكنك هنا جلب بيانات الطاولة أو استخدام ID
-    }
+    console.log('✅ تم تطبيق بيانات الطلب بنجاح');
     
-    console.log('تم تحميل الطلب للتعديل:', invoiceData);
   } catch (error) {
-    console.error('خطأ في تحويل بيانات الطلب:', error);
-    showError('حدث خطأ في تحميل بيانات الطلب');
+    console.error('❌ خطأ في تحويل بيانات الطلب:', error);
+    showError('فشل في تحميل بيانات الطلب للتعديل');
+  } finally {
+    setIsLoadingOrder(false); // ✅ استبدل setLoading بـ setIsLoadingOrder
   }
-}, [convertInvoiceToOrderItems, setOrderItems, setSelectedOrderType, setCustomerName, showError]);
+}, [setOrderItems, setSelectedCustomer, setCustomerName, setSelectedAddress, 
+    setSelectedOrderType, setIsEditMode, setCurrentInvoiceId, showError]);
+
+
+    const handleViewTableOrder = useCallback((invoiceData: any) => {
+  setShowTablePopup(false);
+  // استخدام نفس معالج عرض الطلب الموجود
+  handleViewOrderFromPopup(invoiceData);
+}, [handleViewOrderFromPopup]);
+
+    useEffect(() => {
+  // حفظ المنتجات المحملة في كاش المحول
+  const allProducts = getProducts(false); // المنتجات العادية
+  allProducts.forEach(product => {
+    InvoiceDataConverter.cacheProduct(product);
+  });
+}, [getProducts]);
+
+// أضف في معالج اختيار العميل
+const handleCustomerSelect = useCallback((customer: Customer, address: CustomerAddress) => {
+  // حفظ العميل في الكاش
+  InvoiceDataConverter.cacheCustomer(customer);
+  
+  setSelectedCustomer(customer);
+  setSelectedAddress(address);
+  setCustomerName(`${customer.name} - ${customer.phone1}`);
+}, []);
 
   // حذف منتج من الطلب
   const removeOrderItem = useCallback((itemId: string) => {
@@ -674,30 +664,34 @@ const handleViewOrderFromPopup = useCallback((invoiceData: any) => {
 
 
 
-  const handleResetOrder = useCallback(() => {
-    setOrderItems([]);
-    setSelectedOrderItemId(null);
-    setCustomerName('');
-    setKeypadValue('0');
-    
-    setSelectedCustomer(null);
-    setSelectedAddress(null);
-    setDeliveryCharge(0);
- // إعادة تعيين وضع التعديل
+const handleResetOrder = useCallback(() => {
+  setOrderItems([]);
+  setSelectedOrderItemId(null);
+  setCustomerName('');
+  setKeypadValue('0');
+  
+  setSelectedCustomer(null);
+  setSelectedAddress(null);
+  setDeliveryCharge(0);
+  
+  // إعادة تعيين وضع التعديل
   setIsEditMode(false);
   setCurrentInvoiceId(null);
-    clearSelectedTable();
+  
+  clearSelectedTable();
 
-    setIsExtraMode(false);
-    setIsWithoutMode(false);
-    setSelectedChips([]);
-    
-    handleBackToMainProducts();
-    
-    setSearchQuery('');
-    
-    console.log('Order reset successfully');
-  }, [handleBackToMainProducts, clearSelectedTable]);
+  setIsExtraMode(false);
+  setIsWithoutMode(false);
+  setSelectedChips([]);
+  
+  handleBackToMainProducts();
+  setSearchQuery('');
+  
+  // تنظيف الكاش عند الحاجة (اختياري)
+  // InvoiceDataConverter.clearCache();
+  
+  console.log('Order reset successfully');
+}, [handleBackToMainProducts, clearSelectedTable]);
 
     const handleOrderCompleted = useCallback((result: any) => {
   console.log('تم إنهاء الطلب بنجاح:', result);
@@ -879,12 +873,13 @@ const handleViewOrderFromPopup = useCallback((invoiceData: any) => {
         onRemoveItem={removeOrderItem}
       />
 
-      <TableSelectionPopup
-        isOpen={showTablePopup}
-        onClose={() => setShowTablePopup(false)}
-        onSelectTable={handleTableSelect}
-        tableSections={tableSections}
-      />
+<TableSelectionPopup
+  isOpen={showTablePopup}
+  onClose={() => setShowTablePopup(false)}
+  onSelectTable={handleTableSelect}
+  onViewOrder={handleViewTableOrder} // إضافة جديدة
+  tableSections={tableSections}
+/>
 
       
     </div>

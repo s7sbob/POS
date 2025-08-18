@@ -21,6 +21,7 @@ interface PaymentRightProps {
   onShowWarning?: (message: string) => void;
   // إضافة prop جديد لدعم وضع التعديل
   isEditMode?: boolean;
+  isSubmitting?: boolean; // إضافة جديدة
 }
 
 const PaymentRight: React.FC<PaymentRightProps> = ({
@@ -34,7 +35,8 @@ const PaymentRight: React.FC<PaymentRightProps> = ({
   totalAmount,
   nonCashTotal,
   onShowWarning,
-  isEditMode = false // القيمة الافتراضية false
+  isEditMode = false, // القيمة الافتراضية false
+  isSubmitting = false // إضافة جديدة
 }) => {
   const getPaymentData = (methodName: string) => {
     return selectedPayments.find(payment => payment.method === methodName);
@@ -176,19 +178,28 @@ const PaymentRight: React.FC<PaymentRightProps> = ({
         </div>
       )}
       
-      <button 
-        className={`${styles.finishBtn} ${!canFinish ? styles.disabled : ''} ${isEditMode ? styles.editMode : ''}`}
-        onClick={onFinishPayment}
-        disabled={!canFinish}
-        title={isEditMode ? 'تحديث بيانات الطلب مع طرق الدفع الجديدة' : 'إنهاء عملية الدفع'}
-      >
-        {getButtonText()}
-        {isEditMode && (
-          <span className={styles.editIcon}>
-            ✏️
-          </span>
-        )}
-      </button>
+<button 
+  className={`${styles.finishBtn} ${!canFinish || isSubmitting ? styles.disabled : ''} ${isEditMode ? styles.editMode : ''}`}
+  onClick={onFinishPayment}
+  disabled={!canFinish || isSubmitting}
+  title={isEditMode ? 'تحديث بيانات الطلب مع طرق الدفع الجديدة' : 'إنهاء عملية الدفع'}
+>
+  {isSubmitting ? (
+    <>
+      <span className={styles.loadingSpinner}></span>
+      {isEditMode ? 'جاري التحديث...' : 'جاري المعالجة...'}
+    </>
+  ) : (
+    <>
+      {getButtonText()}
+      {isEditMode && (
+        <span className={styles.editIcon}>
+          ✏️
+        </span>
+      )}
+    </>
+  )}
+</button>
       
       <div className={styles.methodsList}>
         {availablePaymentMethods.map((method) => {
