@@ -176,66 +176,71 @@ const convertPaymentsToInvoicePayments = (payments: PaymentMethodData[]): invoic
   };
 
   // دالة تحديث فاتورة موجودة مع دعم اختيار الحالة
-  const updateInvoice = async (
-    invoiceId: string,
-    orderSummary: OrderSummary,
-    orderType: string,
-    payments: PaymentMethodData[],
-    invoiceStatus: number,
-    selectedCustomer?: Customer | null,
-    selectedAddress?: CustomerAddress | null,
-    selectedDeliveryCompany?: DeliveryCompany | null,
-    selectedTable?: TableSelection | null,
-    servicePercentage: number = 0,
-    taxPercentage: number = 0,
-    discountPercentage: number = 0,
-    notes?: string
-  ): Promise<invoicesApi.InvoiceResponse> => {
-    setIsSubmitting(true);
+const updateInvoice = async (
+  invoiceId: string,
+  orderSummary: OrderSummary,
+  orderType: string,
+  payments: PaymentMethodData[],
+  invoiceStatus: number,
+  selectedCustomer?: Customer | null,
+  selectedAddress?: CustomerAddress | null,
+  selectedDeliveryCompany?: DeliveryCompany | null,
+  selectedTable?: TableSelection | null,
+  servicePercentage: number = 0,
+  taxPercentage: number = 0,
+  discountPercentage: number = 0,
+  notes?: string
+): Promise<invoicesApi.InvoiceResponse> => {
+  setIsSubmitting(true);
 
-    try {
-      const updateData: invoicesApi.CreateInvoiceRequest & { invoiceId: string } = {
-        invoiceId: invoiceId,
-        InvoiceType: getInvoiceType(orderType),
-        InvoiceStatus: invoiceStatus,
-        WareHouseId: getWareHouseId(),
-        RawBranchId: getRawBranchId(),
-        CustomerId: selectedCustomer?.id || null,
-        TableId: selectedTable?.table.id || null,
-        HallCaptainId: null,
-        DeliveryCompanyId: selectedDeliveryCompany?.id || null,
-        DeliveryAgentId: null,
-        TaxPercentage: taxPercentage,
-        ServicePercentage: servicePercentage,
-        HeaderDiscountPercentage: discountPercentage,
-        PreparedAt: new Date().toISOString(),
-        CompletedAt: new Date().toISOString(),
-        Notes: notes || `طلب ${orderType} - تم التحديث`,
-        Items: orderSummary.items.map(convertOrderItemToInvoiceItem),
-        Payments: convertPaymentsToInvoicePayments(payments)
-      };
+  try {
+    console.log('🔄 بدء تحديث الفاتورة:', invoiceId);
+    
+    // ✅ استخدام id بدلاً من invoiceId
+    const updateData: invoicesApi.CreateInvoiceRequest & { id: string } = {
+      id: invoiceId, // ✅ مُصحح: id بدلاً من invoiceId
+      InvoiceType: getInvoiceType(orderType),
+      InvoiceStatus: invoiceStatus,
+      WareHouseId: getWareHouseId(),
+      RawBranchId: getRawBranchId(),
+      CustomerId: selectedCustomer?.id || null,
+      TableId: selectedTable?.table.id || null,
+      HallCaptainId: null,
+      DeliveryCompanyId: selectedDeliveryCompany?.id || null,
+      DeliveryAgentId: null,
+      TaxPercentage: taxPercentage,
+      ServicePercentage: servicePercentage,
+      HeaderDiscountPercentage: discountPercentage,
+      PreparedAt: new Date().toISOString(),
+      CompletedAt: new Date().toISOString(),
+      Notes: notes || `طلب ${orderType} - تم التحديث`,
+      Items: orderSummary.items.map(convertOrderItemToInvoiceItem),
+      Payments: convertPaymentsToInvoicePayments(payments)
+    };
 
-      const result = await invoicesApi.updateInvoice(updateData);
+    console.log('📤 بيانات التحديث المرسلة:', updateData);
+    const result = await invoicesApi.updateInvoice(updateData);
+    console.log('✅ تم تحديث الفاتورة بنجاح:', result);
 
-      showSuccess(`تم تحديث الفاتورة رقم ${result.invoiceNumber} بنجاح`);
-      return result;
-    } catch (error: any) {
-      console.error('Error updating invoice:', error);
+    showSuccess(`تم تحديث الفاتورة رقم ${result.invoiceNumber} بنجاح`);
+    return result;
+  } catch (error: any) {
+    console.error('❌ خطأ في تحديث الفاتورة:', error);
 
-      let errorMessage = 'حدث خطأ أثناء تحديث الفاتورة';
+    let errorMessage = 'حدث خطأ أثناء تحديث الفاتورة';
 
-      if (error.isApiValidationError && error.errors) {
-        errorMessage = error.errors.map((err: any) => err.errorMessage).join(', ');
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-
-      showError(errorMessage);
-      throw error;
-    } finally {
-      setIsSubmitting(false);
+    if (error.isApiValidationError && error.errors) {
+      errorMessage = error.errors.map((err: any) => err.errorMessage).join(', ');
+    } else if (error.message) {
+      errorMessage = error.message;
     }
-  };
+
+    showError(errorMessage);
+    throw error;
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   // دالة موحدة للإنشاء والتحديث مع دعم اختيار الحالة
   const saveInvoice = async (

@@ -213,7 +213,8 @@ export const getInvoiceById = async (invoiceId: string): Promise<Invoice> => {
 };
 
 // دالة تحديث الفاتورة
-export const updateInvoice = async (invoiceData: CreateInvoiceRequest & { invoiceId: string }): Promise<InvoiceResponse> => {
+
+export const updateInvoice = async (invoiceData: CreateInvoiceRequest & { id: string }): Promise<InvoiceResponse> => {
   try {
     const response = await api.post('/UpdateInvoice', invoiceData);
     return response.data.data;

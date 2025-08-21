@@ -1002,6 +1002,7 @@ import CustomerDetailsPopup from './CustomerDetailsPopup';
 import CustomerForm from '../../customers/components/CustomerForm';
 import styles from '../styles/OrderSummary.module.css';
 import PaymentPopup from './PaymentPopup';
+import { useInvoiceManager } from '../hooks/useInvoiceManager';
 
 interface OrderSummaryProps {
   orderSummary: OrderSummaryType;
@@ -1024,6 +1025,12 @@ interface OrderSummaryProps {
   // إضافة الـ props المطلوبة لوضع التعديل
   isEditMode?: boolean;
   currentInvoiceId?: string | null;
+}
+
+export enum InvoiceStatus {
+  SENT = 1,
+  PRINTED = 2,
+  PAID = 3
 }
 
 const OrderSummary: React.FC<OrderSummaryProps> = ({
@@ -1063,6 +1070,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
   const [inputHasFocus, setInputHasFocus] = useState(false);
   const [showPaymentPopup, setShowPaymentPopup] = useState(false);
   const [pendingEnterAction, setPendingEnterAction] = useState<string | null>(null);
+const { saveInvoice, isSubmitting } = useInvoiceManager();
 
   // استخدام useRef بدلاً من state للمتغيرات المساعدة
   const searchDebounceTimer = useRef<NodeJS.Timeout | null>(null);
@@ -1070,6 +1078,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
   const lastSearchQuery = useRef<string>('');
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+const [selectedActionType, setSelectedActionType] = useState<'send' | 'print' | 'pay'>('pay');
 
   // تحميل المناطق عند بدء التشغيل
   useEffect(() => {
@@ -1084,6 +1093,9 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
     
     loadZones();
   }, []);
+
+
+
 
   // حساب رسوم التوصيل عند تغيير العنوان أو نوع الطلب
   useEffect(() => {
@@ -1271,6 +1283,23 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
   }, [phoneInput, searchResults.length]);
 
   const canOpenPayment = orderSummary.items.length > 0;
+
+
+const handleActionButtonClick = useCallback(async (actionType: 'send' | 'print' | 'pay') => {
+  if (!canOpenPayment) return;
+  
+  if (actionType === 'pay') {
+    // فقط Pay يفتح payment popup
+    setSelectedActionType(actionType);
+    setShowPaymentPopup(true);
+  } else {
+    // Send و Print يحفظوا مباشرة بدون popup
+    await handleDirectSave(actionType);
+  }
+}, [canOpenPayment]);
+
+
+
 
   // معالج Blur للـ input
   const handleInputBlur = useCallback(() => {
@@ -1558,10 +1587,66 @@ useEffect(() => {
   const taxAmount = 0;
   const finalTotal = subtotalWithDelivery + taxAmount - orderSummary.discount;
 
+
+  // دالة جديدة للحفظ المباشر لـ Send و Print
+const handleDirectSave = useCallback(async (actionType: 'send' | 'print') => {
+  try {
+    console.log(`بدء معالجة ${actionType}...`);
+    
+    // ✅ إنشاء طرق دفع افتراضية فارغة للـ Send و Print
+const defaultPayments: { method: string; amount: number; isSelected: boolean }[] = [];
+    
+    // تحديد الحالة
+    const invoiceStatus = actionType === 'send' ? 1 : 2;
+    
+    // ✅ حفظ الفاتورة بدون طرق دفع
+    const result = await saveInvoice(
+      orderSummary,
+      orderType,
+      defaultPayments, // ✅ مصفوفة فارغة
+      invoiceStatus,
+      {
+        isEditMode,
+        invoiceId: currentInvoiceId,
+        selectedCustomer,
+        selectedAddress,
+        selectedDeliveryCompany,
+        selectedTable,
+        servicePercentage: 0,
+        taxPercentage: 0,
+        discountPercentage: 0,
+        notes: customerName
+      }
+    );
+    
+    const actionName = actionType === 'send' ? 'إرسال' : 'طباعة';
+    console.log(`تم ${actionName} الطلب بنجاح! رقم الفاتورة: ${result.invoiceNumber}`);
+    
+    // إعادة تعيين النظام
+    if (onOrderCompleted) {
+      onOrderCompleted({
+        success: true,
+        invoice: result,
+        actionType: actionType
+      });
+    }
+    
+  } catch (error) {
+    console.error(`خطأ في ${actionType}:`, error);
+    // يمكن عرض رسالة خطأ للمستخدم هنا
+  }
+}, [saveInvoice, orderSummary, orderType, isEditMode, currentInvoiceId, 
+    selectedCustomer, selectedAddress, selectedDeliveryCompany, selectedTable, 
+    customerName, onOrderCompleted]);
+
+
+
+
   // دوال العرض
   const renderSubItem = (subItem: SubItem, orderItemId: string) => {
     const canDelete = subItem.type === 'extra' || subItem.type === 'without';
     const isSelected = selectedSubItemId === subItem.id && canDelete;
+    
     
     return (
       <div 
@@ -1857,27 +1942,32 @@ useEffect(() => {
           <div className={`${styles.actionButtons} ${shouldShowPayOnly ? styles.takeawayButtons : ''}`}>
             {shouldShowAllButtons && (
               <>
-                <button className={`${styles.actionButton} ${styles.send}`}>
-                  <img src="/images/img_tabler_send.svg" alt="Send" />
-                  <span>Send</span>
-                </button>
-                <button onClick={() => canOpenPayment && setShowPaymentPopup(true)}
-                        disabled={!canOpenPayment}
-                        className={`${styles.actionButton} ${styles.print} ${!canOpenPayment ? styles.disabledBtn : ''}`}>
-                  <img src="/images/img_printer.svg" alt="Print" />
-                  <span>Print</span>
-                </button>
+<button 
+  className={`${styles.actionButton} ${styles.send}`}
+  onClick={() => handleActionButtonClick('send')}
+  disabled={!canOpenPayment || isSubmitting}
+>
+  <img src="/images/img_tabler_send.svg" alt="Send" />
+  <span>{isSubmitting ? 'جاري الإرسال...' : 'Send'}</span>
+</button>
+<button 
+  className={`${styles.actionButton} ${styles.print}`}
+  onClick={() => handleActionButtonClick('print')}
+  disabled={!canOpenPayment || isSubmitting}
+>
+  <img src="/images/img_printer.svg" alt="Print" />
+  <span>{isSubmitting ? 'جاري الطباعة...' : 'Print'}</span>
+</button>
               </>
             )}
-            <button
-              onClick={() => canOpenPayment && setShowPaymentPopup(true)}
-              disabled={!canOpenPayment}
-              className={`${styles.actionButton} ${styles.pay} ${shouldShowPayOnly ? styles.fullWidth : ''} ${!canOpenPayment ? styles.disabledBtn : ''}`}
-              title={!canOpenPayment ? "لا يمكن الدفع بدون إضافة أصناف" : undefined}
-            >
-              <img src="/images/img_payment_02.svg" alt="Pay" />
-              <span>{isEditMode ? 'تحديث' : 'Pay'}</span>
-            </button>
+<button
+  onClick={() => handleActionButtonClick('pay')}
+  disabled={!canOpenPayment}
+  className={`${styles.actionButton} ${styles.pay} ${shouldShowPayOnly ? styles.fullWidth : ''} ${!canOpenPayment ? styles.disabledBtn : ''}`}
+>
+  <img src="/images/img_payment_02.svg" alt="Pay" />
+  <span>{isEditMode ? 'تحديث' : 'Pay'}</span>
+</button>
           </div>
         )}
       </div>
@@ -1908,6 +1998,7 @@ useEffect(() => {
         orderType={orderType}
         onDeliveryChargeChange={onDeliveryChargeChange}
         selectedTable={selectedTable}
+        actionType={selectedActionType} // ✅ إضافة جديدة
         selectedDeliveryCompany={selectedDeliveryCompany}
         isEditMode={isEditMode} // ✅ تمرير صحيح
         currentInvoiceId={currentInvoiceId} // ✅ تمرير صحيح
@@ -2620,6 +2711,1111 @@ const PaymentRight: React.FC<PaymentRightProps> = ({
 
 export default PaymentRight;
 
+===== src/Pages/pos/newSales/components/paymentPopup components/styles/PaymentCenter.module.css =====
+/* src/Pages/pos/newSales/components/paymentPopup components/styles/PaymentCenter.module.css */
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  padding: 0.8rem;
+  box-sizing: border-box;
+  font-family: "Cairo", sans-serif;
+  overflow: hidden;
+  gap: 0.6rem;
+}
+
+.headerRow {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-shrink: 0;
+  height: 50px;
+}
+
+.balanceTitle {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #000;
+  direction: rtl;
+  text-align: center;
+}
+
+.fieldsRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.8rem;
+  flex-shrink: 0;
+  height: 80px;
+}
+
+.fieldBlock {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  height: 100%;
+}
+
+.label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #333;
+  direction: rtl;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.remainingBox, .totalPaidBox {
+  padding: 0.6rem;
+  font-size: 1.1rem;
+  text-align: center;
+  border-radius: 8px;
+  font-weight: 600;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.remainingBox {
+  background-color: #28a745;
+  color: white;
+}
+
+.totalPaidBox {
+  background-color: #0373ed;
+  color: white;
+}
+
+.selectedMethodRow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  flex-shrink: 0;
+  height: 70px;
+}
+
+.selectedMethodLabel {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #0373ed;
+  direction: rtl;
+  text-align: right;
+}
+
+.selectedMethodInput {
+  padding: 0.6rem;
+  font-size: 1.1rem;
+  text-align: center;
+  border-radius: 8px;
+  font-weight: 600;
+  border: 2px solid #0373ed;
+  background: #f8f9ff;
+  flex: 1;
+}
+
+.quickButtons {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.6rem;
+  flex-shrink: 0;
+  height: 45px;
+}
+
+.quickBtn {
+  flex: 1;
+  background-color: #d9d9d9;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  height: 100%;
+}
+
+.quickBtn:hover:not(:disabled) {
+  background-color: #c8c8c8;
+}
+
+.quickBtn:disabled {
+  background-color: #f0f0f0;
+  color: #999;
+  cursor: not-allowed;
+}
+
+.keypad {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.keypadRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex: 1;
+  min-height: 0;
+}
+
+.keypadBtn {
+  flex: 1;
+  font-size: 1.5rem;
+  font-weight: 700;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.keypadBtn.gray {
+  background-color: #d9d9d9;
+}
+
+.keypadBtn:hover:not(.disabled) {
+  background-color: #f0f0f0;
+}
+
+.keypadBtn:active:not(.disabled) {
+  transform: scale(0.96);
+}
+
+.keypadBtn.disabled {
+  background-color: #f5f5f5;
+  color: #999;
+  cursor: not-allowed;
+  border-color: #e0e0e0;
+}
+
+.noSelectionMessage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  color: #666;
+  font-size: 0.9rem;
+  direction: rtl;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+
+
+/* إضافة في PaymentCenter.module.css */
+
+.cashPaidBox {
+  padding: 0.6rem;
+  font-size: 1.1rem;
+  text-align: center;
+  border-radius: 8px;
+  font-weight: 600;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #0373ed;
+  color: white;
+}
+
+.selectedMethodInfo {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 0.6rem;
+  text-align: center;
+  flex-shrink: 0;
+  direction: rtl;
+}
+
+.selectedMethodName {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 0.2rem;
+}
+
+.limitWarning {
+  display: block;
+  font-size: 0.8rem;
+  color: #dc3545;
+  font-weight: 500;
+}
+
+===== src/Pages/pos/newSales/components/paymentPopup components/styles/PaymentLeft.module.css =====
+.container {
+  width: 100%;
+  height: 100%;
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #e9ecef;
+  display: flex;
+  flex-direction: column;
+}
+
+/* قاعدة عامة للخطوط */
+:where(.container,
+       .container *) { 
+  font-size: var(--fs); 
+}
+
+.header {
+  background: #0373ed;
+  color: white;
+  padding: clamp(12px, 2vw, 20px);
+  text-align: center;
+  border-bottom: 2px solid #e9ecef;
+}
+
+.title {
+  margin: 0;
+  font-family: "Cairo-Bold", Helvetica;
+  font-weight: 700;
+  font-size: calc(var(--fs) * 1.4);
+  direction: rtl;
+}
+
+.orderSummaryWrapper {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  padding: clamp(8px, 1.5vw, 16px);
+}
+
+.orderSummaryWrapper::-webkit-scrollbar {
+  width: clamp(4px, 0.8vw, 8px);
+}
+
+.orderSummaryWrapper::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.orderSummaryWrapper::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 10px;
+}
+
+.orderSummaryWrapper::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Responsive للشاشات المختلفة */
+@media (max-width: 1600px) {
+  .orderSummaryWrapper {
+    padding: clamp(6px, 1.2vw, 14px);
+  }
+}
+
+@media (max-width: 1024px) {
+  .container {
+    border-radius: 8px;
+  }
+  
+  .orderSummaryWrapper {
+    padding: clamp(6px, 1vw, 12px);
+  }
+}
+
+
+
+===== src/Pages/pos/newSales/components/paymentPopup components/styles/PaymentOrderSummary.module.css =====
+/* src/Pages/pos/newSales/components/paymentPopup components/styles/PaymentOrderSummary.module.css */
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap');
+
+:root {
+  --primary-blue: #0373ed;
+  --primary-green: #23a929;
+  --primary-red: #e53935;
+  --bg-white: #ffffff;
+  --text-primary: #000000;
+  --text-secondary: rgba(0, 0, 0, 0.7);
+  --border-color: rgba(0, 0, 0, 0.2);
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+}
+
+.orderSummary {
+  width: 100%;
+  height: 100%;
+  background: var(--bg-white);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.1);
+}
+
+/* Header */
+.orderHeader {
+  height: clamp(50px, 7vh, 80px);
+  display: flex;
+  flex-shrink: 0;
+}
+
+.orderNumber {
+  flex: 1;
+  background: var(--primary-blue);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(16px, 2vw, 24px);
+  font-weight: 700;
+  border-radius: 8px 0 0 0;
+}
+
+.orderTotal {
+  width: clamp(100px, 12vw, 150px);
+  border: 2px solid var(--primary-blue);
+  color: var(--primary-blue);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+  border-radius: 0 8px 0 0;
+}
+
+.orderTotal .amount {
+  font-size: clamp(16px, 2vw, 24px);
+  font-weight: 700;
+}
+
+.orderTotal .currency {
+  font-size: clamp(10px, 1.2vw, 16px);
+  font-weight: 600;
+}
+
+/* Content */
+.orderContent {
+  flex: 1;
+  padding: var(--spacing-lg);
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.orderContent::-webkit-scrollbar {
+  width: 6px;
+}
+
+.orderContent::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.orderContent::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 3px;
+}
+
+/* Customer Info */
+.customerInfo {
+  background: #e3f2fd;
+  border: 1px solid #bbdefb;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: var(--spacing-lg);
+  font-family: 'Cairo', sans-serif;
+}
+
+.customerName {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  color: #1976d2;
+  margin-bottom: 4px;
+}
+
+.vipBadge {
+  background: linear-gradient(135deg, #ffd700 0%, #ffed4a 100%);
+  color: #8b4513;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.customerPhone {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #1976d2;
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+
+.customerAddress {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #1976d2;
+  font-size: 11px;
+}
+
+/* Order Items */
+.orderItems {
+  max-height: 50vh;
+  margin-bottom: var(--spacing-md);
+  scrollbar-width: thin;
+}
+
+.orderItems::-webkit-scrollbar {
+  width: 4px;
+}
+
+.orderItems::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 2px;
+}
+
+.orderItemContainer {
+  margin-bottom: clamp(12px, 1.5vw, 16px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  padding-bottom: clamp(8px, 1vw, 12px);
+}
+
+.orderItemContainer:last-child {
+  border-bottom: none;
+}
+
+.orderItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-radius: 6px;
+  margin-bottom: 0;
+}
+
+.orderItem.extraItem {
+  border-left: 3px solid #28a745;
+}
+
+.orderItem.withoutItem {
+  border-left: 3px solid #dc3545;
+}
+
+.itemDetails {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: flex-start;
+  flex: 1;
+  min-width: 0;
+}
+
+.itemInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.itemName {
+  font-size: clamp(11px, 1.3vw, 16px);
+  font-weight: 600;
+  margin-bottom: var(--spacing-xs);
+  color: var(--text-primary);
+  line-height: 1.2;
+  font-family: 'Cairo', sans-serif;
+}
+
+.itemSizeInline {
+  color: var(--primary-blue);
+  font-weight: 500;
+  font-size: 0.9em;
+}
+
+.extraBadge, .withoutBadge {
+  color: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  margin-right: 4px;
+  font-weight: 600;
+}
+
+.extraBadge {
+  background: #28a745;
+}
+
+.withoutBadge {
+  background: #dc3545;
+}
+
+.itemPrices {
+  display: flex;
+  align-items: center;
+  gap: clamp(6px, 1vw, 10px);
+  flex-shrink: 0;
+  min-width: fit-content;
+}
+
+.itemPrice {
+  font-size: clamp(10px, 1.2vw, 14px);
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  padding-right: clamp(6px, 1vw, 10px);
+  border-right: 1px solid #ccc;
+}
+
+.itemTotal {
+  font-size: clamp(11px, 1.3vw, 16px);
+  font-weight: 700;
+  color: var(--primary-blue);
+  white-space: nowrap;
+  padding-left: clamp(6px, 1vw, 10px);
+}
+
+.itemTotal.negative {
+  color: #dc3545;
+  font-weight: 600;
+}
+
+/* Sub Items */
+.subItemsContainer {
+  margin-top: 0;
+  padding-left: 16px;
+  border-left: 2px solid #f0f0f0;
+}
+
+.subItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1px 0;
+  margin-bottom: 0px;
+  min-height: 18px;
+  border-radius: 4px;
+}
+
+.subItemDetails {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+}
+
+.subItemInfo {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+}
+
+.subItemBadge {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 7px;
+  font-weight: 600;
+  color: white;
+  flex-shrink: 0;
+}
+
+.subItemBadge.extra {
+  background: #28a745;
+}
+
+.subItemBadge.without {
+  background: #dc3545;
+}
+
+.subItemBadge.option {
+  background: #6c757d;
+}
+
+.subItemName {
+  font-size: 10px;
+  color: #666;
+  line-height: 1.2;
+  font-family: 'Cairo', sans-serif;
+}
+
+.subItemPrices {
+  display: flex;
+  align-items: center;
+  gap: clamp(4px, 0.8vw, 8px);
+  min-width: fit-content;
+}
+
+.subItemPrice {
+  font-size: 8px;
+  color: #999;
+  font-weight: 500;
+  white-space: nowrap;
+  padding-right: clamp(4px, 0.8vw, 8px);
+  border-right: 1px solid #ddd;
+}
+
+.subItemTotal {
+  font-size: 9px;
+  color: #333;
+  font-weight: 600;
+  white-space: nowrap;
+  padding-left: clamp(4px, 0.8vw, 8px);
+}
+
+.subItemTotal.negative {
+  color: #dc3545;
+}
+
+/* Options */
+.itemOptions {
+  margin-top: 0;
+  padding-left: 16px;
+}
+
+.optionDetail {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1px;
+  padding: 2px 0;
+  min-height: 18px;
+}
+
+.optionText {
+  font-size: 10px;
+  color: #666;
+  font-weight: 400;
+  line-height: 1.2;
+  font-family: 'Cairo', sans-serif;
+  flex: 1;
+}
+
+.optionPrices {
+  display: flex;
+  align-items: center;
+  gap: clamp(4px, 0.8vw, 8px);
+  min-width: fit-content;
+}
+
+.optionPrice {
+  font-size: 8px;
+  color: #999;
+  font-weight: 500;
+  white-space: nowrap;
+  padding-right: clamp(4px, 0.8vw, 8px);
+  border-right: 1px solid #ddd;
+}
+
+.optionTotal {
+  font-size: 9px;
+  color: #333;
+  font-weight: 600;
+  white-space: nowrap;
+  padding-left: clamp(4px, 0.8vw, 8px);
+}
+
+/* Comments */
+.commentsContainer {
+  margin-top: 0;
+  padding-left: 16px;
+  border-left: 2px solid #e3f2fd;
+}
+
+.commentItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 3px 0;
+  margin-bottom: 2px;
+  min-height: 20px;
+}
+
+.commentIcon {
+  font-size: 10px;
+  color: #2196f3;
+  margin-top: 1px;
+  flex-shrink: 0;
+}
+
+.commentText {
+  font-size: 10px;
+  color: #2196f3;
+  line-height: 1.3;
+  font-family: 'Cairo', sans-serif;
+  font-style: italic;
+  word-wrap: break-word;
+  flex: 1;
+}
+
+/* Footer */
+.orderFooter {
+  padding: var(--spacing-md);
+  border-top: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+.summaryRows {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--spacing-sm) * 0.8);
+  margin-bottom: var(--spacing-md);
+}
+
+.summaryRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: clamp(10px, 1.2vw, 15px);
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.summaryRow span:last-child {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.totalRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: clamp(13px, 1.5vw, 19px);
+  font-weight: 700;
+  padding-top: var(--spacing-md);
+  border-top: 2px solid var(--border-color);
+  margin-bottom: var(--spacing-md);
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .summaryRows {
+    gap: calc(var(--spacing-sm) * 0.6);
+  }
+  
+  .orderItems {
+    max-height: 42vh;
+  }
+  
+  .itemPrices, .subItemPrices, .optionPrices {
+    gap: 4px;
+  }
+}
+
+@media (max-width: 768px) {
+  .subItemName {
+    font-size: 9px;
+  }
+  
+  .subItemPrice {
+    font-size: 7px;
+  }
+  
+  .subItemTotal {
+    font-size: 8px;
+  }
+  
+  .optionText {
+    font-size: 9px;
+  }
+  
+  .optionPrice {
+    font-size: 7px;
+  }
+  
+  .optionTotal {
+    font-size: 8px;
+  }
+  
+  .commentText {
+    font-size: 9px;
+  }
+}
+
+
+
+/* إضافة أنماط زر الرجوع */
+.backButtonContainer {
+  padding: clamp(8px, 1.5vw, 16px);
+}
+
+.backButton {
+  background: var(--primary-blue);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: clamp(12px, 2vw, 16px) clamp(24px, 4vw, 32px);
+  font-size: clamp(14px, 1.6vw, 18px);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: 'Cairo', sans-serif;
+  width: 100%;
+  margin: 0 auto;
+  display: block;
+}
+
+.backButton:hover {
+  background: #025bb5;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(3, 115, 237, 0.3);
+}
+
+.backButton:active {
+  transform: translateY(0);
+}
+
+===== src/Pages/pos/newSales/components/paymentPopup components/styles/PaymentRight.module.css =====
+/* src/Pages/pos/newSales/components/paymentPopup components/styles/PaymentRight.module.css */
+
+.container {
+  width: 100%;
+  height: 100%;
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #e9ecef;
+  display: flex;
+  flex-direction: column;
+  padding: 0.8rem;
+  font-family: "Cairo", sans-serif;
+  gap: 0.6rem;
+  min-height: 0;
+}
+
+.finishBtn {
+  width: 100%;
+  height: 50px;
+  font-size: 1.2rem;
+  font-weight: 700;
+  background: #28a745;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  direction: rtl;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.finishBtn:hover:not(.disabled) {
+  background: #218838;
+}
+
+.finishBtn.disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+}
+
+.methodsList {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 0.2rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+  align-content: start;
+}
+
+.methodItem {
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  padding: 0.6rem;
+  background: #f8f9fa;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  min-height: 60px;
+  position: relative;
+  user-select: none; /* منع تحديد النص */
+}
+
+.methodItem:hover {
+  background: #e9ecef;
+  border-color: #dee2e6;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* طريقة الدفع المفعلة */
+.methodItem.active {
+  background: #e8f5e8;
+  border-color: #28a745;
+}
+
+.methodItem.active:hover {
+  background: #d4edda;
+  border-color: #1e7e34;
+}
+
+/* طريقة الدفع المحددة للتعديل */
+.methodItem.selectedForEdit {
+  background: #e8f4fd;
+  border-color: #0373ed;
+  box-shadow: 0 0 0 2px rgba(3, 115, 237, 0.2);
+}
+
+.methodItem.selectedForEdit:hover {
+  background: #d1ecf1;
+}
+
+/* طريقة الدفع المفعلة والمحددة للتعديل */
+.methodItem.active.selectedForEdit {
+  background: #d4edda;
+  border-color: #0373ed;
+  box-shadow: 0 0 0 2px rgba(3, 115, 237, 0.3);
+}
+
+/* طريقة دفع بها مبلغ */
+.methodItem.hasAmount {
+  border-width: 3px;
+}
+
+.methodHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  direction: rtl;
+  margin-bottom: 0.3rem;
+}
+
+.methodCheckbox {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #28a745;
+  flex-shrink: 0;
+}
+
+.methodName {
+  font-size: 0.9rem;
+  color: #333;
+  flex: 1;
+  text-align: right;
+  line-height: 1.2;
+  word-break: break-word;
+  font-weight: 600;
+}
+
+.methodAmount {
+  font-size: 0.8rem;
+  color: #28a745;
+  font-weight: 700;
+  background: rgba(40, 167, 69, 0.15);
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  text-align: center;
+  margin-top: 0.2rem;
+  border: 1px solid rgba(40, 167, 69, 0.3);
+}
+
+.editIndicator {
+  font-size: 0.7rem;
+  color: #0373ed;
+  font-weight: 600;
+  background: rgba(3, 115, 237, 0.1);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  text-align: center;
+  margin-top: 0.2rem;
+  border: 1px solid rgba(3, 115, 237, 0.2);
+}
+
+.paymentSummary {
+  border-top: 1px solid #e9ecef;
+  padding-top: 0.6rem;
+  flex-shrink: 0;
+}
+
+.summaryRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.3rem 0;
+  direction: rtl;
+  font-size: 0.9rem;
+}
+
+.totalPaid {
+  color: #28a745;
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.methodsCount {
+  color: #0373ed;
+  font-weight: 600;
+}
+
+/* تحسينات للشاشات الصغيرة */
+@media (max-width: 768px) {
+  .methodsList {
+    grid-template-columns: 1fr;
+  }
+  
+  .methodName {
+    font-size: 0.85rem;
+  }
+  
+  .methodAmount {
+    font-size: 0.75rem;
+  }
+}
+
+/* تحسين للشاشات الواسعة جداً */
+@media (min-width: 1400px) {
+  .methodsList {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}
+
+/* أنماط للأسماء الطويلة */
+.methodItem.longName .methodName {
+  font-size: 0.8rem;
+  line-height: 1.1;
+}
+
+/* تحسين التمرير */
+.methodsList {
+  scrollbar-width: thin;
+  scrollbar-color: #ccc #f1f1f1;
+}
+
+.methodsList::-webkit-scrollbar {
+  width: 6px;
+}
+
+.methodsList::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.methodsList::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 3px;
+}
+
+.methodsList::-webkit-scrollbar-thumb:hover {
+  background: #999;
+}
+
 ===== src/Pages/pos/newSales/components/PaymentPopup.tsx =====
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { OrderSummary as OrderSummaryType } from '../types/PosSystem';
@@ -2667,6 +3863,8 @@ interface PaymentPopupProps {
   // إضافة props جديدة لدعم وضع التعديل
   isEditMode?: boolean;
   currentInvoiceId?: string | null;
+  actionType?: 'send' | 'print' | 'pay'; // ✅ إضافة جديدة
+
 }
 
 const PaymentPopup: React.FC<PaymentPopupProps> = ({
@@ -2689,7 +3887,8 @@ const PaymentPopup: React.FC<PaymentPopupProps> = ({
   selectedTable,
   selectedDeliveryCompany,
   isEditMode = false, // القيمة الافتراضية false
-  currentInvoiceId = null // القيمة الافتراضية null
+  currentInvoiceId = null, // القيمة الافتراضية null
+  actionType = 'pay' // ✅ إضافة جديدة
 }) => {
   const overlayRef = useRef<HTMLDivElement>(null);
   const { paymentMethods, loading, error } = usePosPaymentMethods();
@@ -2733,6 +3932,34 @@ const PaymentPopup: React.FC<PaymentPopupProps> = ({
       severity: 'error'
     });
   };
+
+  const getInvoiceStatus = (): number => {
+  switch (actionType) {
+    case 'send': return 1;
+    case 'print': return 2;
+    case 'pay': return 3;
+    default: return 3;
+  }
+};
+
+
+const getSuccessMessage = (invoiceNumber: string): string => {
+  if (isEditMode) {
+    switch (actionType) {
+      case 'send': return 'تم تحديث وإرسال الطلب بنجاح!';
+      case 'print': return 'تم تحديث وطباعة الطلب بنجاح!';
+      case 'pay': return 'تم تحديث ودفع الطلب بنجاح!';
+      default: return 'تم تحديث الطلب بنجاح!';
+    }
+  } else {
+    switch (actionType) {
+      case 'send': return `تم إرسال الطلب بنجاح! رقم الفاتورة: ${invoiceNumber}`;
+      case 'print': return `تم طباعة الطلب بنجاح! رقم الفاتورة: ${invoiceNumber}`;
+      case 'pay': return `تم دفع الطلب بنجاح! رقم الفاتورة: ${invoiceNumber}`;
+      default: return `تم إنشاء الطلب بنجاح! رقم الفاتورة: ${invoiceNumber}`;
+    }
+  }
+};
 
   // حساب المبالغ
   const deliveryCharge = 0;
@@ -3204,6 +4431,7 @@ const handleFinishPayment = useCallback(async () => {
       orderSummary,
       orderType,
       selectedPayments,
+      getInvoiceStatus(), // ✅ إضافة هذا البرامتر
       {
         isEditMode,
         invoiceId: currentInvoiceId,
@@ -3214,7 +4442,8 @@ const handleFinishPayment = useCallback(async () => {
         servicePercentage: 0, // يمكن تخصيصه
         taxPercentage: 0, // يمكن تخصيصه
         discountPercentage: 0, // يمكن تخصيصه
-        notes: customerName
+        notes: customerName,
+        
       }
     );
 
@@ -3862,7 +5091,11 @@ export default ProductOptionsPopup;
 // src/Pages/pos/newSales/components/TableSelectionPopup.tsx
 import React, { useState, useEffect } from 'react';
 import { TableSection, Table, TableSelection } from '../types/TableSystem';
+import { UnclosedTableInvoice } from '../../../../utils/api/pagesApi/unclosedTablesApi';
+import * as unclosedTablesApi from '../../../../utils/api/pagesApi/unclosedTablesApi';
 import CloseIcon from '@mui/icons-material/Close';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import styles from '../styles/TableSelectionPopup.module.css';
 
 interface TableSelectionPopupProps {
@@ -3870,15 +5103,68 @@ interface TableSelectionPopupProps {
   onClose: () => void;
   onSelectTable: (selection: TableSelection) => void;
   tableSections: TableSection[];
+  onViewOrder?: (invoiceData: any) => void; // إضافة جديدة لمعاينة الطلب
 }
 
 const TableSelectionPopup: React.FC<TableSelectionPopupProps> = ({
   isOpen,
   onClose,
   onSelectTable,
-  tableSections
+  tableSections,
+  onViewOrder
 }) => {
   const [selectedSection, setSelectedSection] = useState<TableSection | null>(null);
+  const [unclosedTables, setUnclosedTables] = useState<UnclosedTableInvoice[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [openDurations, setOpenDurations] = useState<{[key: string]: string}>({});
+
+  // تحديث حالة الطاولات كل دقيقة
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const loadUnclosedTables = async () => {
+      try {
+        setLoading(true);
+        const response = await unclosedTablesApi.getBranchUnclosedTables();
+        setUnclosedTables(response.data);
+      } catch (error) {
+        console.error('Error loading unclosed tables:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadUnclosedTables();
+    
+    // تحديث كل دقيقة
+    const interval = setInterval(loadUnclosedTables, 60000);
+    
+    return () => clearInterval(interval);
+  }, [isOpen]);
+
+  // تحديث عدادات الوقت كل ثانية
+useEffect(() => {
+  const updateDurations = () => {
+    const newDurations: {[key: string]: string} = {};
+    unclosedTables.forEach(invoice => {
+      if (invoice.tableDTO?.id) {
+        // ✅ استخدام createdAt إذا كان موجود، وإلا preparedAt
+        const timeToUse = invoice.createdAt !== '0001-01-01T00:00:00' && invoice.createdAt 
+          ? invoice.createdAt 
+          : invoice.preparedAt || invoice.completedAt;
+          
+        newDurations[invoice.tableDTO.id] = unclosedTablesApi.calculateTableOpenDuration(timeToUse);
+      }
+    });
+    setOpenDurations(newDurations);
+  };
+
+  updateDurations();
+  const interval = setInterval(updateDurations, 1000); // كل ثانية لتحديث مباشر
+  
+  return () => clearInterval(interval);
+}, [unclosedTables]);
+
 
   useEffect(() => {
     if (isOpen && tableSections.length > 0) {
@@ -3892,15 +5178,38 @@ const TableSelectionPopup: React.FC<TableSelectionPopupProps> = ({
     setSelectedSection(section);
   };
 
-  const handleTableClick = (table: Table) => {
-    if (selectedSection && !table.isOccupied) {
-      onSelectTable({
-        section: selectedSection,
-        table: table
-      });
-    }
+  const getTableInvoice = (tableId: string) => {
+    return unclosedTables.find(invoice => invoice.tableDTO?.id === tableId);
   };
 
+  const isTableOccupied = (tableId: string) => {
+    return !!getTableInvoice(tableId);
+  };
+
+const handleTableClick = (table: Table) => {
+  if (!selectedSection) return;
+
+  const invoice = getTableInvoice(table.id || '');
+  
+  if (invoice) {
+    // ✅ إذا كانت الطاولة مشغولة: اختارها أولاً ثم اعرض الطلب
+    onSelectTable({
+      section: selectedSection,
+      table: table
+    });
+    
+    // ثم اعرض محتويات الطلب
+    if (onViewOrder) {
+      onViewOrder(invoice);
+    }
+  } else {
+    // إذا كانت الطاولة فارغة، اختيارها فقط
+    onSelectTable({
+      section: selectedSection,
+      table: table
+    });
+  }
+};
   const displayedTables = selectedSection?.tables || [];
 
   return (
@@ -3916,57 +5225,112 @@ const TableSelectionPopup: React.FC<TableSelectionPopupProps> = ({
           <main className={styles.mainContent}>
             {/* قسم الطاولات */}
             <section className={styles.productsSection}>
+              {loading && (
+                <div className={styles.loadingMessage}>
+                  جاري تحديث حالة الطاولات...
+                </div>
+              )}
+              
               <div className={styles.productGrid}>
-                {displayedTables.map((table) => (
-                  <div
-                    key={table.id}
-                    className={`${styles.productItem} ${table.isOccupied ? styles.occupied : ''}`}
-                    onClick={() => handleTableClick(table)}
-                  >
-                    <div className={styles.productImage}>
-                      <img 
-                        src="/images/default-table.png" 
-                        alt={table.name}
-                        onError={(e) => {
-                          e.currentTarget.src = '/images/placeholder.png';
-                        }}
-                      />
-                    </div>
-                    <div className={styles.productName}>
-                      <span>{table.name}</span>
-                      <small>{table.capacity} أشخاص</small>
-                      <div className={`${styles.status} ${table.isOccupied ? styles.occupied : styles.available}`}>
-                        {table.isOccupied ? 'مشغولة' : 'متاحة'}
+                {displayedTables.map((table) => {
+                  const occupied = isTableOccupied(table.id || '');
+                  const invoice = getTableInvoice(table.id || '');
+                  const duration = openDurations[table.id || ''] || '00:00';
+                  
+                  return (
+                    <div
+                      key={table.id}
+                      className={`${styles.productItem} ${occupied ? styles.occupied : styles.available}`}
+                      onClick={() => handleTableClick(table)}
+                    >
+                      <div className={styles.productImage}>
+                        <img 
+                          src="/images/default-table.png" 
+                          alt={table.name}
+                          onError={(e) => {
+                            e.currentTarget.src = '/images/placeholder.png';
+                          }}
+                        />
+                        
+                        {/* أيقونة الحالة */}
+                        <div className={`${styles.statusIcon} ${occupied ? styles.occupiedIcon : styles.availableIcon}`}>
+                          {occupied ? '🔴' : '🟢'}
+                        </div>
+                        
+                        {/* أيقونة العرض للطاولات المشغولة */}
+                        {occupied && (
+                          <div className={styles.viewIcon}>
+                            <VisibilityIcon />
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className={styles.productName}>
+                        <span>{table.name}</span>
+                        <small>{table.capacity} أشخاص</small>
+                        
+                        <div className={`${styles.status} ${occupied ? styles.occupied : styles.available}`}>
+                          {occupied ? 'مشغولة' : 'متاحة'}
+                        </div>
+                        
+                        {/* معلومات إضافية للطاولات المشغولة */}
+                        {occupied && invoice && (
+                          <div className={styles.occupiedInfo}>
+                            <div className={styles.orderTotal}>
+                              {invoice.totalAfterTaxAndService.toFixed(2)} جنيه
+                            </div>
+                            
+                            <div className={styles.openDuration}>
+                              <AccessTimeIcon style={{ fontSize: 14 }} />
+                              <span>{duration}</span>
+                            </div>
+                            
+                            <div className={styles.itemsCount}>
+                              {invoice.items?.length || 0} صنف
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </section>
 
             {/* الشريط الجانبي للأقسام */}
             <aside className={styles.categoriesSidebar}>
               <div className={styles.categoriesList}>
-                {tableSections.map((section) => (
-                  <div
-                    key={section.id}
-                    className={`${styles.categoryItem} ${selectedSection?.id === section.id ? styles.active : ''}`}
-                    onClick={() => handleSectionClick(section)}
-                  >
-                    <img 
-                      src="/images/default-section.png" 
-                      alt={section.name}
-                      onError={(e) => {
-                        e.currentTarget.src = '/images/placeholder.png';
-                      }}
-                    />
-                    <div>
-                      <span>{section.name}</span>
-                      <br />
-                      <small>{section.serviceCharge}% خدمة</small>
+                {tableSections.map((section) => {
+                  // حساب عدد الطاولات المشغولة في هذا القسم
+                  const occupiedCount = section.tables.filter(table => 
+                    isTableOccupied(table.id || '')
+                  ).length;
+                  
+                  return (
+                    <div
+                      key={section.id}
+                      className={`${styles.categoryItem} ${selectedSection?.id === section.id ? styles.active : ''}`}
+                      onClick={() => handleSectionClick(section)}
+                    >
+                      <img 
+                        src="/images/default-section.png" 
+                        alt={section.name}
+                        onError={(e) => {
+                          e.currentTarget.src = '/images/placeholder.png';
+                        }}
+                      />
+                      <div>
+                        <span>{section.name}</span>
+                        <br />
+                        <small>{section.serviceCharge}% خدمة</small>
+                        <br />
+                        <small className={styles.occupiedStats}>
+                          {occupiedCount}/{section.tables.length} مشغول
+                        </small>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </aside>
           </main>
@@ -4955,7 +6319,6 @@ export const useInvoiceManager = () => {
   const { showSuccess, showError } = useError();
 
   const getInvoiceType = (orderType: string): number => {
-    // حسب نوع الطلب
     switch (orderType) {
       case 'Takeaway': return 1;
       case 'Dine-in': return 2;
@@ -4966,7 +6329,6 @@ export const useInvoiceManager = () => {
   };
 
   const getWareHouseId = (): string => {
-    // يمكن الحصول عليه من الإعدادات أو localStorage
     return localStorage.getItem('warehouse_id') || 'e81866c0-791d-449f-bc04-c5d65bb3820c';
   };
 
@@ -4974,96 +6336,92 @@ export const useInvoiceManager = () => {
     return localStorage.getItem('branch_id') || 'branch_1';
   };
 
+  const convertOrderItemToInvoiceItem = (item: OrderItem): invoicesApi.CreateInvoiceItem => {
+    const components: any[] = [];
 
-const convertOrderItemToInvoiceItem = (item: OrderItem): invoicesApi.CreateInvoiceItem => {
-  // ✅ تحويل subItems و selectedOptions إلى Components مع الحقول المطلوبة
-  const components: any[] = [];
-  
-  // إضافة الـ subItems (Extra/Without)
-  if (item.subItems && item.subItems.length > 0) {
-    item.subItems.forEach(subItem => {
-      components.push({
-        // الحقول الموجودة
-        id: subItem.id,
-        name: subItem.name,
-        quantity: subItem.quantity,
-        extraPrice: subItem.type === 'without' ? 0 : subItem.price,
-        price: subItem.price,
-        type: subItem.type,
-        groupId: subItem.groupId,
-        isRequired: subItem.isRequired || false,
-        isCommentOnly: false,
-        useOriginalPrice: false,
-        sortOrder: 0,
-        
-        // ✅ الحقول المطلوبة الجديدة
-        WareHouseId: localStorage.getItem('warehouse_id') || 'e81866c0-791d-449f-bc04-c5d65bb3820c',
-        ComponentName: subItem.name, // نفس الاسم
-        ProductComponentId: subItem.productId || item.product.id // معرف المنتج أو المنتج الأساسي
+    if (item.subItems && item.subItems.length > 0) {
+      item.subItems.forEach(subItem => {
+        components.push({
+          id: subItem.id,
+          name: subItem.name,
+          quantity: subItem.quantity,
+          extraPrice: subItem.type === 'without' ? 0 : subItem.price,
+          price: subItem.price,
+          type: subItem.type,
+          groupId: subItem.groupId,
+          isRequired: subItem.isRequired || false,
+          isCommentOnly: false,
+          useOriginalPrice: false,
+          sortOrder: 0,
+          WareHouseId: localStorage.getItem('warehouse_id') || 'e81866c0-791d-449f-bc04-c5d65bb3820c',
+          ComponentName: subItem.name,
+          ProductComponentId: subItem.productId || item.product.id
+        });
       });
-    });
-  }
-  
-  // إضافة الـ selectedOptions
-  if (item.selectedOptions && item.selectedOptions.length > 0) {
-    item.selectedOptions.forEach(option => {
-      components.push({
-        // الحقول الموجودة
-        id: option.itemId,
-        name: option.itemName,
-        quantity: option.quantity,
-        extraPrice: option.extraPrice,
-        price: option.extraPrice,
-        type: 'option',
-        groupId: option.groupId,
-        isCommentOnly: option.isCommentOnly,
-        isRequired: false,
-        useOriginalPrice: false,
-        sortOrder: 0,
-        
-        // ✅ الحقول المطلوبة الجديدة
-        WareHouseId: localStorage.getItem('warehouse_id') || 'e81866c0-791d-449f-bc04-c5d65bb3820c',
-        ComponentName: option.itemName, // نفس الاسم
-        ProductComponentId: item.product.id // معرف المنتج الأساسي للخيارات
-      });
-    });
-  }
+    }
 
-  return {
-    ProductId: item.product.id,
-    ProductPriceId: item.selectedPrice.id,
-    Barcode: item.selectedPrice.barcode || '1234567890123',
-    UnitId: null,
-    PosPriceName: item.selectedPrice.nameArabic,
-    UnitFactor: 1,
-    Qty: item.quantity,
-    UnitPrice: item.selectedPrice.price,
-    UnitCost: 45,
-    ItemDiscountPercentage: item.discountPercentage || 0,
-    ItemTaxPercentage: 14,
-    ServicePercentage: 10,
-    WareHouseId: localStorage.getItem('warehouse_id') || 'e81866c0-791d-449f-bc04-c5d65bb3820c',
-    Components: components // ✅ الآن مع جميع الحقول المطلوبة
+    if (item.selectedOptions && item.selectedOptions.length > 0) {
+      item.selectedOptions.forEach(option => {
+        components.push({
+          id: option.itemId,
+          name: option.itemName,
+          quantity: option.quantity,
+          extraPrice: option.extraPrice,
+          price: option.extraPrice,
+          type: 'option',
+          groupId: option.groupId,
+          isCommentOnly: option.isCommentOnly,
+          isRequired: false,
+          useOriginalPrice: false,
+          sortOrder: 0,
+          WareHouseId: localStorage.getItem('warehouse_id') || 'e81866c0-791d-449f-bc04-c5d65bb3820c',
+          ComponentName: option.itemName,
+          ProductComponentId: item.product.id
+        });
+      });
+    }
+
+    return {
+      ProductId: item.product.id,
+      ProductPriceId: item.selectedPrice.id,
+      Barcode: item.selectedPrice.barcode || '1234567890123',
+      UnitId: null,
+      PosPriceName: item.selectedPrice.nameArabic,
+      UnitFactor: 1,
+      Qty: item.quantity,
+      UnitPrice: item.selectedPrice.price,
+      UnitCost: 45,
+      ItemDiscountPercentage: item.discountPercentage || 0,
+      ItemTaxPercentage: 14,
+      ServicePercentage: 10,
+      WareHouseId: localStorage.getItem('warehouse_id') || 'e81866c0-791d-449f-bc04-c5d65bb3820c',
+      Components: components
+    };
   };
+
+
+const convertPaymentsToInvoicePayments = (payments: PaymentMethodData[]): invoicesApi.CreateInvoicePayment[] => {
+  // ✅ إذا لم توجد طرق دفع، أرجع مصفوفة فارغة
+  if (!payments || payments.length === 0) {
+    return [];
+  }
+  
+  return payments
+    .filter(payment => payment.isSelected && payment.amount > 0)
+    .map(payment => ({
+      Amount: payment.amount,
+      PaymentMethodId: payment.method.toLowerCase().includes('كاش') || 
+                      payment.method.toLowerCase().includes('cash') ? 'cash' : 
+                      payment.method.toLowerCase()
+    }));
 };
 
-
-  const convertPaymentsToInvoicePayments = (payments: PaymentMethodData[]): invoicesApi.CreateInvoicePayment[] => {
-    return payments
-      .filter(payment => payment.isSelected && payment.amount > 0)
-      .map(payment => ({
-        Amount: payment.amount,
-        PaymentMethodId: payment.method.toLowerCase().includes('كاش') || 
-                        payment.method.toLowerCase().includes('cash') ? 'cash' : 
-                        payment.method.toLowerCase()
-      }));
-  };
-
-  // دالة إنشاء فاتورة جديدة
+  // دالة إنشاء فاتورة جديدة مع دعم اختيار الحالة
   const createInvoice = async (
     orderSummary: OrderSummary,
     orderType: string,
     payments: PaymentMethodData[],
+    invoiceStatus: number,
     selectedCustomer?: Customer | null,
     selectedAddress?: CustomerAddress | null,
     selectedDeliveryCompany?: DeliveryCompany | null,
@@ -5074,18 +6432,18 @@ const convertOrderItemToInvoiceItem = (item: OrderItem): invoicesApi.CreateInvoi
     notes?: string
   ): Promise<invoicesApi.InvoiceResponse> => {
     setIsSubmitting(true);
-    
+
     try {
       const invoiceData: invoicesApi.CreateInvoiceRequest = {
         InvoiceType: getInvoiceType(orderType),
-        InvoiceStatus: 1, // حالة نشطة
+        InvoiceStatus: invoiceStatus,
         WareHouseId: getWareHouseId(),
         RawBranchId: getRawBranchId(),
         CustomerId: selectedCustomer?.id || null,
         TableId: selectedTable?.table.id || null,
-        HallCaptainId: null, // يمكن إضافته لاحقاً
+        HallCaptainId: null,
         DeliveryCompanyId: selectedDeliveryCompany?.id || null,
-        DeliveryAgentId: null, // يمكن إضافته لاحقاً
+        DeliveryAgentId: null,
         TaxPercentage: taxPercentage,
         ServicePercentage: servicePercentage,
         HeaderDiscountPercentage: discountPercentage,
@@ -5097,21 +6455,20 @@ const convertOrderItemToInvoiceItem = (item: OrderItem): invoicesApi.CreateInvoi
       };
 
       const result = await invoicesApi.addInvoice(invoiceData);
-      
+
       showSuccess(`تم إنشاء الفاتورة رقم ${result.invoiceNumber} بنجاح`);
-      
       return result;
     } catch (error: any) {
       console.error('Error creating invoice:', error);
-      
+
       let errorMessage = 'حدث خطأ أثناء إنشاء الفاتورة';
-      
+
       if (error.isApiValidationError && error.errors) {
         errorMessage = error.errors.map((err: any) => err.errorMessage).join(', ');
       } else if (error.message) {
         errorMessage = error.message;
       }
-      
+
       showError(errorMessage);
       throw error;
     } finally {
@@ -5119,12 +6476,13 @@ const convertOrderItemToInvoiceItem = (item: OrderItem): invoicesApi.CreateInvoi
     }
   };
 
-  // دالة تحديث فاتورة موجودة
+  // دالة تحديث فاتورة موجودة مع دعم اختيار الحالة
   const updateInvoice = async (
     invoiceId: string,
     orderSummary: OrderSummary,
     orderType: string,
     payments: PaymentMethodData[],
+    invoiceStatus: number,
     selectedCustomer?: Customer | null,
     selectedAddress?: CustomerAddress | null,
     selectedDeliveryCompany?: DeliveryCompany | null,
@@ -5135,12 +6493,12 @@ const convertOrderItemToInvoiceItem = (item: OrderItem): invoicesApi.CreateInvoi
     notes?: string
   ): Promise<invoicesApi.InvoiceResponse> => {
     setIsSubmitting(true);
-    
+
     try {
       const updateData: invoicesApi.CreateInvoiceRequest & { invoiceId: string } = {
         invoiceId: invoiceId,
         InvoiceType: getInvoiceType(orderType),
-        InvoiceStatus: 1, // حالة نشطة
+        InvoiceStatus: invoiceStatus,
         WareHouseId: getWareHouseId(),
         RawBranchId: getRawBranchId(),
         CustomerId: selectedCustomer?.id || null,
@@ -5159,21 +6517,20 @@ const convertOrderItemToInvoiceItem = (item: OrderItem): invoicesApi.CreateInvoi
       };
 
       const result = await invoicesApi.updateInvoice(updateData);
-      
+
       showSuccess(`تم تحديث الفاتورة رقم ${result.invoiceNumber} بنجاح`);
-      
       return result;
     } catch (error: any) {
       console.error('Error updating invoice:', error);
-      
+
       let errorMessage = 'حدث خطأ أثناء تحديث الفاتورة';
-      
+
       if (error.isApiValidationError && error.errors) {
         errorMessage = error.errors.map((err: any) => err.errorMessage).join(', ');
       } else if (error.message) {
         errorMessage = error.message;
       }
-      
+
       showError(errorMessage);
       throw error;
     } finally {
@@ -5181,11 +6538,12 @@ const convertOrderItemToInvoiceItem = (item: OrderItem): invoicesApi.CreateInvoi
     }
   };
 
-  // دالة موحدة للإنشاء والتحديث
+  // دالة موحدة للإنشاء والتحديث مع دعم اختيار الحالة
   const saveInvoice = async (
     orderSummary: OrderSummary,
     orderType: string,
     payments: PaymentMethodData[],
+    invoiceStatus: number, // أجباري هنا
     options: {
       isEditMode?: boolean;
       invoiceId?: string | null;
@@ -5218,6 +6576,7 @@ const convertOrderItemToInvoiceItem = (item: OrderItem): invoicesApi.CreateInvoi
         orderSummary,
         orderType,
         payments,
+        invoiceStatus,
         selectedCustomer,
         selectedAddress,
         selectedDeliveryCompany,
@@ -5232,6 +6591,7 @@ const convertOrderItemToInvoiceItem = (item: OrderItem): invoicesApi.CreateInvoi
         orderSummary,
         orderType,
         payments,
+        invoiceStatus,
         selectedCustomer,
         selectedAddress,
         selectedDeliveryCompany,
@@ -5889,10 +7249,13 @@ const [isLoadingOrder, setIsLoadingOrder] = useState(false);
   }, [addToOrder, showWarning, hasProductOptions, selectedOrderType, canAddProduct]);
 
   // إضافة معالج اختيار الطاولة
-  const handleTableSelect = useCallback((selection: TableSelection) => {
-    selectTable(selection);
-    setShowTablePopup(false);
-  }, [selectTable]);
+const handleTableSelect = useCallback((selection: TableSelection) => {
+  selectTable(selection);
+  setShowTablePopup(false);
+}, [selectTable]);
+
+
+
 
   // إضافة معالج فتح popup الطاولة
   const handleTableClick = useCallback(() => {
@@ -6008,6 +7371,12 @@ const handleViewOrderFromPopup = useCallback(async (invoiceData: any) => {
 }, [setOrderItems, setSelectedCustomer, setCustomerName, setSelectedAddress, 
     setSelectedOrderType, setIsEditMode, setCurrentInvoiceId, showError]);
 
+
+    const handleViewTableOrder = useCallback((invoiceData: any) => {
+  setShowTablePopup(false);
+  // استخدام نفس معالج عرض الطلب الموجود
+  handleViewOrderFromPopup(invoiceData);
+}, [handleViewOrderFromPopup]);
 
     useEffect(() => {
   // حفظ المنتجات المحملة في كاش المحول
@@ -6362,12 +7731,13 @@ const handleResetOrder = useCallback(() => {
         onRemoveItem={removeOrderItem}
       />
 
-      <TableSelectionPopup
-        isOpen={showTablePopup}
-        onClose={() => setShowTablePopup(false)}
-        onSelectTable={handleTableSelect}
-        tableSections={tableSections}
-      />
+<TableSelectionPopup
+  isOpen={showTablePopup}
+  onClose={() => setShowTablePopup(false)}
+  onSelectTable={handleTableSelect}
+  onViewOrder={handleViewTableOrder} // إضافة جديدة
+  tableSections={tableSections}
+/>
 
       
     </div>
@@ -6586,6 +7956,7017 @@ export const useReactPlugin = (options: ReactPluginOptions = {}) => {
 };
 
 export default react;
+===== src/Pages/pos/newSales/styles/ActionButtons.css =====
+/* src/Pages/pos/newSales/components/ActionButtons.css */
+
+.action-buttons-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: #ffffff;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.action-chips {
+  display: flex;
+  gap: 12px;
+}
+
+.action-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  background: #ffffff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.action-chip:hover {
+  border-color: #0373ed;
+  background: rgba(3, 115, 237, 0.05);
+}
+
+.action-chip.active {
+  background: #0373ed;
+  color: white;
+  border-color: #0373ed;
+}
+
+.action-chip img {
+  width: 16px;
+  height: 16px;
+}
+
+.search-container {
+  display: flex;
+  align-items: center;
+  position: relative;
+  gap: 8px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  width: 16px;
+  height: 16px;
+  z-index: 1;
+}
+
+.search-input {
+  padding: 8px 12px 8px 36px;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  font-size: 14px;
+  width: 200px;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #0373ed;
+}
+
+.filter-button {
+  padding: 8px;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  background: white;
+  cursor: pointer;
+}
+
+.filter-button:hover {
+  border-color: #0373ed;
+}
+
+.filter-button img {
+  width: 16px;
+  height: 16px;
+}
+
+===== src/Pages/pos/newSales/styles/Header.css =====
+/* src/Pages/pos/newSales/components/Header.css */
+
+.pos-header {
+  height: clamp(60px, 8vh, 100px);
+  background: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
+  z-index: 100;
+  position: relative;
+}
+
+.header-content {
+  height: 100%;
+  padding: 0 clamp(16px, 3vw, 32px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.header-logo {
+  height: 70%;
+  width: auto;
+  object-fit: contain;
+}
+
+.header-nav {
+  display: flex;
+  align-items: center;
+  gap: clamp(12px, 2vw, 24px);
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: clamp(4px, 0.8vw, 8px);
+  padding: clamp(6px, 1.2vw, 12px) clamp(8px, 1.6vw, 16px);
+  border-radius: 6px;
+  text-decoration: none;
+  color: #333333;
+  font-size: clamp(11px, 1.4vw, 16px);
+  font-weight: 500;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.nav-item:hover {
+  background: rgba(3, 115, 237, 0.1);
+}
+
+.nav-item.active {
+  color: #0373ed;
+  background: rgba(3, 115, 237, 0.1);
+}
+
+.nav-item img {
+  width: clamp(14px, 1.8vw, 20px);
+  height: clamp(14px, 1.8vw, 20px);
+}
+
+.order-type-display {
+  padding: clamp(6px, 1.2vw, 12px) clamp(12px, 2.4vw, 20px);
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  font-size: clamp(11px, 1.4vw, 16px);
+  font-weight: 600;
+  color: #333333;
+  min-width: clamp(80px, 12vw, 120px);
+  text-align: center;
+}
+
+.menu-dropdown-container {
+  position: relative;
+}
+
+.menu-button {
+  padding: clamp(6px, 1.2vw, 12px);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.menu-button:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.menu-button img {
+  width: clamp(18px, 2.4vw, 28px);
+  height: clamp(18px, 2.4vw, 28px);
+}
+
+/* Figma Dropdown - مع scroll مخفي */
+.figma-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: transparent;
+  z-index: 1000;
+  animation: slideInFromRight 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  gap: clamp(16px, 2.5vw, 20px);
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  /* إخفاء الـ scrollbar */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* Internet Explorer 10+ */
+}
+
+/* إخفاء الـ scrollbar في WebKit browsers */
+.figma-dropdown::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  background: transparent;
+  display: none;
+}
+
+/* Order Types Section */
+.order-types-section {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(6px, 1vw, 8px);
+  flex-shrink: 0;
+}
+
+/* Delivery Partners Section */
+.delivery-partners-section {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(6px, 1vw, 8px);
+  margin-top: clamp(12px, 2vw, 16px);
+  flex-shrink: 0;
+}
+
+/* Section Separator */
+.section-separator {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.1), transparent);
+  margin: clamp(8px, 1.5vw, 12px) 0;
+  flex-shrink: 0;
+}
+
+/* Figma Cards - مُحسنة بدون تأثير على الكروت المجاورة */
+.figma-card {
+  width: clamp(90px, 14vw, 110px);
+  height: clamp(85px, 13vw, 105px);
+  background: white;
+  border-radius: 12px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: clamp(6px, 1.2vw, 8px);
+  backdrop-filter: blur(8px);
+  scroll-snap-align: start;
+  contain: layout style paint;
+  /* إضافة margin للحفاظ على المساحة */
+  margin: 2px;
+}
+
+.figma-card:hover {
+  border-color: #0373ed;
+  /* تقليل الحركة لتجنب التأثير على الكروت المجاورة */
+  transform: translateX(-2px);
+  box-shadow: 0 6px 16px rgba(3, 115, 237, 0.2);
+  /* استخدام brightness كبديل للـ scale */
+  filter: brightness(1.05);
+}
+
+.figma-card.selected {
+  border-color: #0373ed;
+  box-shadow: 0 5px 12px rgba(3, 115, 237, 0.25);
+  background: rgba(3, 115, 237, 0.02);
+}
+
+.delivery-card {
+  border: 1px solid #e9ecef;
+}
+
+.delivery-card:hover {
+  border-color: #0373ed;
+  transform: translateX(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+  filter: brightness(1.05);
+}
+
+/* Card Icon Section */
+.card-icon-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  width: 100%;
+}
+
+/* Card Icons - مُصغرة */
+.card-icon {
+  width: clamp(24px, 3.5vw, 32px);
+  height: clamp(24px, 3.5vw, 32px);
+  object-fit: contain;
+}
+
+.delivery-icon {
+  max-width: clamp(45px, 7vw, 60px);
+  max-height: clamp(15px, 2.5vw, 20px);
+  object-fit: contain;
+}
+
+/* Card Labels - داخل الكارت */
+.card-label {
+  color: black;
+  font-size: clamp(10px, 1.5vw, 14px);
+  font-family: 'Nunito', sans-serif;
+  font-weight: 400;
+  word-wrap: break-word;
+  text-align: center;
+  line-height: 1.1;
+  margin-top: clamp(2px, 0.5vw, 4px);
+  width: 100%;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+.figma-card.selected .card-label {
+  color: #0373ed;
+  font-weight: 500;
+}
+
+/* Animations */
+@keyframes slideInFromRight {
+  from {
+    opacity: 0;
+    transform: translateX(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* تأثيرات إضافية للكروت */
+.figma-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.3));
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  border-radius: 10px;
+}
+
+.figma-card:hover::before {
+  opacity: 1;
+}
+
+/* تأثيرات fade للـ scroll */
+.figma-dropdown::before {
+  content: '';
+  position: sticky;
+  top: 0;
+  height: 6px;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.9), transparent);
+  z-index: 1;
+  pointer-events: none;
+  flex-shrink: 0;
+}
+
+.figma-dropdown::after {
+  content: '';
+  position: sticky;
+  bottom: 0;
+  height: 6px;
+  background: linear-gradient(to top, rgba(255, 255, 255, 0.9), transparent);
+  z-index: 1;
+  pointer-events: none;
+  flex-shrink: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .nav-item span {
+    display: none;
+  }
+  
+  .nav-item {
+    padding: clamp(8px, 1.5vw, 12px);
+  }
+  
+  .figma-dropdown {
+    right: -5px;
+  }
+}
+
+@media (max-width: 768px) {
+  .header-nav {
+    gap: clamp(8px, 1.5vw, 16px);
+  }
+  
+  .order-type-display {
+    min-width: clamp(60px, 10vw, 80px);
+    font-size: clamp(10px, 1.2vw, 14px);
+  }
+  
+  .figma-dropdown {
+    right: -10px;
+    gap: clamp(12px, 2vw, 16px);
+    max-height: calc(100vh - 100px);
+  }
+  
+  .figma-card {
+    width: clamp(75px, 16vw, 95px);
+    height: clamp(70px, 15vw, 90px);
+    padding: clamp(4px, 1vw, 6px);
+    margin: 1px;
+  }
+  
+  .figma-card:hover {
+    transform: translateX(-1px);
+  }
+  
+  .delivery-card:hover {
+    transform: translateX(-1px);
+  }
+  
+  .card-icon {
+    width: clamp(18px, 3vw, 24px);
+    height: clamp(18px, 3vw, 24px);
+  }
+  
+  .delivery-icon {
+    max-width: clamp(35px, 6vw, 45px);
+    max-height: clamp(12px, 2vw, 16px);
+  }
+  
+  .card-label {
+    font-size: clamp(8px, 1.3vw, 12px);
+  }
+}
+
+@media (max-width: 480px) {
+  .header-content {
+    padding: 0 clamp(8px, 2vw, 16px);
+  }
+  
+  .header-nav {
+    gap: clamp(4px, 1vw, 8px);
+  }
+  
+  .figma-dropdown {
+    right: -15px;
+    max-height: calc(100vh - 80px);
+  }
+  
+  .figma-card {
+    width: clamp(65px, 18vw, 85px);
+    height: clamp(60px, 17vw, 80px);
+    padding: clamp(3px, 0.8vw, 5px);
+    margin: 1px;
+  }
+  
+  /* إزالة الحركة نهائياً في الشاشات الصغيرة */
+  .figma-card:hover {
+    transform: none;
+    filter: brightness(1.1);
+  }
+  
+  .delivery-card:hover {
+    transform: none;
+    filter: brightness(1.1);
+  }
+  
+  .card-icon {
+    width: clamp(16px, 2.5vw, 20px);
+    height: clamp(16px, 2.5vw, 20px);
+  }
+  
+  .delivery-icon {
+    max-width: clamp(30px, 5vw, 40px);
+    max-height: clamp(10px, 1.8vw, 14px);
+  }
+  
+  .card-label {
+    font-size: clamp(7px, 1.1vw, 10px);
+  }
+}
+
+/* تحسينات للأجهزة اللمسية */
+@media (hover: none) and (pointer: coarse) {
+  .figma-dropdown {
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: y proximity;
+  }
+  
+  .figma-card {
+    scroll-snap-align: start;
+  }
+}
+
+/* تحسينات الأداء */
+.figma-dropdown {
+  will-change: scroll-position;
+  contain: layout style paint;
+}
+
+.figma-card {
+  will-change: transform, box-shadow;
+  backface-visibility: hidden;
+}
+
+/* تحسينات للشاشات عالية الدقة */
+@media (min-resolution: 150dpi) {
+  .figma-card {
+    border-width: 1.5px;
+  }
+}
+
+@media (min-resolution: 200dpi) {
+  .figma-card {
+    border-width: 1px;
+  }
+}
+
+
+
+/* إضافة هذا في Header.css */
+
+.order-type-display.clickable {
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-radius: 4px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid transparent;
+  position: relative;
+  overflow: hidden;
+}
+
+.order-type-display.clickable:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.order-type-display.clickable:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* تأثير ripple عند النقر */
+.order-type-display.clickable::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.3s ease, height 0.3s ease;
+}
+
+.order-type-display.clickable:active::before {
+  width: 100px;
+  height: 100px;
+}
+
+/* إضافة أيقونة صغيرة للإشارة للـ reset */
+.order-type-display.clickable::after {
+  content: '↻';
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  font-size: 10px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.order-type-display.clickable:hover::after {
+  opacity: 0.7;
+}
+
+/* تحسين الـ tooltip */
+.order-type-display.clickable[title] {
+  position: relative;
+}
+
+.order-type-display.clickable[title]:hover::after {
+  content: attr(title);
+  position: absolute;
+  bottom: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  z-index: 1000;
+  opacity: 0.9;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .order-type-display.clickable {
+    padding: 6px 8px;
+    font-size: 12px;
+  }
+  
+  .order-type-display.clickable::after {
+    font-size: 8px;
+  }
+}
+
+
+
+/* إضافة هذا في Header.css */
+
+/* Professional Dropdown Styles */
+.professional-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  width: 420px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.15);
+  border: 1px solid #e9ecef;
+  z-index: 1000;
+  transform: translateY(8px);
+  opacity: 0;
+  animation: dropdownSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+@keyframes dropdownSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(8px);
+  }
+}
+
+.dropdown-section {
+  padding: 20px;
+}
+
+.dropdown-section:not(:last-child) {
+  border-bottom: 1px solid #f1f3f4;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+  font-family: 'Cairo', sans-serif;
+}
+
+.section-divider {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, #e9ecef, transparent);
+}
+
+/* Order Types Cards */
+.order-types-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.order-type-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: white;
+  border: 2px solid #f1f3f4;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.order-type-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, var(--accent-color), transparent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.order-type-card:hover {
+  border-color: var(--accent-color);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+.order-type-card:hover::before {
+  opacity: 0.05;
+}
+
+.order-type-card.selected {
+  border-color: var(--accent-color);
+  background: rgba(var(--accent-color), 0.05);
+  box-shadow: 0 4px 16px rgba(var(--accent-color), 0.2);
+}
+
+.order-type-card.selected::before {
+  opacity: 0.08;
+}
+
+.card-icon-container {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(var(--accent-color), 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.card-icon {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+
+.card-content {
+  flex: 1;
+  text-align: left;
+}
+
+.card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 2px;
+  font-family: 'Cairo', sans-serif;
+}
+
+.card-description {
+  font-size: 12px;
+  color: #666;
+  font-family: 'Cairo', sans-serif;
+}
+
+.card-check {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--accent-color);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: scale(0);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.order-type-card.selected .card-check {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Delivery Partners Cards */
+.delivery-partners-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.delivery-partner-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: white;
+  border: 1px solid #e9ecef;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.delivery-partner-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.delivery-partner-card:hover {
+  border-color: var(--partner-color);
+  transform: translateX(4px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.delivery-partner-card:hover::before {
+  opacity: 1;
+}
+
+.delivery-partner-card.selected {
+  border-color: var(--partner-color);
+  background: var(--partner-bg);
+  box-shadow: 0 4px 16px rgba(var(--partner-color), 0.15);
+}
+
+.partner-icon-container {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: var(--partner-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.partner-icon {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+
+.partner-content {
+  flex: 1;
+  text-align: left;
+}
+
+.partner-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 2px;
+  font-family: 'Cairo', sans-serif;
+}
+
+.partner-status {
+  font-size: 11px;
+  color: #28a745;
+  font-weight: 500;
+  font-family: 'Cairo', sans-serif;
+}
+
+.partner-badge {
+  width: 16px;
+  height: 16px;
+  color: var(--partner-color);
+  opacity: 0;
+  transform: scale(0);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.delivery-partner-card.selected .partner-badge {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Order Type Display Button Enhancement */
+.order-type-display.clickable {
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 8px;
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+}
+
+.order-type-display.clickable::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), transparent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.order-type-display.clickable:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.order-type-display.clickable:hover::before {
+  opacity: 1;
+}
+
+.order-type-display.clickable:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .professional-dropdown {
+    width: 360px;
+    right: -20px;
+  }
+  
+  .order-types-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .dropdown-section {
+    padding: 16px;
+  }
+  
+  .order-type-card {
+    padding: 12px;
+  }
+  
+  .delivery-partner-card {
+    padding: 10px 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .professional-dropdown {
+    width: 320px;
+    right: -40px;
+  }
+  
+  .section-title {
+    font-size: 14px;
+  }
+  
+  .card-title,
+  .partner-name {
+    font-size: 13px;
+  }
+  
+  .card-description {
+    font-size: 11px;
+  }
+}
+
+/* Scroll Styling */
+.professional-dropdown::-webkit-scrollbar {
+  width: 6px;
+}
+
+.professional-dropdown::-webkit-scrollbar-track {
+  background: #f1f3f4;
+  border-radius: 3px;
+}
+
+.professional-dropdown::-webkit-scrollbar-thumb {
+  background: #c1c8cd;
+  border-radius: 3px;
+}
+
+.professional-dropdown::-webkit-scrollbar-thumb:hover {
+  background: #a8b2ba;
+}
+
+
+
+
+
+
+
+/* إضافة هذا لـ Header.css */
+
+.customer-info-section {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0 20px;
+}
+
+.customer-info-card {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 10px 16px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  max-width: 400px;
+  width: 100%;
+}
+
+.customer-basic-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.customer-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  color: #2c3e50;
+  font-size: 14px;
+}
+
+.customer-phone {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #6c757d;
+  font-size: 12px;
+}
+
+.customer-address {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #495057;
+  font-size: 12px;
+  border-top: 1px solid #dee2e6;
+  padding-top: 4px;
+  margin-top: 4px;
+}
+
+.address-text {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.customer-icon,
+.phone-icon,
+.address-icon {
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.vip-badge {
+  background: linear-gradient(135deg, #ffd700 0%, #ffed4a 100%);
+  color: #8b4513;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive للـ customer info */
+@media (max-width: 1200px) {
+  .customer-info-section {
+    margin: 0 10px;
+  }
+  
+  .customer-info-card {
+    padding: 8px 12px;
+    max-width: 300px;
+  }
+  
+  .customer-name {
+    font-size: 13px;
+  }
+  
+  .customer-phone,
+  .customer-address {
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 768px) {
+  .customer-info-section {
+    margin: 0 5px;
+  }
+  
+  .customer-info-card {
+    padding: 6px 10px;
+    max-width: 250px;
+  }
+  
+  .customer-name {
+    font-size: 12px;
+  }
+  
+  .customer-phone,
+  .customer-address {
+    font-size: 10px;
+  }
+  
+  .address-text {
+    max-width: 150px;
+  }
+}
+
+
+
+
+
+
+
+
+
+
+===== src/Pages/pos/newSales/styles/OrderItemDetailsPopup.module.css =====
+/* src/Pages/pos/newSales/components/OrderItemDetailsPopup.module.css */
+
+.popupOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.orderItemDetails {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  width: 90%;
+  max-width: 600px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* السطر الرئيسي الوحيد */
+.mainRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 0;
+  border-bottom: 1px solid #eee;
+}
+
+/* اسم المنتج والسعر على اليمين */
+.productInfo {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  flex: 1;
+}
+
+.productName {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.productSize {
+  font-size: 12px;
+  color: #666;
+}
+
+.unitPrice {
+  font-size: 14px;
+  font-weight: 600;
+  color: #e74c3c;
+}
+
+/* الكمية في النص */
+.quantityControls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 0 0 auto;
+}
+
+.quantityBtn {
+  width: 36px;
+  height: 36px;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  background: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.quantityBtn:hover:not(:disabled) {
+  border-color: #0373ed;
+  background: #f8f9ff;
+}
+
+.quantityBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.quantityDisplay {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  min-width: 30px;
+  text-align: center;
+}
+
+/* الإجمالي على الشمال */
+.totalDisplay {
+  flex: 0 0 auto;
+}
+
+.totalAmount {
+  font-size: 18px;
+  font-weight: 700;
+  color: #e74c3c;
+}
+
+/* حقل الملاحظات */
+.notesSection {
+  width: 100%;
+}
+
+.notesInput {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  resize: vertical;
+  font-family: inherit;
+  transition: border-color 0.2s ease;
+}
+
+.notesInput:focus {
+  outline: none;
+  border-color: #0373ed;
+}
+
+.notesInput::placeholder {
+  color: #999;
+}
+
+/* قسم الخصم */
+.discountSection {
+  width: 100%;
+}
+
+.discountInputs {
+  display: flex;
+  gap: 16px;
+}
+
+.discountField {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.discountField label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+.discountInput {
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: border-color 0.2s ease;
+  /* إزالة الأزرار من number input */
+  -moz-appearance: textfield;
+}
+
+.discountInput::-webkit-outer-spin-button,
+.discountInput::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.discountInput:focus {
+  outline: none;
+  border-color: #0373ed;
+}
+
+/* أزرار التأكيد والإلغاء */
+.actionButtons {
+  display: flex;
+  gap: 0;
+  width: 100%;
+  margin-top: 8px;
+}
+
+.confirmBtn,
+.cancelBtn {
+  flex: 1;
+  padding: 16px;
+  font-size: 16px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.confirmBtn {
+  background: #28a745;
+  color: white;
+  border-radius: 8px 0 0 8px;
+}
+
+.confirmBtn:hover {
+  background: #218838;
+}
+
+.cancelBtn {
+  background: #f8f9fa;
+  color: #333;
+  border-radius: 0 8px 8px 0;
+  border-left: 1px solid #ddd;
+}
+
+.cancelBtn:hover {
+  background: #e9ecef;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .mainRow {
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+  }
+  
+  .productInfo {
+    align-items: center;
+    text-align: center;
+  }
+  
+  .quantityControls {
+    justify-content: center;
+  }
+  
+  .totalDisplay {
+    text-align: center;
+  }
+  
+  .discountInputs {
+    flex-direction: column;
+  }
+  
+  .actionButtons {
+    flex-direction: column;
+  }
+  
+  .confirmBtn,
+  .cancelBtn {
+    border-radius: 8px;
+  }
+  
+  .cancelBtn {
+    border-left: none;
+    border-top: 1px solid #ddd;
+  }
+}
+
+===== src/Pages/pos/newSales/styles/OrderSummary.module.css =====
+/* OrderSummary Module CSS */
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap');
+
+:root {
+  /* Colors */
+  --primary-blue: #0373ed;
+  --primary-green: #23a929;
+  --primary-red: #e53935;
+  --primary-orange: #ffb74d;
+  --bg-main: #f5f5f5;
+  --bg-white: #ffffff;
+  --text-primary: #000000;
+  --text-secondary: rgba(0, 0, 0, 0.7);
+  --border-color: rgba(0, 0, 0, 0.2);
+  
+  /* Responsive spacing */
+  --scale-factor: clamp(0.8, 1vw, 1.2);
+  --spacing-xs: calc(0.25rem * var(--scale-factor));
+  --spacing-sm: calc(0.5rem * var(--scale-factor));
+  --spacing-md: calc(1rem * var(--scale-factor));
+  --spacing-lg: calc(1.5rem * var(--scale-factor));
+  --spacing-xl: calc(2rem * var(--scale-factor));
+}
+
+/* Main Container */
+.orderSummary {
+  width: clamp(280px, 35vw, 400px);
+  background: var(--bg-white);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
+}
+
+/* Header Section */
+.orderHeader {
+  height: clamp(50px, 7vh, 80px);
+  display: flex;
+  flex-shrink: 0;
+}
+
+.orderNumber {
+  flex: 1;
+  background: var(--primary-blue);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(16px, 2vw, 24px);
+  font-weight: 700;
+  border-radius: 8px 0 0 0;
+}
+
+.orderTotal {
+  width: clamp(100px, 12vw, 150px);
+  border: 2px solid var(--primary-blue);
+  color: var(--primary-blue);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+  border-radius: 0 8px 0 0;
+}
+
+.orderTotal .amount {
+  font-size: clamp(16px, 2vw, 24px);
+  font-weight: 700;
+}
+
+.orderTotal .currency {
+  font-size: clamp(10px, 1.2vw, 16px);
+  font-weight: 600;
+}
+
+/* Content Section */
+.orderContent {
+  flex: 1;
+  padding: var(--spacing-lg);
+  overflow-y: auto;
+  scrollbar-width: none;
+  scrollbar-color: var(--border-color) transparent;
+}
+
+.orderContent::-webkit-scrollbar {
+  width: 6px;
+}
+
+.orderContent::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.orderContent::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 3px;
+}
+
+/* Customer Input */
+.customerInput {
+  display: flex;
+  margin-bottom: var(--spacing-lg);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.customerField {
+  flex: 1;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: none;
+  font-size: clamp(10px, 1.2vw, 14px);
+  font-family: 'Cairo', sans-serif;
+  background: transparent;
+}
+
+.customerField:focus {
+  outline: none;
+}
+
+.customerButton {
+  width: clamp(30px, 4vw, 45px);
+  background: var(--primary-blue);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease;
+}
+
+.customerButton:hover {
+  background: #025bb5;
+}
+
+.customerButton img {
+  width: clamp(12px, 1.4vw, 18px);
+  height: clamp(12px, 1.4vw, 18px);
+}
+
+/* Order Items */
+.orderItems {
+  max-height: 50vh;
+  margin-bottom: var(--spacing-md);
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-color) transparent;
+}
+
+.orderItems::-webkit-scrollbar {
+  width: 4px;
+}
+
+.orderItems::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.orderItems::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 2px;
+}
+
+/* Order Item Container - التعديل الرئيسي للفاصل */
+.orderItemContainer {
+  margin-bottom: clamp(12px, 1.5vw, 16px); /* مسافة بين مجموعات المنتجات فقط */
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1); /* خط فاصل بين المجموعات */
+  padding-bottom: clamp(8px, 1vw, 12px);
+}
+
+.orderItemContainer:last-child {
+  border-bottom: none; /* إزالة الخط من آخر عنصر */
+}
+
+/* Main Order Item */
+.orderItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border-radius: 6px;
+  margin-bottom: 0; /* إزالة المسافة السفلية */
+}
+
+.orderItem:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.orderItem.selected {
+  background: rgba(3, 115, 237, 0.1);
+  border-left: 20px solid #0373ed;
+  padding-left: 8px;
+  position: relative;
+}
+
+/* حرف X للمنتج الرئيسي */
+.orderItem.selected::before {
+  content: '✕';
+  position: absolute;
+  left: -20px; /* داخل الـ border بالسالب */
+  top: 0;
+  bottom: 0;
+  width: 20px;
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 1;
+  background: transparent;
+  transition: all 0.2s ease;
+}
+
+/* تأثير hover للمنتج الرئيسي */
+.orderItem.selected:hover::before {
+  background: rgba(255, 255, 255, 0.1);
+  font-size: 18px;
+  transform: scale(1.1);
+}
+
+.orderItem.extraItem {
+  border-left: 3px solid #28a745;
+}
+
+.orderItem.withoutItem {
+  border-left: 3px solid #dc3545;
+}
+
+/* Item Details */
+.itemDetails {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: flex-start;
+  flex: 1;
+  min-width: 0;
+}
+
+.deleteButton {
+    order: -1; /* أول عنصر */
+
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: var(--spacing-xs);
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+.deleteButton:hover {
+  background: rgba(229, 57, 53, 0.1);
+}
+
+.deleteButton img {
+  width: clamp(12px, 1.4vw, 16px);
+  height: clamp(12px, 1.4vw, 16px);
+}
+
+.itemInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.itemName {
+  font-size: clamp(11px, 1.3vw, 16px);
+  font-weight: 600;
+  margin-bottom: var(--spacing-xs);
+  color: var(--text-primary);
+  line-height: 1.2;
+  font-family: 'Cairo', sans-serif;
+}
+
+.itemSizeInline {
+  color: var(--primary-blue);
+  font-weight: 500;
+  font-size: 0.9em;
+}
+
+/* Item Prices - التعديل الرئيسي للأسعار */
+.itemPrices {
+  display: flex;
+  align-items: center;
+  gap: clamp(6px, 1vw, 10px);
+  flex-shrink: 0;
+  min-width: fit-content;
+}
+
+.itemPrice {
+  font-size: clamp(10px, 1.2vw, 14px);
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  padding-right: clamp(6px, 1vw, 10px);
+  border-right: 1px solid #ccc; /* الخط العمودي الفاصل */
+}
+
+.itemTotal {
+  font-size: clamp(11px, 1.3vw, 16px);
+  font-weight: 700;
+  color: var(--primary-blue);
+  white-space: nowrap;
+  padding-left: clamp(6px, 1vw, 10px);
+}
+
+.itemTotal.negative {
+  color: #dc3545;
+  font-weight: 600;
+}
+
+/* Badges */
+.extraBadge, .withoutBadge {
+  color: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  margin-right: 4px;
+  font-weight: 600;
+}
+
+.extraBadge {
+  background: #28a745;
+}
+
+.withoutBadge {
+  background: #dc3545;
+}
+
+/* Sub-items Container - إزالة الفاصل مع المنتج الرئيسي */
+.subItemsContainer {
+  margin-top: 0; /* إزالة المسافة العلوية */
+  padding-left: 16px;
+  border-left: 2px solid #f0f0f0;
+}
+
+/* Sub-item */
+.subItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1px 0;
+  margin-bottom: 0px;
+  min-height: 18px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border-radius: 4px;
+  position: relative;
+}
+
+
+.subItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1px 0;
+  margin-bottom: 0px;
+  min-height: 18px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border-radius: 4px;
+  position: relative;
+}
+
+/* Sub-item المحدد - مع border أكبر */
+.selectedSubItem {
+  background: rgba(3, 115, 237, 0.1);
+  border-left: 20px solid #0373ed;
+  padding-left: 8px;
+  position: relative;
+}
+.selectedSubItem::before {
+  content: '✕';
+  position: absolute;
+  left: -20px; /* داخل الـ border بالسالب */
+  top: 0;
+  bottom: 0;
+  width: 20px;
+  color: white;
+  font-size: 14px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 1;
+  background: transparent;
+  transition: all 0.2s ease;
+}
+
+/* تأثير hover للـ sub-item */
+.selectedSubItem:hover::before {
+  background: rgba(255, 255, 255, 0.1);
+  font-size: 16px;
+  transform: scale(1.1);
+}
+
+/* تأثير الضغط للعناصر المحددة */
+.orderItem.selected:active::before,
+.selectedSubItem:active::before {
+  transform: scale(0.9);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+/* الـ options لا تأخذ تأثيرات الـ hover */
+.subItem[data-type="option"] {
+  cursor: default;
+}
+
+.subItem[data-type="option"]:hover {
+  background: initial;
+}
+
+/* تحسين للتابلت */
+@media (max-width: 1024px) {
+  .orderItem.selected,
+  .selectedSubItem {
+    border-left: 35px solid #0373ed;
+  }
+  
+  .orderItem.selected::before,
+  .selectedSubItem::before {
+    width: 35px;
+    font-size: 15px;
+  }
+}
+
+/* تحسين للموبايل */
+@media (max-width: 768px) {
+  .orderItem.selected,
+  .selectedSubItem {
+    border-left: 38px solid #0373ed;
+  }
+  
+  .orderItem.selected::before,
+  .selectedSubItem::before {
+    width: 38px;
+    font-size: 16px;
+  }
+}
+
+/* تحسين للشاشات الصغيرة جداً */
+@media (max-width: 480px) {
+  .orderItem.selected,
+  .selectedSubItem {
+    border-left: 40px solid #0373ed;
+  }
+  
+  .orderItem.selected::before,
+  .selectedSubItem::before {
+    width: 40px;
+    font-size: 17px;
+  }
+}
+
+.subItemDetails {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+}
+
+.subItemInfo {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+}
+
+.subItemBadge {
+  width: 12px; /* زيادة الحجم قليلاً */
+  height: 12px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 7px;
+  font-weight: 600;
+  color: white;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.subItemBadge.extra {
+  background: #28a745;
+}
+
+.subItemBadge.without {
+  background: #dc3545;
+}
+
+.subItemBadge.option {
+  background: #6c757d;
+}
+
+.subItemName {
+  font-size: 10px;
+  color: #666;
+  line-height: 1.2;
+  font-family: 'Cairo', sans-serif;
+}
+
+/* Sub-item Prices - نفس تصميم الأسعار الرئيسية */
+.subItemPrices {
+  display: flex;
+  align-items: center;
+  gap: clamp(4px, 0.8vw, 8px);
+  min-width: fit-content;
+}
+
+.subItemPrice {
+  font-size: 8px;
+  color: #999;
+  font-weight: 500;
+  white-space: nowrap;
+  padding-right: clamp(4px, 0.8vw, 8px);
+  border-right: 1px solid #ddd; /* الخط العمودي الفاصل */
+}
+
+.subItemTotal {
+  font-size: 9px;
+  color: #333;
+  font-weight: 600;
+  white-space: nowrap;
+  padding-left: clamp(4px, 0.8vw, 8px);
+}
+
+.subItemTotal.negative {
+  color: #dc3545;
+}
+
+.subItemDelete {
+  width: 14px;
+  height: 14px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
+  margin-left: 4px;
+}
+
+.subItemDelete:hover {
+  opacity: 1;
+}
+
+.subItemDelete img {
+  width: 8px;
+  height: 8px;
+}
+
+/* Item Options - إزالة الفاصل مع المنتج الرئيسي */
+.itemOptions {
+  margin-top: 0; /* إزالة المسافة العلوية */
+  padding-left: 16px;
+}
+
+.optionDetail {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1px;
+  padding: 2px 0;
+  min-height: 18px;
+}
+
+.optionText {
+  font-size: 10px;
+  color: #666;
+  font-weight: 400;
+  line-height: 1.2;
+  font-family: 'Cairo', sans-serif;
+  flex: 1;
+}
+
+/* Option Prices - نفس تصميم الأسعار الرئيسية */
+.optionPrices {
+  display: flex;
+  align-items: center;
+  gap: clamp(4px, 0.8vw, 8px);
+  min-width: fit-content;
+}
+
+.optionPrice {
+  font-size: 8px;
+  color: #999;
+  font-weight: 500;
+  white-space: nowrap;
+  padding-right: clamp(4px, 0.8vw, 8px);
+  border-right: 1px solid #ddd; /* الخط العمودي الفاصل */
+}
+
+.optionTotal {
+  font-size: 9px;
+  color: #333;
+  font-weight: 600;
+  white-space: nowrap;
+  padding-left: clamp(4px, 0.8vw, 8px);
+}
+
+/* Order Footer */
+.orderFooter {
+  padding: var(--spacing-md);
+  border-top: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+.summaryRows {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--spacing-sm) * 0.8);
+  margin-bottom: var(--spacing-md);
+}
+
+.summaryRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: clamp(10px, 1.2vw, 15px);
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.summaryRow span:last-child {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.totalRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: clamp(13px, 1.5vw, 19px);
+  font-weight: 700;
+  padding-top: var(--spacing-md);
+  border-top: 2px solid var(--border-color);
+  margin-bottom: var(--spacing-md);
+}
+
+.actionButtons {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-md);
+}
+
+.actionButton {
+  height: clamp(40px, 7vh, 60px);
+  border-radius: 6px;
+  border: none;
+  color: white;
+  font-size: clamp(10px, 1.2vw, 16px);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.actionButton img {
+  width: clamp(12px, 1.4vw, 18px);
+  height: clamp(12px, 1.4vw, 18px);
+}
+
+.actionButton:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.actionButton.send {
+  background: var(--primary-red);
+}
+
+.actionButton.print {
+  background: var(--primary-blue);
+}
+
+.actionButton.pay {
+  background: var(--primary-green);
+}
+
+/* Responsive Design */
+@media (max-width: 1366px) {
+  .summaryRows {
+    gap: calc(var(--spacing-sm) * 0.6);
+  }
+  
+  .orderItems {
+    max-height: 45vh;
+  }
+}
+
+@media (max-width: 1024px) {
+  .summaryRows {
+    gap: calc(var(--spacing-sm) * 0.4);
+  }
+  
+  .orderItems {
+    max-height: 42vh;
+  }
+  
+  .itemPrices, .subItemPrices, .optionPrices {
+    gap: 4px;
+  }
+}
+
+@media (max-width: 768px) {
+  .subItemName {
+    font-size: 9px;
+  }
+  
+  .subItemPrice {
+    font-size: 7px;
+  }
+  
+  .subItemTotal {
+    font-size: 8px;
+  }
+  
+  .subItemDelete {
+    width: 12px;
+    height: 12px;
+  }
+  
+  .subItemDelete img {
+    width: 6px;
+    height: 6px;
+  }
+  
+  .optionText {
+    font-size: 9px;
+  }
+  
+  .optionPrice {
+    font-size: 7px;
+  }
+  
+  .optionTotal {
+    font-size: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .orderItemContainer {
+    margin-bottom: 8px;
+  }
+  
+  .subItem {
+    padding: 1px 0;
+    margin-bottom: 0px;
+    min-height: 16px;
+  }
+  
+  .optionDetail {
+    padding: 1px 0;
+    margin-bottom: 0px;
+    min-height: 14px;
+  }
+  
+  .itemPrices, .subItemPrices, .optionPrices {
+    gap: 3px;
+  }
+}
+
+
+/* Comments Container */
+.commentsContainer {
+  margin-top: 0;
+  padding-left: 16px;
+  border-left: 2px solid #e3f2fd;
+}
+
+.commentItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 3px 0;
+  margin-bottom: 2px;
+  min-height: 20px;
+}
+
+.commentIcon {
+  font-size: 10px;
+  color: #2196f3;
+  margin-top: 1px;
+  flex-shrink: 0;
+}
+
+.commentText {
+  font-size: 10px;
+  color: #2196f3;
+  line-height: 1.3;
+  font-family: 'Cairo', sans-serif;
+  font-style: italic;
+  word-wrap: break-word;
+  flex: 1;
+}
+
+/* Responsive للتعليقات */
+@media (max-width: 768px) {
+  .commentText {
+    font-size: 9px;
+  }
+  
+  .commentIcon {
+    font-size: 9px;
+  }
+}
+
+@media (max-width: 480px) {
+  .commentItem {
+    padding: 2px 0;
+    margin-bottom: 1px;
+    min-height: 16px;
+  }
+  
+  .commentText {
+    font-size: 8px;
+  }
+  
+  .commentIcon {
+    font-size: 8px;
+  }
+}
+
+
+
+
+
+
+
+
+
+
+/* زر الحذف المدمج */
+.deleteButtonInline {
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-left: 8px;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 16px;
+}
+
+.deleteButtonInline:hover {
+  background: #c82333;
+  transform: scale(1.1);
+}
+
+/* تحديث SubItem لتقليل المسافات */
+.subItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1px 0; /* تقليل المسافة */
+  margin-bottom: 0px; /* إزالة المسافة السفلية */
+  min-height: 18px; /* تقليل الارتفاع */
+  cursor: pointer;
+}
+
+.subItem:hover {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.subItemName {
+  font-size: 10px;
+  color: #666;
+  line-height: 1.1; /* تحسين المسافة بين الأسطر */
+  font-family: 'Cairo', sans-serif;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* تحديث OrderItemContainer لتقليل المسافة */
+.orderItemContainer {
+  margin-bottom: clamp(6px, 1vw, 10px); /* تقليل المسافة */
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  padding-bottom: clamp(4px, 0.8vw, 8px); /* تقليل المسافة */
+}
+
+/* تحديث SubItemsContainer */
+.subItemsContainer {
+  margin-top: -2px; /* تقليل الفجوة مع المنتج الأساسي */
+  padding-left: 12px; /* تقليل المسافة اليسرى */
+  border-left: 2px solid #f0f0f0;
+}
+
+/* تحديث SubItemDetails */
+.subItemDetails {
+  display: flex;
+  align-items: center;
+  gap: 4px; /* تقليل المسافة */
+  flex: 1;
+}
+
+.subItemInfo {
+  display: flex;
+  align-items: center;
+  gap: 3px; /* تقليل المسافة */
+  flex: 1;
+}
+
+.subItemBadge {
+  width: 12px; /* زيادة الحجم قليلاً */
+  height: 12px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 7px;
+  font-weight: 600;
+  color: white;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+/* تحديث الـ responsive */
+@media (max-width: 768px) {
+  .deleteButtonInline {
+    font-size: 8px;
+    padding: 1px 4px;
+    min-width: 16px;
+    height: 14px;
+  }
+  
+  .subItem {
+    min-height: 16px;
+  }
+  
+  .subItemName {
+    font-size: 9px;
+  }
+}
+
+@media (max-width: 480px) {
+  .deleteButtonInline {
+    font-size: 7px;
+    padding: 1px 3px;
+    min-width: 14px;
+    height: 12px;
+  }
+  
+  .subItem {
+    min-height: 14px;
+  }
+  
+  .subItemName {
+    font-size: 8px;
+  }
+  
+  .orderItemContainer {
+    margin-bottom: 4px;
+    padding-bottom: 4px;
+  }
+  
+  .subItemsContainer {
+    padding-left: 8px;
+  }
+}
+
+
+
+
+
+
+
+
+
+/* تحديث SubItemBadge */
+.subItemBadge {
+  width: 12px; /* زيادة الحجم قليلاً */
+  height: 12px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 7px;
+  font-weight: 600;
+  color: white;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+/* حالة الحذف - يكبر ويصبح قابل للنقر */
+.subItemBadge.deletable {
+  width: 18px;
+  height: 18px;
+  font-size: 10px;
+  cursor: pointer;
+  transform: scale(1.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.subItemBadge.deletable:hover {
+  transform: scale(1.2);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+}
+
+.subItemBadge.deletable:active {
+  transform: scale(1.0);
+}
+/* ألوان الـ badges */
+.subItemBadge.extra {
+  background: #28a745;
+}
+
+.subItemBadge.extra.deletable {
+  background: #dc3545; /* أحمر للحذف */
+}
+
+.subItemBadge.without {
+  background: #dc3545;
+}
+
+.subItemBadge.without.deletable {
+  background: #dc3545; /* يبقى أحمر */
+}
+
+.subItemBadge.option {
+  background: #6c757d;
+}
+
+.subItemBadge.option.deletable {
+  background: #dc3545; /* أحمر للحذف */
+}
+
+/* تحسين للتابلت */
+@media (max-width: 1024px) {
+  .subItemBadge.deletable {
+    width: 22px; /* أكبر للتابلت */
+    height: 22px;
+    font-size: 12px;
+  }
+}
+
+/* تحسين للموبايل */
+@media (max-width: 768px) {
+  .subItemBadge.deletable {
+    width: 20px;
+    height: 20px;
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 480px) {
+  .subItemBadge.deletable {
+    width: 24px; /* أكبر للشاشات الصغيرة */
+    height: 24px;
+    font-size: 12px;
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* إضافة هذه الأنماط لـ OrderSummary.module.css */
+
+.customerInputContainer {
+  position: relative;
+  margin-bottom: var(--spacing-lg);
+}
+
+.customerInput {
+  display: flex;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.customerField {
+  flex: 1;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: none;
+  font-size: clamp(10px, 1.2vw, 14px);
+  font-family: 'Cairo', sans-serif;
+  background: transparent;
+}
+
+.customerField:focus {
+  outline: none;
+}
+
+.customerButton {
+  width: clamp(30px, 4vw, 45px);
+  background: var(--primary-blue);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease;
+}
+
+.customerButton:hover {
+  background: #025bb5;
+}
+
+.customerButton img {
+  width: clamp(12px, 1.4vw, 18px);
+  height: clamp(12px, 1.4vw, 18px);
+}
+
+/* Customer Dropdown Styles */
+.customerDropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid var(--border-color);
+  border-top: none;
+  border-radius: 0 0 6px 6px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.dropdownHeader {
+  padding: 8px 12px;
+  background: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+  font-size: 12px;
+  font-weight: 600;
+  color: #495057;
+}
+
+.customerOption {
+  padding: 12px;
+  cursor: pointer;
+  border-bottom: 1px solid #f1f3f4;
+  transition: background 0.2s ease;
+}
+
+.customerOption:hover {
+  background: #f8f9fa;
+}
+
+.customerOption:last-child {
+  border-bottom: none;
+}
+
+.customerInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.customerName {
+  font-weight: 600;
+  font-size: 14px;
+  color: #333;
+}
+
+.customerPhone {
+  font-size: 12px;
+  color: #666;
+}
+
+.customerDetails {
+  font-size: 11px;
+  color: #999;
+}
+
+.searchingMessage {
+  padding: 16px;
+  text-align: center;
+  color: #666;
+  font-size: 12px;
+}
+
+.noResults {
+  padding: 16px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.noResults span {
+  color: #666;
+  font-size: 12px;
+}
+
+.addNewCustomerBtn {
+  background: var(--primary-blue);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background 0.2s ease;
+}
+
+.addNewCustomerBtn:hover {
+  background: #025bb5;
+}
+
+/* Address Selection Dropdown */
+.addressSelectionContainer {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid var(--border-color);
+  border-top: none;
+  border-radius: 0 0 6px 6px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  z-index: 1001;
+  max-height: 250px;
+  overflow-y: auto;
+}
+
+.addressHeader {
+  padding: 8px 12px;
+  background: #e3f2fd;
+  border-bottom: 1px solid #bbdefb;
+  font-size: 12px;
+  font-weight: 600;
+  color: #1976d2;
+}
+
+.addressOption {
+  padding: 12px;
+  cursor: pointer;
+  border-bottom: 1px solid #f1f3f4;
+  transition: background 0.2s ease;
+}
+
+.addressOption:hover {
+  background: #f8f9fa;
+}
+
+.addressOption:last-child {
+  border-bottom: none;
+}
+
+.addressInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.addressLine {
+  font-weight: 600;
+  font-size: 13px;
+  color: #333;
+}
+
+.addressDetails {
+  font-size: 11px;
+  color: #666;
+}
+
+.addressLandmark {
+  font-size: 10px;
+  color: #999;
+  font-style: italic;
+}
+
+/* Selected Customer Display */
+.selectedCustomerInfo {
+  background: #e3f2fd;
+  border: 1px solid #bbdefb;
+  border-radius: 4px;
+  padding: 8px 12px;
+  margin-bottom: var(--spacing-md);
+}
+
+.customerDisplayName {
+  font-weight: 600;
+  font-size: 13px;
+  color: #1976d2;
+  margin-bottom: 4px;
+}
+
+.selectedAddressInfo {
+  font-size: 11px;
+  color: #1976d2;
+  opacity: 0.8;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .customerDropdown,
+  .addressSelectionContainer {
+    max-height: 200px;
+  }
+  
+  .customerOption,
+  .addressOption {
+    padding: 8px;
+  }
+  
+  .customerName,
+  .addressLine {
+    font-size: 12px;
+  }
+  
+  .customerPhone,
+  .addressDetails {
+    font-size: 10px;
+  }
+}
+
+
+
+
+
+
+.selectedOption {
+  background-color: #007bff !important;
+  color: white !important;
+}
+
+.selectedOption .customerName,
+.selectedOption .customerPhone,
+.selectedOption .customerDetails {
+  color: white !important;
+}
+
+.customerDropdown {
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.customerOption {
+  padding: 12px;
+  cursor: pointer;
+  border-bottom: 1px solid #eee;
+  transition: background-color 0.2s;
+}
+
+.customerOption:hover {
+  background-color: #f5f5f5;
+}
+
+.customerOption:last-child {
+  border-bottom: none;
+}
+
+
+
+/* أنماط البحث المحسن */
+.customerField:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.customerButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.selectedOption {
+  background-color: #007bff !important;
+  color: white;
+}
+
+.selectedOption .customerName,
+.selectedOption .customerPhone,
+.selectedOption .customerDetails {
+  color: white;
+}
+
+.addNewCustomerBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.searchingMessage {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  color: #666;
+  font-size: 14px;
+  justify-content: center;
+}
+
+.loadingSpinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid #007bff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+
+
+
+
+/* إضافة styles للحالة الخاصة بـ Takeaway */
+.takeawayButtons {
+  display: flex;
+  justify-content: center;
+}
+
+.takeawayButtons .actionButton.pay.fullWidth {
+  flex: 1;
+  min-width: 100%;
+  max-width: 100%;
+}
+
+/* للتأكد من أن الزر يأخذ العرض الكامل */
+.actionButton.fullWidth {
+  width: 100% !important;
+  flex-grow: 1;
+}
+
+===== src/Pages/pos/newSales/styles/PaymentPopup.module.css =====
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.popup {
+  background: #f5f5f5;
+  width: clamp(90vw, 95vw, 1800px);
+  height: clamp(85vh, 90vh, 1200px);
+  border-radius: clamp(8px, 1.5vw, 16px);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+/* Header */
+.header {
+  background: white;
+  height: clamp(60px, 10vh, 80px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 clamp(20px, 4vw, 40px);
+  border-bottom: 2px solid #e9ecef;
+  position: relative;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+}
+
+.logo img {
+  height: clamp(40px, 8vh, 60px);
+  width: auto;
+}
+
+.title {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: "Cairo-Bold", Helvetica;
+  font-weight: 700;
+  color: #333;
+  font-size: clamp(18px, 3vw, 24px);
+  margin: 0;
+  direction: rtl;
+}
+
+.closeBtn {
+  background: #ff6b6b;
+  color: white;
+  border: none;
+  width: clamp(30px, 5vw, 40px);
+  height: clamp(30px, 5vw, 40px);
+  border-radius: 50%;
+  font-size: clamp(18px, 3vw, 24px);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.closeBtn:hover {
+  background: #ff5252;
+  transform: scale(1.1);
+}
+
+/* المحتوى الرئيسي */
+.content {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: clamp(10px, 2vw, 20px);
+  padding: clamp(10px, 2vw, 20px);
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* الأجزاء الثلاثة */
+.leftSection,
+.centerSection,
+.rightSection {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  border-radius: clamp(8px, 1.5vw, 12px);
+  overflow: hidden;
+}
+
+
+
+
+/* Responsive Design لجميع شاشات الكمبيوتر/اللابتوب */
+
+/* شاشات كبيرة جداً 2560px+ */
+@media (min-width: 2560px) {
+  .popup {
+    width: 85vw;
+    height: 85vh;
+  }
+  
+  .content {
+    gap: clamp(20px, 2.5vw, 30px);
+    padding: clamp(20px, 2.5vw, 30px);
+  }
+}
+
+/* شاشات كبيرة 1920px - 2559px */
+@media (max-width: 2559px) and (min-width: 1920px) {
+  .popup {
+    width: 90vw;
+    height: 88vh;
+  }
+}
+
+/* شاشات قياسية 1680px - 1919px */
+@media (max-width: 1919px) and (min-width: 1680px) {
+  .popup {
+    width: 92vw;
+    height: 90vh;
+  }
+}
+
+/* شاشات متوسطة 1440px - 1679px */
+@media (max-width: 1679px) and (min-width: 1440px) {
+  .popup {
+    width: 95vw;
+    height: 92vh;
+  }
+  
+  .content {
+    gap: clamp(12px, 1.8vw, 18px);
+    padding: clamp(12px, 1.8vw, 18px);
+  }
+}
+
+/* شاشات صغيرة 1366px - 1439px */
+@media (max-width: 1439px) and (min-width: 1366px) {
+  .popup {
+    width: 98vw;
+    height: 95vh;
+  }
+  
+  .header {
+    height: clamp(50px, 8vh, 70px);
+    padding: 0 clamp(15px, 3vw, 30px);
+  }
+  
+  .content {
+    gap: clamp(10px, 1.5vw, 15px);
+    padding: clamp(10px, 1.5vw, 15px);
+  }
+}
+
+/* لابتوب كبير 1280px - 1365px */
+@media (max-width: 1365px) and (min-width: 1280px) {
+  .popup {
+    width: 99vw;
+    height: 98vh;
+    border-radius: clamp(6px, 1vw, 12px);
+  }
+  
+  .header {
+    height: clamp(50px, 7vh, 65px);
+  }
+  
+  .content {
+    gap: clamp(8px, 1.2vw, 12px);
+    padding: clamp(8px, 1.2vw, 12px);
+  }
+}
+
+/* لابتوب متوسط 1024px - 1279px */
+@media (max-width: 1279px) and (min-width: 1024px) {
+  .popup {
+    width: 100vw;
+    height: 100vh;
+    border-radius: 0;
+  }
+  
+  .header {
+    height: clamp(45px, 6vh, 60px);
+    padding: 0 clamp(12px, 2vw, 20px);
+  }
+  
+  .logo img {
+    height: clamp(35px, 6vh, 50px);
+  }
+  
+  .title {
+    font-size: clamp(16px, 2.5vw, 20px);
+  }
+  
+  .closeBtn {
+    width: clamp(28px, 4vw, 35px);
+    height: clamp(28px, 4vw, 35px);
+    font-size: clamp(16px, 2.5vw, 20px);
+  }
+  
+  .content {
+    gap: clamp(6px, 1vw, 10px);
+    padding: clamp(6px, 1vw, 10px);
+  }
+}
+
+/* لابتوب صغير/تابلت كبير 768px - 1023px */
+@media (max-width: 1023px) {
+  .popup {
+    width: 100vw;
+    height: 100vh;
+    border-radius: 0;
+  }
+  
+  .header {
+    height: clamp(40px, 5vh, 50px);
+    padding: 0 clamp(10px, 1.5vw, 15px);
+  }
+  
+  .logo img {
+    height: clamp(30px, 4vh, 40px);
+  }
+  
+  .title {
+    font-size: clamp(14px, 2vw, 18px);
+  }
+  
+  .closeBtn {
+    width: clamp(25px, 3.5vw, 30px);
+    height: clamp(25px, 3.5vw, 30px);
+    font-size: clamp(14px, 2vw, 18px);
+  }
+  
+  .content {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(0, 0.4fr) minmax(0, 1fr) minmax(0, 0.6fr);
+    gap: clamp(5px, 0.8vw, 8px);
+    padding: clamp(5px, 0.8vw, 8px);
+  }
+  
+  .leftSection {
+    order: 1;
+    overflow-y: auto;
+  }
+  
+  .centerSection {
+    order: 2;
+  }
+  
+  .rightSection {
+    order: 3;
+    overflow-y: auto;
+  }
+}
+
+/* شاشات صغيرة جداً */
+@media (max-width: 768px) {
+  .content {
+    grid-template-rows: minmax(200px, 30vh) 1fr minmax(150px, 25vh);
+  }
+}
+
+@media (max-width: 480px) {
+  .header {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+  
+  .title {
+    position: static;
+    transform: none;
+    font-size: clamp(12px, 3vw, 16px);
+  }
+  
+  .content {
+    grid-template-rows: minmax(150px, 25vh) 1fr minmax(120px, 20vh);
+  }
+}
+
+
+.loadingOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  border-radius: inherit;
+}
+
+.loadingContent {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.loadingContent p {
+  margin-top: 1rem;
+  font-family: 'Cairo', sans-serif;
+  font-size: 1.1rem;
+  color: #333;
+}
+
+===== src/Pages/pos/newSales/styles/popup.css =====
+/* src/Pages/pos/newSales/styles/popup.css */
+.popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.popup-content {
+  background: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 80vh;
+  overflow: hidden;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+.popup-header {
+  padding: 20px;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.popup-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.popup-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+}
+
+
+.popup-close:hover {
+  background: #f0f0f0;
+  transform: scale(1.1);
+}
+
+.popup-close img {
+  width: 20px;
+  height: 20px;
+}
+
+.popup-close .MuiSvgIcon-root {
+  font-size: 20px !important;
+  color: var(--text-secondary) !important;
+  transition: color 0.2s ease;
+}
+
+.popup-close:hover .MuiSvgIcon-root {
+  color: var(--text-primary) !important;
+}
+
+.popup-body {
+  padding: 20px;
+}
+
+.quantity-display {
+  text-align: center;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--primary-blue);
+  margin-bottom: 20px;
+  padding: 10px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.prices-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 15px;
+}
+
+.price-card {
+  background: white;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.price-card:hover {
+  border-color: var(--primary-blue);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(3, 115, 237, 0.2);
+}
+
+.price-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-align: center;
+}
+
+.price-value {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+}
+
+.price-value .price {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--primary-blue);
+}
+
+.price-value .currency {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .popup-content {
+    width: 95%;
+    margin: 20px;
+  }
+  
+  .prices-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .popup-header {
+    padding: 15px;
+  }
+  
+  .popup-body {
+    padding: 15px;
+  }
+}
+
+
+
+@media (max-width: 768px) {
+  .popup-close {
+    width: 32px;
+    height: 32px;
+    padding: 6px;
+  }
+  
+  .popup-close .MuiSvgIcon-root {
+    font-size: 18px !important;
+  }
+}
+
+
+.options-popup {
+  max-width: 600px;
+  max-height: 85vh;
+}
+
+.popup-title-section {
+  flex: 1;
+}
+
+.popup-subtitle {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+.group-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.group-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.group-progress {
+  font-size: 12px;
+  color: var(--text-secondary);
+  background: #f0f0f0;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.group-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding: 10px;
+  background: #f8f9fa;
+  border-radius: 6px;
+}
+
+.selection-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.required-badge {
+  background: var(--primary-red);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.selection-count {
+  font-size: 14px;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.min-selection {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.options-list {
+  max-height: 300px;
+  overflow-y: auto;
+  margin-bottom: 20px;
+}
+
+.option-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  transition: all 0.2s ease;
+}
+
+.option-item:hover {
+  border-color: var(--primary-blue);
+  background: #f8f9ff;
+}
+
+.option-info {
+  flex: 1;
+}
+
+.option-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.option-price {
+  font-size: 14px;
+  color: var(--primary-green);
+  font-weight: 500;
+}
+
+.comment-only {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.option-controls {
+  display: flex;
+  align-items: center;
+}
+
+.quantity-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.quantity-btn {
+  width: 32px;
+  height: 32px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.quantity-btn:hover:not(:disabled) {
+  border-color: var(--primary-blue);
+  background: #f8f9ff;
+}
+
+.quantity-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.quantity-btn.plus {
+  border-color: var(--primary-green);
+  color: var(--primary-green);
+}
+
+.quantity-btn.minus {
+  border-color: var(--primary-red);
+  color: var(--primary-red);
+}
+
+.quantity-display {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  min-width: 20px;
+  text-align: center;
+}
+
+.select-btn {
+  padding: 8px 16px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: white;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.select-btn:hover {
+  border-color: var(--primary-blue);
+  background: #f8f9ff;
+}
+
+.select-btn.selected {
+  background: var(--primary-blue);
+  color: white;
+  border-color: var(--primary-blue);
+}
+
+.popup-footer {
+  border-top: 1px solid #eee;
+  padding: 15px 20px;
+}
+
+.footer-buttons {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.footer-buttons button {
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-cancel {
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  color: var(--text-primary);
+}
+
+.btn-cancel:hover {
+  background: #e0e0e0;
+}
+
+.btn-back {
+  background: #f8f9fa;
+  border: 1px solid #ddd;
+  color: var(--text-primary);
+}
+
+.btn-back:hover {
+  background: #e9ecef;
+}
+
+.btn-skip {
+  background: var(--primary-orange);
+  border: 1px solid var(--primary-orange);
+  color: white;
+}
+
+.btn-skip:hover {
+  opacity: 0.9;
+}
+
+.btn-skip:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-next {
+  background: var(--primary-blue);
+  border: 1px solid var(--primary-blue);
+  color: white;
+}
+
+.btn-next:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.btn-next:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* عرض الخيارات في الفاتورة */
+.item-options {
+  margin-top: 4px;
+  padding-left: 10px;
+}
+
+.option-detail {
+  margin-bottom: 2px;
+}
+
+.option-text {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-weight: 400;
+  line-height: 1.3;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .options-popup {
+    width: 98%;
+    max-height: 90vh;
+  }
+  
+  .option-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .option-controls {
+    align-self: flex-end;
+  }
+  
+  .footer-buttons {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  
+  .footer-buttons button {
+    flex: 1;
+    min-width: 80px;
+  }
+}
+===== src/Pages/pos/newSales/styles/PriceSelectionPopup.module.css =====
+/* src/Pages/pos/newSales/components/PriceSelectionPopup.module.css */
+
+.popupOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.popupContent {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  width: 50%;
+  max-height: 80vh;
+  overflow-y: auto;
+  animation: slideIn 0.3s ease-out;
+}
+
+.popupHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.popupTitle {
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+}
+
+.popupClose {
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: #f5f5f5;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.popupClose:hover {
+  background: #e9ecef;
+  transform: scale(1.1);
+}
+
+.popupBody {
+  padding: 20px;
+}
+
+.quantityDisplay {
+  text-align: center;
+  font-size: 16px;
+  font-weight: 500;
+  color: #666;
+  margin-bottom: 20px;
+  padding: 10px;
+  background: #f8f9fa;
+  border-radius: 6px;
+}
+
+.pricesGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 15px;
+}
+
+.priceCard {
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  padding: 20px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.priceCard:hover {
+  border-color: #0373ed;
+  background: #f8f9ff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(3, 115, 237, 0.2);
+}
+
+.priceName {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.priceValue {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+}
+
+.price {
+  font-size: 24px;
+  font-weight: 700;
+  color: #0373ed;
+}
+
+.currency {
+  font-size: 14px;
+  color: #666;
+  font-weight: 500;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-50px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .popupContent {
+    width: 95%;
+    margin: 10px;
+  }
+  
+  .pricesGrid {
+    grid-template-columns: 1fr;
+  }
+  
+  .popupHeader {
+    padding: 15px;
+  }
+  
+  .popupBody {
+    padding: 15px;
+  }
+  
+  .popupTitle {
+    font-size: 18px;
+  }
+}
+
+===== src/Pages/pos/newSales/styles/ProductCard.module.css =====
+/* src/Pages/pos/newSales/styles/ProductCard.module.css */
+
+.productCard {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  height: auto; /* تغيير من fixed height إلى auto */
+  min-height: 180px; /* حد أدنى للارتفاع */
+}
+
+.productCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.productCard:active {
+  transform: translateY(-2px);
+}
+
+.productImageContainer {
+  position: relative;
+  width: 100%;
+  height: 120px; /* ارتفاع ثابت للصورة */
+  overflow: hidden;
+}
+
+.productImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.productCard:hover .productImage {
+  transform: scale(1.05);
+}
+
+/* النص المعروض على الصورة (السعر) */
+.priceOverlay {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(3, 115, 237, 0.9);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  backdrop-filter: blur(4px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.productInfo {
+  padding: 12px;
+  flex: 1; /* يأخذ باقي المساحة المتاحة */
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.productName {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+  line-height: 1.4;
+  text-align: center;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  /* إزالة height constraints لتسمح بالتوسع */
+}
+
+/* Responsive Design */
+@media (max-width: 1366px) {
+  .productCard {
+    min-height: 160px;
+  }
+  
+  .productImageContainer {
+    height: 100px;
+  }
+  
+  .productName {
+    font-size: 13px;
+  }
+  
+  .priceOverlay {
+    font-size: 11px;
+    padding: 3px 6px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .productCard {
+    min-height: 140px;
+  }
+  
+  .productImageContainer {
+    height: 90px;
+  }
+  
+  .productName {
+    font-size: 12px;
+  }
+  
+  .productInfo {
+    padding: 10px;
+  }
+  
+  .priceOverlay {
+    font-size: 10px;
+    padding: 2px 5px;
+  }
+}
+
+@media (max-width: 768px) {
+  .productCard {
+    min-height: 120px;
+  }
+  
+  .productImageContainer {
+    height: 80px;
+  }
+  
+  .productName {
+    font-size: 11px;
+  }
+  
+  .productInfo {
+    padding: 8px;
+  }
+  
+  .priceOverlay {
+    font-size: 9px;
+    padding: 2px 4px;
+  }
+}
+
+@media (max-width: 480px) {
+  .productCard {
+    min-height: 100px;
+  }
+  
+  .productImageContainer {
+    height: 70px;
+  }
+  
+  .productName {
+    font-size: 10px;
+  }
+  
+  .productInfo {
+    padding: 6px;
+  }
+  
+  .priceOverlay {
+    font-size: 8px;
+    padding: 1px 3px;
+  }
+}
+
+===== src/Pages/pos/newSales/styles/ProductOptionsPopup.module.css =====
+/* src/Pages/pos/newSales/components/ProductOptionsPopup.module.css */
+
+.popupOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.popupContent {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  max-width: 700px;
+  width: 50%;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+.popupHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 20px;
+  border-bottom: 1px solid #e9ecef;
+  background: #f8f9fa;
+}
+
+.popupTitleSection {
+  flex: 1;
+}
+
+.popupTitle {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 5px 0;
+  font-family: 'Cairo', sans-serif;
+}
+
+.popupSubtitle {
+  font-size: 14px;
+  color: #666;
+  margin: 0;
+  font-family: 'Cairo', sans-serif;
+}
+
+.popupClose {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: #e9ecef;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.popupClose:hover {
+  background: #dee2e6;
+  transform: scale(1.1);
+}
+
+.popupBody {
+  padding: 20px;
+}
+
+.optionsContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+.optionGroup {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 20px;
+  border-left: 4px solid #0373ed;
+}
+
+.groupHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.groupTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.groupName {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  font-family: 'Cairo', sans-serif;
+}
+
+.requiredBadge {
+  background: #e74c3c;
+  color: white;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 500;
+  font-family: 'Cairo', sans-serif;
+}
+
+.groupInfo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #666;
+  font-family: 'Cairo', sans-serif;
+}
+
+.selectionCount {
+  font-weight: 600;
+  color: #0373ed;
+}
+
+.minSelection {
+  color: #666;
+}
+
+.optionsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 12px;
+}
+
+.optionCard {
+  background: white;
+  border: 2px solid #e9ecef;
+  border-radius: 12px;
+  padding: 16px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.optionCard:hover {
+  border-color: #0373ed;
+  background: rgba(3, 115, 237, 0.05);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(3, 115, 237, 0.15);
+}
+
+.optionCard.selected {
+  border-color: #0373ed;
+  background: rgba(3, 115, 237, 0.1);
+  box-shadow: 0 4px 16px rgba(3, 115, 237, 0.2);
+}
+
+.optionContent {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+  text-align: center;
+}
+
+.optionInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.optionName {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  line-height: 1.3;
+  font-family: 'Cairo', sans-serif;
+}
+
+.optionPrice {
+  font-size: 12px;
+  color: #e74c3c;
+  font-weight: 500;
+  font-family: 'Cairo', sans-serif;
+}
+
+.optionControls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+/* للمجموعات المتعددة */
+.quantitySection {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  justify-content: center;
+}
+
+.removeBtn {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 50%;
+  background: #dc3545;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(220, 53, 69, 0.2);
+}
+
+.removeBtn:hover {
+  background: #c82333;
+  transform: scale(1.1);
+  box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+}
+
+.quantityBadge {
+  background: #0373ed;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 14px;
+  font-weight: 600;
+  min-width: 32px;
+  text-align: center;
+  font-family: 'Cairo', sans-serif;
+  box-shadow: 0 2px 4px rgba(3, 115, 237, 0.2);
+}
+
+.addIcon {
+  width: 32px;
+  height: 32px;
+  border: 2px dashed #0373ed;
+  border-radius: 50%;
+  color: #0373ed;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.optionCard:hover .addIcon {
+  border-style: solid;
+  background: rgba(3, 115, 237, 0.1);
+}
+
+.maxReached {
+  padding: 6px 12px;
+  background: #f8f9fa;
+  border-radius: 16px;
+  font-size: 12px;
+  color: #666;
+  font-family: 'Cairo', sans-serif;
+}
+
+/* للمجموعات الفردية */
+.singleSelect {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.selectedIcon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #28a745;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(40, 167, 69, 0.2);
+}
+
+.unselectedIcon {
+  width: 32px;
+  height: 32px;
+  border: 2px dashed #0373ed;
+  border-radius: 50%;
+  color: #0373ed;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.optionCard:hover .unselectedIcon {
+  border-style: solid;
+  background: rgba(3, 115, 237, 0.1);
+}
+
+.totalSection {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #e9ecef;
+}
+
+.totalRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 18px;
+  font-weight: 600;
+  font-family: 'Cairo', sans-serif;
+}
+
+.totalLabel {
+  color: #333;
+}
+
+.totalValue {
+  color: #0373ed;
+}
+
+.popupFooter {
+  display: flex;
+  gap: 12px;
+  padding: 20px;
+  border-top: 1px solid #e9ecef;
+  background: #f8f9fa;
+}
+
+.btnCancel {
+  flex: 1;
+  padding: 12px;
+  background: #f8f9fa;
+  color: #666;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  font-family: 'Cairo', sans-serif;
+}
+
+.btnCancel:hover {
+  background: #e9ecef;
+}
+
+.btnConfirm {
+  flex: 2;
+  padding: 12px;
+  background: #0373ed;
+  color: white;
+  border: 1px solid #0373ed;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  font-family: 'Cairo', sans-serif;
+}
+
+.btnConfirm:hover:not(:disabled) {
+  background: #0256c7;
+}
+
+.btnConfirm:disabled {
+  background: #ccc;
+  border-color: #ccc;
+  cursor: not-allowed;
+}
+
+/* تأثيرات النقر */
+.optionCard:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(3, 115, 237, 0.2);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .popupContent {
+    width: 98%;
+    max-height: 90vh;
+  }
+  
+  .optionsGrid {
+    grid-template-columns: 1fr;
+  }
+  
+  .groupHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .popupFooter {
+    flex-direction: column;
+  }
+  
+  .optionGroup {
+    padding: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .popupHeader {
+    padding: 15px;
+  }
+  
+  .popupBody {
+    padding: 15px;
+  }
+  
+  .optionCard {
+    padding: 12px;
+  }
+  
+  .popupTitle {
+    font-size: 16px;
+  }
+  
+  .groupName {
+    font-size: 14px;
+  }
+  
+  .optionName {
+    font-size: 13px;
+  }
+  
+  .removeBtn {
+    width: 24px;
+    height: 24px;
+  }
+  
+  .quantityBadge {
+    padding: 4px 8px;
+    font-size: 12px;
+  }
+  
+  .selectedIcon,
+  .unselectedIcon,
+  .addIcon {
+    width: 28px;
+    height: 28px;
+  }
+}
+
+===== src/Pages/pos/newSales/styles/responsive.css =====
+/* src/Pages/pos/newSales/styles/responsive.css */
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap');
+
+
+html[dir="rtl"] .pos-system,
+html[dir="rtl"] .pos-system * {
+  direction: ltr !important;
+}
+
+
+/* تحديد نظام الوحدات المرن */
+:root {
+  --base-font-size: clamp(10px, 0.8vw, 16px);
+  --scale-factor: clamp(0.8, 1vw, 1.2);
+  
+  /* Colors */
+  --primary-blue: #0373ed;
+  --primary-green: #23a929;
+  --primary-red: #e53935;
+  --primary-orange: #ffb74d;
+  --bg-main: #f5f5f5;
+  --bg-white: #ffffff;
+  --text-primary: #000000;
+  --text-secondary: rgba(0, 0, 0, 0.7);
+  --border-color: rgba(0, 0, 0, 0.2);
+  
+  /* Responsive spacing */
+  --spacing-xs: calc(0.25rem * var(--scale-factor));
+  --spacing-sm: calc(0.5rem * var(--scale-factor));
+  --spacing-md: calc(1rem * var(--scale-factor));
+  --spacing-lg: calc(1.5rem * var(--scale-factor));
+  --spacing-xl: calc(2rem * var(--scale-factor));
+  --spacing-xxl: calc(3rem * var(--scale-factor));
+  
+  /* Component heights */
+  --header-height: clamp(60px, 8vh, 100px);
+  --keypad-height: clamp(80px, 8vh, 120px);
+  --action-bar-height: clamp(50px, 7vh, 80px);
+}
+
+/* Reset and base styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+      font-family: 'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+
+}
+
+html {
+  font-size: var(--base-font-size);
+  height: 100%;
+}
+
+body {
+  font-family: 'Nunito', sans-serif;
+  background-color: var(--bg-main);
+  color: var(--text-primary);
+  height: 100%;
+  overflow: hidden;
+    direction: ltr !important;
+
+}
+
+/* Main container */
+.pos-system {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+    direction: ltr !important;
+}
+
+/* Top Bar */
+.top-bar {
+  height: var(--header-height);
+  background: var(--bg-white);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
+}
+
+.top-bar-content {
+  height: 100%;
+  padding: 0 var(--spacing-xl);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.logo {
+  height: 70%;
+  width: auto;
+  object-fit: contain;
+}
+
+.nav-items {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-lg);
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: 6px;
+  text-decoration: none;
+  color: var(--text-primary);
+  font-size: clamp(12px, 1.2vw, 18px);
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.nav-item:hover {
+  background: rgba(3, 115, 237, 0.1);
+}
+
+.nav-item.active {
+  color: var(--primary-blue);
+}
+
+.nav-item img {
+  width: clamp(16px, 1.8vw, 24px);
+  height: clamp(16px, 1.8vw, 24px);
+}
+
+.order-type-select {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: clamp(12px, 1.2vw, 16px);
+  font-family: 'Nunito', sans-serif;
+  background: var(--bg-white);
+  min-width: 120px;
+}
+
+.menu-button {
+  padding: var(--spacing-sm);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 0.2s ease;
+}
+
+.menu-button:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.menu-button img {
+  width: clamp(20px, 2vw, 28px);
+  height: clamp(20px, 2vw, 28px);
+}
+
+/* Main Content */
+.main-content {
+  flex: 1;
+  display: flex;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  overflow: hidden;
+}
+
+/* Products Section */
+.products-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  overflow: hidden;
+}
+
+/* Number Pad Bar */
+.number-pad-bar {
+  height: var(--keypad-height);
+  display: flex;
+  background: var(--bg-white);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
+}
+
+.keypad-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 1px;
+  background: var(--border-color);
+}
+
+.keypad-key {
+  background: var(--bg-white);
+  border: none;
+  font-size: clamp(18px, 2.5vw, 32px);
+  font-weight: 600;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.keypad-key:hover {
+  background: #f8f9fa;
+}
+
+.keypad-display {
+  width: clamp(120px, 15vw, 200px);
+  background: var(--primary-blue);
+  color: white;
+  font-size: clamp(20px, 2.8vw, 36px);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* Action Buttons Bar */
+.action-buttons-bar {
+  height: var(--action-bar-height);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-md);
+  flex-shrink: 0;
+}
+
+.action-chips {
+  display: flex;
+  gap: var(--spacing-md);
+}
+
+.action-chip {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: 6px;
+  border: none;
+  color: white;
+  font-size: clamp(12px, 1.4vw, 18px);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  height: 100%;
+}
+
+.action-chip img {
+  width: clamp(14px, 1.6vw, 20px);
+  height: clamp(14px, 1.6vw, 20px);
+}
+
+.action-chip.extra { background: var(--primary-green); }
+.action-chip.without { background: var(--primary-red); }
+.action-chip.offer { background: var(--primary-orange); }
+
+.action-chip:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.search-container {
+  position: relative;
+  display: flex;
+  background: var(--bg-white);
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  height: 85%;
+}
+
+.search-icon {
+  position: absolute;
+  left: var(--spacing-md);
+  top: 50%;
+  transform: translateY(-50%);
+  width: clamp(14px, 1.6vw, 20px);
+  height: clamp(14px, 1.6vw, 20px);
+  z-index: 1;
+}
+
+.search-input {
+  width: clamp(200px, 25vw, 350px);
+  padding: var(--spacing-sm) var(--spacing-md);
+  padding-left: calc(var(--spacing-md) * 2 + 20px);
+  border: none;
+  font-size: clamp(12px, 1.4vw, 16px);
+  font-family: 'Nunito', sans-serif;
+  background: transparent;
+  height: 100%;
+}
+
+.search-input:focus {
+  outline: none;
+}
+
+.filter-button {
+  width: clamp(40px, 5vw, 60px);
+  background: var(--primary-blue);
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.filter-button:hover {
+  background: #025bb5;
+}
+
+.filter-button img {
+  width: clamp(16px, 1.8vw, 24px);
+  height: clamp(16px, 1.8vw, 24px);
+}
+
+/* Product Grid */
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  padding: 20px;
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+
+.product-grid::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+.product-grid::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.product-grid::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 3px;
+}
+
+.product-card {
+  aspect-ratio: 3/4;
+  background: var(--bg-white);
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: none;
+  display: flex;
+  flex-direction: column;
+    min-width: 0; /* للسماح بالتقلص */
+
+}
+
+.product-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.product-image {
+  width: 100%;
+  height: 70%;
+  object-fit: cover;
+    flex-shrink: 0;
+
+}
+
+.product-info {
+  height: 30%;
+  padding: clamp(4px, 0.8vw, 12px);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: clamp(4px, 0.6vw, 8px);
+  width: 100%;
+  min-height: 0;
+}
+
+.product-name {
+  font-family: 'Cairo', sans-serif;
+  font-size: clamp(8px, 1.2vw, 16px);
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.2;
+  text-align: right; /* محاذاة لليمين للنص العربي */
+  flex: 1; /* يأخذ المساحة المتاحة */
+  min-width: 0; /* يسمح بالتقلص */
+  word-wrap: break-word;
+    flex-direction: row; /* تغيير من column إلى row */
+
+  overflow-wrap: break-word;
+  hyphens: auto;
+  display: -webkit-box;
+  -webkit-line-clamp: 2; /* السماح بسطرين كحد أقصى */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.product-price {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(2px, 0.3vw, 4px);
+  width: 100%;
+}
+
+.product-price .price {
+  font-size: clamp(9px, 1.4vw, 18px);
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap; /* منع النقل للسطر التالي */
+}
+.product-price .currency {
+  font-size: clamp(7px, 1vw, 14px);
+  font-weight: 600;
+  color: var(--text-secondary);
+  white-space: nowrap; /* منع النقل للسطر التالي */
+}
+
+/* Categories Sidebar */
+.categories-sidebar {
+  width: clamp(80px, 10vw, 120px);
+  background: transparent;
+  flex-shrink: 0;
+}
+
+.categories-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  height: 100%;
+  overflow-y: auto;
+  padding: var(--spacing-sm);
+ scrollbar-width: none;
+  scrollbar-color: var(--border-color) transparent;
+}
+
+.categories-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.categories-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.categories-list::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 2px;
+}
+
+.category-item {
+  aspect-ratio: 1;
+  background: var(--bg-white);
+  border-radius: 8px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-sm);
+  text-align: center;
+}
+
+.category-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.category-item.active {
+  border-color: var(--primary-blue);
+}
+
+.category-item img {
+  width: clamp(24px, 3vw, 48px);
+  height: clamp(24px, 3vw, 48px);
+  object-fit: contain;
+}
+
+.category-item span {
+  font-family: 'Cairo', sans-serif;
+  font-size: clamp(8px, 1vw, 14px);
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+/* Order Summary */
+.order-summary {
+  width: clamp(280px, 35vw, 400px);
+  background: var(--bg-white);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
+}
+
+.order-header {
+  height: clamp(50px, 7vh, 80px);
+  display: flex;
+  flex-shrink: 0;
+}
+
+.order-number {
+  flex: 1;
+  background: var(--primary-blue);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(16px, 2vw, 24px);
+  font-weight: 700;
+  border-radius: 8px 0 0 0;
+}
+
+.order-total {
+  width: clamp(100px, 12vw, 150px);
+  border: 2px solid var(--primary-blue);
+  color: var(--primary-blue);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+  border-radius: 0 8px 0 0;
+}
+
+.order-total .amount {
+  font-size: clamp(16px, 2vw, 24px);
+  font-weight: 700;
+}
+
+.order-total .currency {
+  font-size: clamp(10px, 1.2vw, 16px);
+  font-weight: 600;
+}
+
+.order-content {
+  flex: 1;
+  padding: var(--spacing-lg);
+  overflow-y: auto;
+  scrollbar-width: none;
+  scrollbar-color: var(--border-color) transparent;
+}
+
+.order-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.order-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.order-content::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 3px;
+}
+
+.order-title {
+  font-size: clamp(14px, 1.6vw, 20px);
+  font-weight: 700;
+  margin-bottom: var(--spacing-lg);
+  color: var(--text-primary);
+  
+}
+
+.customer-input {
+  display: flex;
+  margin-bottom: var(--spacing-lg);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.customer-field {
+  flex: 1;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: none;
+  font-size: clamp(10px, 1.2vw, 14px);
+  font-family: 'Nunito', sans-serif;
+  background: transparent;
+}
+
+.customer-field:focus {
+  outline: none;
+}
+
+.customer-button {
+  width: clamp(30px, 4vw, 45px);
+  background: var(--primary-blue);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease;
+}
+
+.customer-button:hover {
+  background: #025bb5;
+}
+
+.customer-button img {
+  width: clamp(12px, 1.4vw, 18px);
+  height: clamp(12px, 1.4vw, 18px);
+}
+
+.order-items {
+  max-height: 50vh; /* زيادة من 40vh إلى 50vh */
+  margin-bottom: var(--spacing-md); /* كان var(--spacing-lg) */
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-color) transparent;
+}
+
+.order-items::-webkit-scrollbar {
+  width: 4px;
+}
+
+.order-items::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.order-items::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 2px;
+}
+
+.order-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-bottom: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.item-details {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: flex-start;
+  flex: 1;
+  min-width: 0; /* للسماح بالتقلص */
+}
+
+.delete-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: var(--spacing-xs);
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+.delete-button:hover {
+  background: rgba(229, 57, 53, 0.1);
+}
+
+.delete-button img {
+  width: clamp(12px, 1.4vw, 16px);
+  height: clamp(12px, 1.4vw, 16px);
+}
+
+.item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.item-name {
+  font-size: clamp(11px, 1.3vw, 16px);
+  font-weight: 600;
+  margin-bottom: var(--spacing-xs);
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.item-extra {
+  font-size: clamp(9px, 1.1vw, 13px);
+  color: var(--text-secondary);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-xs);
+}
+
+.extra-price,
+.extra-total {
+  font-size: clamp(9px, 1.1vw, 13px);
+  color: var(--text-secondary);
+}
+
+.item-prices {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  flex-shrink: 0;
+  min-width: fit-content;
+}
+
+.item-price::after {
+  content: "|";
+  margin-left: var(--spacing-xs);
+  color: var(--text-secondary);
+  font-weight: normal;
+}
+
+.item-price {
+  font-size: clamp(10px, 1.2vw, 14px);
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.item-total {
+  font-size: clamp(11px, 1.3vw, 16px);
+  font-weight: 700;
+  color: var(--primary-blue);
+  white-space: nowrap;
+}
+
+.order-footer {
+  padding: var(--spacing-md); /* كان var(--spacing-lg) */
+  border-top: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+.summary-rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm); /* كان var(--spacing-md) */
+  margin-bottom: var(--spacing-md); /* كان var(--spacing-lg) */
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: clamp(10px, 1.2vw, 15px); /* كان 11px, 1.3vw, 16px */
+  font-weight: 500;
+  line-height: 1.3; /* إضافة line-height للوضوح */
+}
+
+.summary-row span:last-child {
+  font-weight: 700;
+  color: var(--text-primary); /* تأكيد اللون */
+}
+
+.total-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: clamp(13px, 1.5vw, 19px); /* كان 14px, 1.6vw, 20px */
+  font-weight: 700;
+  padding-top: var(--spacing-md); /* كان var(--spacing-lg) */
+  border-top: 2px solid var(--border-color);
+  margin-bottom: var(--spacing-md); /* كان var(--spacing-lg) */
+}
+
+.action-buttons {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-md);
+}
+
+.action-button {
+  height: clamp(40px, 6vh, 60px);
+  border-radius: 6px;
+  border: none;
+  color: white;
+  font-size: clamp(10px, 1.2vw, 16px);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+}
+
+.action-button img {
+  width: clamp(12px, 1.4vw, 18px);
+  height: clamp(12px, 1.4vw, 18px);
+}
+
+.action-button:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.action-button.send { background: var(--primary-red); }
+.action-button.print { background: var(--primary-blue); }
+.action-button.pay { background: var(--primary-green); }
+
+/* Responsive breakpoints */
+@media (max-width: 1366px) {
+  :root {
+    --scale-factor: 0.9;
+  }
+    .product-grid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+    .summary-rows {
+    gap: calc(var(--spacing-sm) * 0.8);
+  }
+  
+  .order-items {
+    max-height: 45vh;
+  }
+  
+}
+
+@media (max-width: 1024px) {
+  :root {
+    --scale-factor: 0.8;
+  }
+  
+  .product-grid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+    .summary-rows {
+    gap: calc(var(--spacing-sm) * 0.6);
+  }
+  
+  .order-items {
+    max-height: 42vh;
+  }
+}
+
+@media (min-width: 1920px) {
+  :root {
+    --scale-factor: 1.1;
+  }
+}
+
+@media (min-width: 2560px) {
+  :root {
+    --scale-factor: 1.3;
+  }
+}
+
+/* Print styles */
+@media print {
+  .pos-system {
+    transform: none !important;
+    width: 100% !important;
+    height: auto !important;
+  }
+}
+
+
+
+/* إضافة media query لمنطقة 1400-1600px */
+@media (min-width: 1400px) and (max-width: 1600px) {
+  :root {
+    --scale-factor: 0.95; /* قيمة وسط */
+    --base-font-size: clamp(12px, 1vw, 18px); /* تحسين الخط */
+  }
+  
+  .product-grid {
+    grid-template-columns: repeat(7, 1fr);
+    gap: var(--spacing-md);
+  }
+  
+  /* تثبيت ارتفاعات العناصر */
+  .action-buttons-bar {
+    height: clamp(55px, 8vh, 85px);
+  }
+  
+  
+  .top-bar {
+    height: clamp(65px, 9vh, 105px);
+  }
+}
+
+.loading-message {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 2rem;
+  font-size: 1.6rem;
+  color: var(--text-secondary);
+}
+
+.item-size {
+  font-size: clamp(9px, 1vw, 12px);
+  color: var(--primary-blue);
+  font-weight: 500;
+}
+
+.product-card .product-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.product-card .product-name {
+  order: 1;
+}
+
+.product-card .product-price {
+  order: 2;
+}
+
+
+.item-size-inline {
+  color: var(--primary-blue);
+  font-weight: 500;
+  font-size: 0.9em; /* أصغر قليلاً من اسم الصنف */
+}
+
+.back-button {
+  background-color: #f0f0f0 !important;
+  border: 2px solid #ddd !important;
+  color: var(--text-primary) !important;
+}
+
+.back-button:hover {
+  background-color: #e0e0e0 !important;
+}
+
+/* تحسين responsive للشاشات المختلفة */
+@media (max-width: 1366px) {
+  .product-name {
+    font-size: clamp(7px, 1.1vw, 14px);
+    -webkit-line-clamp: 2;
+  }
+  
+  .product-price .price {
+    font-size: clamp(8px, 1.3vw, 16px);
+  }
+  
+  .product-price .currency {
+    font-size: clamp(6px, 0.9vw, 12px);
+  }
+}
+
+@media (max-width: 1024px) {
+  .product-name {
+    font-size: clamp(6px, 1vw, 12px);
+    -webkit-line-clamp: 2;
+  }
+  
+  .product-price .price {
+    font-size: clamp(7px, 1.2vw, 14px);
+  }
+  
+  .product-price .currency {
+    font-size: clamp(5px, 0.8vw, 10px);
+  }
+  
+  .item-prices {
+    flex-direction: column;
+    gap: 2px;
+    align-items: flex-end;
+  }
+  
+  .item-price::after {
+    display: none;
+  }
+}
+
+/* للشاشات الكبيرة */
+@media (min-width: 1920px) {
+  .product-name {
+    font-size: clamp(10px, 1.4vw, 20px);
+  }
+  
+  .product-price .price {
+    font-size: clamp(12px, 1.6vw, 22px);
+  }
+  
+  .product-price .currency {
+    font-size: clamp(9px, 1.2vw, 18px);
+  }
+}
+
+/* جعل الصفحة دائماً LTR */
+.pos-system {
+  direction: ltr !important;
+}
+
+.pos-system * {
+  direction: ltr !important;
+}
+
+/* تحسين شكل الـ Material UI Icons */
+.back-button {
+  background-color: #f0f0f0 !important;
+  border: 2px solid #ddd !important;
+  color: var(--text-primary) !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+.back-button:hover {
+  background-color: #e0e0e0 !important;
+}
+
+.back-button .MuiSvgIcon-root {
+  font-size: 18px !important;
+  color: var(--text-primary) !important;
+}
+
+/* تحسين شكل زر الإغلاق في الـ popup */
+.popup-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 6px;
+  transition: background 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.popup-close:hover {
+  background: #f0f0f0;
+}
+
+.popup-close .MuiSvgIcon-root {
+  font-size: 20px !important;
+  color: var(--text-secondary) !important;
+}
+
+.popup-close:hover .MuiSvgIcon-root {
+  color: var(--text-primary) !important;
+}
+
+/* التأكد من أن الـ popup overlay يمكن الضغط عليه */
+.popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  cursor: pointer; /* إضافة cursor للإشارة أنه قابل للضغط */
+}
+
+.popup-content {
+  cursor: default; /* إزالة cursor من المحتوى */
+  /* باقي الـ styles كما هي */
+}
+
+/* إضافة animation للـ popup */
+.popup-overlay {
+  animation: fadeIn 0.2s ease-out;
+}
+
+.popup-content {
+  animation: slideIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+
+/* ضمان عدد المنتجات في الصف حسب حجم الشاشة */
+
+/* شاشات كبيرة جداً - 7 منتجات */
+@media (min-width: 1920px) {
+  .product-grid {
+    grid-template-columns: repeat(7, 1fr);
+    gap: 20px;
+    padding: 24px;
+  }
+}
+
+/* شاشات كبيرة - 6-7 منتجات */
+@media (max-width: 1600px) {
+  .product-grid {
+    grid-template-columns: repeat(6, 1fr);
+    gap: 18px;
+    padding: 22px;
+  }
+}
+
+/* شاشات متوسطة - 6 منتجات */
+@media (max-width: 1400px) {
+  .product-grid {
+    grid-template-columns: repeat(6, 1fr);
+    gap: 16px;
+    padding: 20px;
+  }
+}
+
+/* شاشات لابتوب - 5-6 منتجات */
+@media (max-width: 1200px) {
+  .product-grid {
+    grid-template-columns: repeat(5, 1fr);
+    gap: 14px;
+    padding: 18px;
+  }
+}
+
+/* شاشات صغيرة - 5 منتجات */
+@media (max-width: 1024px) {
+  .product-grid {
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+    padding: 16px;
+  }
+}
+
+/* تابلت - 5 منتجات */
+@media (max-width: 768px) {
+  .product-grid {
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+    padding: 14px;
+  }
+}
+
+/* موبايل - 5 منتجات */
+@media (max-width: 480px) {
+  .product-grid {
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+    padding: 12px;
+  }
+}
+
+/* تحسينات إضافية للشبكة */
+.product-grid::-webkit-scrollbar {
+  width: 8px;
+}
+
+.product-grid::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.product-grid::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+.product-grid::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* تأثيرات الانتقال للشبكة */
+.product-grid {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+
+
+/* إضافة هذا للـ CSS الموجود */
+
+/* Order Item Selection */
+.order-item {
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.order-item.selected {
+  background: rgba(3, 115, 237, 0.1);
+  border-left: 4px solid #0373ed;
+}
+
+.order-item:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+/* Extra/Without Items */
+.extra-item {
+  border-left: 3px solid #28a745;
+}
+
+.without-item {
+  border-left: 3px solid #dc3545;
+}
+
+.extra-badge {
+  background: #28a745;
+  color: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  margin-right: 4px;
+  font-weight: 600;
+}
+
+.without-badge {
+  background: #dc3545;
+  color: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  margin-right: 4px;
+  font-weight: 600;
+}
+
+.item-total.negative {
+  color: #dc3545;
+  font-weight: 600;
+}
+/* Sub-items styling */
+.sub-items-container {
+  margin-top: 6px;
+  padding-left: 8px;
+  border-left: 2px solid #f0f0f0;
+}
+
+.sub-item {
+  margin-bottom: 3px;
+}
+
+.sub-item-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2px 0;
+}
+
+.sub-item-info {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+}
+
+.sub-item-badge {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+  font-weight: 600;
+  color: white;
+  flex-shrink: 0;
+}
+
+.sub-item-badge.extra {
+  background: #28a745;
+}
+
+.sub-item-badge.without {
+  background: #dc3545;
+}
+
+.sub-item-badge.option {
+  background: #6c757d;
+}
+
+.sub-item-text {
+  font-size: 10px;
+  color: #666;
+  line-height: 1.2;
+}
+
+.sub-item-delete {
+  width: 16px;
+  height: 16px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
+}
+
+.sub-item-delete:hover {
+  opacity: 1;
+}
+
+.sub-item-delete img {
+  width: 12px;
+  height: 12px;
+}
+
+/* Loading and Error states */
+.pos-system.loading,
+.pos-system.error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.loading-spinner {
+  font-size: 18px;
+  color: #666;
+}
+
+.error-message {
+  font-size: 16px;
+  color: #dc3545;
+  text-align: center;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .sub-item-text {
+    font-size: 9px;
+  }
+  
+  .sub-item-delete {
+    width: 14px;
+    height: 14px;
+  }
+  
+  .sub-item-delete img {
+    width: 10px;
+    height: 10px;
+  }
+}
+
+
+
+* تصميم التعليق */
+.item-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  margin-top: 4px;
+  padding: 3px 6px;
+  background: rgba(108, 117, 125, 0.1);
+  border-radius: 4px;
+  border-left: 2px solid #6c757d;
+}
+
+.note-icon {
+  font-size: 10px;
+  line-height: 1;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.note-text {
+  font-size: 10px;
+  color: #6c757d;
+  line-height: 1.2;
+  font-style: italic;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  flex: 1;
+}
+
+/* تأكيد أن التعليق بنفس حجم الخيارات */
+.item-note,
+.option-detail,
+.sub-item {
+  font-size: 10px;
+  line-height: 1.2;
+  margin-top: 3px;
+}
+
+/* Responsive للتعليقات */
+@media (max-width: 768px) {
+  .item-note {
+    padding: 2px 4px;
+    margin-top: 3px;
+  }
+  
+  .note-icon {
+    font-size: 9px;
+  }
+  
+  .note-text {
+    font-size: 9px;
+  }
+}
+
+@media (max-width: 480px) {
+  .item-note {
+    padding: 2px 3px;
+    margin-top: 2px;
+  }
+  
+  .note-icon {
+    font-size: 8px;
+  }
+  
+  .note-text {
+    font-size: 8px;
+  }
+}
+
+/* تحسينات إضافية */
+.item-note:empty {
+  display: none;
+}
+
+.note-text:empty {
+  display: none;
+}
+
+/* تأثير hover خفيف */
+.order-item:hover .item-note {
+  background: rgba(108, 117, 125, 0.15);
+}
+
+
+/* للمنتجات الإضافية */
+.order-item.extra-item .item-note {
+  background: rgba(40, 167, 69, 0.1);
+  border-left-color: #28a745;
+}
+
+.order-item.extra-item .note-text {
+  color: #28a745;
+}
+
+/* للمنتجات بدون */
+.order-item.without-item .item-note {
+  background: rgba(220, 53, 69, 0.1);
+  border-left-color: #dc3545;
+}
+
+.order-item.without-item .note-text {
+  color: #dc3545;
+}
+
+
+
+
+/* تحديث Sub-items styling */
+.order-item-container {
+  margin-bottom: 8px;
+}
+
+.sub-items-container {
+  margin-top: 6px;
+  padding-left: 20px;
+  border-left: 2px solid #f0f0f0;
+}
+
+.sub-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+  margin-bottom: 2px;
+  min-height: 24px;
+}
+
+.sub-item-details {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+}
+
+.sub-item-info {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+}
+
+.sub-item-badge {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+  font-weight: 600;
+  color: white;
+  flex-shrink: 0;
+}
+
+.sub-item-badge.extra {
+  background: #28a745;
+}
+
+.sub-item-badge.without {
+  background: #dc3545;
+}
+
+.sub-item-badge.option {
+  background: #6c757d;
+}
+
+.sub-item-name {
+  font-size: 10px;
+  color: #666;
+  line-height: 1.2;
+  font-family: 'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+}
+
+.sub-item-prices {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  min-width: 60px;
+}
+
+.sub-item-price {
+  font-size: 9px;
+  color: #999;
+  font-weight: 500;
+}
+
+.sub-item-total {
+  font-size: 10px;
+  color: #333;
+  font-weight: 600;
+}
+
+.sub-item-total.negative {
+  color: #dc3545;
+}
+
+.sub-item-delete {
+  width: 16px;
+  height: 16px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
+  margin-left: 4px;
+}
+
+.sub-item-delete:hover {
+  opacity: 1;
+}
+
+.sub-item-delete img {
+  width: 10px;
+  height: 10px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .sub-item-name {
+    font-size: 9px;
+  }
+  
+  .sub-item-price {
+    font-size: 8px;
+  }
+  
+  .sub-item-total {
+    font-size: 9px;
+  }
+  
+  .sub-item-delete {
+    width: 14px;
+    height: 14px;
+  }
+  
+  .sub-item-delete img {
+    width: 8px;
+    height: 8px;
+  }
+}
+
+
+/* حالة الأزرار المعطلة */
+.action-chip.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.action-chip.disabled:hover {
+  background: inherit;
+  border-color: inherit;
+  transform: none;
+  box-shadow: none;
+}
+
+.action-chip.disabled img {
+  opacity: 0.5;
+}
+
+.action-chip.disabled span {
+  opacity: 0.5;
+}
+
+/* تحسين الـ tooltip */
+.action-chip[title] {
+  position: relative;
+}
+
+.action-chip[title]:hover::after {
+  content: attr(title);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #333;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  z-index: 1000;
+  margin-bottom: 5px;
+}
+
+.action-chip[title]:hover::before {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: #333;
+  z-index: 1000;
+}
+
+
+
+===== src/Pages/pos/newSales/styles/TableSelectionPopup.module.css =====
+/* src/Pages/pos/newSales/components/TableSelectionPopup.module.css */
+
+/* Popup Overlay */
+.popupOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.popupContainer {
+  background: white;
+  border-radius: 16px;
+  width: 95%;
+  max-width: 1400px;
+  height: 90vh;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+/* Close Button */
+.closeBtn {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  z-index: 1001;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  font-family: 'Cairo', sans-serif;
+}
+
+.closeBtn:hover {
+  background: #c82333;
+  transform: translateY(-2px);
+}
+
+/* Main Layout */
+.posSystem {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.mainContent {
+  flex: 1;
+  display: flex;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Products Section (Tables) */
+.productsSection {
+  flex: 1;
+  background: #f8f9fa;
+  padding: 20px;
+  overflow-y: auto;
+  padding-top: 80px; /* Space for close button */
+}
+
+.productGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 16px;
+  padding: 20px;
+}
+
+.productItem {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+  position: relative;
+  min-height: 160px;
+}
+
+.productItem:hover:not(.occupied) {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  border-color: #0373ed;
+}
+
+.productItem.occupied {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: #f8f9fa;
+}
+
+.productItem.occupied::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(220, 53, 69, 0.1);
+  border-radius: 12px;
+}
+
+.productImage {
+  width: 60px;
+  height: 60px;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f0f0f0;
+}
+
+.productImage img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.productName {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.productName span {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  font-family: 'Cairo', sans-serif;
+}
+
+.productName small {
+  font-size: 12px;
+  color: #666;
+  font-family: 'Cairo', sans-serif;
+}
+
+.status {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 500;
+  margin-top: 4px;
+  display: inline-block;
+  font-family: 'Cairo', sans-serif;
+}
+
+.status.available {
+  background: #d4edda;
+  color: #155724;
+}
+
+.status.occupied {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+/* Categories Sidebar (Sections) */
+.categoriesSidebar {
+  width: 280px;
+  background: white;
+  border-left: 1px solid #e9ecef;
+  padding: 20px;
+  overflow-y: auto;
+  height: 100%;
+}
+
+.categoriesList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 20px;
+}
+
+.categoryItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+  text-align: left;
+}
+
+.categoryItem:hover {
+  background: #e9ecef;
+  transform: translateY(-2px);
+}
+
+.categoryItem.active {
+  background: #0373ed;
+  color: white;
+  border-color: #0373ed;
+}
+
+.categoryItem.active span,
+.categoryItem.active small {
+  color: white;
+}
+
+.categoryItem img {
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.categoryItem span {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  font-family: 'Cairo', sans-serif;
+  line-height: 1.2;
+}
+
+.categoryItem small {
+  font-size: 11px;
+  color: #666;
+  font-family: 'Cairo', sans-serif;
+  margin-top: 2px;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .productGrid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 12px;
+    padding: 15px;
+  }
+  
+  .categoriesSidebar {
+    width: 240px;
+  }
+  
+  .productItem {
+    min-height: 140px;
+    padding: 12px;
+  }
+}
+
+@media (max-width: 768px) {
+  .popupContainer {
+    width: 98%;
+    height: 95vh;
+  }
+  
+  .mainContent {
+    flex-direction: column;
+  }
+  
+  .categoriesSidebar {
+    width: 100%;
+    height: 120px;
+    border-left: none;
+    border-top: 1px solid #e9ecef;
+    padding: 15px;
+  }
+  
+  .categoriesList {
+    flex-direction: row;
+    overflow-x: auto;
+    gap: 8px;
+    padding-top: 10px;
+  }
+  
+  .categoryItem {
+    min-width: 120px;
+    padding: 8px;
+    gap: 8px;
+  }
+  
+  .categoryItem img {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .categoryItem span {
+    font-size: 12px;
+  }
+  
+  .categoryItem small {
+    font-size: 10px;
+  }
+  
+  .productsSection {
+    padding: 15px;
+    padding-top: 70px;
+  }
+  
+  .productGrid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 10px;
+    padding: 10px;
+  }
+  
+  .productItem {
+    min-height: 120px;
+    padding: 10px;
+  }
+  
+  .productImage {
+    width: 50px;
+    height: 50px;
+    margin-bottom: 8px;
+  }
+  
+  .productName span {
+    font-size: 12px;
+  }
+  
+  .productName small {
+    font-size: 10px;
+  }
+  
+  .closeBtn {
+    top: 10px;
+    left: 10px;
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .productGrid {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 8px;
+  }
+  
+  .productItem {
+    min-height: 100px;
+    padding: 8px;
+  }
+  
+  .productImage {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .productName span {
+    font-size: 11px;
+  }
+  
+  .status {
+    font-size: 9px;
+    padding: 1px 4px;
+  }
+}
+
+
+
+/* أنماط المؤقت */
+.timerOverlay {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  backdrop-filter: blur(4px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  z-index: 10;
+}
+
+.timerInfo {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  margin-top: 2px;
+  color: #666;
+}
+
+.occupiedStatus {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.sectionStats {
+  margin-top: 4px;
+}
+
+.tableCount {
+  font-size: 0.7rem;
+  color: #666;
+  font-weight: 500;
+}
+
+.productItem.occupied {
+  border: 2px solid #dc3545;
+  background-color: #fee;
+  cursor: not-allowed;
+}
+
+.productItem.available {
+  border: 2px solid #28a745;
+  background-color: #f0fff4;
+  cursor: pointer;
+}
+
+.productItem.occupied:hover {
+  transform: none;
+  box-shadow: 0 4px 8px rgba(220, 53, 69, 0.2);
+}
+
+.productItem.available:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(40, 167, 69, 0.2);
+}
+
+.tableName {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.tableCapacity {
+  color: #666;
+  font-size: 0.8rem;
+}
+
+/* أنماط مؤشر التحميل المحسن */
+.searchingMessage {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  color: #666;
+  font-size: 14px;
+}
+
+.loadingSpinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid #007bff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* TableSelectionPopup.module.css */
+
+.productItem {
+  position: relative;
+  border-radius: 12px;
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.productItem.occupied {
+  background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%) !important;
+  border: 2px solid #f44336 !important;
+  box-shadow: 0 4px 12px rgba(244, 67, 54, 0.2);
+}
+
+.productItem.occupied:hover {
+  background: linear-gradient(135deg, #ffcdd2 0%, #ef9a9a 100%) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(244, 67, 54, 0.3);
+}
+
+.productItem.available {
+  background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c8 100%) !important;
+  border: 2px solid #4caf50 !important;
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.2);
+}
+
+.productItem.available:hover {
+  background: linear-gradient(135deg, #c8e6c8 0%, #a5d6a5 100%) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(76, 175, 80, 0.3);
+}
+
+/* تسمية الحالة */
+.status {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  z-index: 2;
+}
+
+.status.occupied {
+  background: #f44336;
+  color: white;
+  animation: pulse 2s infinite;
+}
+
+.status.available {
+  background: #4caf50;
+  color: white;
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.7; }
+  100% { opacity: 1; }
+}
+
+/* معلومات الطاولة المشغولة */
+.occupiedInfo {
+  background: rgba(244, 67, 54, 0.1);
+  border: 1px solid rgba(244, 67, 54, 0.3);
+  border-radius: 8px;
+  padding: 8px;
+  margin-top: 8px;
+  font-size: 11px;
+}
+
+.orderTotal {
+  font-weight: bold;
+  color: #d32f2f;
+  margin-bottom: 4px;
+  font-size: 12px;
+}
+
+.openDuration {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #666;
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+
+.openDuration svg {
+  color: #f44336;
+  animation: tick 1s infinite;
+}
+
+@keyframes tick {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0.5; }
+}
+
+.itemsCount {
+  color: #666;
+  font-size: 10px;
+}
+
+/* أيقونة المعاينة */
+.viewIcon {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  border-radius: 50%;
+  padding: 6px;
+  font-size: 14px;
+  z-index: 2;
+  transition: all 0.3s ease;
+}
+
+.viewIcon:hover {
+  background: rgba(0, 0, 0, 0.9);
+  transform: scale(1.1);
+}
+
+/* إحصائيات الأقسام */
+.occupiedStats {
+  color: #f44336;
+  font-weight: bold;
+  font-size: 10px;
+  margin-top: 2px;
+}
+
+===== src/Pages/pos/newSales/styles/tailwind.css =====
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Primary Colors */
+    --primary-blue: #0373ed;
+    --primary-green: #22a928;
+    --primary-red: #e53935;
+    --primary-orange: #ffb74d;
+
+    /* Background Colors */
+    --bg-main: #f5f5f5;
+    --bg-card: #ffffff;
+    --bg-overlay-light: #00000033;
+    --bg-overlay-dark: #0000004c;
+
+    /* Text Colors */
+    --text-primary: #000000;
+    --text-secondary: #0000007f;
+    --text-white: #ffffff;
+    --text-blue: #0373ed;
+  }
+}
+
+@layer utilities {
+  /* Primary Colors */
+  .bg-primary-blue {
+    background-color: var(--primary-blue);
+  }
+  .bg-primary-green {
+    background-color: var(--primary-green);
+  }
+  .bg-primary-red {
+    background-color: var(--primary-red);
+  }
+  .bg-primary-orange {
+    background-color: var(--primary-orange);
+  }
+
+  /* Background Colors */
+  .bg-main {
+    background-color: var(--bg-main);
+  }
+  .bg-card {
+    background-color: var(--bg-card);
+  }
+  .bg-overlay-light {
+    background-color: var(--bg-overlay-light);
+  }
+  .bg-overlay-dark {
+    background-color: var(--bg-overlay-dark);
+  }
+
+  /* Text Colors */
+  .text-primary {
+    color: var(--text-primary);
+  }
+  .text-secondary {
+    color: var(--text-secondary);
+  }
+  .text-white {
+    color: var(--text-white);
+  }
+  .text-blue {
+    color: var(--text-blue);
+  }
+}
+===== src/Pages/pos/newSales/styles/TodayOrdersPopup.module.css =====
+/* src/Pages/pos/newSales/styles/TodayOrdersPopup.module.css */
+.dialogPaper {
+  max-height: 90vh;
+  margin: 20px;
+  border-radius: 12px !important;
+}
+
+.dialogTitle {
+  background: linear-gradient(135deg, #0373ed 0%, #025bb5 100%);
+  color: white !important;
+  padding: 16px 24px !important;
+  border-radius: 12px 12px 0 0 !important;
+}
+
+.dialogTitle .MuiTypography-root {
+  font-weight: 600;
+  font-family: 'Cairo', sans-serif;
+}
+
+.dialogContent {
+  padding: 24px !important;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.filtersBar {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  flex-wrap: wrap;
+}
+
+.searchField {
+  flex: 1;
+  min-width: 250px;
+}
+
+.filterSelect {
+  min-width: 150px;
+}
+
+.errorAlert {
+  margin-bottom: 16px;
+}
+
+.tableContainer {
+  flex: 1;
+  max-height: 50vh;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.tableContainer .MuiTableHead-root {
+  background: #f5f5f5;
+}
+
+.tableContainer .MuiTableCell-head {
+  font-weight: 600;
+  font-family: 'Cairo', sans-serif;
+  background: #f5f5f5;
+  border-bottom: 2px solid #dee2e6;
+  padding: 12px 16px;
+}
+
+.tableRow {
+  transition: background-color 0.2s ease;
+}
+
+.tableRow:hover {
+  background-color: #f8f9fa;
+}
+
+.tableRow .MuiTableCell-root {
+  padding: 12px 16px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.invoiceId {
+  font-family: 'Courier New', monospace;
+  font-weight: 600;
+  color: #495057;
+}
+
+.totalAmount {
+  font-weight: 600;
+  color: #28a745;
+}
+
+.viewButton {
+  color: #0373ed;
+  transition: all 0.2s ease;
+}
+
+.viewButton:hover {
+  background-color: rgba(3, 115, 237, 0.1);
+  transform: scale(1.1);
+}
+
+.loadingCell,
+.emptyCell {
+  padding: 40px 16px !important;
+}
+
+.paginationContainer {
+  display: flex;
+  justify-content: center;
+  padding: 16px 0;
+  border-top: 1px solid #e9ecef;
+  margin-top: 16px;
+}
+
+.dialogActions {
+  padding: 16px 24px !important;
+  border-top: 1px solid #e9ecef;
+  background: #f8f9fa;
+  border-radius: 0 0 12px 12px;
+}
+
+/* تحسينات للشاشات الصغيرة */
+@media (max-width: 768px) {
+  .dialogPaper {
+    margin: 8px;
+    max-height: 95vh;
+  }
+  
+  .filtersBar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .searchField,
+  .filterSelect {
+    min-width: auto;
+    width: 100%;
+  }
+  
+  .tableContainer {
+    max-height: 40vh;
+  }
+  
+  .tableContainer .MuiTableCell-head,
+  .tableContainer .MuiTableCell-body {
+    padding: 8px 12px;
+    font-size: 0.875rem;
+  }
+}
+
+/* تحسينات للأجهزة اللوحية */
+@media (max-width: 1024px) {
+  .tableContainer {
+    max-height: 45vh;
+  }
+  
+  .filtersBar {
+    gap: 12px;
+  }
+}
+
+/* تأثيرات التحميل */
+.loadingCell {
+  text-align: center;
+}
+
+.loadingCell .MuiCircularProgress-root {
+  color: #0373ed;
+}
+
+/* تأثيرات الـ Chips */
+.tableRow .MuiChip-root {
+  font-weight: 500;
+  font-size: 0.75rem;
+}
+
+/* تحسين عرض المعلومات الإضافية */
+.tableRow .MuiBox-root {
+  min-width: 120px;
+}
+
+.tableRow .MuiTypography-caption {
+  display: block;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+/* تحسين شريط الفلاتر */
+.filtersBar .MuiButton-root {
+  white-space: nowrap;
+  min-width: auto;
+}
+
+/* تحسين العنوان */
+.dialogTitle .MuiIconButton-root {
+  color: white;
+}
+
+.dialogTitle .MuiIconButton-root:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
 ===== src/Pages/pos/newSales/types/PosSystem.tsx =====
 // src/Pages/pos/newSales/types/PosSystem.tsx
 export interface PosProduct {
