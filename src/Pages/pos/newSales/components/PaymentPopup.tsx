@@ -7,7 +7,6 @@ import PaymentRight from './paymentPopup components/PaymentRight';
 import styles from '../styles/PaymentPopup.module.css';
 import { usePosPaymentMethods } from '../hooks/usePosPaymentMethods';
 import { Snackbar, Alert } from '@mui/material';
-import * as invoicesApi from 'src/utils/api/pagesApi/invoicesApi';
 import { useInvoiceManager } from '../hooks/useInvoiceManager';
 
 interface PaymentMethodData {

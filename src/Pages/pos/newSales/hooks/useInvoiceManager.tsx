@@ -13,8 +13,14 @@ interface PaymentMethodData {
   isSelected: boolean;
 }
 
+// Interface محسن لتخزين بيانات الفاتورة الأصلية
+interface ExistingInvoiceData {
+  originalInvoice: invoicesApi.Invoice;
+}
+
 export const useInvoiceManager = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [existingInvoiceData, setExistingInvoiceData] = useState<ExistingInvoiceData | null>(null);
   const { showSuccess, showError } = useError();
 
   const getInvoiceType = (orderType: string): number => {
@@ -35,9 +41,35 @@ export const useInvoiceManager = () => {
     return localStorage.getItem('branch_id') || 'branch_1';
   };
 
-  const convertOrderItemToInvoiceItem = (item: OrderItem): invoicesApi.CreateInvoiceItem => {
+  // دالة تحميل بيانات الفاتورة الأصلية
+  const loadExistingInvoice = async (invoiceId: string) => {
+    try {
+      console.log('🔄 تحميل بيانات الفاتورة الموجودة:', invoiceId);
+      const invoiceData = await invoicesApi.getInvoiceById(invoiceId);
+      
+      setExistingInvoiceData({
+        originalInvoice: invoiceData
+      });
+
+      console.log('✅ تم تحميل بيانات الفاتورة الموجودة بنجاح');
+      console.log(`📊 Items موجودة: ${invoiceData.items?.length || 0}`);
+      console.log(`💳 Payments موجودة: ${invoiceData.payments?.length || 0}`);
+      
+      return invoiceData;
+    } catch (error) {
+      console.error('❌ خطأ في تحميل بيانات الفاتورة الموجودة:', error);
+      throw error;
+    }
+  };
+
+  // دالة تحويل عنصر الطلب إلى عنصر فاتورة
+  const convertOrderItemToInvoiceItem = (
+    item: OrderItem, 
+    existingItem?: invoicesApi.InvoiceItem
+  ): invoicesApi.CreateInvoiceItem => {
     const components: any[] = [];
 
+    // معالجة الـ subItems
     if (item.subItems && item.subItems.length > 0) {
       item.subItems.forEach(subItem => {
         components.push({
@@ -52,13 +84,14 @@ export const useInvoiceManager = () => {
           isCommentOnly: false,
           useOriginalPrice: false,
           sortOrder: 0,
-          WareHouseId: localStorage.getItem('warehouse_id') || 'e81866c0-791d-449f-bc04-c5d65bb3820c',
+          WareHouseId: getWareHouseId(),
           ComponentName: subItem.name,
           ProductComponentId: subItem.productId || item.product.id
         });
       });
     }
 
+    // معالجة الـ selectedOptions
     if (item.selectedOptions && item.selectedOptions.length > 0) {
       item.selectedOptions.forEach(option => {
         components.push({
@@ -73,14 +106,14 @@ export const useInvoiceManager = () => {
           isRequired: false,
           useOriginalPrice: false,
           sortOrder: 0,
-          WareHouseId: localStorage.getItem('warehouse_id') || 'e81866c0-791d-449f-bc04-c5d65bb3820c',
+          WareHouseId: getWareHouseId(),
           ComponentName: option.itemName,
           ProductComponentId: item.product.id
         });
       });
     }
 
-    return {
+    const invoiceItem: invoicesApi.CreateInvoiceItem = {
       ProductId: item.product.id,
       ProductPriceId: item.selectedPrice.id,
       Barcode: item.selectedPrice.barcode || '1234567890123',
@@ -93,29 +126,57 @@ export const useInvoiceManager = () => {
       ItemDiscountPercentage: item.discountPercentage || 0,
       ItemTaxPercentage: 14,
       ServicePercentage: 10,
-      WareHouseId: localStorage.getItem('warehouse_id') || 'e81866c0-791d-449f-bc04-c5d65bb3820c',
+      WareHouseId: getWareHouseId(),
       Components: components
     };
+
+    // إضافة الـ id إذا كان العنصر موجود مسبقاً
+    if (existingItem) {
+      (invoiceItem as any).id = existingItem.id;
+      console.log(`🔄 تحديث item موجود: ${item.product.id} -> ID: ${existingItem.id}`);
+    } else {
+      console.log(`✨ إضافة item جديد: ${item.product.id}`);
+    }
+
+    return invoiceItem;
   };
 
+  // دالة تحويل طرق الدفع
+  const convertPaymentsToInvoicePayments = (
+    payments: PaymentMethodData[],
+    originalPayments?: invoicesApi.InvoicePayment[]
+  ): invoicesApi.CreateInvoicePayment[] => {
+    if (!payments || payments.length === 0) {
+      return [];
+    }
+    
+    return payments
+      .filter(payment => payment.isSelected && payment.amount > 0)
+      .map(payment => {
+        const paymentMethodId = payment.method.toLowerCase().includes('كاش') || 
+                              payment.method.toLowerCase().includes('cash') ? 'cash' : 
+                              payment.method.toLowerCase();
 
-const convertPaymentsToInvoicePayments = (payments: PaymentMethodData[]): invoicesApi.CreateInvoicePayment[] => {
-  // ✅ إذا لم توجد طرق دفع، أرجع مصفوفة فارغة
-  if (!payments || payments.length === 0) {
-    return [];
-  }
-  
-  return payments
-    .filter(payment => payment.isSelected && payment.amount > 0)
-    .map(payment => ({
-      Amount: payment.amount,
-      PaymentMethodId: payment.method.toLowerCase().includes('كاش') || 
-                      payment.method.toLowerCase().includes('cash') ? 'cash' : 
-                      payment.method.toLowerCase()
-    }));
-};
+        // البحث عن الدفعة الأصلية المطابقة
+        const existingPayment = originalPayments?.find(p => p.paymentMethodId === paymentMethodId);
 
-  // دالة إنشاء فاتورة جديدة مع دعم اختيار الحالة
+        const invoicePayment: invoicesApi.CreateInvoicePayment = {
+          Amount: payment.amount,
+          PaymentMethodId: paymentMethodId
+        };
+
+        if (existingPayment) {
+          (invoicePayment as any).id = existingPayment.id;
+          console.log(`🔄 تحديث payment موجود: ${paymentMethodId} -> ID: ${existingPayment.id}`);
+        } else {
+          console.log(`✨ إضافة payment جديد: ${paymentMethodId}`);
+        }
+
+        return invoicePayment;
+      });
+  };
+
+  // دالة إنشاء فاتورة جديدة
   const createInvoice = async (
     orderSummary: OrderSummary,
     orderType: string,
@@ -149,17 +210,15 @@ const convertPaymentsToInvoicePayments = (payments: PaymentMethodData[]): invoic
         PreparedAt: new Date().toISOString(),
         CompletedAt: new Date().toISOString(),
         Notes: notes || `طلب ${orderType}`,
-        Items: orderSummary.items.map(convertOrderItemToInvoiceItem),
+        Items: orderSummary.items.map(item => convertOrderItemToInvoiceItem(item)),
         Payments: convertPaymentsToInvoicePayments(payments)
       };
 
       const result = await invoicesApi.addInvoice(invoiceData);
-
       showSuccess(`تم إنشاء الفاتورة رقم ${result.invoiceNumber} بنجاح`);
       return result;
     } catch (error: any) {
       console.error('Error creating invoice:', error);
-
       let errorMessage = 'حدث خطأ أثناء إنشاء الفاتورة';
 
       if (error.isApiValidationError && error.errors) {
@@ -175,79 +234,202 @@ const convertPaymentsToInvoicePayments = (payments: PaymentMethodData[]): invoic
     }
   };
 
-  // دالة تحديث فاتورة موجودة مع دعم اختيار الحالة
-const updateInvoice = async (
-  invoiceId: string,
-  orderSummary: OrderSummary,
-  orderType: string,
-  payments: PaymentMethodData[],
-  invoiceStatus: number,
-  selectedCustomer?: Customer | null,
-  selectedAddress?: CustomerAddress | null,
-  selectedDeliveryCompany?: DeliveryCompany | null,
-  selectedTable?: TableSelection | null,
-  servicePercentage: number = 0,
-  taxPercentage: number = 0,
-  discountPercentage: number = 0,
-  notes?: string
-): Promise<invoicesApi.InvoiceResponse> => {
-  setIsSubmitting(true);
+  // دالة البحث عن عنصر مطابق في الفاتورة الأصلية
+  const findMatchingOriginalItem = (
+    orderItem: OrderItem,
+    originalItems: invoicesApi.InvoiceItem[]
+  ): invoicesApi.InvoiceItem | undefined => {
+    return originalItems.find(originalItem => 
+      originalItem.productId === orderItem.product.id && 
+      originalItem.productPriceId === orderItem.selectedPrice.id
+    );
+  };
 
-  try {
-    console.log('🔄 بدء تحديث الفاتورة:', invoiceId);
-    
-    // ✅ استخدام id بدلاً من invoiceId
-    const updateData: invoicesApi.CreateInvoiceRequest & { id: string } = {
-      id: invoiceId, // ✅ مُصحح: id بدلاً من invoiceId
-      InvoiceType: getInvoiceType(orderType),
-      InvoiceStatus: invoiceStatus,
-      WareHouseId: getWareHouseId(),
-      RawBranchId: getRawBranchId(),
-      CustomerId: selectedCustomer?.id || null,
-      TableId: selectedTable?.table.id || null,
-      HallCaptainId: null,
-      DeliveryCompanyId: selectedDeliveryCompany?.id || null,
-      DeliveryAgentId: null,
-      TaxPercentage: taxPercentage,
-      ServicePercentage: servicePercentage,
-      HeaderDiscountPercentage: discountPercentage,
-      PreparedAt: new Date().toISOString(),
-      CompletedAt: new Date().toISOString(),
-      Notes: notes || `طلب ${orderType} - تم التحديث`,
-      Items: orderSummary.items.map(convertOrderItemToInvoiceItem),
-      Payments: convertPaymentsToInvoicePayments(payments)
-    };
+  // دالة تحديث فاتورة موجودة - الحل الجذري
+  const updateInvoice = async (
+    invoiceId: string,
+    orderSummary: OrderSummary,
+    orderType: string,
+    payments: PaymentMethodData[],
+    invoiceStatus: number,
+    selectedCustomer?: Customer | null,
+    selectedAddress?: CustomerAddress | null,
+    selectedDeliveryCompany?: DeliveryCompany | null,
+    selectedTable?: TableSelection | null,
+    servicePercentage: number = 0,
+    taxPercentage: number = 0,
+    discountPercentage: number = 0,
+    notes?: string
+  ): Promise<invoicesApi.InvoiceResponse> => {
+    setIsSubmitting(true);
 
-    console.log('📤 بيانات التحديث المرسلة:', updateData);
-    const result = await invoicesApi.updateInvoice(updateData);
-    console.log('✅ تم تحديث الفاتورة بنجاح:', result);
+    try {
+      console.log('🔄 بدء تحديث الفاتورة:', invoiceId);
+      
+      // تحميل بيانات الفاتورة الأصلية إذا لم تكن محملة
+      let originalInvoice = existingInvoiceData?.originalInvoice;
+      if (!originalInvoice || originalInvoice.id !== invoiceId) {
+        originalInvoice = await loadExistingInvoice(invoiceId);
+      }
 
-    showSuccess(`تم تحديث الفاتورة رقم ${result.invoiceNumber} بنجاح`);
-    return result;
-  } catch (error: any) {
-    console.error('❌ خطأ في تحديث الفاتورة:', error);
+      // ✅ بناء قائمة Items شاملة - الحل الصحيح
+      const allItems: invoicesApi.CreateInvoiceItem[] = [];
+      
+      // خريطة لتتبع العناصر المعالجة من الواجهة
+      const processedItemsKeys = new Set<string>();
 
-    let errorMessage = 'حدث خطأ أثناء تحديث الفاتورة';
+      // 1. معالجة العناصر من الواجهة الحالية
+      orderSummary.items.forEach(currentItem => {
+        const itemKey = `${currentItem.product.id}-${currentItem.selectedPrice.id}`;
+        processedItemsKeys.add(itemKey);
+        
+        // البحث عن العنصر في الفاتورة الأصلية
+        const matchingOriginalItem = findMatchingOriginalItem(currentItem, originalInvoice.items || []);
+        
+        // تحويل العنصر مع الاحتفاظ بالـ ID إذا كان موجود
+        const invoiceItem = convertOrderItemToInvoiceItem(currentItem, matchingOriginalItem);
+        allItems.push(invoiceItem);
+      });
 
-    if (error.isApiValidationError && error.errors) {
-      errorMessage = error.errors.map((err: any) => err.errorMessage).join(', ');
-    } else if (error.message) {
-      errorMessage = error.message;
+      // 2. إضافة العناصر الأصلية التي لم تعد موجودة في الواجهة
+      // هذا مهم للاحتفاظ بالعناصر التي لم يتم حذفها صراحة
+      originalInvoice.items?.forEach(originalItem => {
+        const itemKey = `${originalItem.productId}-${originalItem.productPriceId}`;
+        
+        // إذا لم يتم معالجة هذا العنصر من الواجهة، احتفظ به
+        if (!processedItemsKeys.has(itemKey)) {
+          const preservedItem: invoicesApi.CreateInvoiceItem = {
+            id: originalItem.id, // ✅ الـ ID الأصلي مهم جداً
+            ProductId: originalItem.productId,
+            ProductPriceId: originalItem.productPriceId,
+            Barcode: originalItem.barcode,
+            UnitId: originalItem.unitId,
+            PosPriceName: originalItem.posPriceName,
+            UnitFactor: originalItem.unitFactor,
+            Qty: originalItem.qty,
+            UnitPrice: originalItem.unitPrice,
+            UnitCost: originalItem.unitCost,
+            ItemDiscountPercentage: originalItem.itemDiscountPercentage,
+            ItemTaxPercentage: originalItem.itemTaxPercentage,
+            ServicePercentage: originalItem.servicePercentage,
+            WareHouseId: originalItem.wareHouseId,
+            Components: originalItem.components || []
+          };
+          allItems.push(preservedItem);
+          console.log(`🔒 الاحتفاظ بعنصر أصلي: ${originalItem.id} (${originalItem.posPriceName})`);
+        }
+      });
+
+      // ✅ معالجة المدفوعات بنفس الطريقة
+      const allPayments = convertPaymentsToInvoicePayments(payments, originalInvoice.payments || []);
+
+      // إضافة المدفوعات الأصلية التي لم تعد موجودة في الواجهة
+      originalInvoice.payments?.forEach(originalPayment => {
+        const existsInCurrentPayments = payments?.some(currentPayment => {
+          const currentMethodId = currentPayment.method.toLowerCase().includes('كاش') || 
+                                 currentPayment.method.toLowerCase().includes('cash') ? 'cash' : 
+                                 currentPayment.method.toLowerCase();
+          return currentMethodId === originalPayment.paymentMethodId && 
+                 currentPayment.isSelected && 
+                 currentPayment.amount > 0;
+        });
+
+        if (!existsInCurrentPayments) {
+          const preservedPayment: invoicesApi.CreateInvoicePayment = {
+            id: originalPayment.id,
+            Amount: originalPayment.amount,
+            PaymentMethodId: originalPayment.paymentMethodId
+          };
+          allPayments.push(preservedPayment);
+          console.log(`🔒 الاحتفاظ بدفعة أصلية: ${originalPayment.id} (${originalPayment.paymentMethodId})`);
+        }
+      });
+
+      // ✅ بناء طلب التحديث الشامل
+      const updateData: invoicesApi.UpdateInvoiceRequest = {
+        id: invoiceId,
+        backInvoiceCode: originalInvoice.backInvoiceCode,
+        androidInvoiceCode: originalInvoice.androidInvoiceCode,
+        InvoiceType: getInvoiceType(orderType),
+        InvoiceStatus: invoiceStatus,
+        WareHouseId: originalInvoice.wareHouseId,
+        RawBranchId: originalInvoice.rawBranchId,
+        CustomerId: selectedCustomer?.id || originalInvoice.customerId,
+        TableId: selectedTable?.table.id || originalInvoice.tableId,
+        HallCaptainId: originalInvoice.hallCaptainId,
+        DeliveryCompanyId: selectedDeliveryCompany?.id || originalInvoice.deliveryCompanyId,
+        DeliveryAgentId: originalInvoice.deliveryAgentId,
+        CustomerName: selectedCustomer?.name || originalInvoice.customerName,
+        CustomerAddress: selectedAddress?.addressLine || originalInvoice.customerAddress,
+        TableGuestsCount: originalInvoice.tableGuestsCount,
+        ShiftCode: originalInvoice.shiftCode,
+        DayCode: originalInvoice.dayCode,
+        ReturnShiftCode: originalInvoice.returnShiftCode,
+        TaxPercentage: taxPercentage,
+        ServicePercentage: servicePercentage,
+        HeaderDiscountPercentage: discountPercentage,
+        ItemDiscountTotal: originalInvoice.itemDiscountTotal,
+        HeaderDiscountValue: originalInvoice.headerDiscountValue,
+        TaxAmount: originalInvoice.taxAmount,
+        ServiceAmount: originalInvoice.serviceAmount,
+        TotalBeforeDiscount: orderSummary.subtotal,
+        TotalAfterDiscount: orderSummary.total,
+        TotalAfterTaxAndService: orderSummary.total,
+        TotalCost: originalInvoice.totalCost,
+        GrossProfit: originalInvoice.grossProfit,
+        CreatedAt: originalInvoice.createdAt,
+        PrintedAt: originalInvoice.printedAt,
+        PreparedAt: originalInvoice.preparedAt,
+        CompletedAt: invoiceStatus === 3 ? new Date().toISOString() : originalInvoice.completedAt,
+        CreatedByUserId: originalInvoice.createdByUserId,
+        CancelledByUserId: originalInvoice.cancelledByUserId,
+        CancelReason: originalInvoice.cancelReason,
+        RefundedAmount: originalInvoice.refundedAmount,
+        Notes: notes || originalInvoice.notes,
+        Items: allItems,  // ✅ كل العناصر (الأصلية + الجديدة + المحدثة)
+        Payments: allPayments,  // ✅ كل المدفوعات (الأصلية + الجديدة + المحدثة)
+        BranchId: originalInvoice.branchId,
+        CompanyID: originalInvoice.companyID,
+        IsActive: originalInvoice.isActive
+      };
+
+      console.log('📤 إرسال بيانات التحديث الشاملة:');
+      console.log(`📊 إجمالي Items: ${allItems.length}`);
+      console.log(`   - محدثة/موجودة: ${allItems.filter(i => (i as any).id).length}`);
+      console.log(`   - جديدة: ${allItems.filter(i => !(i as any).id).length}`);
+      console.log(`💳 إجمالي Payments: ${allPayments.length}`);
+      console.log(`   - محدثة/موجودة: ${allPayments.filter(p => (p as any).id).length}`);
+      console.log(`   - جديدة: ${allPayments.filter(p => !(p as any).id).length}`);
+      
+      const result = await invoicesApi.updateInvoice(updateData);
+      console.log('✅ تم تحديث الفاتورة بنجاح:', result);
+
+      showSuccess(`تم تحديث الفاتورة رقم ${result.invoiceNumber} بنجاح`);
+      return result;
+
+    } catch (error: any) {
+      console.error('❌ خطأ في تحديث الفاتورة:', error);
+      let errorMessage = 'حدث خطأ أثناء تحديث الفاتورة';
+
+      if (error.isApiValidationError && error.errors) {
+        errorMessage = error.errors.map((err: any) => err.errorMessage).join(', ');
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      showError(errorMessage);
+      throw error;
+    } finally {
+      setIsSubmitting(false);
     }
+  };
 
-    showError(errorMessage);
-    throw error;
-  } finally {
-    setIsSubmitting(false);
-  }
-};
-
-  // دالة موحدة للإنشاء والتحديث مع دعم اختيار الحالة
+  // دالة موحدة للإنشاء والتحديث
   const saveInvoice = async (
     orderSummary: OrderSummary,
     orderType: string,
     payments: PaymentMethodData[],
-    invoiceStatus: number, // أجباري هنا
+    invoiceStatus: number,
     options: {
       isEditMode?: boolean;
       invoiceId?: string | null;
@@ -308,10 +490,18 @@ const updateInvoice = async (
     }
   };
 
+  // تنظيف البيانات عند الانتهاء
+  const clearExistingInvoiceData = () => {
+    setExistingInvoiceData(null);
+    console.log('🧹 تم تنظيف بيانات الفاتورة الموجودة');
+  };
+
   return {
     createInvoice,
     updateInvoice,
     saveInvoice,
+    loadExistingInvoice,
+    clearExistingInvoiceData,
     isSubmitting
   };
 };

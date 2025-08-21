@@ -110,6 +110,7 @@ export interface InvoicesResponse {
 }
 
 export interface CreateInvoiceItem {
+  id?: string; // اختياري للـ items الموجودة
   ProductId: string;
   ProductPriceId: string;
   Barcode: string;
@@ -127,6 +128,7 @@ export interface CreateInvoiceItem {
 }
 
 export interface CreateInvoicePayment {
+  id?: string; // اختياري للـ payments الموجودة
   Amount: number;
   PaymentMethodId: string;
 }
@@ -149,6 +151,54 @@ export interface CreateInvoiceRequest {
   Notes?: string;
   Items: CreateInvoiceItem[];
   Payments: CreateInvoicePayment[];
+}
+
+// Interface جديد للتحديث مع جميع الحقول المطلوبة
+export interface UpdateInvoiceRequest {
+  id: string;
+  backInvoiceCode?: string | null;
+  androidInvoiceCode?: string | null;
+  InvoiceType: number;
+  InvoiceStatus: number;
+  WareHouseId: string;
+  RawBranchId: string;
+  CustomerId?: string | null;
+  TableId?: string | null;
+  HallCaptainId?: string | null;
+  DeliveryCompanyId?: string | null;
+  DeliveryAgentId?: string | null;
+  CustomerName?: string | null;
+  CustomerAddress?: string | null;
+  TableGuestsCount?: number | null;
+  ShiftCode?: string | null;
+  DayCode?: string | null;
+  ReturnShiftCode?: string | null;
+  TaxPercentage: number;
+  ServicePercentage: number;
+  HeaderDiscountPercentage: number;
+  ItemDiscountTotal?: number;
+  HeaderDiscountValue?: number;
+  TaxAmount?: number;
+  ServiceAmount?: number;
+  TotalBeforeDiscount?: number;
+  TotalAfterDiscount?: number;
+  TotalAfterTaxAndService?: number;
+  TotalCost?: number;
+  GrossProfit?: number;
+  CreatedAt?: string;
+  PrintedAt?: string | null;
+  PreparedAt?: string;
+  CompletedAt?: string;
+  CreatedByUserId?: string | null;
+  CancelledByUserId?: string | null;
+  CancelReason?: string | null;
+  RefundedAmount?: number | null;
+  Notes?: string;
+  Items: CreateInvoiceItem[];
+  Payments: CreateInvoicePayment[];
+  BranchId?: string | null;
+  CompanyID?: string | null;
+  IsActive?: boolean;
 }
 
 export interface InvoiceResponse {
@@ -190,10 +240,12 @@ export const getAllInvoices = async (pageNumber: number = 1, pageSize: number = 
 // دالة إنشاء فاتورة جديدة
 export const addInvoice = async (invoiceData: CreateInvoiceRequest): Promise<InvoiceResponse> => {
   try {
+    console.log('📤 إرسال طلب إنشاء فاتورة جديدة:', invoiceData);
     const response = await api.post('/AddInvoice', invoiceData);
+    console.log('📥 استجابة إنشاء الفاتورة:', response.data);
     return response.data.data;
   } catch (error) {
-    console.error('Error creating invoice:', error);
+    console.error('❌ خطأ في إنشاء الفاتورة:', error);
     throw error;
   }
 };
@@ -201,25 +253,29 @@ export const addInvoice = async (invoiceData: CreateInvoiceRequest): Promise<Inv
 // دالة جلب فاتورة واحدة بالـ ID
 export const getInvoiceById = async (invoiceId: string): Promise<Invoice> => {
   try {
+    console.log('📤 طلب جلب الفاتورة:', invoiceId);
     const response = await api.get(`/GetInvoiceById?invoiceId=${invoiceId}`);
+    console.log('📥 استجابة جلب الفاتورة:', response.data);
+    
     if (response.data?.isvalid && response.data?.data) {
       return response.data.data;
     }
     throw new Error('Invoice not found');
   } catch (error) {
-    console.error('Error fetching invoice:', error);
+    console.error('❌ خطأ في جلب الفاتورة:', error);
     throw error;
   }
 };
 
 // دالة تحديث الفاتورة
-
-export const updateInvoice = async (invoiceData: CreateInvoiceRequest & { id: string }): Promise<InvoiceResponse> => {
+export const updateInvoice = async (invoiceData: UpdateInvoiceRequest): Promise<InvoiceResponse> => {
   try {
+    console.log('📤 إرسال طلب تحديث الفاتورة:', invoiceData);
     const response = await api.post('/UpdateInvoice', invoiceData);
+    console.log('📥 استجابة تحديث الفاتورة:', response.data);
     return response.data.data;
   } catch (error) {
-    console.error('Error updating invoice:', error);
+    console.error('❌ خطأ في تحديث الفاتورة:', error);
     throw error;
   }
 };

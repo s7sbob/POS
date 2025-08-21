@@ -291,22 +291,6 @@ const [selectedActionType, setSelectedActionType] = useState<'send' | 'print' | 
   const canOpenPayment = orderSummary.items.length > 0;
 
 
-const handleActionButtonClick = useCallback(async (actionType: 'send' | 'print' | 'pay') => {
-  if (!canOpenPayment) return;
-  
-  if (actionType === 'pay') {
-    // فقط Pay يفتح payment popup
-    setSelectedActionType(actionType);
-    setShowPaymentPopup(true);
-  } else {
-    // Send و Print يحفظوا مباشرة بدون popup
-    await handleDirectSave(actionType);
-  }
-}, [canOpenPayment]);
-
-
-
-
   // معالج Blur للـ input
   const handleInputBlur = useCallback(() => {
     // تأخير إخفاء الـ dropdown للسماح بالنقر على النتائج
@@ -595,21 +579,41 @@ useEffect(() => {
 
 
   // دالة جديدة للحفظ المباشر لـ Send و Print
+// دالة جديدة للحفظ المباشر لـ Send و Print
 const handleDirectSave = useCallback(async (actionType: 'send' | 'print') => {
   try {
-    console.log(`بدء معالجة ${actionType}...`);
+    console.log(`🔄 بدء معالجة ${actionType}...`);
     
-    // ✅ إنشاء طرق دفع افتراضية فارغة للـ Send و Print
-const defaultPayments: { method: string; amount: number; isSelected: boolean }[] = [];
+    // ✅ تأكد من وجود items قبل المتابعة
+    if (!orderSummary.items || orderSummary.items.length === 0) {
+      console.error('❌ لا توجد عناصر في الطلب');
+      return;
+    }
     
-    // تحديد الحالة
+    console.log(`📊 عدد العناصر في orderSummary: ${orderSummary.items.length}`);
+    console.log('🔍 محتوى العناصر:', orderSummary.items.map(item => ({
+      id: item.id,
+      name: item.product.nameArabic,
+      quantity: item.quantity,
+      price: item.selectedPrice.price
+    })));
+    
+    // إنشاء دفعة كاش افتراضية بقيمة 0
+    const defaultPayments: { method: string; amount: number; isSelected: boolean }[] = [
+      {
+        method: 'cash',
+        amount: 0,
+        isSelected: true
+      }
+    ];
+    
     const invoiceStatus = actionType === 'send' ? 1 : 2;
     
-    // ✅ حفظ الفاتورة بدون طرق دفع
+    // ✅ حفظ الفاتورة مع البيانات الكاملة
     const result = await saveInvoice(
-      orderSummary,
+      orderSummary, // هذا يحتوي على العناصر الجديدة
       orderType,
-      defaultPayments, // ✅ مصفوفة فارغة
+      defaultPayments,
       invoiceStatus,
       {
         isEditMode,
@@ -626,9 +630,8 @@ const defaultPayments: { method: string; amount: number; isSelected: boolean }[]
     );
     
     const actionName = actionType === 'send' ? 'إرسال' : 'طباعة';
-    console.log(`تم ${actionName} الطلب بنجاح! رقم الفاتورة: ${result.invoiceNumber}`);
+    console.log(`✅ تم ${actionName} الطلب بنجاح! رقم الفاتورة: ${result.invoiceNumber}`);
     
-    // إعادة تعيين النظام
     if (onOrderCompleted) {
       onOrderCompleted({
         success: true,
@@ -638,12 +641,29 @@ const defaultPayments: { method: string; amount: number; isSelected: boolean }[]
     }
     
   } catch (error) {
-    console.error(`خطأ في ${actionType}:`, error);
-    // يمكن عرض رسالة خطأ للمستخدم هنا
+    console.error(`❌ خطأ في ${actionType}:`, error);
   }
 }, [saveInvoice, orderSummary, orderType, isEditMode, currentInvoiceId, 
     selectedCustomer, selectedAddress, selectedDeliveryCompany, selectedTable, 
     customerName, onOrderCompleted]);
+
+
+const handleActionButtonClick = useCallback(async (actionType: 'send' | 'print' | 'pay') => {
+  if (!canOpenPayment) {
+    console.warn('❌ لا يمكن فتح الدفع - لا توجد عناصر');
+    return;
+  }
+  
+  console.log(`🔄 تم الضغط على زر ${actionType}`);
+  console.log(`📊 عدد العناصر الحالي: ${orderSummary.items.length}`);
+  
+  if (actionType === 'pay') {
+    setSelectedActionType(actionType);
+    setShowPaymentPopup(true);
+  } else {
+    await handleDirectSave(actionType);
+  }
+}, [canOpenPayment, orderSummary.items.length, handleDirectSave]);
 
 
 

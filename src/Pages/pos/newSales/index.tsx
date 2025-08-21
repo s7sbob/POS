@@ -443,24 +443,46 @@ const handleTableSelect = useCallback((selection: TableSelection) => {
   }, [selectedProductForOptions, selectedPriceForOptions, addToOrder]);
 
   // تعديل حساب ملخص الطلب ليشمل الخدمة
-  const orderSummary: OrderSummaryType = useMemo(() => {
-    const subtotal = orderItems.reduce((sum, item) => sum + item.totalPrice, 0);
-    const serviceCharge = getServiceCharge();
-    const service = (subtotal * serviceCharge) / 100;
-    const discountPercentage = 0;
-    const discount = (subtotal * discountPercentage) / 100;
-    
-    return {
-      items: orderItems,
-      subtotal,
-      discount,
-      tax: 0,
-      service,
-      total: subtotal + service + deliveryCharge - discount
-    };
-  }, [orderItems, getServiceCharge, deliveryCharge]);
+const calculateOrderSummary = useCallback((): OrderSummaryType => {
+  console.log('🔄 حساب orderSummary مع:', orderItems.length, 'عنصر');
+  
+  orderItems.forEach((item, index) => {
+    console.log(`   ${index + 1}: ${item.product.nameArabic} (الكمية: ${item.quantity}) - ID: ${item.id}`);
+  });
+  
+  const subtotal = orderItems.reduce((sum, item) => sum + item.totalPrice, 0);
+  const serviceCharge = getServiceCharge();
+  const service = (subtotal * serviceCharge) / 100;
+  const discountPercentage = 0;
+  const discount = (subtotal * discountPercentage) / 100;
+  const tax = 0;
+  
+  // حساب المجاميع بالترتيب الصحيح
+  const totalAfterDiscount = subtotal - discount;
+  const totalAfterTaxAndService = totalAfterDiscount + tax + service + deliveryCharge;
+  
+  const summary = {
+    items: orderItems,
+    subtotal,
+    discount,
+    tax,
+    service,
+    total: totalAfterTaxAndService,
+    totalAfterDiscount,
+    totalAfterTaxAndService
+  };
+  
+  console.log('📊 orderSummary محسوب:', {
+    itemsCount: summary.items.length,
+    subtotal: summary.subtotal,
+    total: summary.total
+  });
+  
+  return summary;
+}, [orderItems, getServiceCharge, deliveryCharge]);
 
-
+// واستخدمه في كل مرة:
+const orderSummary = calculateOrderSummary();
 
 // معالج عرض الطلب من popup
 const handleViewOrderFromPopup = useCallback(async (invoiceData: any) => {

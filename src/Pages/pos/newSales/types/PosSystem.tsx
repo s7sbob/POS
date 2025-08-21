@@ -93,6 +93,8 @@ export interface SubItem {
 }
 
 export interface OrderSummary {
+  totalAfterTaxAndService: number;
+  totalAfterDiscount: number;
   items: OrderItem[];
   subtotal: number;
   discount: number;

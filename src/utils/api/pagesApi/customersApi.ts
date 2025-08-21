@@ -13,6 +13,7 @@ export interface CustomerAddress {
   branchId?: string;
   companyID?: string;
   isActive: boolean;
+  address?: string;
 }
 
 export interface Customer {
