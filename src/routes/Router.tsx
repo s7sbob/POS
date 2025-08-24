@@ -15,6 +15,7 @@ import CustomersPage from 'src/Pages/pos/customers/CustomersPage';
 import OffersPage from 'src/Pages/pos/offers/OffersPage';
 import DeliveryCompaniesPage from 'src/Pages/pos/delivery/companies/DeliveryCompaniesPage';
 import LandingPage from 'src/Pages/landing/LandingPage';
+import DeliveryManagementPage from 'src/Pages/pos/newSales/components/DeliveryManagementPage';
 // import SalesPage from 'src/Pages/pos/sales/SalesPage';
 
 /* ***Layouts**** */
@@ -135,6 +136,9 @@ const Router = [
       // Offers and Delivery Companies
       { path: '/pos/offers', element: <OffersPage /> },
       { path: '/pos/delivery/companies', element: <DeliveryCompaniesPage /> },
+
+
+
       // Business Entities Routes
       { path: '/suppliers', element: <SuppliersPage /> },
       { path: '/purchases/suppliers', element: <SuppliersPage /> },
@@ -185,6 +189,7 @@ const Router = [
       { path: '/unauthorized', element: <Unauthorized /> },
       { path: '/auth/no-branches', element: <NoBranches /> },
       { path: '/pos/sales', element: <SalesPage2 /> },
+      { path: '/pos/delivery/management', element: <DeliveryManagementPage /> },
       // Fallback for public routes
       { path: '*', element: <Navigate to="/auth/login" /> },
     ],
