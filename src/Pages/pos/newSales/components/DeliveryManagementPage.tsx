@@ -31,7 +31,11 @@ import {
   Toolbar,
   alpha,
   Fab,
-  Zoom
+  Zoom,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions
 } from '@mui/material';
 import {
   AccessTime as TimeIcon,
@@ -47,300 +51,40 @@ import {
   TwoWheeler as BikeIcon,
   AccountCircle as AccountIcon,
   ExitToApp as ExitIcon,
-  Refresh as RefreshIcon,
+  ArrowBack as ArrowBackIcon,
   FilterList as FilterIcon,
   Search as SearchIcon,
+  Refresh as RefreshIcon,
   NotificationImportant as UrgentIcon
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
+import * as invoicesApi from 'src/utils/api/pagesApi/invoicesApi';
+import * as deliveryAgentsApi from 'src/utils/api/pagesApi/deliveryAgentsApi';
 
-
-// Mock data with 'as const' fix
-const mockDeliveryAgents = [
-  { id: '1', name: 'أحمد محمد', status: 'available' as const },
-  { id: '2', name: 'محمد علي', status: 'available' as const },
-  { id: '3', name: 'علي أحمد', status: 'available' as const },
-  { id: '4', name: 'خالد محمود', status: 'available' as const }
-];
-
-
-const mockAgentsOnDuty = [
-  { id: '5', name: 'سامي حسن', status: 'busy' as const, ordersCount: 2 },
-  { id: '6', name: 'محمود أحمد', status: 'busy' as const, ordersCount: 1 }
-];
-
-
-const mockDeliveryOrders = [
-  {
-    id: '1',
-    code: '6',
-    customerName: 'أحمد',
-    customerAddress: 'شارع الجامعة، المعادي',
-    customerPhone: '01012345678',
-    total: 570.00,
-    area: 'جديدة الفلل',
-    status: 'preparing',
-    orderTime: new Date(Date.now() - 11 * 60 * 1000),
-    selected: false,
-    priority: 'high'
-  },
-  {
-    id: '2',
-    code: '7',
-    customerName: 'سارة محمد',
-    customerAddress: 'شارع النيل، الزمالك',
-    customerPhone: '01087654321',
-    total: 320.50,
-    area: 'الزمالك',
-    status: 'preparing',
-    orderTime: new Date(Date.now() - 25 * 60 * 1000),
-    selected: false,
-    priority: 'normal'
-  },
-  {
-    id: '3',
-    code: '8',
-    customerName: 'محمد حسن',
-    customerAddress: 'شارع التحرير، وسط البلد',
-    customerPhone: '01156789012',
-    total: 450.75,
-    area: 'وسط البلد',
-    status: 'preparing',
-    orderTime: new Date(Date.now() - 8 * 60 * 1000),
-    selected: false,
-    priority: 'urgent'
-  },
-    {
-    id: '4',
-    code: '8',
-    customerName: 'محمد حسن',
-    customerAddress: 'شارع التحرير، وسط البلد',
-    customerPhone: '01156789012',
-    total: 450.75,
-    area: 'وسط البلد',
-    status: 'preparing',
-    orderTime: new Date(Date.now() - 8 * 60 * 1000),
-    selected: false,
-    priority: 'urgent'
-  },
-    {
-    id: '5',
-    code: '8',
-    customerName: 'محمد حسن',
-    customerAddress: 'شارع التحرير، وسط البلد',
-    customerPhone: '01156789012',
-    total: 450.75,
-    area: 'وسط البلد',
-    status: 'preparing',
-    orderTime: new Date(Date.now() - 8 * 60 * 1000),
-    selected: false,
-    priority: 'urgent'
-  },
-    {
-    id: '6',
-    code: '8',
-    customerName: 'محمد حسن',
-    customerAddress: 'شارع التحرير، وسط البلد',
-    customerPhone: '01156789012',
-    total: 450.75,
-    area: 'وسط البلد',
-    status: 'preparing',
-    orderTime: new Date(Date.now() - 8 * 60 * 1000),
-    selected: false,
-    priority: 'urgent'
-  },
-    {
-    id: '7',
-    code: '8',
-    customerName: 'محمد حسن',
-    customerAddress: 'شارع التحرير، وسط البلد',
-    customerPhone: '01156789012',
-    total: 450.75,
-    area: 'وسط البلد',
-    status: 'preparing',
-    orderTime: new Date(Date.now() - 8 * 60 * 1000),
-    selected: false,
-    priority: 'urgent'
-  },
-    {
-    id: '8',
-    code: '8',
-    customerName: 'محمد حسن',
-    customerAddress: 'شارع التحرير، وسط البلد',
-    customerPhone: '01156789012',
-    total: 450.75,
-    area: 'وسط البلد',
-    status: 'preparing',
-    orderTime: new Date(Date.now() - 8 * 60 * 1000),
-    selected: false,
-    priority: 'urgent'
-  },
-    {
-    id: '9',
-    code: '8',
-    customerName: 'محمد حسن',
-    customerAddress: 'شارع التحرير، وسط البلد',
-    customerPhone: '01156789012',
-    total: 450.75,
-    area: 'وسط البلد',
-    status: 'preparing',
-    orderTime: new Date(Date.now() - 8 * 60 * 1000),
-    selected: false,
-    priority: 'urgent'
-  },
-    {
-    id: '10',
-    code: '8',
-    customerName: 'محمد حسن',
-    customerAddress: 'شارع التحرير، وسط البلد',
-    customerPhone: '01156789012',
-    total: 450.75,
-    area: 'وسط البلد',
-    status: 'preparing',
-    orderTime: new Date(Date.now() - 8 * 60 * 1000),
-    selected: false,
-    priority: 'urgent'
-  },
-    {
-    id: '11',
-    code: '8',
-    customerName: 'محمد حسن',
-    customerAddress: 'شارع التحرير، وسط البلد',
-    customerPhone: '01156789012',
-    total: 450.75,
-    area: 'وسط البلد',
-    status: 'preparing',
-    orderTime: new Date(Date.now() - 8 * 60 * 1000),
-    selected: false,
-    priority: 'urgent'
-  },
-    {
-    id: '12',
-    code: '8',
-    customerName: 'محمد حسن',
-    customerAddress: 'شارع التحرير، وسط البلد',
-    customerPhone: '01156789012',
-    total: 450.75,
-    area: 'وسط البلد',
-    status: 'preparing',
-    orderTime: new Date(Date.now() - 8 * 60 * 1000),
-    selected: false,
-    priority: 'urgent'
-  },
-    {
-    id: '13',
-    code: '8',
-    customerName: 'محمد حسن',
-    customerAddress: 'شارع التحرير، وسط البلد',
-    customerPhone: '01156789012',
-    total: 450.75,
-    area: 'وسط البلد',
-    status: 'preparing',
-    orderTime: new Date(Date.now() - 8 * 60 * 1000),
-    selected: false,
-    priority: 'urgent'
-  },
-    {
-    id: '14',
-    code: '8',
-    customerName: 'محمد حسن',
-    customerAddress: 'شارع التحرير، وسط البلد',
-    customerPhone: '01156789012',
-    total: 450.75,
-    area: 'وسط البلد',
-    status: 'preparing',
-    orderTime: new Date(Date.now() - 8 * 60 * 1000),
-    selected: false,
-    priority: 'urgent'
-  },
-    {
-    id: '15',
-    code: '8',
-    customerName: 'محمد حسن',
-    customerAddress: 'شارع التحرير، وسط البلد',
-    customerPhone: '01156789012',
-    total: 450.75,
-    area: 'وسط البلد',
-    status: 'preparing',
-    orderTime: new Date(Date.now() - 8 * 60 * 1000),
-    selected: false,
-    priority: 'urgent'
-  },
-    {
-    id: '16',
-    code: '8',
-    customerName: 'محمد حسن',
-    customerAddress: 'شارع التحرير، وسط البلد',
-    customerPhone: '01156789012',
-    total: 450.75,
-    area: 'وسط البلد',
-    status: 'preparing',
-    orderTime: new Date(Date.now() - 8 * 60 * 1000),
-    selected: false,
-    priority: 'urgent'
-  },
-    {
-    id: '17',
-    code: '8',
-    customerName: 'محمد حسن',
-    customerAddress: 'شارع التحرير، وسط البلد',
-    customerPhone: '01156789012',
-    total: 450.75,
-    area: 'وسط البلد',
-    status: 'preparing',
-    orderTime: new Date(Date.now() - 8 * 60 * 1000),
-    selected: false,
-    priority: 'urgent'
-  },
-    {
-    id: '18',
-    code: '8',
-    customerName: 'محمد حسن',
-    customerAddress: 'شارع التحرير، وسط البلد',
-    customerPhone: '01156789012',
-    total: 450.75,
-    area: 'وسط البلد',
-    status: 'preparing',
-    orderTime: new Date(Date.now() - 8 * 60 * 1000),
-    selected: false,
-    priority: 'urgent'
-  },
-  {
-    id: '19',
-    code: '9',
-    customerName: 'فاطمة علي',
-    customerAddress: 'شارع الهرم، الجيزة',
-    customerPhone: '01234567890',
-    total: 280.00,
-    area: 'الهرم',
-    status: 'preparing',
-    orderTime: new Date(Date.now() - 15 * 60 * 1000),
-    selected: false,
-    priority: 'normal'
-  }
-];
 
 
 interface DeliveryAgent {
   id: string;
   name: string;
-  status: 'available' | 'busy';
+  phone: string;
+  branchName?: string;
+  branchId: string;
+  companyID?: string;
+  isActive: boolean;
+  status?: 'available' | 'busy';
   ordersCount?: number;
 }
 
-
 interface DeliveryOrder {
   id: string;
-  code: string;
-  customerName: string;
-  customerAddress: string;
-  customerPhone: string;
-  total: number;
-  area: string;
-  status: string;
-  orderTime: Date;
+  notes?: string;
+  totalAfterTaxAndService: number;
+  createdAt: string;
+  preparedAt: string;
+  deliveryAgentId?: string | null;
+  invoiceStatus: number;
   selected: boolean;
-  priority: 'normal' | 'high' | 'urgent' | string;
 }
 
 
@@ -490,46 +234,148 @@ const theme = createTheme({
 
 const DeliveryManagementPage: React.FC = () => {
   const { t } = useTranslation();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const navigate = useNavigate();
   
-  const [orders, setOrders] = useState<DeliveryOrder[]>(mockDeliveryOrders);
-  const [availableAgents, setAvailableAgents] = useState<DeliveryAgent[]>(mockDeliveryAgents);
-  const [agentsOnDuty, setAgentsOnDuty] = useState<DeliveryAgent[]>(mockAgentsOnDuty);
+  const [orders, setOrders] = useState<DeliveryOrder[]>([]);
+  const [availableAgents, setAvailableAgents] = useState<DeliveryAgent[]>([]);
+  const [agentsOnDuty, setAgentsOnDuty] = useState<DeliveryAgent[]>([]);
   const [selectedAgents, setSelectedAgents] = useState<string[]>([]);
   const [selectAll, setSelectAll] = useState(false);
+  const [agentTimers, setAgentTimers] = useState<{[key: string]: Date}>({});
+  const [accountingDialog, setAccountingDialog] = useState<{
+    open: boolean;
+    agentId?: string;
+    agentName?: string;
+    orders?: any[];
+  }>({ open: false });
+  const [loading, setLoading] = useState(true);
+  const [filteredByAgent, setFilteredByAgent] = useState<string | null>(null);
+
+  // Fetch delivery agents from API
+  const fetchDeliveryAgents = async () => {
+    try {
+      const agents = await deliveryAgentsApi.getAll();
+      
+      // Separate agents into available and on duty based on whether they have orders assigned
+      const agentsWithStatus = agents
+        .filter(agent => agent.isActive)
+        .map(agent => ({
+          ...agent,
+          status: 'available' as const,
+          ordersCount: 0
+        }));
+      
+      setAvailableAgents(agentsWithStatus);
+    } catch (error) {
+      console.error('Error fetching delivery agents:', error);
+      setAvailableAgents([]);
+    }
+  };
+
+  // Fetch delivery orders from API
+  const fetchDeliveryOrders = async () => {
+    try {
+      setLoading(true);
+      const response = await invoicesApi.getDeliveryInPrepareInvoices();
+      
+      const transformedOrders: DeliveryOrder[] = response.data.map((invoice: invoicesApi.Invoice) => ({
+        id: invoice.id,
+        notes: invoice.notes || '',
+        totalAfterTaxAndService: invoice.totalAfterTaxAndService,
+        createdAt: invoice.createdAt,
+        preparedAt: invoice.preparedAt,
+        deliveryAgentId: invoice.deliveryAgentId,
+        invoiceStatus: invoice.invoiceStatus,
+        selected: false
+      }));
+      
+      setOrders(transformedOrders);
+      
+      // Update agents on duty based on orders with assigned agents
+      await updateAgentsOnDutyFromOrders(transformedOrders);
+      
+    } catch (error) {
+      console.error('Error fetching delivery orders:', error);
+      // Fallback to empty array on error
+      setOrders([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Update agents on duty based on orders
+  const updateAgentsOnDutyFromOrders = async (orders: DeliveryOrder[]) => {
+    try {
+      const agentIds = [...new Set(orders
+        .filter(order => order.deliveryAgentId)
+        .map(order => order.deliveryAgentId!)
+      )];
+
+      if (agentIds.length === 0) {
+        setAgentsOnDuty([]);
+        return;
+      }
+
+      const onDutyAgents: DeliveryAgent[] = [];
+      
+      for (const agentId of agentIds) {
+        try {
+          const agent = await deliveryAgentsApi.getById(agentId);
+          const ordersCount = orders.filter(order => order.deliveryAgentId === agentId).length;
+          
+          onDutyAgents.push({
+            ...agent,
+            status: 'busy' as const,
+            ordersCount
+          });
+        } catch (error) {
+          console.error(`Error fetching agent ${agentId}:`, error);
+        }
+      }
+
+      setAgentsOnDuty(onDutyAgents);
+      
+      // Remove on-duty agents from available agents
+      setAvailableAgents(prev => 
+        prev.filter(agent => !agentIds.includes(agent.id))
+      );
+      
+    } catch (error) {
+      console.error('Error updating agents on duty:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchDeliveryAgents();
+    fetchDeliveryOrders();
+  }, []);
 
 
-  const getElapsedTime = (orderTime: Date) => {
+  const getElapsedTime = (orderTimeString: string) => {
+    const orderTime = new Date(orderTimeString);
     const now = new Date();
     const diff = Math.floor((now.getTime() - orderTime.getTime()) / 1000);
-    const minutes = Math.floor(diff / 60);
+    const hours = Math.floor(diff / 3600);
+    const minutes = Math.floor((diff % 3600) / 60);
     const seconds = diff % 60;
-    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  };
+
+  const getAgentTimerElapsed = (agentId: string) => {
+    const startTime = agentTimers[agentId];
+    if (!startTime) return '00:00:00';
+    
+    const now = new Date();
+    const diff = Math.floor((now.getTime() - startTime.getTime()) / 1000);
+    const hours = Math.floor(diff / 3600);
+    const minutes = Math.floor((diff % 3600) / 60);
+    const seconds = diff % 60;
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   };
 
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'urgent':
-        return 'error';
-      case 'high':
-        return 'warning';
-      default:
-        return 'primary';
-    }
-  };
 
 
-  const getPriorityIcon = (priority: string) => {
-    switch (priority) {
-      case 'urgent':
-        return <UrgentIcon sx={{ fontSize: '1rem' }} />;
-      case 'high':
-        return <ScheduleIcon sx={{ fontSize: '1rem' }} />;
-      default:
-        return <CheckIcon sx={{ fontSize: '1rem' }} />;
-    }
-  };
 
 
   useEffect(() => {
@@ -569,11 +415,252 @@ const DeliveryManagementPage: React.FC = () => {
     );
   };
 
+  // Filter orders based on selected agent
+  const displayedOrders = filteredByAgent 
+    ? orders.filter(order => order.deliveryAgentId === filteredByAgent)
+    : orders;
+    
+  const selectedOrdersCount = displayedOrders.filter(order => order.selected).length;
+  const totalOrdersCount = orders.length;
 
-  const selectedOrdersCount = orders.filter(order => order.selected).length;
-  const totalAmount = orders
-    .filter(order => order.selected)
-    .reduce((sum, order) => sum + order.total, 0);
+    const handlePrintReceipt = async () => {
+    // Check if exactly one agent is selected and at least one order is selected
+    const selectedAgentIds = selectedAgents.filter(id => !id.startsWith('duty_'));
+    if (selectedAgentIds.length !== 1 || selectedOrdersCount === 0) {
+      alert('يجب اختيار طيار واحد فقط وطلب واحد على الأقل');
+      return;
+    }
+
+    const selectedAgentId = selectedAgentIds[0];
+    const agent = availableAgents.find(a => a.id === selectedAgentId);
+    
+    if (!agent) {
+      alert('الطيار غير موجود');
+      return;
+    }
+
+    try {
+      // Update selected orders with agent ID and status using API
+      const selectedOrders = orders.filter(order => order.selected);
+      
+      for (const order of selectedOrders) {
+        // Get the full invoice data first
+        const fullInvoice = await invoicesApi.getInvoiceById(order.id);
+        
+        // Update the invoice with agent ID and status to 2 (in delivery)
+        const updateData: invoicesApi.UpdateInvoiceRequest = {
+          id: fullInvoice.id,
+          InvoiceType: fullInvoice.invoiceType,
+          InvoiceStatus: 2, // Set to in delivery
+          WareHouseId: fullInvoice.wareHouseId,
+          RawBranchId: fullInvoice.rawBranchId,
+          CustomerId: fullInvoice.customerId,
+          TableId: fullInvoice.tableId,
+          HallCaptainId: fullInvoice.hallCaptainId,
+          DeliveryCompanyId: fullInvoice.deliveryCompanyId,
+          DeliveryAgentId: selectedAgentId, // Set the selected agent ID
+          TaxPercentage: fullInvoice.taxPercentage,
+          ServicePercentage: fullInvoice.servicePercentage,
+          HeaderDiscountPercentage: fullInvoice.headerDiscountPercentage,
+          PreparedAt: fullInvoice.preparedAt,
+          CompletedAt: fullInvoice.completedAt,
+          Notes: fullInvoice.notes,
+          Items: fullInvoice.items.map(item => ({
+            id: item.id,
+            ProductId: item.productId,
+            ProductPriceId: item.productPriceId,
+            Barcode: item.barcode,
+            UnitId: item.unitId,
+            PosPriceName: item.posPriceName,
+            UnitFactor: item.unitFactor,
+            Qty: item.qty,
+            UnitPrice: item.unitPrice,
+            UnitCost: item.unitCost,
+            ItemDiscountPercentage: item.itemDiscountPercentage,
+            ItemTaxPercentage: item.itemTaxPercentage,
+            ServicePercentage: item.servicePercentage,
+            WareHouseId: item.wareHouseId,
+            Components: item.components
+          })),
+          Payments: fullInvoice.payments.map(payment => ({
+            id: payment.id,
+            Amount: payment.amount,
+            PaymentMethodId: payment.paymentMethodId
+          }))
+        };
+        
+        await invoicesApi.updateInvoice(updateData);
+      }
+
+      // Update local state
+      setOrders(prevOrders => 
+        prevOrders.map(order => 
+          order.selected 
+            ? { ...order, deliveryAgentId: selectedAgentId, invoiceStatus: 2, selected: false }
+            : order
+        )
+      );
+
+      // Move agent from available to on duty
+      setAvailableAgents(prev => prev.filter(a => a.id !== selectedAgentId));
+      setAgentsOnDuty(prev => [...prev, {
+        ...agent,
+        status: 'busy' as const,
+        ordersCount: selectedOrdersCount
+      }]);
+
+      // Start timer for the agent
+      setAgentTimers(prev => ({
+        ...prev,
+        [selectedAgentId]: new Date()
+      }));
+
+      // Clear selections
+      setSelectedAgents([]);
+      setSelectAll(false);
+
+      alert(`تم تعيين ${selectedOrders.length} طلب للطيار ${agent.name} وبدء التوصيل`);
+      
+      // Refresh orders from API
+      await fetchDeliveryOrders();
+      
+    } catch (error) {
+      console.error('Error updating orders:', error);
+      alert('حدث خطأ أثناء تحديث الطلبات');
+    }
+  };
+
+  const handleAgentAccounting = (agentId: string, isOnDuty = false) => {
+    const agent = isOnDuty 
+      ? agentsOnDuty.find(a => a.id === agentId)
+      : availableAgents.find(a => a.id === agentId);
+    
+    if (!agent) {
+      alert('الطيار غير موجود');
+      return;
+    }
+
+    // Filter orders by agent instead of opening dialog
+    if (filteredByAgent === agentId) {
+      // If already filtered by this agent, clear filter
+      setFilteredByAgent(null);
+    } else {
+      // Filter orders by this agent
+      setFilteredByAgent(agentId);
+    }
+  };
+
+  const handleFinishAgentAccounting = async () => {
+    // Check if any agents are selected and any orders are selected
+    if (selectedAgents.length === 0 || selectedOrdersCount === 0) {
+      alert('يجب اختيار طيار واحد على الأقل وطلب واحد على الأقل');
+      return;
+    }
+
+    try {
+      // Update selected orders status to 3 (completed) using API
+      const selectedOrders = orders.filter(order => order.selected);
+      
+      for (const order of selectedOrders) {
+        // Get the full invoice data first
+        const fullInvoice = await invoicesApi.getInvoiceById(order.id);
+        
+        // Update the invoice status to 3 (completed)
+        const updateData: invoicesApi.UpdateInvoiceRequest = {
+          id: fullInvoice.id,
+          InvoiceType: fullInvoice.invoiceType,
+          InvoiceStatus: 3, // Set to completed
+          WareHouseId: fullInvoice.wareHouseId,
+          RawBranchId: fullInvoice.rawBranchId,
+          CustomerId: fullInvoice.customerId,
+          TableId: fullInvoice.tableId,
+          HallCaptainId: fullInvoice.hallCaptainId,
+          DeliveryCompanyId: fullInvoice.deliveryCompanyId,
+          DeliveryAgentId: fullInvoice.deliveryAgentId,
+          TaxPercentage: fullInvoice.taxPercentage,
+          ServicePercentage: fullInvoice.servicePercentage,
+          HeaderDiscountPercentage: fullInvoice.headerDiscountPercentage,
+          PreparedAt: fullInvoice.preparedAt,
+          CompletedAt: new Date().toISOString(),
+          Notes: fullInvoice.notes,
+          Items: fullInvoice.items.map(item => ({
+            id: item.id,
+            ProductId: item.productId,
+            ProductPriceId: item.productPriceId,
+            Barcode: item.barcode,
+            UnitId: item.unitId,
+            PosPriceName: item.posPriceName,
+            UnitFactor: item.unitFactor,
+            Qty: item.qty,
+            UnitPrice: item.unitPrice,
+            UnitCost: item.unitCost,
+            ItemDiscountPercentage: item.itemDiscountPercentage,
+            ItemTaxPercentage: item.itemTaxPercentage,
+            ServicePercentage: item.servicePercentage,
+            WareHouseId: item.wareHouseId,
+            Components: item.components
+          })),
+          Payments: fullInvoice.payments.map(payment => ({
+            id: payment.id,
+            Amount: payment.amount,
+            PaymentMethodId: payment.paymentMethodId
+          }))
+        };
+        
+        await invoicesApi.updateInvoice(updateData);
+      }
+
+      // Update local state
+      setOrders(prevOrders => 
+        prevOrders.map(order => 
+          order.selected 
+            ? { ...order, invoiceStatus: 3, selected: false }
+            : order
+        )
+      );
+
+      // Remove agents from on duty if they were selected
+      const agentsToRemove = selectedAgents
+        .filter(agentKey => agentKey.startsWith('duty_'))
+        .map(agentKey => agentKey.replace('duty_', ''));
+
+      if (agentsToRemove.length > 0) {
+        setAgentsOnDuty(prev => prev.filter(agent => !agentsToRemove.includes(agent.id)));
+        
+        // Remove timers for these agents
+        setAgentTimers(prev => {
+          const newTimers = { ...prev };
+          agentsToRemove.forEach(agentId => delete newTimers[agentId]);
+          return newTimers;
+        });
+
+        // Move agents back to available (optional, depending on business logic)
+        const completedAgents = agentsOnDuty.filter(agent => agentsToRemove.includes(agent.id));
+        setAvailableAgents(prev => [...prev, ...completedAgents.map(agent => ({
+          id: agent.id,
+          name: agent.name,
+          status: 'available' as const,
+          ordersCount: 0,
+          phone: agent.phone,
+          branchId: agent.branchId,
+          isActive: agent.isActive
+        }))]);
+      }
+
+      // Clear selections
+      setSelectedAgents([]);
+      setSelectAll(false);
+
+      alert(`تم إنهاء حساب ${agentsToRemove.length} طيار وتحديث ${selectedOrdersCount} طلب`);
+      
+      // Refresh orders from API
+      await fetchDeliveryOrders();
+      
+    } catch (error) {
+      console.error('Error updating invoices:', error);
+      alert('حدث خطأ أثناء تحديث الطلبات');
+    }
+  };
 
 
   return (
@@ -658,9 +745,22 @@ const DeliveryManagementPage: React.FC = () => {
                       >
                         {agent.name.charAt(0)}
                       </Avatar>
-                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                        {agent.name}
-                      </Typography>
+                      <Box sx={{ flex: 1 }}>
+                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                          {agent.name}
+                        </Typography>
+                      </Box>
+                      <IconButton
+                        size="small"
+                        color="warning"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleAgentAccounting(agent.id);
+                        }}
+                        sx={{ ml: 1 }}
+                      >
+                        <AccountIcon fontSize="small" />
+                      </IconButton>
                     </Stack>
                   </Card>
                 ))}
@@ -726,14 +826,43 @@ const DeliveryManagementPage: React.FC = () => {
                           {agent.name.charAt(0)}
                         </Avatar>
                       </Badge>
-                      <Box>
+                      <Box sx={{ flex: 1 }}>
                         <Typography variant="body2" sx={{ fontWeight: 500 }}>
                           {agent.name}
                         </Typography>
-                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', lineHeight: 1.2 }}>
-                          {agent.ordersCount} طلب نشط
-                        </Typography>
+                        <Stack direction="row" alignItems="center" spacing={1}>
+                          <Typography variant="caption" color="text.secondary" sx={{ lineHeight: 1.2 }}>
+                            {agent.ordersCount} طلب نشط
+                          </Typography>
+                          <Chip
+                            icon={<TimeIcon fontSize="small" />}
+                            label={getAgentTimerElapsed(agent.id)}
+                            size="small"
+                            sx={{ 
+                              bgcolor: 'warning.dark', 
+                              color: 'white',
+                              fontWeight: 'bold',
+                              fontFamily: 'monospace',
+                              fontSize: '0.7rem',
+                              height: '20px',
+                              '& .MuiChip-label': {
+                                px: 0.5
+                              }
+                            }}
+                          />
+                        </Stack>
                       </Box>
+                      <IconButton
+                        size="small"
+                        color="warning"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleAgentAccounting(agent.id, true);
+                        }}
+                        sx={{ ml: 1 }}
+                      >
+                        <AccountIcon fontSize="small" />
+                      </IconButton>
                     </Stack>
                   </Card>
                 ))}
@@ -775,7 +904,13 @@ const DeliveryManagementPage: React.FC = () => {
 
               <Stack direction="row" spacing={1}>
                 <Tooltip title="تحديث">
-                  <IconButton color="primary">
+                  <IconButton 
+                    color="primary"
+                    onClick={() => {
+                      fetchDeliveryAgents();
+                      fetchDeliveryOrders();
+                    }}
+                  >
                     <RefreshIcon />
                   </IconButton>
                 </Tooltip>
@@ -786,21 +921,23 @@ const DeliveryManagementPage: React.FC = () => {
                 </Tooltip>
                 <Button 
                   variant="contained" 
-                  color="error" 
-                  startIcon={<ExitIcon />}
+                  color="primary" 
+                  startIcon={<ArrowBackIcon />}
                   size="small"
                   sx={{ borderRadius: 2 }}
+                  onClick={() => navigate('/pos/sales')}
                 >
-                  خروج
+                  رجوع
                 </Button>
               </Stack>
             </Toolbar>
           </AppBar>
 
 
-          {/* Stats Cards */}
+          {/* Stats Cards and Action Buttons */}
           <Box sx={{ p: 1.5 }}>
-            <Grid container spacing={1.5}>
+            <Grid container spacing={1.5} alignItems="center">
+              {/* Total Orders Stat */}
               <Grid item xs={12} sm={6} md={3}>
                 <Card sx={{ p: 1.5, textAlign: 'center' }}>
                   <Stack alignItems="center" spacing={0.5}>
@@ -808,58 +945,78 @@ const DeliveryManagementPage: React.FC = () => {
                       <OrderIcon />
                     </Avatar>
                     <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
-                      {orders.length}
+                      {filteredByAgent ? displayedOrders.length : totalOrdersCount}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      إجمالي الطلبات
+                      {filteredByAgent ? 'طلبات الطيار' : 'إجمالي الطلبات'}
                     </Typography>
                   </Stack>
                 </Card>
               </Grid>
-              <Grid item xs={12} sm={6} md={3}>
-                <Card sx={{ p: 1.5, textAlign: 'center' }}>
-                  <Stack alignItems="center" spacing={0.5}>
-                    <Avatar sx={{ bgcolor: 'success.light', width: 40, height: 40 }}>
-                      <CheckIcon />
-                    </Avatar>
-                    <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'success.main' }}>
-                      {selectedOrdersCount}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      الطلبات المحددة
-                    </Typography>
-                  </Stack>
-                </Card>
-              </Grid>
-              <Grid item xs={12} sm={6} md={3}>
-                <Card sx={{ p: 1.5, textAlign: 'center' }}>
-                  <Stack alignItems="center" spacing={0.5}>
-                    <Avatar sx={{ bgcolor: 'warning.light', width: 40, height: 40 }}>
-                      <PersonIcon />
-                    </Avatar>
-                    <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'warning.main' }}>
-                      {availableAgents.length}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      طيارين متاحين
-                    </Typography>
-                  </Stack>
-                </Card>
-              </Grid>
-              <Grid item xs={12} sm={6} md={3}>
-                <Card sx={{ p: 1.5, textAlign: 'center' }}>
-                  <Stack alignItems="center" spacing={0.5}>
-                    <Avatar sx={{ bgcolor: 'secondary.light', width: 40, height: 40 }}>
-                      <DeliveryIcon />
-                    </Avatar>
-                    <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'secondary.main' }}>
-                      {totalAmount.toFixed(0)}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      قيمة المحدد (جنيه)
-                    </Typography>
-                  </Stack>
-                </Card>
+              
+              {/* Action Buttons */}
+              <Grid item xs={12} sm={6} md={9}>
+                <Stack direction="row" spacing={2} justifyContent="flex-end">
+                  {filteredByAgent && (
+                    <Button
+                      variant="outlined"
+                      color="warning"
+                      size="large"
+                      onClick={() => setFilteredByAgent(null)}
+                      sx={{ 
+                        minWidth: 140,
+                        borderRadius: 2,
+                        fontWeight: 'bold'
+                      }}
+                    >
+                      إلغاء الفلتر
+                    </Button>
+                  )}
+                  
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    size="large"
+                    sx={{ 
+                      minWidth: 140,
+                      borderRadius: 2,
+                      fontWeight: 'bold'
+                    }}
+                    disabled={selectedAgents.length !== 1 || selectedOrdersCount === 0}
+                    onClick={handlePrintReceipt}
+                  >
+                    طباعة البون
+                  </Button>
+                  
+                  <Button
+                    variant="contained"
+                    color="warning"
+                    size="large"
+                    sx={{ 
+                      minWidth: 140,
+                      borderRadius: 2,
+                      fontWeight: 'bold'
+                    }}
+                    disabled={selectedAgents.length === 0}
+                  >
+                    حساب المندوب
+                  </Button>
+                  
+                  <Button
+                    variant="contained"
+                    color="error"
+                    size="large"
+                    sx={{ 
+                      minWidth: 140,
+                      borderRadius: 2,
+                      fontWeight: 'bold'
+                    }}
+                    disabled={selectedAgents.length === 0 || selectedOrdersCount === 0}
+                    onClick={handleFinishAgentAccounting}
+                  >
+                    انهاء حساب الطيار
+                  </Button>
+                </Stack>
               </Grid>
             </Grid>
           </Box>
@@ -878,7 +1035,6 @@ const DeliveryManagementPage: React.FC = () => {
                         onChange={handleSelectAll}
                       />
                     </TableCell>
-                    <TableCell align="center">الأولوية</TableCell>
                     <TableCell align="center">الوقت</TableCell>
                     <TableCell align="center">الكود</TableCell>
                     <TableCell>العميل</TableCell>
@@ -886,105 +1042,106 @@ const DeliveryManagementPage: React.FC = () => {
                     <TableCell>الهاتف</TableCell>
                     <TableCell align="right">المبلغ</TableCell>
                     <TableCell>المنطقة</TableCell>
-                    <TableCell align="center">الحالة</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {orders.map((order) => (
-                    <TableRow 
-                      key={order.id}
-                      hover
-                      onClick={() => handleSelectOrder(order.id)}
-                      role="checkbox"
-                      aria-checked={order.selected}
-                      selected={order.selected}
-                      sx={{ cursor: 'pointer' }}
-                    >
-                      <TableCell padding="checkbox">
-                        <Checkbox
-                          color="primary"
-                          checked={order.selected}
-                        />
-                      </TableCell>
-                      <TableCell align="center">
-                        <Tooltip title={`أولوية ${order.priority}`}>
-                          <Chip
-                            icon={getPriorityIcon(order.priority)}
-                            size="small"
-                            color={getPriorityColor(order.priority) as any}
-                            variant="outlined"
-                          />
-                        </Tooltip>
-                      </TableCell>
-                      <TableCell align="center">
-                        <Chip
-                          icon={<TimeIcon fontSize="small" />}
-                          label={getElapsedTime(order.orderTime)}
-                          size="small"
-                          sx={{ 
-                            bgcolor: 'grey.800', 
-                            color: 'white',
-                            fontWeight: 'bold'
-                          }}
-                        />
-                      </TableCell>
-                      <TableCell align="center">
-                        <Chip 
-                          label={`#${order.code}`}
-                          color="primary"
-                          variant="outlined"
-                          size="small"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Stack direction="row" alignItems="center" spacing={1}>
-                          <Avatar sx={{ width: 28, height: 28, bgcolor: 'grey.300' }}>
-                            <PersonIcon fontSize="small" />
-                          </Avatar>
-                          <Typography variant="body2" fontWeight="medium">
-                            {order.customerName}
-                          </Typography>
-                        </Stack>
-                      </TableCell>
-                      <TableCell>
-                        <Stack direction="row" alignItems="center" spacing={1}>
-                          <LocationIcon fontSize="small" color="action" />
-                          <Typography variant="body2">
-                            {order.customerAddress}
-                          </Typography>
-                        </Stack>
-                      </TableCell>
-                      <TableCell>
-                        <Stack direction="row" alignItems="center" spacing={1}>
-                          <PhoneIcon fontSize="small" color="action" />
-                          <Typography variant="body2">
-                            {order.customerPhone}
-                          </Typography>
-                        </Stack>
-                      </TableCell>
-                      <TableCell align="right">
-                        <Typography variant="body1" fontWeight="bold" color="primary.main">
-                          {order.total.toFixed(2)} ج.م
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          label={order.area}
-                          size="small"
-                          variant="outlined"
-                          color="default"
-                        />
-                      </TableCell>
-                      <TableCell align="center">
-                        <Chip
-                          label="تجهيز"
-                          color="success"
-                          size="small"
-                          variant="filled"
-                        />
+                  {loading ? (
+                    <TableRow>
+                      <TableCell colSpan={8} align="center">
+                        <Typography>جاري التحميل...</Typography>
                       </TableCell>
                     </TableRow>
-                  ))}
+                  ) : displayedOrders.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={8} align="center">
+                        <Typography>لا توجد طلبات</Typography>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    displayedOrders.map((order) => (
+                      <TableRow 
+                        key={order.id}
+                        hover
+                        onClick={() => handleSelectOrder(order.id)}
+                        role="checkbox"
+                        aria-checked={order.selected}
+                        selected={order.selected}
+                        sx={{ cursor: 'pointer' }}
+                      >
+                        <TableCell padding="checkbox">
+                          <Checkbox
+                            color="primary"
+                            checked={order.selected}
+                          />
+                        </TableCell>
+                        <TableCell align="center">
+                          <Chip
+                            icon={<TimeIcon fontSize="small" />}
+                            label={getElapsedTime(order.createdAt)}
+                            size="small"
+                            sx={{ 
+                              bgcolor: 'grey.900', 
+                              color: 'white',
+                              fontWeight: 'bold',
+                              fontFamily: 'monospace',
+                              fontSize: '0.85rem',
+                              minWidth: '90px',
+                              '& .MuiChip-label': {
+                                px: 1
+                              }
+                            }}
+                          />
+                        </TableCell>
+                        <TableCell align="center">
+                          <Chip 
+                            label={`#${order.id.substring(0, 8)}`}
+                            size="small"
+                            color="primary"
+                            variant="outlined"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Stack direction="row" alignItems="center" spacing={1}>
+                            <Avatar sx={{ width: 28, height: 28, bgcolor: 'primary.light', fontSize: '0.8rem' }}>
+                              {order.notes ? order.notes.charAt(0) : 'ع'}
+                            </Avatar>
+                            <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                              {order.notes ? order.notes.split(' - ')[0] || 'عميل' : 'عميل'}
+                            </Typography>
+                          </Stack>
+                        </TableCell>
+                        <TableCell>
+                          <Stack direction="row" alignItems="center" spacing={0.5}>
+                            <LocationIcon fontSize="small" color="action" />
+                            <Typography variant="body2" color="text.secondary">
+                              عنوان التوصيل
+                            </Typography>
+                          </Stack>
+                        </TableCell>
+                        <TableCell>
+                          <Stack direction="row" alignItems="center" spacing={0.5}>
+                            <PhoneIcon fontSize="small" color="action" />
+                            <Typography variant="body2" color="text.secondary">
+                              {order.notes ? order.notes.split(' - ')[1] || 'غير محدد' : 'غير محدد'}
+                            </Typography>
+                          </Stack>
+                        </TableCell>
+                        <TableCell align="right">
+                          <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'success.main' }}>
+                            {order.totalAfterTaxAndService.toFixed(2)} ج.م
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Chip 
+                            label="منطقة التوصيل"
+                            size="small"
+                            color="secondary"
+                            variant="outlined"
+                          />
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </TableContainer>
@@ -1010,9 +1167,9 @@ const DeliveryManagementPage: React.FC = () => {
               <Typography variant="body2" color="text.secondary">
                 المحدد: <strong>{selectedOrdersCount}</strong>
               </Typography>
-              <Typography variant="body2" color="text.secondary">
+              {/* <Typography variant="body2" color="text.secondary">
                 القيمة: <strong>{totalAmount.toFixed(2)} ج.م</strong>
-              </Typography>
+              </Typography> */}
             </Stack>
             
             <Stack direction="row" alignItems="center" spacing={1}>

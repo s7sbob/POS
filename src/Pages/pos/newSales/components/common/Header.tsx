@@ -1,5 +1,6 @@
 // src/Pages/pos/newSales/components/Header.tsx
 import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Customer, CustomerAddress } from 'src/utils/api/pagesApi/customersApi';
 import { DeliveryCompany } from '../../../../../utils/api/pagesApi/deliveryCompaniesApi';
 import { Invoice } from '../../../../../utils/api/pagesApi/invoicesApi'; // إضافة استيراد Invoice type
@@ -34,6 +35,7 @@ const Header: React.FC<HeaderProps> = ({
   selectedAddress,
   onViewOrder // ✅ إضافة في destructuring
 }) => {
+  const navigate = useNavigate();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [showTodayOrders, setShowTodayOrders] = useState(false);
@@ -122,28 +124,49 @@ const Header: React.FC<HeaderProps> = ({
             </div>
           )}
 
-          <nav className="header-nav">
-            <a
-              href="#"
-              className="nav-item active today-orders-btn"
-              onClick={handleTodayOrdersClick}
-              title="عرض طلبات اليوم"
-            >
-              <img src="/images/img_sending_order.svg" alt="Today Orders" />
-              <span>Today Orders</span>
-            </a>
+            <nav className="header-nav">
+              <a
+                href="#"
+                className="nav-item active today-orders-btn"
+                onClick={handleTodayOrdersClick}
+                title="عرض طلبات اليوم"
+              >
+                <img src="/images/img_sending_order.svg" alt="Today Orders" />
+                <span>Today Orders</span>
+              </a>
 
-            <a 
-              href="#" 
-              className="nav-item" 
-              onClick={(e) => { 
-                e.preventDefault(); 
-                if (onTableClick) onTableClick(); 
-              }}
-            >
-              <img src="/images/img_table_02.svg" alt="Table" />
-              <span>{tableDisplayName}</span>
-            </a>
+              {/* Delivery Order button - only show for Delivery and Pickup */}
+              {(selectedOrderType === 'Delivery' || selectedOrderType === 'Pickup') && (
+                <a 
+                  href="#" 
+                  className="nav-item delivery-order-btn" 
+                  onClick={(e) => { 
+                    e.preventDefault(); 
+                    // Navigate to DeliveryManagementPage using React Router
+                    navigate('/pos/delivery/management');
+                  }}
+                  title="إدارة التوصيل"
+                >
+                  <img src="/images/img_delivery_truck.svg" alt="Delivery Order" />
+                  <span>Delivery Order</span>
+                </a>
+              )}
+
+              {/* Table button - only show for Takeaway and Dine-in */}
+              {(selectedOrderType === 'Takeaway' || selectedOrderType === 'Dine-in') && (
+                <a 
+                  href="#" 
+                  className="nav-item" 
+                  onClick={(e) => { 
+                    e.preventDefault(); 
+                    if (onTableClick) onTableClick(); 
+                  }}
+                  title="اختيار الطاولة"
+                >
+                  <img src="/images/img_table_02.svg" alt="Table" />
+                  <span>{tableDisplayName}</span>
+                </a>
+              )}
 
             <a href="#" className="nav-item">
               <img src="/images/img_discount_tag_01.svg" alt="Discount" />

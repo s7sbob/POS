@@ -237,6 +237,34 @@ export const getAllInvoices = async (pageNumber: number = 1, pageSize: number = 
   }
 };
 
+// دالة جلب الطلبات قيد التحضير للتوصيل
+export const getDeliveryInPrepareInvoices = async (): Promise<InvoicesResponse> => {
+  try {
+    const response = await api.get('/GetDeliveryInPrepareInvoices');
+    
+    if (response.data?.isvalid && response.data?.data) {
+      return {
+        totalCount: response.data.data.totalCount,
+        pageCount: response.data.data.pageCount,
+        pageNumber: response.data.data.pageNumber,
+        pageSize: response.data.data.pageSize,
+        data: response.data.data.data
+      };
+    }
+    
+    return {
+      totalCount: 0,
+      pageCount: 0,
+      pageNumber: 0,
+      pageSize: 0,
+      data: []
+    };
+  } catch (error) {
+    console.error('Error fetching delivery prepare invoices:', error);
+    throw error;
+  }
+};
+
 // دالة إنشاء فاتورة جديدة
 export const addInvoice = async (invoiceData: CreateInvoiceRequest): Promise<InvoiceResponse> => {
   try {
