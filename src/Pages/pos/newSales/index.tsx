@@ -497,8 +497,7 @@ const handleViewOrderFromPopup = useCallback(async (invoiceData: any) => {
     // تطبيق البيانات على الواجهة
     setOrderItems(convertedData.orderItems);
     setDeliveryCharge(convertedData.deliveryCharge);
-    
-    // تطبيق بيانات العميل
+     // تطبيق بيانات العميل
     if (convertedData.selectedCustomer) {
       setSelectedCustomer(convertedData.selectedCustomer);
       setCustomerName(`${convertedData.selectedCustomer.name} - ${convertedData.selectedCustomer.phone1}`);

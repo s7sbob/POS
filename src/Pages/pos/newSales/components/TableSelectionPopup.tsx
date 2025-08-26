@@ -58,12 +58,17 @@ useEffect(() => {
     const newDurations: {[key: string]: string} = {};
     unclosedTables.forEach(invoice => {
       if (invoice.tableDTO?.id) {
-        // ✅ استخدام createdAt إذا كان موجود، وإلا preparedAt
         const timeToUse = invoice.createdAt !== '0001-01-01T00:00:00' && invoice.createdAt 
           ? invoice.createdAt 
           : invoice.preparedAt || invoice.completedAt;
-          
-        newDurations[invoice.tableDTO.id] = unclosedTablesApi.calculateTableOpenDuration(timeToUse);
+        
+        const startTime = new Date(timeToUse);
+        const now = new Date();
+        const diff = Math.floor((now.getTime() - startTime.getTime()) / 1000);
+        const hours = Math.floor(diff / 3600);
+        const minutes = Math.floor((diff % 3600) / 60);
+        const seconds = diff % 60;
+        newDurations[invoice.tableDTO.id] = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
       }
     });
     setOpenDurations(newDurations);
@@ -150,7 +155,7 @@ const handleTableClick = (table: Table) => {
                   return (
                     <div
                       key={table.id}
-                      className={`${styles.productItem} ${occupied ? styles.occupied : styles.available}`}
+                      className={`${styles.productItem} ${!occupied ? styles.available : invoice?.invoiceStatus === 1 ? styles.preparing : styles.delivering}`}
                       onClick={() => handleTableClick(table)}
                     >
                       <div className={styles.productImage}>
@@ -163,8 +168,8 @@ const handleTableClick = (table: Table) => {
                         />
                         
                         {/* أيقونة الحالة */}
-                        <div className={`${styles.statusIcon} ${occupied ? styles.occupiedIcon : styles.availableIcon}`}>
-                          {occupied ? '🔴' : '🟢'}
+                        <div className={`${styles.statusIcon} ${!occupied ? styles.availableIcon : invoice?.invoiceStatus === 1 ? styles.preparingIcon : styles.deliveringIcon}`}>
+                          {!occupied ? '🟢' : invoice?.invoiceStatus === 1 ? '🔴' : '🔵'}
                         </div>
                         
                         {/* أيقونة العرض للطاولات المشغولة */}
@@ -195,9 +200,7 @@ const handleTableClick = (table: Table) => {
                               <span>{duration}</span>
                             </div>
                             
-                            <div className={styles.itemsCount}>
-                              {invoice.items?.length || 0} صنف
-                            </div>
+
                           </div>
                         )}
                       </div>

@@ -328,11 +328,11 @@ export const getInvoiceTypeText = (invoiceType: number): string => {
 export const getInvoiceStatusText = (invoiceStatus: number): string => {
   switch (invoiceStatus) {
     case 1:
-      return 'مكتملة';
+      return 'مرحلة التجهيز';
     case 2:
-      return 'معلقة';
+      return 'مرحلة التسليم';
     case 3:
-      return 'ملغية';
+      return 'تم الانتهاء';
     default:
       return 'غير معروف';
   }

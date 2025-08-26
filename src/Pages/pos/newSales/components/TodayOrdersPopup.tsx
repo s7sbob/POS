@@ -184,12 +184,12 @@ const TodayOrdersPopup: React.FC<TodayOrdersPopupProps> = ({
       case 2: // Dine-in
         return {
           label: 'الطاولة',
-          value: invoice.tableId ? `طاولة ${invoice.tableId.substring(0, 8)}...` : '--'
+          value: invoice.tableId ? `طاولة ${invoice.tableId}` : '--'
         };
       case 3: // Delivery
         return {
-          label: 'شركة التوصيل',
-          value: invoice.deliveryCompanyId ? `شركة ${invoice.deliveryCompanyId.substring(0, 8)}...` : '--'
+          label: 'الطيار',
+          value: invoice.deliveryAgentId || '--'
         };
       default:
         return null;
@@ -347,8 +347,9 @@ const TodayOrdersPopup: React.FC<TodayOrdersPopupProps> = ({
                         <Chip
                           label={getInvoiceStatusText(invoice.invoiceStatus)}
                           size="small"
-                          color={invoice.invoiceStatus === 1 ? 'success' : 
-                                 invoice.invoiceStatus === 2 ? 'warning' : 'error'}
+                          color={invoice.invoiceStatus === 1 ? 'info' : 
+                                 invoice.invoiceStatus === 2 ? 'primary' : 
+                                 invoice.invoiceStatus === 3 ? 'success' : 'default'}
                         />
                       </TableCell>
                       

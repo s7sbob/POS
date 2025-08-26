@@ -934,92 +934,100 @@ const DeliveryManagementPage: React.FC = () => {
           </AppBar>
 
 
-          {/* Stats Cards and Action Buttons */}
-          <Box sx={{ p: 1.5 }}>
-            <Grid container spacing={1.5} alignItems="center">
-              {/* Total Orders Stat */}
-              <Grid item xs={12} sm={6} md={3}>
-                <Card sx={{ p: 1.5, textAlign: 'center' }}>
-                  <Stack alignItems="center" spacing={0.5}>
-                    <Avatar sx={{ bgcolor: 'primary.light', width: 40, height: 40 }}>
-                      <OrderIcon />
-                    </Avatar>
-                    <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
-                      {filteredByAgent ? displayedOrders.length : totalOrdersCount}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {filteredByAgent ? 'طلبات الطيار' : 'إجمالي الطلبات'}
-                    </Typography>
-                  </Stack>
-                </Card>
-              </Grid>
-              
-              {/* Action Buttons */}
-              <Grid item xs={12} sm={6} md={9}>
-                <Stack direction="row" spacing={2} justifyContent="flex-end">
-                  {filteredByAgent && (
-                    <Button
-                      variant="outlined"
-                      color="warning"
-                      size="large"
-                      onClick={() => setFilteredByAgent(null)}
-                      sx={{ 
-                        minWidth: 140,
-                        borderRadius: 2,
-                        fontWeight: 'bold'
-                      }}
-                    >
-                      إلغاء الفلتر
-                    </Button>
-                  )}
-                  
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    size="large"
-                    sx={{ 
-                      minWidth: 140,
-                      borderRadius: 2,
-                      fontWeight: 'bold'
-                    }}
-                    disabled={selectedAgents.length !== 1 || selectedOrdersCount === 0}
-                    onClick={handlePrintReceipt}
-                  >
-                    طباعة البون
-                  </Button>
-                  
-                  <Button
-                    variant="contained"
-                    color="warning"
-                    size="large"
-                    sx={{ 
-                      minWidth: 140,
-                      borderRadius: 2,
-                      fontWeight: 'bold'
-                    }}
-                    disabled={selectedAgents.length === 0}
-                  >
-                    حساب المندوب
-                  </Button>
-                  
-                  <Button
-                    variant="contained"
-                    color="error"
-                    size="large"
-                    sx={{ 
-                      minWidth: 140,
-                      borderRadius: 2,
-                      fontWeight: 'bold'
-                    }}
-                    disabled={selectedAgents.length === 0 || selectedOrdersCount === 0}
-                    onClick={handleFinishAgentAccounting}
-                  >
-                    انهاء حساب الطيار
-                  </Button>
-                </Stack>
-              </Grid>
-            </Grid>
-          </Box>
+{/* Stats Cards and Action Buttons */}
+<Box sx={{ p: 1.5 }}>
+  <Grid container spacing={1.5} alignItems="center">
+    {/* Total Orders Stat */}
+    <Grid item xs={12} sm={6} md={3}>
+      <Card sx={{ p: 1.5, textAlign: 'center' }}>
+        <Stack alignItems="center" spacing={0.5}>
+          <Avatar sx={{ bgcolor: 'primary.light', width: 40, height: 40 }}>
+            <OrderIcon />
+          </Avatar>
+          <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
+            {filteredByAgent ? displayedOrders.length : totalOrdersCount}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {filteredByAgent ? 'طلبات الطيار' : 'إجمالي الطلبات'}
+          </Typography>
+        </Stack>
+      </Card>
+    </Grid>
+
+    {/* Action Buttons */}
+    <Grid item xs={12} sm={6} md={9}>
+      <Stack direction="row" spacing={2} justifyContent="flex-end">
+        {filteredByAgent && (
+          <Button
+            variant="outlined"
+            color="warning"
+            size="large"
+            onClick={() => setFilteredByAgent(null)}
+            sx={{
+              minWidth: 140,
+              borderRadius: 2,
+              fontWeight: 'bold'
+            }}
+          >
+            إلغاء الفلتر
+          </Button>
+        )}
+
+        <Stack direction="row" spacing={1.5}>
+          {filteredByAgent ? (
+            <>
+              <Button
+                variant="contained"
+                color="info"
+                size="large"
+                sx={{
+                  minWidth: 140,
+                  borderRadius: 2,
+                  fontWeight: 'bold',
+                }}
+                onClick={() => setFilteredByAgent(null)}
+              >
+                الذهاب الى اوردرات تنتظر التسليم
+              </Button>
+              <Button
+                variant="contained"
+                color="error"
+                size="large"
+                sx={{
+                  minWidth: 140,
+                  borderRadius: 2,
+                  fontWeight: 'bold',
+                }}
+                disabled={selectedOrdersCount === 0}
+                onClick={handleFinishAgentAccounting}
+              >
+                انهاء حساب الطيار
+              </Button>
+            </>
+          ) : (
+            <Button
+              variant="contained"
+              color="primary"
+              size="large"
+              sx={{
+                minWidth: 140,
+                borderRadius: 2,
+                fontWeight: 'bold',
+              }}
+              disabled={
+                selectedAgents.filter(id => !id.startsWith('duty_')).length !== 1 ||
+                selectedOrdersCount === 0
+              }
+              onClick={handlePrintReceipt}
+            >
+              طباعة البون
+            </Button>
+          )}
+        </Stack>
+      </Stack>
+    </Grid>
+  </Grid>
+</Box>
 
 
           {/* Enhanced Table */}
