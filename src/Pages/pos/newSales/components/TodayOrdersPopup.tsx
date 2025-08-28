@@ -344,7 +344,6 @@ const TodayOrdersPopup: React.FC<TodayOrdersPopupProps> = ({
                 <TableCell>المبلغ الإجمالي</TableCell>
                 <TableCell>العميل</TableCell>
                 <TableCell>معلومات إضافية</TableCell>
-                <TableCell align="center">إجراءات</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
