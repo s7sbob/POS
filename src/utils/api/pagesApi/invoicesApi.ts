@@ -38,6 +38,7 @@ export interface InvoiceItem {
   branchId?: string | null;
   companyID?: string | null;
   isActive: boolean;
+  childrens?: InvoiceItem[]; // Added for extra/without items
 }
 
 export interface InvoicePayment {
@@ -125,6 +126,7 @@ export interface CreateInvoiceItem {
   ServicePercentage: number;
   WareHouseId: string;
   Components: any[];
+  Childrens?: CreateInvoiceItem[]; // Added for extra/without items
 }
 
 export interface CreateInvoicePayment {

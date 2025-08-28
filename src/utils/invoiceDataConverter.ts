@@ -238,7 +238,10 @@ private static async convertSingleInvoiceItem(item: InvoiceItem): Promise<OrderI
     const selectedPrice = this.getPriceData(item, product);
 
     // ✅ فصل Components إلى نوعين: خيارات وإضافات
-    const { subItems, selectedOptions } = this.separateComponentsIntoTypes(item.components, product);
+    // SubItems تأتي الآن من childrens
+    const subItems: SubItem[] = this.convertChildrensToSubItems(item.childrens || []);
+    // SelectedOptions لا تزال تأتي من components
+    const selectedOptions: SelectedOption[] = this.extractSelectedOptions(item, product);
 
     // ✅ حساب السعر الإجمالي الصحيح (سعر المنتج + الخيارات + الإضافات)
     const basePrice = selectedPrice.price * item.qty;
@@ -261,9 +264,7 @@ private static async convertSingleInvoiceItem(item: InvoiceItem): Promise<OrderI
       discountAmount: item.itemDiscountValue,
       subItems: subItems.length > 0 ? subItems : undefined, // الإضافات والحذوفات فقط
       selectedOptions: selectedOptions.length > 0 ? selectedOptions : undefined // الخيارات فقط
-    };
-
-    console.log('🔍 تحويل العنصر:', {
+    };    console.log('🔍 تحويل العنصر:', {
       productName: product.nameArabic,
       basePrice,
       optionsPrice,
@@ -281,39 +282,42 @@ private static async convertSingleInvoiceItem(item: InvoiceItem): Promise<OrderI
   }
 }
 
-  // ✅ إضافة دالة تحويل الـ components إلى subItems
-  private static convertComponentsToSubItems(components: any[]): SubItem[] {
-    if (!components || !Array.isArray(components)) {
+  // ✅ إضافة دالة تحويل الـ childrens إلى subItems
+  private static convertChildrensToSubItems(childrens: InvoiceItem[]): SubItem[] {
+    if (!childrens || !Array.isArray(childrens)) {
       return [];
     }
 
-    return components.map((component, index) => {
-      // تحديد نوع الـ component
-      let type: 'extra' | 'without' | 'option' = 'option';
-      let price = component.extraPrice || component.price || 0;
-      
-      // إذا كان هناك type محدد في البيانات، استخدمه
-      if (component.type) {
-        type = component.type;
+    return childrens.map((child, index) => {
+      let type: 'extra' | 'without' = 'extra';
+      let price = child.unitPrice || 0;
+
+      // Determine if it's 'without' based on name or price
+      const nameIndicatesWithout = (child.posPriceName || '')
+        .toLowerCase()
+        .includes('بدون') || 
+        (child.posPriceName || '')
+        .toLowerCase()
+        .includes('without') ||
+        (child.posPriceName || '')
+        .toLowerCase()
+        .includes('no ');
+            
+      if (price <= 0 && nameIndicatesWithout) {
+        type = 'without';
+        price = 0;
       } else {
-        // إذا كان السعر 0 أو سالب، يبقى "without"
-        if (price <= 0) {
-          type = 'without';
-          price = 0;
-        } else {
-          type = 'extra';
-        }
+        type = 'extra';
       }
 
       return {
-        id: component.id || `component_${index}_${Date.now()}`,
+        id: child.id || `child_${index}_${Date.now()}`,
         type: type,
-        name: component.name || component.ComponentName || component.componentName || `مكون ${index + 1}`,
-        quantity: component.quantity || 1,
-        price: type === 'without' ? 0 : price,
-        isRequired: component.isRequired || false,
-        productId: component.ProductComponentId || component.productComponentId,
-        groupId: component.groupId
+        name: child.posPriceName || `مكون ${index + 1}`,
+        quantity: child.qty || 1,
+        price: price,
+        productId: child.productId,
+        groupId: undefined // Childrens from API don't have groupId in this context
       };
     });
   }

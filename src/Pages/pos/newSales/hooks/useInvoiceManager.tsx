@@ -80,48 +80,25 @@ export const useInvoiceManager = () => {
     item: OrderItem, 
     existingItem?: invoicesApi.InvoiceItem
   ): invoicesApi.CreateInvoiceItem => {
-    const components: any[] = [];
-
-    // معالجة الـ subItems
+    // معالجة الـ subItems كـ Childrens
+    const childrens: invoicesApi.CreateInvoiceItem[] = [];
     if (item.subItems && item.subItems.length > 0) {
       item.subItems.forEach(subItem => {
-        components.push({
-          id: subItem.id,
-          name: subItem.name,
-          quantity: subItem.quantity,
-          extraPrice: subItem.type === 'without' ? 0 : subItem.price,
-          price: subItem.price,
-          type: subItem.type,
-          groupId: subItem.groupId,
-          isRequired: subItem.isRequired || false,
-          isCommentOnly: false,
-          useOriginalPrice: false,
-          sortOrder: 0,
+        childrens.push({
+          ProductId: subItem.productId || item.product.id, // Fallback to parent product ID
+          ProductPriceId: item.selectedPrice.id, // Fallback to parent price ID
+          Barcode: item.selectedPrice.barcode || '1234567890123',
+          UnitId: null,
+          PosPriceName: subItem.name,
+          UnitFactor: 1,
+          Qty: subItem.quantity,
+          UnitPrice: subItem.price,
+          UnitCost: 0, // Or fetch cost if available
+          ItemDiscountPercentage: 0,
+          ItemTaxPercentage: 0, // Or from settings
+          ServicePercentage: 0, // Or from settings
           WareHouseId: getWareHouseId(),
-          ComponentName: subItem.name,
-          ProductComponentId: subItem.productId || item.product.id
-        });
-      });
-    }
-
-    // معالجة الـ selectedOptions
-    if (item.selectedOptions && item.selectedOptions.length > 0) {
-      item.selectedOptions.forEach(option => {
-        components.push({
-          id: option.itemId,
-          name: option.itemName,
-          quantity: option.quantity,
-          extraPrice: option.extraPrice,
-          price: option.extraPrice,
-          type: 'option',
-          groupId: option.groupId,
-          isCommentOnly: option.isCommentOnly,
-          isRequired: false,
-          useOriginalPrice: false,
-          sortOrder: 0,
-          WareHouseId: getWareHouseId(),
-          ComponentName: option.itemName,
-          ProductComponentId: item.product.id
+          Components: [],
         });
       });
     }
@@ -135,12 +112,13 @@ export const useInvoiceManager = () => {
       UnitFactor: 1,
       Qty: item.quantity,
       UnitPrice: item.selectedPrice.price,
-      UnitCost: 45,
+      UnitCost: 45, // This should be fetched from product data
       ItemDiscountPercentage: item.discountPercentage || 0,
-      ItemTaxPercentage: 14,
-      ServicePercentage: 10,
+      ItemTaxPercentage: 0, // This should be from settings
+      ServicePercentage: 0, // This should be from settings
       WareHouseId: getWareHouseId(),
-      Components: components
+      Components: [], // Components are now handled by childrens
+      Childrens: childrens.length > 0 ? childrens : undefined,
     };
 
     // إضافة الـ id إذا كان العنصر موجود مسبقاً
@@ -327,7 +305,7 @@ export const useInvoiceManager = () => {
             ItemTaxPercentage: originalItem.itemTaxPercentage,
             ServicePercentage: originalItem.servicePercentage,
             WareHouseId: originalItem.wareHouseId,
-            Components: originalItem.components || []
+            Components: originalItem.components || [],
           };
           allItems.push(preservedItem);
           console.log(`🔒 الاحتفاظ بعنصر أصلي: ${originalItem.id} (${originalItem.posPriceName})`);

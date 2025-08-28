@@ -146,8 +146,9 @@ const handleTableClick = (table: Table) => {
             {/* قسم الطاولات */}
             <section className={styles.productsSection}>
               {loading && (
-                <div className={styles.loadingMessage}>
-                  جاري تحديث حالة الطاولات...
+                <div className={styles.tableLoadingMessage}>
+                  <div className={styles.loadingSpinner}></div>
+                  <span>جاري تحديث حالة الطاولات...</span>
                 </div>
               )}
               
