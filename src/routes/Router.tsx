@@ -16,6 +16,7 @@ import OffersPage from 'src/Pages/pos/offers/OffersPage';
 import DeliveryCompaniesPage from 'src/Pages/pos/delivery/companies/DeliveryCompaniesPage';
 import LandingPage from 'src/Pages/landing/LandingPage';
 import DeliveryManagementPage from 'src/Pages/pos/newSales/components/DeliveryManagementPage';
+import DeliveryAgentAccountingPage from 'src/Pages/pos/newSales/components/DeliveryAgentAccountingPage';
 // import SalesPage from 'src/Pages/pos/sales/SalesPage';
 
 /* ***Layouts**** */
@@ -190,6 +191,7 @@ const Router = [
       { path: '/auth/no-branches', element: <NoBranches /> },
       { path: '/pos/sales', element: <SalesPage2 /> },
       { path: '/pos/delivery/management', element: <DeliveryManagementPage /> },
+      { path: '/pos/delivery/agent-accounting/:agentId', element: <DeliveryAgentAccountingPage /> },
       // Fallback for public routes
       { path: '*', element: <Navigate to="/auth/login" /> },
     ],

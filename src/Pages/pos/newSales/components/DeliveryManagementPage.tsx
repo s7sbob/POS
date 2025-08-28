@@ -35,7 +35,13 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogActions
+  DialogActions,
+  Snackbar,
+  Alert,
+  AlertTitle,
+  Slide,
+  Grow,
+  Backdrop,
 } from '@mui/material';
 import {
   AccessTime as TimeIcon,
@@ -61,7 +67,28 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import * as invoicesApi from 'src/utils/api/pagesApi/invoicesApi';
 import * as deliveryAgentsApi from 'src/utils/api/pagesApi/deliveryAgentsApi';
+import { TransitionProps } from '@mui/material/transitions';
 
+
+// Add these interfaces at the top with other interfaces
+interface NotificationState {
+  open: boolean;
+  message: string;
+  type: 'success' | 'error' | 'warning' | 'info';
+  title?: string;
+  action?: () => void;
+  actionLabel?: string;
+}
+
+// Custom transition component
+const SlideTransition = React.forwardRef<
+  unknown,
+  TransitionProps & {
+    children: React.ReactElement;
+  }
+>(function Transition(props, ref) {
+  return <Slide direction="up" ref={ref} {...props} />;
+});
 
 
 interface DeliveryAgent {
@@ -168,6 +195,24 @@ const theme = createTheme({
         },
       },
     },
+    MuiCssBaseline: {
+      styleOverrides: {
+        '@keyframes pulse': {
+          '0%': {
+            transform: 'scale(1)',
+            opacity: 1,
+          },
+          '50%': {
+            transform: 'scale(1.1)',
+            opacity: 0.7,
+          },
+          '100%': {
+            transform: 'scale(1)',
+            opacity: 1,
+          },
+        },
+      },
+    },
     MuiButton: {
       styleOverrides: {
         root: {
@@ -235,7 +280,11 @@ const theme = createTheme({
 const DeliveryManagementPage: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  
+  const [notification, setNotification] = useState<NotificationState>({
+  open: false,
+  message: '',
+  type: 'info'
+});
   const [orders, setOrders] = useState<DeliveryOrder[]>([]);
   const [availableAgents, setAvailableAgents] = useState<DeliveryAgent[]>([]);
   const [agentsOnDuty, setAgentsOnDuty] = useState<DeliveryAgent[]>([]);
@@ -302,6 +351,28 @@ const DeliveryManagementPage: React.FC = () => {
       setLoading(false);
     }
   };
+
+
+  const showNotification = (
+  message: string, 
+  type: NotificationState['type'] = 'info',
+  title?: string,
+  action?: () => void,
+  actionLabel?: string
+) => {
+  setNotification({
+    open: true,
+    message,
+    type,
+    title,
+    action,
+    actionLabel
+  });
+};
+
+const hideNotification = () => {
+  setNotification(prev => ({ ...prev, open: false }));
+};
 
   // Update agents on duty based on orders
   const updateAgentsOnDutyFromOrders = async (orders: DeliveryOrder[]) => {
@@ -415,6 +486,43 @@ const DeliveryManagementPage: React.FC = () => {
     );
   };
 
+  // Handle agent accounting - show agent's pending orders in the same page
+  const handleAgentAccounting = async (agentId: string) => {
+    try {
+      setLoading(true);
+      
+      // Fetch pending orders for the selected agent
+      const agentPendingOrders = await deliveryAgentsApi.getDeliveryAgentPendingOrders(agentId);
+      
+      // Transform the data to match the existing DeliveryOrder interface
+      const transformedOrders: DeliveryOrder[] = agentPendingOrders.map((order) => ({
+        id: order.id,
+        notes: order.notes || '',
+        totalAfterTaxAndService: order.totalAfterTaxAndService,
+        createdAt: order.createdAt,
+        preparedAt: order.preparedAt,
+        deliveryAgentId: order.deliveryAgentId,
+        invoiceStatus: order.invoiceStatus,
+        selected: false
+      }));
+      
+      // Update the orders state with agent's pending orders
+      setOrders(transformedOrders);
+      
+      // Set filter to show only this agent's orders
+      setFilteredByAgent(agentId);
+      
+      // Clear any selected orders
+      setSelectedAgents([]);
+      
+    } catch (error) {
+      console.error('Error fetching agent pending orders:', error);
+      showNotification('حدث خطأ أثناء جلب طلبات الطيار', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Filter orders based on selected agent
   const displayedOrders = filteredByAgent 
     ? orders.filter(order => order.deliveryAgentId === filteredByAgent)
@@ -427,7 +535,7 @@ const DeliveryManagementPage: React.FC = () => {
     // Check if exactly one agent is selected and at least one order is selected
     const selectedAgentIds = selectedAgents.filter(id => !id.startsWith('duty_'));
     if (selectedAgentIds.length !== 1 || selectedOrdersCount === 0) {
-      alert('يجب اختيار طيار واحد فقط وطلب واحد على الأقل');
+      showNotification('يجب اختيار طيار واحد فقط وطلب واحد على الأقل');
       return;
     }
 
@@ -435,7 +543,7 @@ const DeliveryManagementPage: React.FC = () => {
     const agent = availableAgents.find(a => a.id === selectedAgentId);
     
     if (!agent) {
-      alert('الطيار غير موجود');
+      showNotification('الطيار غير موجود');
       return;
     }
 
@@ -519,41 +627,21 @@ const DeliveryManagementPage: React.FC = () => {
       setSelectedAgents([]);
       setSelectAll(false);
 
-      alert(`تم تعيين ${selectedOrders.length} طلب للطيار ${agent.name} وبدء التوصيل`);
+      showNotification(`تم تعيين ${selectedOrders.length} طلب للطيار ${agent.name} وبدء التوصيل`);
       
       // Refresh orders from API
       await fetchDeliveryOrders();
       
     } catch (error) {
       console.error('Error updating orders:', error);
-      alert('حدث خطأ أثناء تحديث الطلبات');
-    }
-  };
-
-  const handleAgentAccounting = (agentId: string, isOnDuty = false) => {
-    const agent = isOnDuty 
-      ? agentsOnDuty.find(a => a.id === agentId)
-      : availableAgents.find(a => a.id === agentId);
-    
-    if (!agent) {
-      alert('الطيار غير موجود');
-      return;
-    }
-
-    // Filter orders by agent instead of opening dialog
-    if (filteredByAgent === agentId) {
-      // If already filtered by this agent, clear filter
-      setFilteredByAgent(null);
-    } else {
-      // Filter orders by this agent
-      setFilteredByAgent(agentId);
+      showNotification('حدث خطأ أثناء تحديث الطلبات');
     }
   };
 
   const handleFinishAgentAccounting = async () => {
-    // Check if any agents are selected and any orders are selected
-    if (selectedAgents.length === 0 || selectedOrdersCount === 0) {
-      alert('يجب اختيار طيار واحد على الأقل وطلب واحد على الأقل');
+    // Check if any orders are selected
+    if (selectedOrdersCount === 0) {
+      showNotification('يجب اختيار طلب واحد على الأقل', 'warning');
       return;
     }
 
@@ -610,55 +698,23 @@ const DeliveryManagementPage: React.FC = () => {
         await invoicesApi.updateInvoice(updateData);
       }
 
-      // Update local state
+        // Update local state - remove completed orders from the list
       setOrders(prevOrders => 
-        prevOrders.map(order => 
-          order.selected 
-            ? { ...order, invoiceStatus: 3, selected: false }
-            : order
-        )
+        prevOrders.filter(order => !order.selected)
       );
-
-      // Remove agents from on duty if they were selected
-      const agentsToRemove = selectedAgents
-        .filter(agentKey => agentKey.startsWith('duty_'))
-        .map(agentKey => agentKey.replace('duty_', ''));
-
-      if (agentsToRemove.length > 0) {
-        setAgentsOnDuty(prev => prev.filter(agent => !agentsToRemove.includes(agent.id)));
-        
-        // Remove timers for these agents
-        setAgentTimers(prev => {
-          const newTimers = { ...prev };
-          agentsToRemove.forEach(agentId => delete newTimers[agentId]);
-          return newTimers;
-        });
-
-        // Move agents back to available (optional, depending on business logic)
-        const completedAgents = agentsOnDuty.filter(agent => agentsToRemove.includes(agent.id));
-        setAvailableAgents(prev => [...prev, ...completedAgents.map(agent => ({
-          id: agent.id,
-          name: agent.name,
-          status: 'available' as const,
-          ordersCount: 0,
-          phone: agent.phone,
-          branchId: agent.branchId,
-          isActive: agent.isActive
-        }))]);
-      }
-
+      
       // Clear selections
       setSelectedAgents([]);
       setSelectAll(false);
 
-      alert(`تم إنهاء حساب ${agentsToRemove.length} طيار وتحديث ${selectedOrdersCount} طلب`);
-      
+      showNotification(`تم إنهاء حساب الطيار وتسليم ${selectedOrders.length} طلب بنجاح`, 'success');
+
       // Refresh orders from API
       await fetchDeliveryOrders();
       
     } catch (error) {
       console.error('Error updating invoices:', error);
-      alert('حدث خطأ أثناء تحديث الطلبات');
+      showNotification('حدث خطأ أثناء تحديث الطلبات', 'error');
     }
   };
 
@@ -857,7 +913,7 @@ const DeliveryManagementPage: React.FC = () => {
                         color="warning"
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleAgentAccounting(agent.id, true);
+                          handleAgentAccounting(agent.id);
                         }}
                         sx={{ ml: 1 }}
                       >
@@ -903,6 +959,21 @@ const DeliveryManagementPage: React.FC = () => {
 
 
               <Stack direction="row" spacing={1}>
+                {/* {filteredByAgent && (
+                  <Button 
+                    variant="outlined" 
+                    color="secondary" 
+                    startIcon={<RefreshIcon />}
+                    size="small"
+                    sx={{ borderRadius: 2 }}
+                    onClick={() => {
+                      setFilteredByAgent(null);
+                      fetchDeliveryOrders(); // Reload all orders
+                    }}
+                  >
+                    عرض جميع الطلبات
+                  </Button>
+                )} */}
                 <Tooltip title="تحديث">
                   <IconButton 
                     color="primary"
@@ -957,7 +1028,7 @@ const DeliveryManagementPage: React.FC = () => {
     {/* Action Buttons */}
     <Grid item xs={12} sm={6} md={9}>
       <Stack direction="row" spacing={2} justifyContent="flex-end">
-        {filteredByAgent && (
+        {/* {filteredByAgent && (
           <Button
             variant="outlined"
             color="warning"
@@ -971,13 +1042,13 @@ const DeliveryManagementPage: React.FC = () => {
           >
             إلغاء الفلتر
           </Button>
-        )}
+        )} */}
 
         <Stack direction="row" spacing={1.5}>
           {filteredByAgent ? (
             <>
               <Button
-                variant="contained"
+                variant="outlined"
                 color="info"
                 size="large"
                 sx={{
@@ -985,8 +1056,10 @@ const DeliveryManagementPage: React.FC = () => {
                   borderRadius: 2,
                   fontWeight: 'bold',
                 }}
-                onClick={() => setFilteredByAgent(null)}
-              >
+                    onClick={() => {
+                      setFilteredByAgent(null);
+                      fetchDeliveryOrders(); // Reload all orders
+                    }}              >
                 الذهاب الى اوردرات تنتظر التسليم
               </Button>
               <Button
@@ -1032,6 +1105,13 @@ const DeliveryManagementPage: React.FC = () => {
 
           {/* Enhanced Table */}
           <Box sx={{ flex: 1, overflow: 'auto', p: 1.5, pt: 0 }}>
+            {filteredByAgent && (
+              <Box sx={{ mb: 2, p: 2, bgcolor: 'info.light', borderRadius: 2 }}>
+                <Typography variant="h6" color="info.contrastText">
+                  عرض طلبات الطيار المعلقة - يمكنك تحديد الطلبات المدفوعة والضغط على "دفع"
+                </Typography>
+              </Box>
+            )}
             <TableContainer component={Paper}>
               <Table stickyHeader size="small">
                 <TableHead>
@@ -1194,7 +1274,7 @@ const DeliveryManagementPage: React.FC = () => {
 
 
         {/* Floating Action Button */}
-        <Zoom in={selectedOrdersCount > 0}>
+        {/* <Zoom in={selectedOrdersCount > 0}>
           <Fab 
             color="primary" 
             sx={{ 
@@ -1208,10 +1288,95 @@ const DeliveryManagementPage: React.FC = () => {
               <DeliveryIcon />
             </Badge>
           </Fab>
-        </Zoom>
+        </Zoom> */}
       </Box>
-    </ThemeProvider>
-  );
+    {/* Enhanced Notification System */}
+    <Snackbar
+      open={notification.open}
+      autoHideDuration={6000}
+      onClose={hideNotification}
+      TransitionComponent={SlideTransition}
+      anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      sx={{ 
+        '& .MuiSnackbarContent-root': {
+          minWidth: '400px'
+        }
+      }}
+    >
+      <Alert
+        onClose={hideNotification}
+        severity={notification.type}
+        variant="filled"
+        sx={{
+          width: '100%',
+          borderRadius: 2,
+          boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+          '& .MuiAlert-icon': {
+            fontSize: '1.5rem'
+          }
+        }}
+        action={
+          notification.action && notification.actionLabel ? (
+            <Button
+              color="inherit"
+              size="small"
+              onClick={() => {
+                notification.action?.();
+                hideNotification();
+              }}
+              sx={{
+                color: 'white',
+                fontWeight: 'bold',
+                '&:hover': {
+                  backgroundColor: 'rgba(255,255,255,0.1)'
+                }
+              }}
+            >
+              {notification.actionLabel}
+            </Button>
+          ) : undefined
+        }
+      >
+        {notification.title && (
+          <AlertTitle sx={{ fontWeight: 'bold', mb: 0.5 }}>
+            {notification.title}
+          </AlertTitle>
+        )}
+        {notification.message}
+      </Alert>
+    </Snackbar>
+
+    {/* Loading Backdrop */}
+    <Backdrop
+      sx={{ 
+        color: '#fff', 
+        zIndex: (theme) => theme.zIndex.drawer + 1,
+        backdropFilter: 'blur(3px)'
+      }}
+      open={loading}
+    >
+      <Stack alignItems="center" spacing={2}>
+        <Avatar 
+          sx={{ 
+            width: 64, 
+            height: 64, 
+            bgcolor: 'primary.main',
+            animation: 'pulse 2s infinite'
+          }}
+        >
+          <DeliveryIcon sx={{ fontSize: '2rem' }} />
+        </Avatar>
+        <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+          جاري التحميل...
+        </Typography>
+        <Typography variant="body2" color="rgba(255,255,255,0.7)">
+          يرجى الانتظار
+        </Typography>
+      </Stack>
+    </Backdrop>
+
+  </ThemeProvider>
+);
 };
 
 

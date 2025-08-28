@@ -11,6 +11,104 @@ export interface DeliveryAgent {
   isActive: boolean;
 }
 
+export interface DeliveryAgentPendingOrder {
+  id: string;
+  backInvoiceCode: number | null;
+  androidInvoiceCode: string | null;
+  invoiceType: number;
+  invoiceStatus: number;
+  wareHouseId: string;
+  rawBranchId: string;
+  customerId: string | null;
+  deliveryAgentId: string | null;
+  deliveryCompanyId: string | null;
+  tableId: string | null;
+  hallCaptainId: string | null;
+  customerName: string | null;
+  customerAddress: string | null;
+  tableGuestsCount: number | null;
+  shiftCode: string | null;
+  dayCode: string | null;
+  returnShiftCode: string | null;
+  notes: string | null;
+  itemDiscountTotal: number;
+  headerDiscountPercentage: number;
+  headerDiscountValue: number;
+  taxPercentage: number;
+  taxAmount: number;
+  servicePercentage: number;
+  serviceAmount: number;
+  totalBeforeDiscount: number;
+  totalAfterDiscount: number;
+  totalAfterTaxAndService: number;
+  totalCost: number;
+  grossProfit: number;
+  createdAt: string;
+  printedAt: string | null;
+  preparedAt: string;
+  completedAt: string;
+  createdByUserId: string | null;
+  cancelledByUserId: string | null;
+  cancelReason: string | null;
+  refundedAmount: number | null;
+  tableDTO: any | null;
+  items: DeliveryOrderItem[];
+  payments: any[];
+  branchId: string | null;
+  companyID: string | null;
+  isActive: boolean;
+}
+
+export interface DeliveryOrderItem {
+  id: string;
+  productId: string;
+  productPriceId: string;
+  barcode: string;
+  unitId: string | null;
+  posPriceName: string;
+  unitFactor: number;
+  qty: number;
+  unitPrice: number;
+  unitCost: number;
+  subTotal: number;
+  total: number;
+  wareHouseId: string;
+  itemDiscountPercentage: number;
+  itemDiscountValue: number;
+  headerDiscountPercentage: number;
+  headerDiscountValue: number;
+  itemTaxPercentage: number;
+  itemTaxAmount: number;
+  servicePercentage: number;
+  serviceValue: number;
+  offerId: string | null;
+  offerGroupId: string | null;
+  parentLineId: string | null;
+  returnToStock: boolean;
+  wasteOnReturn: boolean;
+  components: any[];
+  preparedQty: number;
+  preparedAt: string | null;
+  deliveredQty: number;
+  deliveredAt: string | null;
+  expectedPreparationDuration: string | null;
+  branchId: string | null;
+  companyID: string | null;
+  isActive: boolean;
+}
+
+export interface DeliveryAgentPendingOrdersResponse {
+  isvalid: boolean;
+  errors: any[];
+  data: {
+    totalCount: number;
+    pageCount: number;
+    pageNumber: number;
+    pageSize: number;
+    data: DeliveryAgentPendingOrder[];
+  };
+}
+
 const toDeliveryAgent = (raw: any): DeliveryAgent => ({
   id: raw.id,
   name: raw.name || '',
@@ -88,6 +186,22 @@ export const deleteAgent = async (id: string): Promise<void> => {
   try {
     await api.post('/DeleteAgent', id);
   } catch (error) {
+    throw error;
+  }
+};
+
+// دالة جديدة للحصول على الطلبات المعلقة للطيار
+export const getDeliveryAgentPendingOrders = async (deliveryManId: string): Promise<DeliveryAgentPendingOrder[]> => {
+  try {
+    const response = await api.get(`/GetDeliveryAgentPendingOrders?DeliveryManId=${deliveryManId}`);
+    
+    if (response.data?.isvalid && response.data?.data) {
+      return response.data.data.data || [];
+    }
+    
+    return [];
+  } catch (error) {
+    console.error('Error fetching delivery agent pending orders:', error);
     throw error;
   }
 };
