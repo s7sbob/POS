@@ -105,6 +105,7 @@ interface DeliveryAgent {
 
 interface DeliveryOrder {
   id: string;
+  backInvoiceCode?: string | null; // ✅ تغيير من number إلى string | null
   notes?: string;
   totalAfterTaxAndService: number;
   createdAt: string;
@@ -329,6 +330,7 @@ const DeliveryManagementPage: React.FC = () => {
       
       const transformedOrders: DeliveryOrder[] = response.data.map((invoice: invoicesApi.Invoice) => ({
         id: invoice.id,
+      backInvoiceCode: invoice.backInvoiceCode, // ✅ مباشرة بدون تحويل
         notes: invoice.notes || '',
         totalAfterTaxAndService: invoice.totalAfterTaxAndService,
         createdAt: invoice.createdAt,
@@ -497,6 +499,7 @@ const hideNotification = () => {
       // Transform the data to match the existing DeliveryOrder interface
       const transformedOrders: DeliveryOrder[] = agentPendingOrders.map((order) => ({
         id: order.id,
+        backInvoiceCode: order.backInvoiceCode, // ✅ إضافة هذا السطر
         notes: order.notes || '',
         totalAfterTaxAndService: order.totalAfterTaxAndService,
         createdAt: order.createdAt,
@@ -629,8 +632,8 @@ const hideNotification = () => {
 
       showNotification(`تم تعيين ${selectedOrders.length} طلب للطيار ${agent.name} وبدء التوصيل`);
       
-      // Refresh orders from API
-      await fetchDeliveryOrders();
+      // Note: Removed automatic refresh to prevent losing current state
+      // The orders will be updated locally and user can manually refresh if needed
       
     } catch (error) {
       console.error('Error updating orders:', error);
@@ -709,8 +712,8 @@ const hideNotification = () => {
 
       showNotification(`تم إنهاء حساب الطيار وتسليم ${selectedOrders.length} طلب بنجاح`, 'success');
 
-      // Refresh orders from API
-      await fetchDeliveryOrders();
+      // Note: Removed automatic refresh to prevent losing current state
+      // The orders will be updated locally and user can manually refresh if needed
       
     } catch (error) {
       console.error('Error updating invoices:', error);
@@ -966,12 +969,6 @@ const hideNotification = () => {
                     startIcon={<RefreshIcon />}
                     size="small"
                     sx={{ borderRadius: 2 }}
-                    onClick={() => {
-                      setFilteredByAgent(null);
-                      fetchDeliveryOrders(); // Reload all orders
-                    }}
-                  >
-                    عرض جميع الطلبات
                   </Button>
                 )} */}
                 <Tooltip title="تحديث">
@@ -990,16 +987,6 @@ const hideNotification = () => {
                     <FilterIcon />
                   </IconButton>
                 </Tooltip>
-                <Button 
-                  variant="contained" 
-                  color="primary" 
-                  startIcon={<ArrowBackIcon />}
-                  size="small"
-                  sx={{ borderRadius: 2 }}
-                  onClick={() => navigate('/pos/sales')}
-                >
-                  رجوع
-                </Button>
               </Stack>
             </Toolbar>
           </AppBar>
@@ -1010,17 +997,19 @@ const hideNotification = () => {
   <Grid container spacing={1.5} alignItems="center">
     {/* Total Orders Stat */}
     <Grid item xs={12} sm={6} md={3}>
-      <Card sx={{ p: 1.5, textAlign: 'center' }}>
-        <Stack alignItems="center" spacing={0.5}>
-          <Avatar sx={{ bgcolor: 'primary.light', width: 40, height: 40 }}>
-            <OrderIcon />
+      <Card sx={{ p: 1, textAlign: 'center' }}>
+        <Stack direction="row" alignItems="center" spacing={1} justifyContent="center">
+          <Avatar sx={{ bgcolor: 'primary.light', width: 24, height: 24 }}>
+            <OrderIcon sx={{ fontSize: 16 }} />
           </Avatar>
-          <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
-            {filteredByAgent ? displayedOrders.length : totalOrdersCount}
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            {filteredByAgent ? 'طلبات الطيار' : 'إجمالي الطلبات'}
-          </Typography>
+          <Box>
+            <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'primary.main', lineHeight: 1 }}>
+              {filteredByAgent ? displayedOrders.length : totalOrdersCount}
+            </Typography>
+            <Typography variant="caption" color="text.secondary" sx={{ lineHeight: 1 }}>
+              {filteredByAgent ? 'طلبات الطيار' : 'إجمالي الطلبات'}
+            </Typography>
+          </Box>
         </Stack>
       </Card>
     </Grid>
@@ -1182,7 +1171,7 @@ const hideNotification = () => {
                         </TableCell>
                         <TableCell align="center">
                           <Chip 
-                            label={`#${order.id.substring(0, 8)}`}
+    label={`#${order.backInvoiceCode }`} // ✅ يعرض backInvoiceCode مباشرة
                             size="small"
                             color="primary"
                             variant="outlined"

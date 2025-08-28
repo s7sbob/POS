@@ -363,7 +363,11 @@ const DeliveryAgentAccountingPage: React.FC = () => {
             <Button
               variant="contained"
               color="primary"
-              onClick={() => window.print()}
+              onClick={() => {
+                window.print();
+                // Note: Removed automatic refresh to prevent losing current state
+                // The page will maintain its current state after printing
+              }}
               startIcon={<ReceiptIcon />}
             >
               طباعة التقرير

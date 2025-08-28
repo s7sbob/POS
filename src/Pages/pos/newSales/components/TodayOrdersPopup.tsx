@@ -41,6 +41,9 @@ import {
   Invoice,
   InvoicesResponse
 } from '../../../../utils/api/pagesApi/invoicesApi';
+import * as tableSectionsApi from '../../../../utils/api/pagesApi/tableSectionsApi';
+import * as deliveryAgentsApi from '../../../../utils/api/pagesApi/deliveryAgentsApi';
+import * as customersApi from '../../../../utils/api/pagesApi/customersApi';
 import styles from '../styles/TodayOrdersPopup.module.css';
 
 interface TodayOrdersPopupProps {
@@ -69,6 +72,47 @@ const TodayOrdersPopup: React.FC<TodayOrdersPopupProps> = ({
   const [searchFilter, setSearchFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState<number | ''>('');
 
+  // States للبيانات المرجعية
+  const [tables, setTables] = useState<{[key: string]: string}>({});
+  const [deliveryAgents, setDeliveryAgents] = useState<{[key: string]: string}>({});
+  const [customers, setCustomers] = useState<{[key: string]: string}>({});
+
+  // تحميل البيانات المرجعية
+  const loadReferenceData = async () => {
+    try {
+      // تحميل الطاولات
+      const tableSections = await tableSectionsApi.getAll();
+      const tablesMap: {[key: string]: string} = {};
+      tableSections.forEach(section => {
+        section.tables.forEach(table => {
+          if (table.id) {
+            tablesMap[table.id] = `${section.name} - ${table.name}`;
+          }
+        });
+      });
+      setTables(tablesMap);
+
+      // تحميل الطيارين
+      const agents = await deliveryAgentsApi.getAll();
+      const agentsMap: {[key: string]: string} = {};
+      agents.forEach(agent => {
+        agentsMap[agent.id] = agent.name;
+      });
+      setDeliveryAgents(agentsMap);
+
+      // تحميل العملاء
+      const customersResponse = await customersApi.getAll(1, 1000); // جلب أول 1000 عميل
+      const customersMap: {[key: string]: string} = {};
+      customersResponse.data.forEach(customer => {
+        customersMap[customer.id] = customer.name;
+      });
+      setCustomers(customersMap);
+
+    } catch (error) {
+      console.error('Error loading reference data:', error);
+    }
+  };
+
   // تحميل البيانات
   const loadInvoices = async (pageNumber: number = 1) => {
     try {
@@ -92,6 +136,7 @@ const TodayOrdersPopup: React.FC<TodayOrdersPopupProps> = ({
   // تحميل البيانات عند فتح النافذة
   useEffect(() => {
     if (isOpen) {
+      loadReferenceData(); // تحميل البيانات المرجعية
       loadInvoices(1);
       
       // تطبيق فلتر نوع الطلب الحالي
@@ -184,12 +229,12 @@ const TodayOrdersPopup: React.FC<TodayOrdersPopupProps> = ({
       case 2: // Dine-in
         return {
           label: 'الطاولة',
-          value: invoice.tableId ? `طاولة ${invoice.tableId}` : '--'
+          value: invoice.tableId ? (tables[invoice.tableId] || `طاولة ${invoice.tableId}`) : '--'
         };
       case 3: // Delivery
         return {
           label: 'الطيار',
-          value: invoice.deliveryAgentId || '--'
+          value: invoice.deliveryAgentId ? (deliveryAgents[invoice.deliveryAgentId] || invoice.deliveryAgentId) : '--'
         };
       default:
         return null;
@@ -225,7 +270,7 @@ const TodayOrdersPopup: React.FC<TodayOrdersPopupProps> = ({
 
       <DialogContent className={styles.dialogContent}>
         {/* شريط الفلاتر */}
-        <Box className={styles.filtersBar}>
+        {/* <Box className={styles.filtersBar}>
           <TextField
             label="البحث"
             variant="outlined"
@@ -273,7 +318,7 @@ const TodayOrdersPopup: React.FC<TodayOrdersPopupProps> = ({
           >
             مسح الفلاتر
           </Button>
-        </Box>
+        </Box> */}
 
         {/* عرض رسالة الخطأ */}
         {error && (
@@ -326,10 +371,15 @@ const TodayOrdersPopup: React.FC<TodayOrdersPopupProps> = ({
                   const isEditable = canEditInvoice(invoice);
                   
                   return (
-                    <TableRow key={invoice.id} className={styles.tableRow}>
+                    <TableRow 
+                      key={invoice.id} 
+                      className={styles.tableRow}
+                      onClick={() => handleViewOrder(invoice)}
+                      style={{ cursor: 'pointer' }}
+                    >
                       <TableCell>
                         <Typography variant="body2" className={styles.invoiceId}>
-                          {invoice.id.substring(0, 8)}...
+                          #{invoice.backInvoiceCode || invoice.id.substring(0, 8) + '...'}
                         </Typography>
                       </TableCell>
                       
@@ -373,7 +423,9 @@ const TodayOrdersPopup: React.FC<TodayOrdersPopupProps> = ({
                       
                       <TableCell>
                         <Typography variant="body2">
-                          {invoice.customerName || '--'}
+                          {invoice.customerName || 
+                           (invoice.customerId ? customers[invoice.customerId] : null) || 
+                           '--'}
                         </Typography>
                       </TableCell>
                       
@@ -392,17 +444,12 @@ const TodayOrdersPopup: React.FC<TodayOrdersPopupProps> = ({
                         )}
                       </TableCell>
                       
-                      <TableCell align="center">
-                        <IconButton
-                          size="small"
-                          onClick={() => handleViewOrder(invoice)}
-                          className={`${styles.viewButton} ${!isEditable ? styles.disabledViewButton : ''}`}
+                      {/* <TableCell align="center">
+                        <VisibilityIcon 
+                          className={`${styles.viewIcon} ${!isEditable ? styles.disabledViewIcon : ''}`}
                           title={isEditable ? "عرض وتعديل الطلب" : "عرض الطلب (غير قابل للتعديل)"}
-                          disabled={loading}
-                        >
-                          <VisibilityIcon />
-                        </IconButton>
-                      </TableCell>
+                        />
+                      </TableCell> */}
                     </TableRow>
                   );
                 })

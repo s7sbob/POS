@@ -134,6 +134,7 @@ export interface CreateInvoicePayment {
 }
 
 export interface CreateInvoiceRequest {
+  backInvoiceCode?: string | null;
   InvoiceType: number;
   InvoiceStatus: number;
   WareHouseId: string;
@@ -353,3 +354,20 @@ export const formatDate = (dateString: string): string => {
     minute: '2-digit'
   });
 };
+
+
+// دالة جلب كود الفاتورة التالي
+export const getNextInvoiceCode = async (posInvoiceType: number): Promise<number> => {
+  try {
+    const response = await api.get(`/GetNextInvoiceCode?PosInvoiceType=${posInvoiceType}`);
+    if (response.data?.isvalid && response.data?.data) {
+      return response.data.data;
+    }
+    throw new Error('Could not fetch next invoice code');
+  } catch (error) {
+    console.error('Error fetching next invoice code:', error);
+    throw error;
+  }
+};
+
+

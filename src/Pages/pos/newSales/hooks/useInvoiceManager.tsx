@@ -21,7 +21,20 @@ interface ExistingInvoiceData {
 export const useInvoiceManager = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [existingInvoiceData, setExistingInvoiceData] = useState<ExistingInvoiceData | null>(null);
+  const [nextInvoiceCode, setNextInvoiceCode] = useState<number | null>(null);
   const { showSuccess, showError } = useError();
+
+  const fetchNextInvoiceCode = async (invoiceType: number) => {
+    try {
+      const code = await invoicesApi.getNextInvoiceCode(invoiceType);
+      setNextInvoiceCode(code);
+      return code;
+    } catch (error) {
+      console.error("Error fetching next invoice code:", error);
+      showError("خطأ في جلب رقم الفاتورة التالي");
+      return null;
+    }
+  };
 
   const getInvoiceType = (orderType: string): number => {
     switch (orderType) {
@@ -195,6 +208,7 @@ export const useInvoiceManager = () => {
 
     try {
       const invoiceData: invoicesApi.CreateInvoiceRequest = {
+        backInvoiceCode: null, // استخدام الكود الجديد من الـ API
         InvoiceType: getInvoiceType(orderType),
         InvoiceStatus: invoiceStatus,
         WareHouseId: getWareHouseId(),
@@ -494,14 +508,13 @@ export const useInvoiceManager = () => {
   const clearExistingInvoiceData = () => {
     setExistingInvoiceData(null);
     console.log('🧹 تم تنظيف بيانات الفاتورة الموجودة');
-  };
-
-  return {
-    createInvoice,
-    updateInvoice,
+  };  return {
     saveInvoice,
+    isSubmitting,
     loadExistingInvoice,
+    updateInvoice,
     clearExistingInvoiceData,
-    isSubmitting
+    nextInvoiceCode,
+    fetchNextInvoiceCode
   };
 };

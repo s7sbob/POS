@@ -118,11 +118,16 @@ const handleTableClick = (table: Table) => {
       onViewOrder(invoice);
     }
   } else {
-    // إذا كانت الطاولة فارغة، اختيارها فقط
+    // إذا كانت الطاولة فارغة، اختيارها فقط وبدء فاتورة جديدة
     onSelectTable({
       section: selectedSection,
       table: table
     });
+    
+    // إشارة لبدء فاتورة جديدة
+    if (onViewOrder) {
+      onViewOrder({ isNewInvoice: true });
+    }
   }
 };
   const displayedTables = selectedSection?.tables || [];

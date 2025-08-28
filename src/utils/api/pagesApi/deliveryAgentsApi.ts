@@ -13,7 +13,7 @@ export interface DeliveryAgent {
 
 export interface DeliveryAgentPendingOrder {
   id: string;
-  backInvoiceCode: number | null;
+  backInvoiceCode: string | null;
   androidInvoiceCode: string | null;
   invoiceType: number;
   invoiceStatus: number;

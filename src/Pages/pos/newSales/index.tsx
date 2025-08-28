@@ -112,6 +112,7 @@ const { showWarning, showError } = useError();
   const [isEditMode, setIsEditMode] = useState(false);
   const [currentInvoiceId, setCurrentInvoiceId] = useState<string | null>(null);
 const [isLoadingOrder, setIsLoadingOrder] = useState(false);
+const [currentBackInvoiceCode, setCurrentBackInvoiceCode] = useState<string | null>(null);
 
   // تحميل البيانات مرة واحدة
   useEffect(() => {
@@ -490,13 +491,16 @@ const handleViewOrderFromPopup = useCallback(async (invoiceData: any) => {
   
   try {
     setIsLoadingOrder(true); // ✅ استبدل setLoading بـ setIsLoadingOrder
-    
+        setCurrentBackInvoiceCode(invoiceData.backInvoiceCode || null); // ✅ إضافة جديدة
+
     // استخدام المحول الجديد
     const convertedData = await InvoiceDataConverter.convertInvoiceForEdit(invoiceData);
     
     // تطبيق البيانات على الواجهة
     setOrderItems(convertedData.orderItems);
     setDeliveryCharge(convertedData.deliveryCharge);
+    setCurrentInvoiceId(invoiceData.id);
+
      // تطبيق بيانات العميل
     if (convertedData.selectedCustomer) {
       setSelectedCustomer(convertedData.selectedCustomer);
@@ -537,6 +541,20 @@ const handleViewOrderFromPopup = useCallback(async (invoiceData: any) => {
 
     const handleViewTableOrder = useCallback((invoiceData: any) => {
   setShowTablePopup(false);
+  
+  // إذا كانت إشارة لبدء فاتورة جديدة
+  if (invoiceData.isNewInvoice) {
+    // مسح الطلب الحالي وبدء فاتورة جديدة
+    setOrderItems([]);
+    setIsEditMode(false);
+    setCurrentInvoiceId(null);
+    setSelectedCustomer(null);
+    setSelectedAddress(null);
+    setCustomerName('');
+    console.log('✅ تم بدء فاتورة جديدة للطاولة');
+    return;
+  }
+  
   // استخدام نفس معالج عرض الطلب الموجود
   handleViewOrderFromPopup(invoiceData);
 }, [handleViewOrderFromPopup]);
@@ -856,6 +874,8 @@ const handleResetOrder = useCallback(() => {
           selectedDeliveryCompany={selectedDeliveryCompany} // ✅ إضافة هذا// إضافة المعالج الجديد
           isEditMode={isEditMode}
   currentInvoiceId={currentInvoiceId}
+    currentBackInvoiceCode={currentBackInvoiceCode} // ✅ تمرير القيمة الجديدة
+
        />
       </main>
 

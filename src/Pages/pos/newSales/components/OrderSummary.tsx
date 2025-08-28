@@ -31,6 +31,8 @@ interface OrderSummaryProps {
   // إضافة الـ props المطلوبة لوضع التعديل
   isEditMode?: boolean;
   currentInvoiceId?: string | null;
+  currentBackInvoiceCode?: string | null; // ✅ إضافة جديدة
+
 }
 
 export enum InvoiceStatus {
@@ -59,7 +61,9 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
   selectedDeliveryCompany,
   // استقبال الـ props الجديدة مع قيم افتراضية
   isEditMode = false,
-  currentInvoiceId = null
+  currentInvoiceId = null,
+  currentBackInvoiceCode = null // ✅ إضافة جديدة
+
 }) => {
   const [selectedSubItemId, setSelectedSubItemId] = useState<string | null>(null);
   const [phoneInput, setPhoneInput] = useState('');
@@ -76,7 +80,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
   const [inputHasFocus, setInputHasFocus] = useState(false);
   const [showPaymentPopup, setShowPaymentPopup] = useState(false);
   const [pendingEnterAction, setPendingEnterAction] = useState<string | null>(null);
-const { saveInvoice, isSubmitting } = useInvoiceManager();
+const { saveInvoice, isSubmitting, nextInvoiceCode, fetchNextInvoiceCode } = useInvoiceManager();
 
   // استخدام useRef بدلاً من state للمتغيرات المساعدة
   const searchDebounceTimer = useRef<NodeJS.Timeout | null>(null);
@@ -85,6 +89,29 @@ const { saveInvoice, isSubmitting } = useInvoiceManager();
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 const [selectedActionType, setSelectedActionType] = useState<'send' | 'print' | 'pay'>('pay');
+
+  // تحميل كود الفاتورة التالي عند تحميل المكون أو تغيير نوع الطلب
+  useEffect(() => {
+    const loadNextInvoiceCode = async () => {
+      if (!isEditMode) {
+        const invoiceType = getInvoiceType(orderType);
+        await fetchNextInvoiceCode(invoiceType);
+      }
+    };
+    
+    loadNextInvoiceCode();
+  }, [orderType, isEditMode, fetchNextInvoiceCode]);
+
+  // دالة تحديد نوع الفاتورة
+  const getInvoiceType = (orderType: string): number => {
+    switch (orderType) {
+      case 'Takeaway': return 1;
+      case 'Dine-in': return 2;
+      case 'Delivery': return 3;
+      case 'Pickup': return 4;
+      default: return 1;
+    }
+  };
 
   // تحميل المناطق عند بدء التشغيل
   useEffect(() => {
@@ -828,12 +855,12 @@ const handleActionButtonClick = useCallback(async (actionType: 'send' | 'print' 
   return (
     <aside className={styles.orderSummary}>
       <div className={styles.orderHeader}>
-        <div className={styles.orderNumber}>
-          {isEditMode && currentInvoiceId ? 
-            `#${currentInvoiceId.substring(0, 8)}...` : 
-            '#123'
-          }
-        </div>
+<div className={styles.orderNumber}>
+  {isEditMode && currentBackInvoiceCode ? 
+    `#${currentBackInvoiceCode}` :  // ✅ استخدام backInvoiceCode
+    (nextInvoiceCode ? `#${nextInvoiceCode}` : `#...`)
+  }
+</div>
         <div className={styles.orderTotal}>
           <span className={styles.amount}>{finalTotal.toFixed(2)}</span>
           <span className={styles.currency}>EGP</span>
@@ -898,6 +925,9 @@ const handleActionButtonClick = useCallback(async (actionType: 'send' | 'print' 
                       {item.quantity} X {item.product.nameArabic}
                       {item.product.hasMultiplePrices && (
                         <span className={styles.itemSizeInline}> - {item.selectedPrice.nameArabic}</span>
+                      )}
+                      {item.notes && (
+                        <span className={styles.itemComment}> ({item.notes})</span>
                       )}
                     </div>
                   </div>
@@ -992,7 +1022,7 @@ const handleActionButtonClick = useCallback(async (actionType: 'send' | 'print' 
   className={`${styles.actionButton} ${styles.pay} ${shouldShowPayOnly ? styles.fullWidth : ''} ${!canOpenPayment ? styles.disabledBtn : ''}`}
 >
   <img src="/images/img_payment_02.svg" alt="Pay" />
-  <span>{isEditMode ? 'تحديث' : 'Pay'}</span>
+  <span>{isEditMode ? 'Pay' : 'Pay'}</span>
 </button>
           </div>
         )}

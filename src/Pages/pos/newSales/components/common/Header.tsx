@@ -6,6 +6,7 @@ import { DeliveryCompany } from '../../../../../utils/api/pagesApi/deliveryCompa
 import { Invoice } from '../../../../../utils/api/pagesApi/invoicesApi'; // إضافة استيراد Invoice type
 import '../../styles/Header.css';
 import TodayOrdersPopup from '../TodayOrdersPopup';
+import DeliveryManagementPopup from '../DeliveryManagementPopup';
 
 interface HeaderProps {
   selectedOrderType: string;
@@ -39,6 +40,7 @@ const Header: React.FC<HeaderProps> = ({
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [showTodayOrders, setShowTodayOrders] = useState(false);
+  const [showDeliveryManagement, setShowDeliveryManagement] = useState(false);
 
   const orderTypes = [
     { id: 1, name: 'Takeaway', displayName: 'Takeaway', icon: '/images/takeaway.png', color: '#28a745', description: 'عميل يأخذ الطلب' },
@@ -142,8 +144,7 @@ const Header: React.FC<HeaderProps> = ({
                   className="nav-item delivery-order-btn" 
                   onClick={(e) => { 
                     e.preventDefault(); 
-                    // Navigate to DeliveryManagementPage using React Router
-                    navigate('/pos/delivery/management');
+                    setShowDeliveryManagement(true);
                   }}
                   title="إدارة التوصيل"
                 >
@@ -280,6 +281,12 @@ const Header: React.FC<HeaderProps> = ({
         onClose={() => setShowTodayOrders(false)}
         currentOrderType={selectedOrderType}
         onViewOrder={handleViewOrder}
+      />
+
+      {/* Delivery Management Popup */}
+      <DeliveryManagementPopup
+        isOpen={showDeliveryManagement}
+        onClose={() => setShowDeliveryManagement(false)}
       />
     </>
   );
