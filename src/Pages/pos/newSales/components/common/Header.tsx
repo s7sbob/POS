@@ -1,10 +1,14 @@
 // src/Pages/pos/newSales/components/Header.tsx
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Customer, CustomerAddress } from 'src/utils/api/pagesApi/customersApi';
+import * as customersApi from 'src/utils/api/pagesApi/customersApi';
 import { DeliveryCompany } from '../../../../../utils/api/pagesApi/deliveryCompaniesApi';
-import { Invoice } from '../../../../../utils/api/pagesApi/invoicesApi'; // إضافة استيراد Invoice type
+import { Invoice } from '../../../../../utils/api/pagesApi/invoicesApi';
+import CustomerDetailsPopup from '../CustomerDetailsPopup';
+import CustomerForm from '../../../customers/components/CustomerForm';
 import '../../styles/Header.css';
+import styles from '../../styles/OrderSummary.module.css'; // استيراد styles الـ OrderSummary
 import TodayOrdersPopup from '../TodayOrdersPopup';
 import DeliveryManagementPopup from '../DeliveryManagementPopup';
 
@@ -19,8 +23,11 @@ interface HeaderProps {
   onDeliveryCompanySelect?: (company: DeliveryCompany) => void;
   selectedCustomer?: Customer | null;
   selectedAddress?: CustomerAddress | null;
-  // ✅ إضافة prop مطلوب لعرض الطلب
   onViewOrder?: (invoiceData: Invoice & { isEditMode: boolean }) => void;
+  // ✅ Props جديدة لإدارة العميل
+  customerName: string;
+  onCustomerNameChange: (name: string) => void;
+  onCustomerSelect: (customer: Customer, address: CustomerAddress) => void;
 }
 
 const Header: React.FC<HeaderProps> = ({ 
@@ -34,13 +41,364 @@ const Header: React.FC<HeaderProps> = ({
   onDeliveryCompanySelect,
   selectedCustomer,
   selectedAddress,
-  onViewOrder // ✅ إضافة في destructuring
+  onViewOrder,
+  // ✅ Props جديدة
+  customerName,
+  onCustomerNameChange,
+  onCustomerSelect
 }) => {
   const navigate = useNavigate();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [showTodayOrders, setShowTodayOrders] = useState(false);
   const [showDeliveryManagement, setShowDeliveryManagement] = useState(false);
+
+  // ✅ States جديدة لإدارة Customer Search
+  const [showCustomerSearch, setShowCustomerSearch] = useState(!selectedCustomer);
+  const [phoneInput, setPhoneInput] = useState('');
+  const [searchResults, setSearchResults] = useState<Customer[]>([]);
+  const [showSearchDropdown, setShowSearchDropdown] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showCustomerForm, setShowCustomerForm] = useState(false);
+  const [showCustomerDetails, setShowCustomerDetails] = useState(false);
+  const [selectedCustomerForDetails, setSelectedCustomerForDetails] = useState<Customer | null>(null);
+  const [selectedResultIndex, setSelectedResultIndex] = useState(-1);
+  const [searchCache, setSearchCache] = useState<{[key: string]: Customer[]}>({});
+  const [inputHasFocus, setInputHasFocus] = useState(false);
+  const [pendingEnterAction, setPendingEnterAction] = useState<string | null>(null);
+
+  // ✅ useRef للمتغيرات المساعدة
+  const searchDebounceTimer = useRef<NodeJS.Timeout | null>(null);
+  const searchAbortController = useRef<AbortController | null>(null);
+  const lastSearchQuery = useRef<string>('');
+  const inputRef = useRef<HTMLInputElement>(null);
+  const searchDropdownRef = useRef<HTMLDivElement>(null);
+
+  // ✅ تحديث حالة البحث عند تغيير العميل
+  useEffect(() => {
+    setShowCustomerSearch(!selectedCustomer);
+    if (selectedCustomer) {
+      setPhoneInput('');
+      setShowSearchDropdown(false);
+      setSearchResults([]);
+      setSelectedResultIndex(-1);
+      setInputHasFocus(false);
+    }
+  }, [selectedCustomer]);
+
+  // ✅ دالة البحث
+  const searchCustomers = useCallback(async (query: string): Promise<Customer[]> => {
+    if (searchCache[query]) {
+      return searchCache[query];
+    }
+
+    if (searchAbortController.current) {
+      searchAbortController.current.abort();
+    }
+
+    const newController = new AbortController();
+    searchAbortController.current = newController;
+
+    try {
+      const results = await customersApi.searchByPhone(query);
+      
+      setSearchCache(prev => ({
+        ...prev,
+        [query]: results
+      }));
+      
+      return results;
+    } catch (error: any) {
+      if (error.name === 'AbortError') {
+        throw error;
+      }
+      console.error('Error searching customers:', error);
+      throw error;
+    }
+  }, [searchCache]);
+
+  // ✅ useEffect للبحث
+  useEffect(() => {
+    if (searchDebounceTimer.current) {
+      clearTimeout(searchDebounceTimer.current);
+    }
+
+    const query = phoneInput.trim();
+    
+    if (!query) {
+      setSearchResults([]);
+      if (!inputHasFocus) {
+        setShowSearchDropdown(false);
+      }
+      setSelectedResultIndex(-1);
+      setIsSearching(false);
+      setPendingEnterAction(null);
+      return;
+    }
+
+    if (query.length < 3) {
+      setSearchResults([]);
+      setSelectedResultIndex(-1);
+      setPendingEnterAction(null);
+      if (inputHasFocus) {
+        setShowSearchDropdown(true);
+      }
+      return;
+    }
+
+    if (query === lastSearchQuery.current && searchResults.length >= 0) {
+      if (inputHasFocus) {
+        setShowSearchDropdown(true);
+      }
+      return;
+    }
+
+    const performSearch = async () => {
+      if (phoneInput.trim() !== query) {
+        return;
+      }
+
+      setIsSearching(true);
+      lastSearchQuery.current = query;
+      
+      try {
+        const results = await searchCustomers(query);
+        
+        if (phoneInput.trim() === query) {
+          setSearchResults(results);
+          if (inputHasFocus || showSearchDropdown) {
+            setShowSearchDropdown(true);
+          }
+          setSelectedResultIndex(-1);
+        }
+      } catch (error: any) {
+        if (error.name !== 'AbortError') {
+          console.error('Search failed:', error);
+          if (phoneInput.trim() === query && inputHasFocus) {
+            setSearchResults([]);
+            setShowSearchDropdown(true);
+          }
+        }
+      } finally {
+        if (phoneInput.trim() === query) {
+          setIsSearching(false);
+        }
+      }
+    };
+
+    searchDebounceTimer.current = setTimeout(performSearch, 500);
+
+    return () => {
+      if (searchDebounceTimer.current) {
+        clearTimeout(searchDebounceTimer.current);
+      }
+    };
+  }, [phoneInput, searchCustomers, inputHasFocus, showSearchDropdown, searchResults.length]);
+
+  // ✅ إغلاق الـ dropdown عند النقر خارجه
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchDropdownRef.current && !searchDropdownRef.current.contains(event.target as Node)) {
+        setShowSearchDropdown(false);
+        setSelectedResultIndex(-1);
+        setInputHasFocus(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // ✅ تنظيف عند إلغاء المكون
+  useEffect(() => {
+    return () => {
+      if (searchAbortController.current) {
+        searchAbortController.current.abort();
+      }
+      if (searchDebounceTimer.current) {
+        clearTimeout(searchDebounceTimer.current);
+      }
+    };
+  }, []);
+
+  // ✅ معالجات الأحداث
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setPhoneInput(value);
+    onCustomerNameChange(value);
+    
+    setSelectedResultIndex(-1);
+    
+    if (value.trim().length > 0) {
+      setShowSearchDropdown(true);
+    }
+  }, [onCustomerNameChange]);
+
+  const handleInputFocus = useCallback(() => {
+    setInputHasFocus(true);
+    if (phoneInput.trim().length > 0 || searchResults.length > 0) {
+      setShowSearchDropdown(true);
+    }
+  }, [phoneInput, searchResults.length]);
+
+  const handleInputBlur = useCallback(() => {
+    setTimeout(() => {
+      setInputHasFocus(false);
+    }, 200);
+  }, []);
+
+  const handleCustomerSelect = useCallback((customer: Customer) => {
+    setSelectedCustomerForDetails(customer);
+    setShowCustomerDetails(true);
+    setShowSearchDropdown(false);
+    setSelectedResultIndex(-1);
+    setInputHasFocus(false);
+  }, []);
+
+  const handleEnterAction = useCallback(async (query: string) => {
+    try {
+      setIsSearching(true);
+      const results = await searchCustomers(query);
+      
+      if (results.length > 0) {
+        const exactMatch = results.find(customer => 
+          customer.phone1 === query || 
+          customer.phone2 === query ||
+          customer.phone3 === query ||
+          customer.phone4 === query
+        );
+        
+        setSearchResults(results);
+        setShowSearchDropdown(true);
+        setSelectedResultIndex(-1);
+        
+        if (exactMatch) {
+          handleCustomerSelect(exactMatch);
+        }
+      } else {
+        setShowCustomerForm(true);
+      }
+    } catch (error) {
+      console.error('Search failed:', error);
+      setShowCustomerForm(true);
+    } finally {
+      setIsSearching(false);
+    }
+  }, [searchCustomers, handleCustomerSelect]);
+
+  const handleKeyDown = useCallback(async (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (showSearchDropdown && searchResults.length > 0) {
+      switch (e.key) {
+        case 'ArrowDown':
+          e.preventDefault();
+          setSelectedResultIndex(prev => 
+            prev < searchResults.length - 1 ? prev + 1 : prev
+          );
+          break;
+        case 'ArrowUp':
+          e.preventDefault();
+          setSelectedResultIndex(prev => prev > 0 ? prev - 1 : -1);
+          break;
+        case 'Enter':
+          e.preventDefault();
+          
+          if (selectedResultIndex >= 0 && selectedResultIndex < searchResults.length) {
+            handleCustomerSelect(searchResults[selectedResultIndex]);
+          } else {
+            const query = phoneInput.trim();
+            const exactMatch = searchResults.find(customer => 
+              customer.phone1 === query || 
+              customer.phone2 === query ||
+              customer.phone3 === query ||
+              customer.phone4 === query
+            );
+            
+            if (exactMatch) {
+              handleCustomerSelect(exactMatch);
+            } else if (!isSearching) {
+              setShowCustomerForm(true);
+              setShowSearchDropdown(false);
+            }
+          }
+          break;
+        case 'Escape':
+          setShowSearchDropdown(false);
+          setSelectedResultIndex(-1);
+          inputRef.current?.blur();
+          break;
+      }
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      
+      const query = phoneInput.trim();
+      if (query.length >= 3) {
+        if (isSearching) {
+          setPendingEnterAction(query);
+          return;
+        }
+        await handleEnterAction(query);
+      }
+    }
+  }, [showSearchDropdown, searchResults, selectedResultIndex, phoneInput, isSearching, handleCustomerSelect]);
+
+  useEffect(() => {
+    if (pendingEnterAction && !isSearching) {
+      const query = pendingEnterAction;
+      setPendingEnterAction(null);
+      handleEnterAction(query);
+    }
+  }, [isSearching, pendingEnterAction, handleEnterAction]);
+
+  const handleCustomerDetailsSelect = useCallback((customer: Customer, address: CustomerAddress) => {
+    onCustomerSelect(customer, address);
+    setPhoneInput('');
+    setShowCustomerDetails(false);
+    setShowSearchDropdown(false);
+    setSearchResults([]);
+    setSelectedResultIndex(-1);
+    setInputHasFocus(false);
+  }, [onCustomerSelect]);
+
+  const handleAddCustomerClick = useCallback(() => {
+    setShowCustomerForm(true);
+    setShowSearchDropdown(false);
+    setSelectedResultIndex(-1);
+    setInputHasFocus(false);
+  }, []);
+
+  const handleCustomerFormSubmit = useCallback(async (data: any) => {
+    try {
+      const newCustomer = await customersApi.add(data);
+      if (newCustomer.addresses.length > 0) {
+        onCustomerSelect(newCustomer, newCustomer.addresses[0]);
+        setPhoneInput('');
+      }
+      setShowCustomerForm(false);
+      setShowSearchDropdown(false);
+      setSearchResults([]);
+      setSelectedResultIndex(-1);
+      setInputHasFocus(false);
+    } catch (error) {
+      console.error('Error creating customer:', error);
+    }
+  }, [onCustomerSelect]);
+
+  const handleCustomerFormClose = useCallback(() => {
+    setShowCustomerForm(false);
+  }, []);
+
+  const handleCustomerDetailsClose = useCallback(() => {
+    setShowCustomerDetails(false);
+  }, []);
+
+  // ✅ دالة لتحريك العرض للبحث
+  const handleEditCustomer = () => {
+    setShowCustomerSearch(true);
+    setPhoneInput('');
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 100);
+  };
 
   const orderTypes = [
     { id: 1, name: 'Takeaway', displayName: 'Takeaway', icon: '/images/takeaway.png', color: '#28a745', description: 'عميل يأخذ الطلب' },
@@ -58,28 +416,23 @@ const Header: React.FC<HeaderProps> = ({
 
   const activeDeliveryCompanies = deliveryCompanies.filter(company => company.isActive);
 
-  // معالج النقر على زر Today Orders
   const handleTodayOrdersClick = (e: React.MouseEvent) => {
     e.preventDefault();
     setShowTodayOrders(true);
   };
 
-  // معالج عرض الطلب - تمرير البيانات للصفحة الرئيسية
   const handleViewOrder = (invoiceData: Invoice & { isEditMode: boolean }) => {
     console.log('Header: تم استقبال بيانات الطلب للعرض:', invoiceData);
     
-    // تمرير البيانات للصفحة الرئيسية
     if (onViewOrder) {
       onViewOrder(invoiceData);
     } else {
       console.warn('Header: onViewOrder prop غير متوفر');
     }
     
-    // إغلاق نافذة Today Orders
     setShowTodayOrders(false);
   };
 
-  // إغلاق dropdown عند النقر خارجه
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -91,83 +444,194 @@ const Header: React.FC<HeaderProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // ✅ دالة عرض محتوى الـ dropdown
+  const renderDropdownContent = () => {
+    const query = phoneInput.trim();
+    
+    if (isSearching) {
+      return (
+        <div className={styles.searchingMessage}>
+          <div className={styles.loadingSpinner}></div>
+          <span>جاري البحث...</span>
+        </div>
+      );
+    }
+    
+    if (query.length < 3) {
+      return (
+        <div className={styles.minLengthMessage}>
+          <span>اكتب 3 أرقام على الأقل للبحث</span>
+        </div>
+      );
+    }
+    
+    if (searchResults.length > 0) {
+      return (
+        <>
+          <div className={styles.dropdownHeader}>
+            <span>نتائج البحث ({searchResults.length})</span>
+          </div>
+          {searchResults.map((customer, index) => (
+            <div
+              key={customer.id}
+              className={`${styles.customerOption} ${
+                index === selectedResultIndex ? styles.selectedOption : ''
+              }`}
+              onClick={() => handleCustomerSelect(customer)}
+            >
+              <div className={styles.customerInfo}>
+                <div className={styles.customerName}>{customer.name}</div>
+                <div className={styles.customerPhone}>
+                  {customer.phone1}
+                  {customer.phone2 && ` - ${customer.phone2}`}
+                </div>
+                <div className={styles.customerDetails}>
+                  {customer.addresses.length} عنوان
+                  {customer.isVIP && ' • VIP'}
+                  {customer.isBlocked && ' • محظور'}
+                </div>
+              </div>
+            </div>
+          ))}
+        </>
+      );
+    }
+    
+    return (
+      <div className={styles.noResults}>
+        <span>لا توجد نتائج لهذا الرقم</span>
+        <button 
+          className={styles.addNewCustomerBtn}
+          onClick={handleAddCustomerClick}
+          disabled={isSearching}
+        >
+          إضافة عميل جديد
+        </button>
+      </div>
+    );
+  };
+
   return (
     <>
       <header className="pos-header">
         <div className="header-content">
           <img src="/images/img_foodify_logo_2_78x166.png" alt="Foodify Logo" className="header-logo" />
 
-          {/* Customer Info Section */}
-          {selectedCustomer && (
-            <div className="customer-info-section">
-              <div className="customer-info-card">
-                <div className="customer-basic-info">
-                  <div className="customer-name">
-                    <span className="customer-icon">👤</span>
-                    <span>{selectedCustomer.name}</span>
-                    {selectedCustomer.isVIP && <span className="vip-badge">VIP</span>}
-                  </div>
-                  <div className="customer-phone">
-                    <span className="phone-icon">📞</span>
-                    <span>{selectedCustomer.phone1}</span>
-                  </div>
+          {/* ✅ Customer Section - مدمج بين البحث وعرض البيانات */}
+          <div className="customer-section">
+            {showCustomerSearch ? (
+              // ✅ Customer Search Input
+              <div className={styles.customerInputContainer} ref={searchDropdownRef}>
+                <div className={styles.customerInput}>
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    placeholder="Customer Phone Number - رقم هاتف العميل"
+                    value={phoneInput}
+                    onChange={handleInputChange}
+                    onFocus={handleInputFocus}
+                    onBlur={handleInputBlur}
+                    onKeyDown={handleKeyDown}
+                    className={styles.customerField}
+                  />
+                  <button 
+                    className={styles.customerButton}
+                    onClick={handleAddCustomerClick}
+                    disabled={isSearching}
+                  >
+                    <img src="/images/img_group_1000004320.svg" alt="Add customer" />
+                  </button>
                 </div>
 
-                {selectedAddress && selectedAddress.addressLine && (
-                  <div className="customer-address">
-                    <span className="address-icon">📍</span>
-                    <span className="address-text">
-                      {selectedAddress.addressLine}
-                      {selectedAddress.zoneName && ` - ${selectedAddress.zoneName}`}
-                    </span>
+                {/* Search Results Dropdown */}
+                {showSearchDropdown && (
+                  <div className={styles.customerDropdown}>
+                    {renderDropdownContent()}
                   </div>
                 )}
               </div>
-            </div>
-          )}
+            ) : (
+              // ✅ عرض بيانات العميل مع زر التعديل
+              selectedCustomer && (
+                <div className="customer-info-section">
+                  <div className="customer-info-card">
+                    <div className="customer-basic-info">
+                      <div className="customer-name">
+                        <span className="customer-icon">👤</span>
+                        <span>{selectedCustomer.name}</span>
+                        {selectedCustomer.isVIP && <span className="vip-badge">VIP</span>}
+                      </div>
+                      <div className="customer-phone">
+                        <span className="phone-icon">📞</span>
+                        <span>{selectedCustomer.phone1}</span>
+                      </div>
+                    </div>
 
-            <nav className="header-nav">
-              <a
-                href="#"
-                className="nav-item active today-orders-btn"
-                onClick={handleTodayOrdersClick}
-                title="عرض طلبات اليوم"
+                    {selectedAddress && selectedAddress.addressLine && (
+                      <div className="customer-address">
+                        <span className="address-icon">📍</span>
+                        <span className="address-text">
+                          {selectedAddress.addressLine}
+                          {selectedAddress.zoneName && ` - ${selectedAddress.zoneName}`}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* ✅ زر التعديل */}
+                    <button 
+                      className="edit-customer-btn"
+                      onClick={handleEditCustomer}
+                      title="تغيير العميل"
+                    >
+                      <img src="/images/img_edit.png" alt="Edit" />
+                      <span>تعديل</span>
+                    </button>
+                  </div>
+                </div>
+              )
+            )}
+          </div>
+
+          <nav className="header-nav">
+            <a
+              href="#"
+              className="nav-item active today-orders-btn"
+              onClick={handleTodayOrdersClick}
+              title="عرض طلبات اليوم"
+            >
+              <img src="/images/img_sending_order.svg" alt="Today Orders" />
+              <span>Today Orders</span>
+            </a>
+
+            {(selectedOrderType === 'Delivery' || selectedOrderType === 'Pickup') && (
+              <a 
+                href="#" 
+                className="nav-item delivery-order-btn" 
+                onClick={(e) => { 
+                  e.preventDefault(); 
+                  setShowDeliveryManagement(true);
+                }}
+                title="إدارة التوصيل"
               >
-                <img src="/images/img_sending_order.svg" alt="Today Orders" />
-                <span>Today Orders</span>
+                <img src="/images/img_delivery_truck.svg" alt="Delivery Order" />
+                <span>Delivery Order</span>
               </a>
+            )}
 
-              {/* Delivery Order button - only show for Delivery and Pickup */}
-              {(selectedOrderType === 'Delivery' || selectedOrderType === 'Pickup') && (
-                <a 
-                  href="#" 
-                  className="nav-item delivery-order-btn" 
-                  onClick={(e) => { 
-                    e.preventDefault(); 
-                    setShowDeliveryManagement(true);
-                  }}
-                  title="إدارة التوصيل"
-                >
-                  <img src="/images/img_delivery_truck.svg" alt="Delivery Order" />
-                  <span>Delivery Order</span>
-                </a>
-              )}
-
-              {/* Table button - only show for Takeaway and Dine-in */}
-              {(selectedOrderType === 'Takeaway' || selectedOrderType === 'Dine-in') && (
-                <a 
-                  href="#" 
-                  className="nav-item" 
-                  onClick={(e) => { 
-                    e.preventDefault(); 
-                    if (onTableClick) onTableClick(); 
-                  }}
-                  title="اختيار الطاولة"
-                >
-                  <img src="/images/img_table_02.svg" alt="Table" />
-                  <span>{tableDisplayName}</span>
-                </a>
-              )}
+            {(selectedOrderType === 'Takeaway' || selectedOrderType === 'Dine-in') && (
+              <a 
+                href="#" 
+                className="nav-item" 
+                onClick={(e) => { 
+                  e.preventDefault(); 
+                  if (onTableClick) onTableClick(); 
+                }}
+                title="اختيار الطاولة"
+              >
+                <img src="/images/img_table_02.svg" alt="Table" />
+                <span>{tableDisplayName}</span>
+              </a>
+            )}
 
             <a href="#" className="nav-item">
               <img src="/images/img_discount_tag_01.svg" alt="Discount" />
@@ -275,7 +739,7 @@ const Header: React.FC<HeaderProps> = ({
         </div>
       </header>
 
-      {/* Today Orders Popup */}
+      {/* ✅ Popups */}
       <TodayOrdersPopup
         isOpen={showTodayOrders}
         onClose={() => setShowTodayOrders(false)}
@@ -283,11 +747,41 @@ const Header: React.FC<HeaderProps> = ({
         onViewOrder={handleViewOrder}
       />
 
-      {/* Delivery Management Popup */}
       <DeliveryManagementPopup
         isOpen={showDeliveryManagement}
         onClose={() => setShowDeliveryManagement(false)}
       />
+
+      {/* ✅ Customer Details Popup */}
+      <CustomerDetailsPopup
+        open={showCustomerDetails}
+        customer={selectedCustomerForDetails}
+        onClose={handleCustomerDetailsClose}
+        onSelectCustomer={handleCustomerDetailsSelect}
+      />
+
+      {/* ✅ Customer Form Popup */}
+      {showCustomerForm && (
+        <CustomerForm
+          key={phoneInput}
+          open={showCustomerForm}
+          mode="add"
+          onClose={handleCustomerFormClose}
+          onSubmit={handleCustomerFormSubmit}
+          initialValues={{
+            id: '',
+            name: '',
+            phone1: phoneInput.trim(),
+            phone2: '',
+            phone3: '',
+            phone4: '',
+            isVIP: false,
+            isBlocked: false,
+            isActive: true,
+            addresses: []
+          }}
+        />
+      )}
     </>
   );
 };

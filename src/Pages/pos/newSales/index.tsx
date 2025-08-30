@@ -776,27 +776,15 @@ const handleResetOrder = useCallback(() => {
         selectedCustomer={selectedCustomer}
         selectedAddress={selectedAddress}
         onViewOrder={handleViewOrderFromPopup} // إضافة هذا
+          customerName={customerName}
+  onCustomerNameChange={setCustomerName}
+  onCustomerSelect={handleCustomerSelect}
 
       />
 
       <main className="main-content">
         <section className="products-section">
-          <div className="number-pad-bar">
-            <div className="keypad-grid">
-              {['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '.', 'C'].map((key) => (
-                <button 
-                  key={key}
-                  className="keypad-key"
-                  onClick={() => key === 'C' ? handleClearClick() : handleNumberClick(key)}
-                >
-                  {key}
-                </button>
-              ))}
-            </div>
-            <div className="keypad-display">
-              {keypadValue}
-            </div>
-          </div>
+
 
           <ActionButtons
             selectedChips={selectedChips}
@@ -856,6 +844,7 @@ const handleResetOrder = useCallback(() => {
           </div>
         </aside>
 
+      <div className="order-section">
         <OrderSummary
           orderSummary={orderSummary}
           customerName={customerName}
@@ -869,15 +858,35 @@ const handleResetOrder = useCallback(() => {
           selectedAddress={selectedAddress}
           onCustomerSelect={handleCustomerSelect}
           orderType={selectedOrderType}
-          onDeliveryChargeChange={handleDeliveryChargeChange} readOnly={false}   onOrderCompleted={handleOrderCompleted} 
-          selectedTable={selectedTable} // ✅ إضافة هذا
-          selectedDeliveryCompany={selectedDeliveryCompany} // ✅ إضافة هذا// إضافة المعالج الجديد
+          onDeliveryChargeChange={handleDeliveryChargeChange}
+          readOnly={false}
+          onOrderCompleted={handleOrderCompleted}
+          selectedTable={selectedTable}
+          selectedDeliveryCompany={selectedDeliveryCompany}
           isEditMode={isEditMode}
-  currentInvoiceId={currentInvoiceId}
-    currentBackInvoiceCode={currentBackInvoiceCode} // ✅ تمرير القيمة الجديدة
-
-       />
-      </main>
+          currentInvoiceId={currentInvoiceId}
+          currentBackInvoiceCode={currentBackInvoiceCode}
+        />
+        
+        {/* ✅ الـ numberpad في مكانها الجديد */}
+        <div className="number-pad-section">
+          <div className="keypad-display">
+            {keypadValue}
+          </div>
+          <div className="keypad-grid">
+            {['1', '2', '3', '4', '5', '6', '7', '8', '9', 'C', '0', '.'].map((key) => (
+              <button 
+                key={key}
+                className={`keypad-key ${key === 'C' ? 'clear-key' : ''}`}
+                onClick={() => key === 'C' ? handleClearClick() : handleNumberClick(key)}
+              >
+                {key}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    </main>
 
       <PriceSelectionPopup
         product={selectedProduct}

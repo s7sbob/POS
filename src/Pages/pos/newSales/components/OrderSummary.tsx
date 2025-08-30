@@ -75,7 +75,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
   const [selectedCustomerForDetails, setSelectedCustomerForDetails] = useState<Customer | null>(null);
   const [deliveryCharge, setDeliveryCharge] = useState(0);
   const [zones, setZones] = useState<any[]>([]);
-  const [selectedResultIndex, setSelectedResultIndex] = useState(-1);
+  const [, setSelectedResultIndex] = useState(-1);
   const [searchCache, setSearchCache] = useState<{[key: string]: Customer[]}>({});
   const [inputHasFocus, setInputHasFocus] = useState(false);
   const [showPaymentPopup, setShowPaymentPopup] = useState(false);
@@ -86,7 +86,6 @@ const { saveInvoice, isSubmitting, nextInvoiceCode, fetchNextInvoiceCode } = use
   const searchDebounceTimer = useRef<NodeJS.Timeout | null>(null);
   const searchAbortController = useRef<AbortController | null>(null);
   const lastSearchQuery = useRef<string>('');
-  const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 const [selectedActionType, setSelectedActionType] = useState<'send' | 'print' | 'pay'>('pay');
 
@@ -292,39 +291,13 @@ const [selectedActionType, setSelectedActionType] = useState<'send' | 'print' | 
     };
   }, []);
 
-  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setPhoneInput(value);
-    onCustomerNameChange(value);
-    
-    // إعادة تعيين الاختيار عند تغيير النص
-    setSelectedResultIndex(-1);
-    
-    // أظهر الـ dropdown عند الكتابة
-    if (value.trim().length > 0) {
-      setShowDropdown(true);
-    }
-  }, [onCustomerNameChange]);
 
   // معالج Focus للـ input
-  const handleInputFocus = useCallback(() => {
-    setInputHasFocus(true);
-    // أظهر الـ dropdown إذا كان هناك نص أو نتائج
-    if (phoneInput.trim().length > 0 || searchResults.length > 0) {
-      setShowDropdown(true);
-    }
-  }, [phoneInput, searchResults.length]);
 
   const canOpenPayment = orderSummary.items.length > 0;
 
 
   // معالج Blur للـ input
-  const handleInputBlur = useCallback(() => {
-    // تأخير إخفاء الـ dropdown للسماح بالنقر على النتائج
-    setTimeout(() => {
-      setInputHasFocus(false);
-    }, 200);
-  }, []);
 
   const handleCustomerSelect = useCallback((customer: Customer) => {
     setSelectedCustomerForDetails(customer);
@@ -335,66 +308,6 @@ const [selectedActionType, setSelectedActionType] = useState<'send' | 'print' | 
   }, []);
 
 
-const handleKeyDown = useCallback(async (e: React.KeyboardEvent<HTMLInputElement>) => {
-  if (showDropdown && searchResults.length > 0) {
-    switch (e.key) {
-      case 'ArrowDown':
-        e.preventDefault();
-        setSelectedResultIndex(prev => 
-          prev < searchResults.length - 1 ? prev + 1 : prev
-        );
-        break;
-      case 'ArrowUp':
-        e.preventDefault();
-        setSelectedResultIndex(prev => prev > 0 ? prev - 1 : -1);
-        break;
-      case 'Enter':
-        e.preventDefault();
-        
-        // اختيار فقط إذا كان هناك عنصر محدد بالأسهم
-        if (selectedResultIndex >= 0 && selectedResultIndex < searchResults.length) {
-          handleCustomerSelect(searchResults[selectedResultIndex]);
-        } else {
-          // تحقق من وجود مطابقة تامة للرقم الكامل
-          const query = phoneInput.trim();
-          const exactMatch = searchResults.find(customer => 
-            customer.phone1 === query || 
-            customer.phone2 === query ||
-            customer.phone3 === query ||
-            customer.phone4 === query
-          );
-          
-          if (exactMatch) {
-            handleCustomerSelect(exactMatch);
-          } else if (!isSearching) {
-            // مفيش مطابقة تامة وانتهى البحث، افتح dialog الإضافة
-            setShowCustomerForm(true);
-            setShowDropdown(false);
-          }
-        }
-        break;
-      case 'Escape':
-        setShowDropdown(false);
-        setSelectedResultIndex(-1);
-        inputRef.current?.blur();
-        break;
-    }
-  } else if (e.key === 'Enter') {
-    e.preventDefault();
-    
-    const query = phoneInput.trim();
-    if (query.length >= 3) {
-      // إذا البحث لسه شغال، احفظ الإجراء المطلوب وانتظر
-      if (isSearching) {
-        setPendingEnterAction(query);
-        return;
-      }
-
-      // إذا البحث خلص، تعامل مع الطلب
-      await handleEnterAction(query);
-    }
-  }
-}, [showDropdown, searchResults, selectedResultIndex, phoneInput, isSearching, searchCustomers, handleCustomerSelect]);
 
 // أضف دالة جديدة للتعامل مع Enter:
 const handleEnterAction = useCallback(async (query: string) => {
@@ -551,12 +464,6 @@ useEffect(() => {
     setInputHasFocus(false);
   }, [onCustomerSelect]);
 
-  const handleAddCustomerClick = useCallback(() => {
-    setShowCustomerForm(true);
-    setShowDropdown(false);
-    setSelectedResultIndex(-1);
-    setInputHasFocus(false);
-  }, []);
 
   const handleCustomerFormSubmit = useCallback(async (data: any) => {
     try {
@@ -782,72 +689,7 @@ const handleActionButtonClick = useCallback(async (actionType: 'send' | 'print' 
     );
   };
 
-  // تحديد محتوى الـ dropdown
-  const renderDropdownContent = () => {
-    const query = phoneInput.trim();
-    
-    if (isSearching) {
-      return (
-        <div className={styles.searchingMessage}>
-          <div className={styles.loadingSpinner}></div>
-          <span>جاري البحث...</span>
-        </div>
-      );
-    }
-    
-    if (query.length < 3) {
-      return (
-        <div className={styles.minLengthMessage}>
-          <span>اكتب 3 أرقام على الأقل للبحث</span>
-        </div>
-      );
-    }
-    
-    if (searchResults.length > 0) {
-      return (
-        <>
-          <div className={styles.dropdownHeader}>
-            <span>نتائج البحث ({searchResults.length})</span>
-          </div>
-          {searchResults.map((customer, index) => (
-            <div
-              key={customer.id}
-              className={`${styles.customerOption} ${
-                index === selectedResultIndex ? styles.selectedOption : ''
-              }`}
-              onClick={() => handleCustomerSelect(customer)}
-            >
-              <div className={styles.customerInfo}>
-                <div className={styles.customerName}>{customer.name}</div>
-                <div className={styles.customerPhone}>
-                  {customer.phone1}
-                  {customer.phone2 && ` - ${customer.phone2}`}
-                </div>
-                <div className={styles.customerDetails}>
-                  {customer.addresses.length} عنوان
-                  {customer.isVIP && ' • VIP'}
-                  {customer.isBlocked && ' • محظور'}
-                </div>
-              </div>
-            </div>
-          ))}
-        </>
-      );
-    }
-    
-    return (
-      <div className={styles.noResults}>
-        <span>لا توجد نتائج لهذا الرقم</span>
-        <button 
-          className={styles.addNewCustomerBtn}
-          onClick={handleAddCustomerClick}
-          disabled={isSearching}
-        >
-          إضافة عميل جديد
-        </button>
-      </div>
-    );
-  };
+
 
   const shouldShowAllButtons = orderType !== 'Takeaway';
   const shouldShowPayOnly = orderType === 'Takeaway';
@@ -868,37 +710,6 @@ const handleActionButtonClick = useCallback(async (actionType: 'send' | 'print' 
       </div>
 
       <div className={styles.orderContent}>
-        {/* Customer Search Input with Enhanced Dropdown */}
-        <div className={styles.customerInputContainer} ref={dropdownRef}>
-          <div className={styles.customerInput}>
-            <input
-              ref={inputRef}
-              type="text"
-              placeholder="Customer Phone Number - رقم هاتف العميل"
-              value={phoneInput}
-              onChange={handleInputChange}
-              onFocus={handleInputFocus}
-              onBlur={handleInputBlur}
-              onKeyDown={handleKeyDown}
-              className={styles.customerField}
-            />
-            <button 
-              className={styles.customerButton}
-              onClick={handleAddCustomerClick}
-              disabled={isSearching}
-            >
-              <img src="/images/img_group_1000004320.svg" alt="Add customer" />
-            </button>
-          </div>
-
-          {/* Search Results Dropdown */}
-          {showDropdown && (
-            <div className={styles.customerDropdown}>
-              {renderDropdownContent()}
-            </div>
-          )}
-        </div>
-
         {/* Order Items */}
         <div className={styles.orderItems}>
           {orderSummary.items.map((item) => (
@@ -989,10 +800,10 @@ const handleActionButtonClick = useCallback(async (actionType: 'send' | 'print' 
           </div>
         </div>
 
-        <div className={styles.totalRow}>
+        {/* <div className={styles.totalRow}>
           <span>Total</span>
           <span>{finalTotal.toFixed(2)} <small>EGP</small></span>
-        </div>
+        </div> */}
 
         {!readOnly && (
           <div className={`${styles.actionButtons} ${shouldShowPayOnly ? styles.takeawayButtons : ''}`}>
