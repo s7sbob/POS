@@ -12,6 +12,7 @@ import { useOrderManager } from './components/OrderManager';
 import { useDataManager } from './hooks/useDataManager';
 import './styles/responsive.css';
 import './styles/popup.css';
+import './styles/numberpad.css';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import OrderItemDetailsPopup from './components/OrderItemDetailsPopup';
 import TableSelectionPopup from './components/TableSelectionPopup';
@@ -763,7 +764,7 @@ const handleResetOrder = useCallback(() => {
 
 
   return (
-    <div className="pos-system">
+    <div className="pos-system" style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
       <Header
         selectedOrderType={selectedOrderType}
         onOrderTypeChange={handleOrderTypeChange}
@@ -845,45 +846,47 @@ const handleResetOrder = useCallback(() => {
         </aside>
 
       <div className="order-section">
-        <OrderSummary
-          orderSummary={orderSummary}
-          customerName={customerName}
-          onCustomerNameChange={setCustomerName}
-          onRemoveOrderItem={removeOrderItem}
-          onRemoveSubItem={handleRemoveSubItem}
-          selectedOrderItemId={selectedOrderItemId}
-          onOrderItemSelect={handleOrderItemSelect}
-          onOrderItemDoubleClick={handleOrderItemDoubleClick}
-          selectedCustomer={selectedCustomer}
-          selectedAddress={selectedAddress}
-          onCustomerSelect={handleCustomerSelect}
-          orderType={selectedOrderType}
-          onDeliveryChargeChange={handleDeliveryChargeChange}
-          readOnly={false}
-          onOrderCompleted={handleOrderCompleted}
-          selectedTable={selectedTable}
-          selectedDeliveryCompany={selectedDeliveryCompany}
-          isEditMode={isEditMode}
-          currentInvoiceId={currentInvoiceId}
-          currentBackInvoiceCode={currentBackInvoiceCode}
-        />
+        <div className="order-summary-container">
+          <OrderSummary
+            orderSummary={orderSummary}
+            customerName={customerName}
+            onCustomerNameChange={setCustomerName}
+            onRemoveOrderItem={removeOrderItem}
+            onRemoveSubItem={handleRemoveSubItem}
+            selectedOrderItemId={selectedOrderItemId}
+            onOrderItemSelect={handleOrderItemSelect}
+            onOrderItemDoubleClick={handleOrderItemDoubleClick}
+            selectedCustomer={selectedCustomer}
+            selectedAddress={selectedAddress}
+            onCustomerSelect={handleCustomerSelect}
+            orderType={selectedOrderType}
+            onDeliveryChargeChange={handleDeliveryChargeChange}
+            readOnly={false}
+            onOrderCompleted={handleOrderCompleted}
+            selectedTable={selectedTable}
+            selectedDeliveryCompany={selectedDeliveryCompany}
+            isEditMode={isEditMode}
+            currentInvoiceId={currentInvoiceId}
+            currentBackInvoiceCode={currentBackInvoiceCode}
+          />
+        </div>
         
         {/* ✅ الـ numberpad في مكانها الجديد */}
         <div className="number-pad-section">
-          <div className="keypad-display">
+          {/* <div className="keypad-display">
             {keypadValue}
-          </div>
-          <div className="keypad-grid">
-            {['1', '2', '3', '4', '5', '6', '7', '8', '9', 'C', '0', '.'].map((key) => (
-              <button 
-                key={key}
-                className={`keypad-key ${key === 'C' ? 'clear-key' : ''}`}
-                onClick={() => key === 'C' ? handleClearClick() : handleNumberClick(key)}
-              >
-                {key}
-              </button>
-            ))}
-          </div>
+          </div> */}
+<div className="keypad-grid">
+  {['7', '8', '9', '4', '5', '6', '1', '2', '3', 'C', '0', '.'].map((key) => (
+    <button 
+      key={key}
+      className={`keypad-key ${key === 'C' ? 'clear-key' : ''}`}
+      onClick={() => key === 'C' ? handleClearClick() : handleNumberClick(key)}
+    >
+      {key === 'C' ? `C (${keypadValue})` : key}
+    </button>
+  ))}
+</div>
         </div>
       </div>
     </main>

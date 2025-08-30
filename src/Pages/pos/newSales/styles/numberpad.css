@@ -1,0 +1,131 @@
+/* الحاوي الرئيسي */
+.order-section {
+  width: auto;
+  background: var(--bg-white);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
+  height: 100%;
+}
+
+/* حاوي OrderSummary - يأخذ أكبر مساحة ممكنة */
+.order-summary-container {
+  flex: 1; /* ينمو ليملء المساحة المتاحة */
+  min-height: 0; /* يسمح بالانكماش عند الحاجة */
+  overflow: hidden;
+  display: grid;
+  flex-direction: column;
+}
+
+/* قسم NumberPad - حجم ثابت حسب المحتوى */
+.number-pad-section {
+  flex: 0 0 auto; /* لا ينمو ولا ينكمش، حجم طبيعي */
+  display: flex;
+  flex-direction: column;
+  border-top: 2px solid var(--border-color);
+  background: var(--bg-white);
+  min-height: 120px; /* حد أدنى لارتفاع NumberPad */
+  max-height: 200px; /* حد أقصى لارتفاع NumberPad */
+}
+
+/* شبكة أزرار NumberPad */
+.keypad-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(4, 1fr);
+  gap: 1px;
+  background: var(--border-color);
+  padding: 1px;
+  min-height: 120px; /* نفس الحد الأدنى */
+}
+
+/* تنسيق الأزرار */
+.keypad-key {
+  background: var(--bg-white);
+  border: none;
+  font-size: clamp(16px, 2.2vw, 28px);
+  font-weight: 600;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  margin: 1px;
+  min-height: 28px; /* حد أدنى لارتفاع الزر */
+}
+
+.keypad-key:hover {
+  background: #f8f9fa;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.keypad-key:active {
+  transform: translateY(0);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* زر المسح الأحمر */
+.clear-key {
+  background: var(--primary-red) !important;
+  color: white !important;
+  font-weight: 700;
+}
+
+.clear-key:hover {
+  background: #d32f2f !important;
+  transform: translateY(-1px);
+}
+
+/* تحسينات للشاشات الصغيرة */
+@media (max-width: 1024px) {
+  .order-section {
+    width: auto;
+  }
+  
+  .keypad-key {
+    font-size: clamp(14px, 2vw, 24px);
+    min-height: 24px;
+  }
+  
+  .number-pad-section {
+    min-height: 100px;
+    max-height: 160px;
+  }
+}
+
+/* تحسينات للشاشات الكبيرة */
+@media (min-width: 1921px) {
+  .keypad-key {
+    font-size: clamp(18px, 2.4vw, 32px);
+    min-height: 32px;
+  }
+  
+  .number-pad-section {
+    min-height: 140px;
+    max-height: 220px;
+  }
+}
+
+/* تحسينات للشاشات الصغيرة جداً */
+@media (max-width: 768px) {
+  .order-section {
+    width: auto;
+  }
+  
+  .keypad-key {
+    font-size: clamp(12px, 1.8vw, 20px);
+    min-height: 20px;
+  }
+  
+  .number-pad-section {
+    min-height: 80px;
+    max-height: 120px;
+  }
+}
