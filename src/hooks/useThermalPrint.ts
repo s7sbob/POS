@@ -1,5 +1,19 @@
-// File: src/hooks/useThermalPrint.ts
 import { useCallback } from 'react';
+
+declare global {
+  interface SerialPort {
+    open(options: { baudRate: number }): Promise<void>;
+    close(): Promise<void>;
+    writable: WritableStream | null;
+  }
+  
+  interface Navigator {
+    serial: {
+      requestPort(): Promise<SerialPort>;
+      getPorts(): Promise<SerialPort[]>;
+    };
+  }
+}
 
 interface ThermalPrintOptions {
   printerType?: 'usb' | 'network';
@@ -7,97 +21,124 @@ interface ThermalPrintOptions {
     ip: string;
     port: number;
   };
+  usbConfig?: {
+    vendorId?: number;
+    productId?: number;
+  };
 }
+
+// 🔥 تحديث URL للـ Firebase Function المنشورة
+// const FIREBASE_PRINTER_PROXY_URL = 'https://YOUR_REGION-YOUR_PROJECT.cloudfunctions.net/printerProxy';
+// أو للاختبار المحلي:
+const FIREBASE_PRINTER_PROXY_URL = 'http://localhost:3001';
 
 export const useThermalPrint = (options: ThermalPrintOptions = {}) => {
   
-  // دالة الطباعة عبر الشبكة مباشرة
-  const printViaNetwork = useCallback(async (content: string) => {
-    try {
-      if (!options.networkConfig) {
-        throw new Error('إعدادات الشبكة غير محددة');
-      }
-
-      const { ip, port } = options.networkConfig;
-      
-      // إرسال مباشر للطابعة عبر الشبكة
-      const escPosData = convertToESCPOS(content);
-      
-      // استخدام WebSocket للاتصال المباشر
-      const ws = new WebSocket(`ws://${ip}:${port}`);
-      
-      return new Promise((resolve) => {
-        ws.onopen = () => {
-          ws.send(escPosData);
-          ws.close();
-          resolve({ success: true });
-        };
-        
-        ws.onerror = () => {
-          // محاولة عبر HTTP إذا فشل WebSocket
-          fetch(`http://${ip}:${port}/print`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/octet-stream' },
-            body: escPosData
-          }).then(() => {
-            resolve({ success: true });
-          }).catch(() => {
-            resolve({ success: false, error: 'فشل الاتصال بالطابعة' });
-          });
-        };
-      });
-      
-    } catch (error) {
-      return { success: false, error: error && typeof error === 'object' && 'message' in error ? (error as any).message : String(error) };
+  // دالة الطباعة عبر الشبكة
+const printViaNetwork = useCallback(async (content: string, log?: (message: string) => void) => {
+  log?.('🌐 Starting network printing...');
+  try {
+    if (!options.networkConfig) {
+      throw new Error('Network configuration not specified');
     }
-  }, [options.networkConfig]);
 
-  // دالة الطباعة عبر USB مع حفظ البورت
-  const printViaUSB = useCallback(async (content: string) => {
+    const { ip, port } = options.networkConfig;
+    const url = 'http://localhost:3001/print'; // تأكد من الـ URL
+    
+    log?.(`📤 Sending to: ${url}`);
+    log?.(`🖨️ Target printer: ${ip}:${port}`);
+    
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/octet-stream',
+        'x-printer-ip': ip,
+        'x-printer-port': port.toString()
+      },
+      body: convertToESCPOS(content)
+    });
+
+    log?.(`📊 Response status: ${response.status}`);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const result = await response.json();
+    log?.(`📋 Server response: ${JSON.stringify(result)}`);
+    
+    return result.success ? { success: true } : { success: false, error: result.error };
+    
+  } catch (error:any) {
+    log?.(`💥 Detailed error: ${error}`);
+    return { success: false, error: error.message };
+  }
+}, [options.networkConfig]);
+
+
+  // دالة الطباعة عبر USB
+  const printViaUSB = useCallback(async (content: string, log?: (message: string) => void) => {
+    log?.('🔌 Starting USB printing...');
     try {
       if (!('serial' in navigator)) {
-        throw new Error('Web Serial API غير مدعوم');
+        log?.('❌ Web Serial API not supported');
+        throw new Error('Web Serial API not supported in this browser');
       }
 
-      // التحقق من البورت المحفوظ
-      const savedPortInfo = localStorage.getItem('thermal_usb_port');
-      let port;
+      let port: SerialPort | any; // 🔥 تعريف صحيح للمتغير
+      const { usbConfig } = options;
 
-      if (savedPortInfo) {
-        // محاولة استخدام البورت المحفوظ
+      // البحث عن منفذ محفوظ
+      if (usbConfig?.vendorId && usbConfig?.productId) {
+        log?.(`🔍 Searching for USB port (Vendor ID: ${usbConfig.vendorId}, Product ID: ${usbConfig.productId})...`);
         try {
           const ports = await (navigator as any).serial.getPorts();
-          port = ports.find((p: any) => p.getInfo().usbVendorId && p.getInfo().usbProductId);
-        } catch (e) {
+          port = ports.find((p: any) => 
+            p.getInfo().usbVendorId === usbConfig.vendorId && 
+            p.getInfo().usbProductId === usbConfig.productId
+          );
+          if (port) {
+            log?.('✅ Found matching USB port');
+          } else {
+            log?.('⚠️ No matching USB port found, will request new one');
           }
+        } catch (e: any) {
+          log?.(`⚠️ Error searching for port: ${e.message || e}`);
+        }
       }
 
-      // إذا لم يوجد بورت محفوظ أو فشل، اطلب واحد جديد
+      // طلب منفذ جديد إذا لم يوجد
       if (!port) {
+        log?.('🖱️ Requesting new USB port from user...');
         port = await (navigator as any).serial.requestPort();
-        // حفظ معلومات البورت
-        const portInfo = port.getInfo();
-        localStorage.setItem('thermal_usb_port', JSON.stringify(portInfo));
+        log?.('✅ New USB port selected');
       }
 
+      log?.('🔓 Opening USB port...');
       await port.open({ baudRate: 9600 });
+      log?.('📤 USB port opened, sending data...');
       
       const writer = port.writable?.getWriter();
       if (writer) {
         const escPosData = convertToESCPOS(content);
         await writer.write(escPosData);
         writer.releaseLock();
+        log?.('✅ Data sent to USB port');
       }
 
+      log?.('🔒 Closing USB port...');
       await port.close();
+      log?.('✅ USB port closed successfully');
       return { success: true };
       
     } catch (error) {
-      return { success: false, error: error && typeof error === 'object' && 'message' in error ? (error as any).message : String(error) };
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      log?.(`💥 USB printing error: ${errorMessage}`);
+      return { success: false, error: errorMessage };
     }
-  }, []);
+  }, [options.usbConfig]);
 
-  // تحويل النص إلى ESC/POS commands
+  // 🔥 نقل دالة convertToESCPOS خارج النطاق المحلي
   const convertToESCPOS = (content: string): Uint8Array => {
     const encoder = new TextEncoder();
     const commands = [];
@@ -118,13 +159,14 @@ export const useThermalPrint = (options: ThermalPrintOptions = {}) => {
   };
 
   // الدالة الرئيسية للطباعة
-  const print = useCallback(async (content: string) => {
+  const print = useCallback(async (content: string, log?: (message: string) => void) => {
     const printerType = options.printerType || 'usb';
+    log?.(`🖨️ Selected printer type: ${printerType}`);
     
     if (printerType === 'network') {
-      return await printViaNetwork(content);
+      return await printViaNetwork(content, log);
     } else {
-      return await printViaUSB(content);
+      return await printViaUSB(content, log);
     }
   }, [options.printerType, printViaNetwork, printViaUSB]);
 

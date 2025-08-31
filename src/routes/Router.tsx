@@ -9,7 +9,6 @@ import { createProtectedPage } from 'src/utils/pageWrapper';
 import DeliveryAgentsPage from 'src/Pages/pos/delivery/agents/DeliveryAgentsPage';
 import DeliveryZonesPage from 'src/Pages/pos/delivery/zones/DeliveryZonesPage';
 import TableSectionsPage from 'src/Pages/pos/table-sections/TableSectionsPage';
-import PrinterSettingsPage from 'src/Pages/settings/components/PrinterSettings';
 import HallCaptainsPage from 'src/Pages/pos/hall-captains/HallCaptainsPage';
 import CustomersPage from 'src/Pages/pos/customers/CustomersPage';
 import OffersPage from 'src/Pages/pos/offers/OffersPage';
@@ -18,7 +17,10 @@ import LandingPage from 'src/Pages/landing/LandingPage';
 import DeliveryManagementPage from 'src/Pages/pos/newSales/components/DeliveryManagementPage';
 import DeliveryAgentAccountingPage from 'src/Pages/pos/newSales/components/DeliveryAgentAccountingPage';
 // import SalesPage from 'src/Pages/pos/sales/SalesPage';
-
+import PrinterSettingsPage from 'src/Pages/settings/components/PrinterSettings';
+import SettingsPage from 'src/Pages/settings';
+import PrinterManagement from 'src/Pages/settings/components/PrinterManagement';
+import PrintTestPage from 'src/Pages/settings/PrintTestPage';
 /* ***Layouts**** */
 const FullLayout = Loadable(lazy(() => import('../layouts/full/FullLayout')));
 const BlankLayout = Loadable(lazy(() => import('../layouts/blank/BlankLayout')));
@@ -109,7 +111,14 @@ const Router = [
       { path: '/', element: <Navigate to="/dashboard" /> },
       { path: '/dashboard', element: <ModernDash /> },
       { path: '/dashboards/modern', element: <ModernDash /> },
+      // {path: '/settings/printer', element: <PrinterSettingsPage />},
+
+
       {path: '/settings/printer', element: <PrinterSettingsPage />},
+      {path: '/settings', element: <SettingsPage />}, 
+        {path: '/settings/printers', element: <PrinterManagement />},
+      {path: '/print-test', element: <PrintTestPage />},
+
 
       // User Management Routes
       { path: '/users', element: <UsersManagement /> },
