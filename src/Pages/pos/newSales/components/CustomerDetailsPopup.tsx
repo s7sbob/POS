@@ -1,5 +1,6 @@
 // src/Pages/pos/newSales/components/CustomerDetailsPopup.tsx
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   TextField, Button, Box, Typography, Card, CardContent,
@@ -24,6 +25,7 @@ const CustomerDetailsPopup: React.FC<CustomerDetailsPopupProps> = ({
   onClose,
   onSelectCustomer
 }) => {
+  const { t } = useTranslation();
   const [selectedAddressId, setSelectedAddressId] = useState<string>('');
   const [showEditForm, setShowEditForm] = useState(false);
   const [zones, setZones] = useState<any[]>([]);
@@ -98,7 +100,7 @@ const CustomerDetailsPopup: React.FC<CustomerDetailsPopupProps> = ({
       <Dialog 
         open={open && !showEditForm} 
         onClose={onClose} 
-        maxWidth="md" 
+        maxWidth="lg" // ✅ تكبير عرض الـ Dialog لاستيعاب الكروت جنب بعض
         fullWidth
         PaperProps={{
           style: { minHeight: '600px' }
@@ -106,7 +108,7 @@ const CustomerDetailsPopup: React.FC<CustomerDetailsPopupProps> = ({
       >
         <DialogTitle>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Typography variant="h6">بيانات العميل</Typography>
+            <Typography variant="h6">{t("pos.newSales.customer.details")}</Typography>
             <IconButton onClick={handleEditCustomer} color="primary">
               <EditIcon />
             </IconButton>
@@ -118,24 +120,24 @@ const CustomerDetailsPopup: React.FC<CustomerDetailsPopupProps> = ({
           <Card sx={{ mb: 3 }}>
             <CardContent>
               <Typography variant="h6" gutterBottom>
-                المعلومات الأساسية
+                {t("pos.newSales.customer.basicInfo")}
               </Typography>
               <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2 }}>
                 <TextField
-                  label="الاسم"
+                  label={t("pos.newSales.customer.name")}
                   value={updatedCustomer.name}
                   InputProps={{ readOnly: true }}
                   variant="outlined"
                 />
                 <TextField
-                  label="الهاتف الأساسي"
+                  label={t("pos.newSales.customer.phone1")}
                   value={updatedCustomer.phone1}
                   InputProps={{ readOnly: true }}
                   variant="outlined"
                 />
                 {updatedCustomer.phone2 && (
                   <TextField
-                    label="الهاتف الثاني"
+                    label={t("pos.newSales.customer.phone2")}
                     value={updatedCustomer.phone2}
                     InputProps={{ readOnly: true }}
                     variant="outlined"
@@ -143,7 +145,7 @@ const CustomerDetailsPopup: React.FC<CustomerDetailsPopupProps> = ({
                 )}
                 {updatedCustomer.phone3 && (
                   <TextField
-                    label="الهاتف الثالث"
+                    label={t("pos.newSales.customer.phone3")}
                     value={updatedCustomer.phone3}
                     InputProps={{ readOnly: true }}
                     variant="outlined"
@@ -163,7 +165,7 @@ const CustomerDetailsPopup: React.FC<CustomerDetailsPopupProps> = ({
                       borderRadius: 1 
                     }}
                   >
-                    عميل VIP
+                    {t("pos.newSales.customer.vip")}
                   </Typography>
                 )}
                 {updatedCustomer.isBlocked && (
@@ -177,7 +179,7 @@ const CustomerDetailsPopup: React.FC<CustomerDetailsPopupProps> = ({
                       borderRadius: 1 
                     }}
                   >
-                    محظور
+                    {t("pos.newSales.customer.blocked")}
                   </Typography>
                 )}
               </Box>
@@ -188,79 +190,145 @@ const CustomerDetailsPopup: React.FC<CustomerDetailsPopupProps> = ({
 
           {/* Address Selection */}
           <Typography variant="h6" sx={{ mb: 2 }}>
-            اختر العنوان للطلب ({updatedCustomer.addresses.length})
+            {t("pos.newSales.customer.selectAddress", { count: updatedCustomer.addresses.length })}
           </Typography>
           
-          <RadioGroup
+          {/* ✅ تعديل RadioGroup لعرض الكروت جنب بعض */}
+          {/* <RadioGroup
             value={selectedAddressId}
             onChange={(e) => handleAddressSelect(e.target.value)}
+            sx={{ 
+              display: 'flex', 
+              flexDirection: 'row', 
+              flexWrap: 'wrap', 
+              gap: 2,
+              '& .MuiFormControlLabel-root': {
+                margin: 0,
+                alignItems: 'flex-start'
+              }
+            }}
           >
             {updatedCustomer.addresses.map((address) => (
               <FormControlLabel
                 key={address.id}
                 value={address.id}
-                control={<Radio />}
-                label={
-                  <Card 
+                control={
+                  <Radio 
                     sx={{ 
-                      width: '100%', 
-                      ml: 1,
-                      border: selectedAddressId === address.id ? '2px solid #1976d2' : '1px solid #e0e0e0'
-                    }}
-                  >
-                    <CardContent sx={{ py: 2 }}>
-                      <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
-                        <LocationIcon color="primary" />
-                        <Box sx={{ flex: 1 }}>
-                          <Typography variant="body1" fontWeight="bold">
-                            {address.addressLine}
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary">
-                            المنطقة: {getZoneName(address.zoneId)}
-                          </Typography>
-                          <Typography variant="body2" color="primary">
-                            رسوم التوصيل: {getDeliveryCharge(address.zoneId)} جنيه
-                          </Typography>
-                          
-                          {address.floor && (
-                            <Typography variant="body2" color="text.secondary">
-                              الدور: {address.floor}
-                            </Typography>
-                          )}
-                          {address.apartment && (
-                            <Typography variant="body2" color="text.secondary">
-                              الشقة: {address.apartment}
-                            </Typography>
-                          )}
-                          {address.landmark && (
-                            <Typography variant="body2" color="text.secondary">
-                              علامة مميزة: {address.landmark}
-                            </Typography>
-                          )}
-                          {address.notes && (
-                            <Typography variant="body2" color="text.secondary">
-                              ملاحظات: {address.notes}
-                            </Typography>
-                          )}
-                        </Box>
-                      </Box>
-                    </CardContent>
-                  </Card>
+                      position: 'absolute',
+                      top: 8,
+                      left: 8,
+                      zIndex: 1,
+                      bgcolor: 'white',
+                      borderRadius: '50%'
+                    }} 
+                  />
                 }
+                label=""
                 sx={{ 
-                  alignItems: 'flex-start',
-                  mb: 1,
-                  ml: 0,
-                  mr: 0
+                  position: 'relative',
+                  margin: 0,
+                  flexBasis: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 10.667px)' }, // responsive width
+                  maxWidth: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 10.667px)' }
                 }}
               />
             ))}
-          </RadioGroup>
+          </RadioGroup> */}
+
+          {/* ✅ عرض الكروت منفصلة عن الـ RadioGroup */}
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' },
+              gap: 2,
+              mt: 0.5
+            }}
+          >
+            {updatedCustomer.addresses.map((address) => (
+              <Card 
+                key={`card-${address.id}`}
+                sx={{ 
+                  cursor: 'pointer',
+                  position: 'relative',
+                  transition: 'all 0.2s ease-in-out',
+                  border: selectedAddressId === address.id ? '2px solid #1976d2' : '1px solid #e0e0e0',
+                  '&:hover': {
+                    boxShadow: 3,
+                    transform: 'translateY(-2px)'
+                  },
+                  minHeight: '200px' // ✅ حد أدنى للارتفاع لتوحيد شكل الكروت
+                }}
+                onClick={() => handleAddressSelect(address.id)}
+              >
+                <CardContent sx={{ py: 2, position: 'relative', pt: 5 }}>
+                  {/* ✅ Radio button في الزاوية */}
+                  <Radio
+                    checked={selectedAddressId === address.id}
+                    sx={{ 
+                      position: 'absolute',
+                      top: 8,
+                      left: 8,
+                      zIndex: 1,
+                      bgcolor: 'rgba(255,255,255,0.9)',
+                      borderRadius: '50%'
+                    }}
+                  />
+                  
+                  <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, mt: 1 }}>
+                    <LocationIcon color="primary" sx={{ mt: 0.5 }} />
+                    <Box sx={{ flex: 1 }}>
+                      <Typography variant="body1" fontWeight="bold" sx={{ mb: 1 }}>
+                        {address.addressLine}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                        {t("pos.newSales.customer.zone")}: {getZoneName(address.zoneId)}
+                      </Typography>
+                      <Typography variant="body2" color="primary" sx={{ mb: 1, fontWeight: 'medium' }}>
+                        {t("pos.newSales.customer.deliveryCharge")}: {getDeliveryCharge(address.zoneId)} {t("pos.newSales.products.currency")}
+                      </Typography>
+                      
+                      {/* ✅ تفاصيل إضافية في صندوق منفصل */}
+                      {(address.floor || address.apartment || address.landmark || address.notes) && (
+                        <Box sx={{ 
+                          bgcolor: '#f5f5f5', 
+                          p: 1, 
+                          borderRadius: 1, 
+                          mt: 1,
+                          fontSize: '0.75rem'
+                        }}>
+                          {address.floor && (
+                            <Typography variant="caption" display="block" color="text.secondary">
+                              {t("pos.newSales.customer.floor")}: {address.floor}
+                            </Typography>
+                          )}
+                          {address.apartment && (
+                            <Typography variant="caption" display="block" color="text.secondary">
+                              {t("pos.newSales.customer.apartment")}: {address.apartment}
+                            </Typography>
+                          )}
+                          {address.landmark && (
+                            <Typography variant="caption" display="block" color="text.secondary">
+                              {t("pos.newSales.customer.landmark")}: {address.landmark}
+                            </Typography>
+                          )}
+                          {address.notes && (
+                            <Typography variant="caption" display="block" color="text.secondary">
+                              {t("pos.newSales.customer.notes")}: {address.notes}
+                            </Typography>
+                          )}
+                        </Box>
+                      )}
+                    </Box>
+                  </Box>
+                </CardContent>
+              </Card>
+            ))}
+          </Box>
 
           {updatedCustomer.addresses.length === 0 && (
             <Box sx={{ textAlign: 'center', py: 4 }}>
               <Typography variant="body1" color="text.secondary">
-                لا توجد عناوين مسجلة لهذا العميل
+                {t("pos.newSales.customer.noAddresses")}
               </Typography>
             </Box>
           )}
@@ -268,14 +336,14 @@ const CustomerDetailsPopup: React.FC<CustomerDetailsPopupProps> = ({
 
         <DialogActions>
           <Button onClick={onClose}>
-            إلغاء
+            {t("pos.newSales.actions.cancel")}
           </Button>
           <Button 
             variant="contained" 
             onClick={handleConfirmSelection}
             disabled={!selectedAddressId}
           >
-            حفظ واختيار
+            {t("pos.newSales.customer.saveAndSelect")}
           </Button>
         </DialogActions>
       </Dialog>

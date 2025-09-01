@@ -1,24 +1,196 @@
 {
-    "Modern": "Modern",
-    "Ecommerce": "Ecommerce",
-    "eCommerce": "eCommerce",
-    "Contacts": "Contacts",
-    "Blog": "Blog",
-    "Posts": "Posts",
-    "Detail": "Detail",
-    "Shop": "Shop",
-    "List": "List",
-    "Checkout": "Checkout",
-    "Chats": "Chats",
-    "Users": "Users",
-    "Profile": "Profile",
-    "Followers": "Followers",
-    "Friends": "Friends",
-    "Gallery": "Gallery",
-    "Notes": "Notes",
-    "Calendar": "Calendar",
-    "Email": "Email",
-    "Tickets": "Tickets",
+  "Modern": "Modern",
+  "Ecommerce": "Ecommerce",
+  "eCommerce": "eCommerce",
+  "Contacts": "Contacts",
+  "Blog": "Blog",
+  "Posts": "Posts",
+  "Detail": "Detail",
+  "Shop": "Shop",
+  "List": "List",
+  "Checkout": "Checkout",
+  "Chats": "Chats",
+  "Users": "Users",
+  "Profile": "Profile",
+  "Followers": "Followers",
+  "Friends": "Friends",
+  "Gallery": "Gallery",
+  "Notes": "Notes",
+  "Calendar": "Calendar",
+  "Email": "Email",
+  "Tickets": "Tickets",
+  "pos": {
+    "todayOrders": "Today Orders",
+    "table": "Table",
+    "discount": "Discount",
+    "void": "Void",
+    "takeaway": "Takeaway",
+    "search": "Search",
+    "extra": "Extra",
+    "without": "Without",
+    "offer": "Offer",
+    "orderDetails": "Order Details",
+    "walkInCustomer": "Walk in Customer",
+    "subTotal": "Sub Total",
+    "tax": "Tax",
+    "service": "Service",
+    "total": "Total",
+    "send": "Send",
+    "print": "Print",
+    "pay": "Pay",
+     "newSales": {
+      "customer": {
+        "details": "Customer Details",
+        "basicInfo": "Basic Information",
+        "name": "Name",
+        "phone1": "Phone 1",
+        "phone2": "Phone 2", 
+        "phone3": "Phone 3",
+        "phone4": "Phone 4",
+        "vip": "VIP",
+        "blocked": "Blocked",
+        "selectAddress": "Select Address ({{count}})",
+        "noAddresses": "No addresses available",
+        "floor": "Floor",
+        "apartment": "Apartment",
+        "landmark": "Landmark",
+        "notes": "Notes",
+        "zone": "Zone",
+        "deliveryCharge": "Delivery Charge",
+        "edit": "Edit",
+        "saveAndSelect": "Save & Select",
+        "addCustomer": "Add Customer"
+      },
+      "actions": {
+        "cancel": "Cancel",
+        "confirm": "Confirm",
+        "close": "Close",
+        "save": "Save",
+        "edit": "Edit",
+        "delete": "Delete",
+        "add": "Add",
+        "search": "Search",
+        "extra": "Extra",
+        "without": "Without",
+        "offer": "Offer",
+        "extraChip": "Extra",
+        "withoutChip": "Without",
+        "next": "Next",
+        "backToPreviousGroup": "Back to Previous Group",
+        "confirmSelection": "Confirm Selection"
+      },
+      "products": {
+        "currency": "EGP",
+        "quantity": "Quantity",
+        "total": "Total",
+        "price": "Price",
+        "unit": "Unit",
+        "size": "Size",
+        "discount": "Discount",
+        "tax": "Tax",
+        "service": "Service",
+        "groupCount": "Group {{current}} of {{total}}",
+        "required": "Required"
+      },
+      "productOptions": {
+        "selectionCount": "Selected {{selected}} of {{max}}",
+        "minSelection": "Minimum: {{min}}",
+        "maxReached": "Maximum reached"
+      },
+      "orderSummary": {
+        "subtotal": "Subtotal",
+        "delivery": "Delivery",
+        "discount": "Discount",
+        "tax": "Tax",
+        "service": "Service",
+        "total": "Total",
+        "options": "Options",
+        "additions": "Additions",
+        "unit": "Unit",
+        "notesPlaceholder": "Add notes...",
+        "discountPercentage": "Discount %",
+        "discountAmount": "Discount Amount"
+      },
+      "payment": {
+        "pay": "Pay",
+        "send": "Send",
+        "print": "Print",
+        "confirmPaymentTitle": "Confirm Payment",
+        "editOrderTitle": "Edit Order",
+        "paymentError": "Payment processing error",
+        "createSuccess": "Order #{{invoiceNumber}} created successfully",
+        "updateSuccess": "Order updated successfully",
+        "sendSuccess": "Order #{{invoiceNumber}} sent successfully",
+        "printSuccess": "Order #{{invoiceNumber}} printed successfully",
+        "paySuccess": "Order #{{invoiceNumber}} paid successfully",
+        "updateSendSuccess": "Order updated and sent successfully",
+        "updatePrintSuccess": "Order updated and printed successfully",
+        "updatePaySuccess": "Order updated and paid successfully",
+        "loadingPaymentMethods": "Loading payment methods...",
+        "maxNonCashWarning": "Cannot use more than two non-cash payment methods"
+      },
+      "orderTypes": {
+        "takeaway": "Takeaway",
+        "takeawayDesc": "Order for takeout",
+        "dineIn": "Dine-in",
+        "dineInDesc": "Eat at restaurant",
+        "delivery": "Delivery",
+        "deliveryDesc": "Home delivery",
+        "pickup": "Pickup",
+        "pickupDesc": "Pickup from restaurant",
+        "deliveryCompany": "Delivery Company",
+        "deliveryCompanyDesc": "Delivery via external company"
+      },
+      "deliveryCompanies": {
+        "title": "Delivery Companies",
+        "select": "Select"
+      },
+      "header": {
+        "customerPhone": "Customer Phone",
+        "addCustomer": "Add Customer",
+        "editCustomer": "Edit Customer",
+        "todayOrders": "Today's Orders",
+        "deliveryOrder": "Delivery Management",
+        "table": "Table",
+        "discount": "Discount",
+        "void": "Void",
+        "vip": "VIP"
+      },
+      "table": {
+        "persons": "persons",
+        "occupied": "Occupied",
+        "available": "Available",
+        "service": "Service"
+      },
+      "language": {
+        "switchTo": "Switch to"
+      },
+      "messages": {
+        "selectTable": "Please select a table first",
+        "selectProductFirst": "Select a product from order first",
+        "loadingData": "Loading data...",
+        "noOrdersToShow": "No orders to display",
+        "updatingTableStatus": "Updating table status...",
+        "loading": "Loading..."
+      },
+      "todayOrdersPopup": {
+        "title": "Today's Orders ({{count}})",
+        "all": "All",
+        "invoiceCode": "Order Code",
+        "type": "Type",
+        "status": "Status",
+        "creationDate": "Creation Date",
+        "lastUpdate": "Last Update",
+        "totalAmount": "Total Amount",
+        "customer": "Customer",
+        "additionalInfo": "Additional Info",
+        "table": "Table",
+        "deliveryAgent": "Delivery Agent",
+        "deliveryCompany": "Delivery Company",
+        "errorLoadingOrder": "Error loading order"
+      }
+    }
+  },
   "reports": {
     "productBalance": {
       "title": "Product Balance Report",
@@ -88,30 +260,30 @@
       "loadFailed": "Failed to load data"
     }
   },
-      "export": {
+  "export": {
     "title": "Export Data",
     "pdf": "Export PDF",
     "excel": "Export Excel",
     "recordsCount": "{{count}} records",
     "exportedOn": "Exported on",
     "subject": "Data Report",
-        "exportExcel": "Export Excel",
+    "exportExcel": "Export Excel",
     "exportPdf": "Export PDF",
     "author": "Inventory Management System",
     "errorPdf": "Error occurred while exporting PDF",
     "errorExcel": "Error occurred while exporting Excel"
   },
- "purchases": {
+  "purchases": {
     "title": "Purchase Invoices",
     "description": "Manage purchase invoices and payments",
     "addButton": "Add Purchase Invoice",
     "searchPlaceholder": "Search purchase invoices...",
     "listTitle": "Purchase Invoices",
     "noData": "No purchase invoices found",
-     "view": {
+    "view": {
       "title": "View Purchase Invoice"
     },
-     "filter": {
+    "filter": {
       "title": "Search & Filter",
       "search": "Search",
       "filters": "Filters",
@@ -166,7 +338,6 @@
       "items": "items",
       "directInvoice": "Direct Invoice"
     },
-    
     "form": {
       "addTitle": "Add Purchase Invoice",
       "editTitle": "Edit Purchase Invoice",
@@ -237,8 +408,7 @@
       "updateSuccess": "Purchase invoice updated successfully"
     }
   },
-
-    "errors": {
+  "errors": {
     "title": "Error",
     "validationError": "Validation Error",
     "forbidden": "Forbidden",
@@ -246,7 +416,7 @@
     "conflict": "Data Conflict",
     "serverError": "Server Error",
     "multipleErrors": "Multiple Errors",
-        "unauthorized": {
+    "unauthorized": {
       "title": "Unauthorized",
       "message": "You don't have permission to access this page",
       "backToDashboard": "Back to Dashboard"
@@ -265,18 +435,17 @@
   "info": {
     "title": "Information"
   },
-
   "sidebar": {
     "inventory": "Inventory",
     "posProducts": "POS Products",
-        "hallCaptains": "Hall Captains",
-       "deliveryZones": "Delivery Zones",
-        "tableSections": "Table Sections",
+    "hallCaptains": "Hall Captains",
+    "deliveryZones": "Delivery Zones",
+    "tableSections": "Table Sections",
     "deliveryAgents": "Delivery Agents",
-     "systemAdmin": "System Administration",
+    "systemAdmin": "System Administration",
     "offers": "Offers",
     "deliveryCompanies": "Delivery Companies",
-     "additionProducts": "Addition Products",
+    "additionProducts": "Addition Products",
     "userManagement": "User Management",
     "companySettings": "Company Settings",
     "permissions": "Permissions",
@@ -317,7 +486,6 @@
     "discount": "Discount",
     "purchaseOrders": "Purchase Orders",
     "purchaseReturn": "Purchase Return",
-
     "expenses": "Expenses",
     "income": "Income",
     "bankAccounts": "Bank Accounts",
@@ -326,13 +494,11 @@
     "trialBalance": "Trial Balance",
     "cashFlow": "Cash Flow",
     "accountStatement": "Account Statement",
-
     "customers": "Customers",
     "billers": "Billers",
     "suppliers": "Suppliers",
     "stores": "Stores",
     "warehouses": "Warehouses",
-
     "employees": "Employees",
     "departments": "Departments",
     "designation": "Designation",
@@ -341,7 +507,6 @@
     "leaves": "Leaves",
     "holidays": "Holidays",
     "payroll": "Payroll",
-
     "salesReport": "Sales Report",
     "purchaseReport": "Purchase Report",
     "inventoryReport": "Inventory Report",
@@ -364,12 +529,11 @@
     "paymentMethods": "Payment Methods",
     "safesAndAccounts": "Safes & Accounts"
   },
-
- "products": {
+  "products": {
     "title": "Products",
-        "pricing": "Pricing",
+    "pricing": "Pricing",
     "defaultPrices": "Default Prices",
-    "branchPrices": "Branch Prices", 
+    "branchPrices": "Branch Prices",
     "branchPrice": "Branch Price",
     "difference": "Difference",
     "defaultPrice": "Default Price",
@@ -383,26 +547,26 @@
     "noOptionGroups": "No option groups",
     "addOptionGroup": "Add Option Group",
     "basicInfo": "Basic Information",
-  "common": {
-    "copy": "Copy",
-    "paste": "Paste", 
-    "clearCopy": "Clear Copy",
-    "currency": "EGP"
-  },
-  "tabs": {
+    "common": {
+      "copy": "Copy",
+      "paste": "Paste",
+      "clearCopy": "Clear Copy",
+      "currency": "EGP"
+    },
+    "tabs": {
       "basicInfoAndPrices": "Basic Info & Prices",
-      "basicInfo": "Basic Information", 
+      "basicInfo": "Basic Information",
       "prices": "Prices",
       "options": "Product Options"
     },
-      "types": {
+    "types": {
       "pos": "POS",
       "material": "Material",
       "addition": "Addition",
       "unknown": "Unknown"
     },
     "form": {
-       "isActive": "Active",
+      "isActive": "Active",
       "posPriceName": "Price Name",
       "posNamePlaceholder": "Enter price name...",
       "required": "Required",
@@ -441,25 +605,25 @@
       "optionItemName": "Item Name",
       "extraPrice": "Extra Price",
       "commentOnly": "Comment Only",
-            "posScreen": "POS Screen",
+      "posScreen": "POS Screen",
       "noPosScreen": "Without Screen"
     },
     "validation": {
       "optionGroupNameRequired": "Option group name is required",
       "optionItemNameRequired": "Option item name is required"
     },
-      "status": {
+    "status": {
       "title": "Status",
       "active": "Active",
       "inactive": "Inactive"
     },
-      "hasBarcode": "Has Barcode",
+    "hasBarcode": "Has Barcode",
     "optionGroup": "Option Group",
     "subtitle": "Manage products and prices in the system",
     "searchPlaceholder": "Search by name or barcode...",
     "searchByBarcode": "Search by Barcode",
     "searchByName": "Search by Name",
-        "copySuccess": "Product settings copied successfully",
+    "copySuccess": "Product settings copied successfully",
     "pasteSuccess": "Settings pasted with {{count}} prices",
     "nameRequiredForCopy": "Product name is required for copying",
     "componentsCopySuccess": "Components copied successfully",
@@ -467,14 +631,14 @@
     "noComponentsToCopy": "No components to copy",
     "searchResults": "{{count}} results",
     "searching": "Searching...",
-        "components": "Components",
+    "components": "Components",
     "addComponent": "Add Component",
-        "loadingComponentDetails": "Loading component details",
-        "selectedComponent": "Selected Component",
+    "loadingComponentDetails": "Loading component details",
+    "selectedComponent": "Selected Component",
     "quantity": "Quantity",
-        "scrollForMore": "Scroll down to load more",
+    "scrollForMore": "Scroll down to load more",
     "noComponents": "No components",
-      "searchProductPrices": "Search product prices...",
+    "searchProductPrices": "Search product prices...",
     "noProductPricesFound": "No product prices found",
     "selectedPrice": "Selected Price",
     "selectComponent": "Select Component",
@@ -518,11 +682,11 @@
     "selectUnit": "Select Unit",
     "barcodeOptional": "Barcode (optional)",
     "addPrice": "Add Price",
-       "searchPricesTitle": "Search Product Prices",
+    "searchPricesTitle": "Search Product Prices",
     "searchPricesPlaceholder": "Search by name or barcode...",
     "startTypingPrices": "Start typing product name or barcode to search",
     "salePrice": "Sale Price",
-     "product": "Product",
+    "product": "Product",
     "quickSearchPlaceholder": "Quick Search...",
     "productAdded": "Product added",
     "noProductFoundWithBarcode": "No product found with this barcode",
@@ -533,9 +697,9 @@
     "allResultsLoaded": "All results loaded",
     "navigateWithArrows": "Navigate with arrows",
     "selectWithEnter": "to select",
-     "selectProduct": "Select Product",
+    "selectProduct": "Select Product",
     "enterSearchTerm": "Enter search term",
-     "filter": {
+    "filter": {
       "title": "Search & Filter",
       "search": "Search",
       "filters": "Filters",
@@ -551,7 +715,7 @@
       "activeFilters": "active filters"
     }
   },
-   "barcode": {
+  "barcode": {
     "scan": "Scan Barcode",
     "scanTitle": "Scan Barcode",
     "pointCamera": "Point camera towards barcode",
@@ -563,11 +727,11 @@
     "enterValidNumber": "Please enter a valid number in",
     "minValue": "Value cannot be less than 0",
     "maxPercent": "Value cannot be more than 100%",
-        "supplierRequired": "Supplier is required",
+    "supplierRequired": "Supplier is required",
     "warehouseRequired": "Warehouse is required",
     "itemsRequired": "At least one item is required"
-    },
-   "suppliers": {
+  },
+  "suppliers": {
     "title": "Suppliers",
     "subtitle": "Manage suppliers and vendor companies",
     "name": "Supplier Name",
@@ -590,7 +754,7 @@
     "phoneRequired": "Phone number is required",
     "phoneInvalid": "Invalid phone number format",
     "addressRequired": "Address is required",
-      "filter": {
+    "filter": {
       "title": "Search & Filter",
       "search": "Search",
       "filters": "Filters",
@@ -606,7 +770,7 @@
       "activeFilters": "active filters"
     }
   },
- "purchaseOrders": {
+  "purchaseOrders": {
     "title": "Purchase Orders",
     "subtitle": "Manage purchase orders from suppliers",
     "search": "Search purchase orders...",
@@ -653,12 +817,11 @@
     "submitted": "Submitted",
     "savePending": "Save Pending",
     "submit": "Save Submitted",
-
     "basicInfo": "Basic Information",
     "discountsAndTaxes": "Discounts & Taxes",
     "unitFactor": "Unit Factor",
-      "status": {
-        "title": "Status",
+    "status": {
+      "title": "Status",
       "pending": "pending",
       "draft": "draft",
       "submitted": "submitted",
@@ -672,7 +835,7 @@
       "total": "Total",
       "status": "Status"
     },
-        "filter": {
+    "filter": {
       "title": "Search & Filter",
       "search": "Search",
       "filters": "Filters",
@@ -690,14 +853,13 @@
       "results": "Results",
       "activeFilters": "active filters"
     }
-
   },
   "common": {
     "update": "Update",
     "saveChanges": "Save Changes",
     "search": "Search",
     "all": "All",
-        "active": "Active",
+    "active": "Active",
     "inactive": "Inactive",
     "home": "Home",
     "currency": "EGP",
@@ -708,13 +870,13 @@
     "cancel": "Cancel",
     "save": "Save",
     "back": "Back",
-        "copy": "Copy",
+    "copy": "Copy",
     "paste": "Paste",
     "clear": "Clear",
     "saveError": "Save Error",
     "inLine": "in line",
     "searching": "Searching",
-        "edit": "Edit",
+    "edit": "Edit",
     "view": "View",
     "submit": "Submit",
     "delete": "Delete",
@@ -723,11 +885,11 @@
     "notSpecified": "Not Specified",
     "noData": "No data available",
     "refresh": "Refresh",
-        "yes": "Yes",
+    "yes": "Yes",
     "no": "No",
     "exportedOn": "Exported on",
     "actions": "Actions",
-       "density": "Density",
+    "density": "Density",
     "compact": "Compact",
     "standard": "Standard",
     "comfortable": "Comfortable",
@@ -780,9 +942,8 @@
     "saveAndNew": "Save & New",
     "supported": "Supported",
     "notSupported": "Not Supported"
-
   },
-    "warehouses": {
+  "warehouses": {
     "title": "Warehouses",
     "subtitle": "Manage your warehouses",
     "add": "Add Warehouse",
@@ -801,7 +962,7 @@
     "status": "Status",
     "totalProducts": "Total Products",
     "qty": "Qty",
-      "filter": {
+    "filter": {
       "title": "Search & Filter",
       "search": "Search",
       "filters": "Filters",
@@ -825,7 +986,7 @@
     "active": "Active",
     "inactive": "Inactive"
   },
-   "units": {
+  "units": {
     "title": "Units",
     "subtitle": "Manage measurement units in the system",
     "name": "Unit Name",
@@ -839,7 +1000,7 @@
     "active": "Active",
     "inactive": "Inactive",
     "nameRequired": "Unit name is required",
-     "filter": {
+    "filter": {
       "title": "Search & Filter",
       "search": "Search",
       "filters": "Filters",
@@ -855,7 +1016,7 @@
       "activeFilters": "active filters"
     }
   },
-   "groups": {
+  "groups": {
     "title": "Groups",
     "subtitle": "Manage groups and categories in the system",
     "name": "Group Name",
@@ -875,7 +1036,7 @@
     "fontColor": "Font Color",
     "preview": "Preview",
     "sampleText": "Sample Text",
-     "filter": {
+    "filter": {
       "title": "Search & Filter",
       "search": "Search",
       "filters": "Filters",
@@ -895,9 +1056,7 @@
     "noGroups": "No groups found",
     "rootGroups": "Root Groups"
   },
-
-
-   "adjustment": {
+  "adjustment": {
     "title": "Inventory Adjustment",
     "types": {
       "openingBalance": "Opening Balance",
@@ -937,7 +1096,7 @@
       "submitSuccess": "Adjustment submitted successfully",
       "selectWarehouseToStart": "Please select a warehouse to start a new inventory adjustment"
     },
-      "search": {
+    "search": {
       "title": "Search Items",
       "placeholder": "Search by name or barcode...",
       "scanBarcode": "Scan Barcode",
@@ -960,13 +1119,13 @@
       "submitFailed": "Failed to submit adjustment"
     }
   },
-    "adjustments": {
+  "adjustments": {
     "list": {
       "title": "Inventory Adjustments",
       "newAdjustment": "New Adjustment",
       "noAdjustments": "No adjustments found"
     },
-     "filter": {
+    "filter": {
       "title": "Search & Filter",
       "search": "Search",
       "filters": "Filters",
@@ -997,8 +1156,7 @@
       "totalItems": "Total Items",
       "totalDifference": "Total Difference",
       "status": "Status",
-            "warehouse": "Warehouse"
-
+      "warehouse": "Warehouse"
     },
     "types": {
       "new": "New",
@@ -1018,15 +1176,13 @@
       "loadFailed": "Failed to load adjustments list",
       "notFound": "Adjustment not found"
     },
-      "summary": {
+    "summary": {
       "totalItems": "Total Items",
       "totalPositive": "Total Increase",
       "totalNegative": "Total Decrease"
     }
   },
-
-
-   "safes": {
+  "safes": {
     "title": "Safes",
     "add": "Add Safe",
     "edit": "Edit Safe",
@@ -1042,7 +1198,7 @@
     "searchPlaceholder": "Search safes...",
     "types": {
       "cash": "Cash",
-        "safe": "خزنة"
+      "safe": "خزنة"
     },
     "filter": {
       "title": "Search & Filter",
@@ -1119,12 +1275,12 @@
       "updateFailed": "Failed to update account"
     }
   },
-   "posPaymentMethods": {
+  "posPaymentMethods": {
     "title": "Payment Methods",
     "add": "Add Payment Method",
     "edit": "Edit Payment Method",
     "name": "Payment Method Name",
-       "accountType": "Account Type",
+    "accountType": "Account Type",
     "accountNumber": "Account Number",
     "collectionFee": "Collection Fee",
     "safeOrAccount": "Safe or Account",
@@ -1160,13 +1316,12 @@
       "updateFailed": "Failed to update payment method"
     }
   },
-
-"import": {
+  "import": {
     "import": "Import",
     "downloadTemplate": "Download Template",
     "importTitle": "Import Data",
     "selectFile": "Select Excel File",
-        "rowError": "Row {{row}}:",
+    "rowError": "Row {{row}}:",
     "addError": "Error adding record",
     "importing": "Importing",
     "errorsFound": "Errors Found",
@@ -1183,9 +1338,7 @@
     "validationError": "Validation error",
     "importError": "Import error"
   },
-
-
-   "posScreens": {
+  "posScreens": {
     "title": "POS Screens",
     "add": "Add Screen",
     "addChild": "Add Child Screen",
@@ -1228,7 +1381,6 @@
       "activeFilters": "active filters"
     }
   },
-
   "auth": {
     "login": {
       "title": "Login",
@@ -1262,9 +1414,7 @@
       "noBranches": "No branches available for this user"
     }
   },
-
-
- "users": {
+  "users": {
     "userName": "User Name",
     "phoneNo": "Phone Number",
     "email": "Email",
@@ -1293,7 +1443,7 @@
     "validation": {
       "requiredFields": "Please enter all required fields",
       "passwordRequired": "Please enter password for new user",
-            "userNameTooShort": "User name must be more than 2 characters",
+      "userNameTooShort": "User name must be more than 2 characters",
       "userNameTooLong": "User name is too long",
       "invalidPhone": "Invalid phone number",
       "invalidEmail": "Invalid email address",
@@ -1377,7 +1527,7 @@
   "branch": {
     "selectBranch": "Select Branch"
   },
-   "profile": {
+  "profile": {
     "user": "User",
     "menu": {
       "userManagement": "User Management",
@@ -1387,8 +1537,6 @@
       "taskList": "Task List"
     }
   },
-
-
   "posProducts": {
     "title": "POS Products",
     "searchPlaceholder": "Search in POS products...",
@@ -1406,7 +1554,7 @@
       "updateFailed": "Failed to update product"
     }
   },
-    "materials": {
+  "materials": {
     "title": "Raw Materials",
     "searchPlaceholder": "Search in raw materials...",
     "searchByBarcode": "Search by Barcode",
@@ -1423,7 +1571,7 @@
       "updateFailed": "Failed to update material"
     }
   },
-    "additionProducts": {
+  "additionProducts": {
     "title": "Addition Products",
     "searchPlaceholder": "Search in addition products...",
     "searchByBarcode": "Search by Barcode",
@@ -1440,10 +1588,7 @@
       "updateFailed": "Failed to update product"
     }
   },
-
-
-
-    "deliveryZones": {
+  "deliveryZones": {
     "title": "Delivery Zones",
     "add": "Add Zone",
     "edit": "Edit Zone",
@@ -1571,7 +1716,7 @@
       "networkDesc": "Print via local network"
     }
   },
-    "tableSections": {
+  "tableSections": {
     "title": "Table Sections",
     "add": "Add Section",
     "edit": "Edit Section",
@@ -1607,7 +1752,7 @@
       "updateFailed": "Failed to update section"
     }
   },
-   "hallCaptains": {
+  "hallCaptains": {
     "title": "Hall Captains",
     "add": "Add Captain",
     "edit": "Edit Captain",
@@ -1690,7 +1835,7 @@
       "deleteFailed": "Failed to delete customer"
     }
   },
- "offers": {
+  "offers": {
     "title": "Offers",
     "add": "Add Offer",
     "edit": "Edit Offer",
@@ -1712,7 +1857,7 @@
       "startDate": "Start Date",
       "endDate": "End Date",
       "orderType": "Order Type",
-         "generalItems": "General Items",
+      "generalItems": "General Items",
       "groupItems": "Group Items",
       "noItemsInGroup": "No items in this group",
       "selectProduct": "Select Product",
@@ -1722,7 +1867,7 @@
       "searchProducts": "Search products...",
       "filterByGroup": "Filter by Group",
       "selectedItems": "Selected Items ({{count}})",
-         "searchProductsAndPrices": "Search products and prices...",
+      "searchProductsAndPrices": "Search products and prices...",
       "allGroups": "All Groups",
       "productsFound": "{{count}} products found",
       "selected": "Selected ({{count}})",
@@ -1737,7 +1882,7 @@
       "noProductsFound": "No products found",
       "isActive": "Active",
       "fixed": "Fixed",
-        "basicInfo": "Basic Information",
+      "basicInfo": "Basic Information",
       "offerGroups": "Offer Groups Count",
       "offerItems": "Offer Items",
       "addGroup": "Add Group",
@@ -1746,7 +1891,7 @@
       "noItems": "No items - Click to add item",
       "group": "Group",
       "item": "Item",
-           "fixedItems": "Fixed Items",
+      "fixedItems": "Fixed Items",
       "noFixedItems": "No fixed items",
       "selectFixedItems": "Select Fixed Items",
       "original": "Original",
@@ -1768,7 +1913,7 @@
       "items": "Items",
       "period": "Period"
     },
-     "groupTitleRequired": "Group title is required",
+    "groupTitleRequired": "Group title is required",
     "productRequired": "Product is required",
     "errors": {
       "loadFailed": "Failed to load offers",
@@ -1776,7 +1921,7 @@
       "updateFailed": "Failed to update offer"
     }
   },
- "deliveryCompanies": {
+  "deliveryCompanies": {
     "title": "Delivery Companies",
     "add": "Add Company",
     "edit": "Edit Company",
@@ -1813,6 +1958,7 @@
       "notesPlaceholder": "Enter any additional notes...",
       "isActive": "Active",
       "cash": "Cash",
+      "inChoice": "InChoice",
       "visa": "Visa",
       "percentages": "Percentages"
     },
@@ -1822,30 +1968,7 @@
       "updateFailed": "Failed to update company"
     }
   },
-
-  "pos": {
-    "todayOrders": "Today Orders",
-    "table": "Table",
-    "discount": "Discount", 
-    "void": "Void",
-    "takeaway": "Takeaway",
-    "search": "Search",
-    "extra": "Extra",
-    "without": "Without",
-    "offer": "Offer", 
-    "orderDetails": "Order Details",
-    "walkInCustomer": "Walk in Customer",
-    "subTotal": "Sub Total",
-    "tax": "Tax",
-    "service": "Service",
-    "total": "Total", 
-    "send": "Send",
-    "print": "Print", 
-    "pay": "Pay"
-  },
-
-
-   "landing": {
+  "landing": {
     "nav": {
       "home": "Home",
       "features": "Features",
@@ -1855,7 +1978,7 @@
     },
     "header": {
       "signIn": "Sign In",
-        "mobile": {
+      "mobile": {
         "signIn": "Sign In",
         "language": "Language",
         "theme": "Theme",
@@ -1866,7 +1989,7 @@
       "badge": "🎉 New: Version 2.0 is now available",
       "title": "The Most Advanced POS System",
       "subtitle": "Manage your store effortlessly with our integrated POS system that helps you increase sales and improve operations",
-        "mobile": {
+      "mobile": {
         "hideStats": "Hide Statistics",
         "showStats": "Show Statistics"
       },
@@ -1900,7 +2023,7 @@
       "inventory": {
         "title": "Inventory Management",
         "description": "Real-time inventory tracking with low stock alerts",
-          "highlights": {
+        "highlights": {
           "realtime": "Real-time Tracking",
           "alerts": "Smart Alerts",
           "reports": "Detailed Reports"
@@ -1909,7 +2032,7 @@
       "customers": {
         "title": "Customer Management",
         "description": "Comprehensive customer database with loyalty programs and discounts",
-         "highlights": {
+        "highlights": {
           "database": "Comprehensive Database",
           "loyalty": "Loyalty Programs",
           "discounts": "Smart Discounts"
@@ -1918,7 +2041,7 @@
       "analytics": {
         "title": "Analytics & Reports",
         "description": "Detailed reports and advanced analytics to help you make the right decisions",
-           "highlights": {
+        "highlights": {
           "advanced": "Advanced Analytics",
           "insights": "Deep Insights",
           "decisions": "Smart Decisions"
@@ -1927,7 +2050,7 @@
       "cloud": {
         "title": "Cloud Storage",
         "description": "Your data is securely stored in the cloud with access from anywhere",
-            "highlights": {
+        "highlights": {
           "secure": "Secure Storage",
           "anywhere": "Access Anywhere",
           "backup": "Automatic Backups"
@@ -1936,7 +2059,7 @@
       "security": {
         "title": "Advanced Security",
         "description": "High-level protection for your data with advanced encryption",
-          "highlights": {
+        "highlights": {
           "encryption": "Advanced Encryption",
           "protection": "High Protection",
           "guaranteed": "Guaranteed Security"
@@ -2156,5 +2279,4 @@
       "madeIn": "in Egypt"
     }
   }
-
 }

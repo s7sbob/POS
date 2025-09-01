@@ -175,6 +175,8 @@ const CompanyForm: React.FC<Props> = ({
                     >
                       <MenuItem value="Cash">{t('deliveryCompanies.form.cash')}</MenuItem>
                       <MenuItem value="Visa">{t('deliveryCompanies.form.visa')}</MenuItem>
+                      <MenuItem value="InChoice">{t('deliveryCompanies.form.inChoice')}</MenuItem>
+
                     </Select>
                   </FormControl>
                 )}

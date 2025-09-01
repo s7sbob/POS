@@ -39,6 +39,7 @@ export interface InvoiceItem {
   companyID?: string | null;
   isActive: boolean;
   childrens?: InvoiceItem[]; // Added for extra/without items
+  salesInvoiceItemType: number; // 1=Product, 2=Addition, 3=Without, 4=Optional
 }
 
 export interface InvoicePayment {
@@ -127,8 +128,17 @@ export interface CreateInvoiceItem {
   WareHouseId: string;
   Components: any[];
   Childrens?: CreateInvoiceItem[]; // Added for extra/without items
+  SalesInvoiceItemType?: number; // 1=Product, 2=Addition, 3=Without, 4=Optional
 }
 
+
+// ✅ إضافة enum للوضوح
+export enum SalesInvoiceItemType {
+  Product = 1,
+  Addition = 2,
+  Without = 3,
+  Optional = 4
+}
 export interface CreateInvoicePayment {
   id?: string; // اختياري للـ payments الموجودة
   Amount: number;
@@ -322,6 +332,8 @@ export const getInvoiceTypeText = (invoiceType: number): string => {
       return 'Delivery';
     case 4:
       return 'Pickup';
+    case 5:
+      return 'Delivery Company';
     default:
       return 'Unknown';
   }

@@ -1,5 +1,6 @@
 // src/Pages/pos/newSales/components/OrderSummary.tsx - تصحيح مشكلة إغلاق الـ dropdown
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { OrderSummary as OrderSummaryType, OrderItem, SubItem } from '../types/PosSystem';
 import { Customer, CustomerAddress } from 'src/utils/api/pagesApi/customersApi';
 import * as customersApi from 'src/utils/api/pagesApi/customersApi';
@@ -65,6 +66,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
   currentBackInvoiceCode = null // ✅ إضافة جديدة
 
 }) => {
+  const { t } = useTranslation();
   const [selectedSubItemId, setSelectedSubItemId] = useState<string | null>(null);
   const [phoneInput, setPhoneInput] = useState('');
   const [searchResults, setSearchResults] = useState<Customer[]>([]);
@@ -108,6 +110,7 @@ const [selectedActionType, setSelectedActionType] = useState<'send' | 'print' | 
       case 'Dine-in': return 2;
       case 'Delivery': return 3;
       case 'Pickup': return 4;
+      case 'DeliveryCompany': return 5;
       default: return 1;
     }
   };
@@ -754,15 +757,31 @@ const handleActionButtonClick = useCallback(async (actionType: 'send' | 'print' 
               
               {item.notes && renderNotes(item.notes)}
               
+              {/* ✅ عرض الخيارات المختارة (selectedOptions) */}
+              {item.selectedOptions && item.selectedOptions.length > 0 && (
+                <div className={styles.itemOptions}>
+                  <div className={styles.optionsHeader}>
+                    {/* <span className={styles.optionsLabel}>{t('pos.newSales.orderSummary.options')}:</span> */}
+                  </div>
+                  {renderOptions(item.selectedOptions)}
+                </div>
+              )}
+              
+              {/* ✅ عرض الإضافات والحذوفات (subItems) */}
               {item.subItems && item.subItems.length > 0 && (
                 <div className={styles.subItemsContainer}>
+                  <div className={styles.subItemsHeader}>
+                    {/* <span className={styles.subItemsLabel}>{t('pos.newSales.orderSummary.additions')}:</span> */}
+                  </div>
                   {item.subItems.map(subItem => renderSubItem(subItem, item.id))}
                 </div>
               )}
               
-              {item.selectedOptions && item.selectedOptions.length > 0 && !item.subItems && (
-                <div className={styles.itemOptions}>
-                  {renderOptions(item.selectedOptions)}
+              {/* ✅ عرض معلومات الوحدة إذا كانت متوفرة */}
+              {item.selectedPrice.name && item.selectedPrice.name !== item.selectedPrice.nameArabic && (
+                <div className={styles.unitInfo}>
+                  <span className={styles.unitLabel}>{t('pos.newSales.orderSummary.unit')}:</span>
+                  <span className={styles.unitValue}>{item.selectedPrice.nameArabic}</span>
                 </div>
               )}
             </div>
@@ -773,35 +792,35 @@ const handleActionButtonClick = useCallback(async (actionType: 'send' | 'print' 
       <div className={styles.orderFooter}>
         <div className={styles.summaryRows}>
           <div className={styles.summaryRow}>
-            <span>Sub Total</span>
+            <span>{t('pos.newSales.orderSummary.subtotal')}</span>
             <span>{orderSummary.subtotal.toFixed(2)} <small>EGP</small></span>
           </div>
           
           {deliveryCharge > 0 && (
             <div className={styles.summaryRow}>
-              <span>Delivery</span>
+              <span>{t('pos.newSales.orderSummary.delivery')}</span>
               <span>{deliveryCharge.toFixed(2)} <small>EGP</small></span>
             </div>
           )}
           
           <div className={styles.summaryRow}>
-            <span>Discount</span>
+            <span>{t('pos.newSales.orderSummary.discount')}</span>
             <span>{orderSummary.discount.toFixed(2)} <small>EGP</small></span>
           </div>
           
           <div className={styles.summaryRow}>
-            <span>Tax</span>
+            <span>{t('pos.newSales.orderSummary.tax')}</span>
             <span>{taxAmount.toFixed(2)} <small>EGP</small></span>
           </div>
           
           <div className={styles.summaryRow}>
-            <span>Service</span>
+            <span>{t('pos.newSales.orderSummary.service')}</span>
             <span>{orderSummary.service.toFixed(2)} <small>EGP</small></span>
           </div>
         </div>
 
         {/* <div className={styles.totalRow}>
-          <span>Total</span>
+          <span>{t('pos.newSales.orderSummary.total')}</span>
           <span>{finalTotal.toFixed(2)} <small>EGP</small></span>
         </div> */}
 
@@ -815,7 +834,7 @@ const handleActionButtonClick = useCallback(async (actionType: 'send' | 'print' 
   disabled={!canOpenPayment || isSubmitting}
 >
   <img src="/images/img_tabler_send.svg" alt="Send" />
-  <span>{isSubmitting ? 'جاري الإرسال...' : 'Send'}</span>
+  <span>{isSubmitting ? t('pos.newSales.messages.loading') : t('pos.newSales.payment.send')}</span>
 </button>
 <button 
   className={`${styles.actionButton} ${styles.print}`}
@@ -823,7 +842,7 @@ const handleActionButtonClick = useCallback(async (actionType: 'send' | 'print' 
   disabled={!canOpenPayment || isSubmitting}
 >
   <img src="/images/img_printer.svg" alt="Print" />
-  <span>{isSubmitting ? 'جاري الطباعة...' : 'Print'}</span>
+  <span>{isSubmitting ? t('pos.newSales.messages.loading') : t('pos.newSales.payment.print')}</span>
 </button>
               </>
             )}
@@ -833,7 +852,7 @@ const handleActionButtonClick = useCallback(async (actionType: 'send' | 'print' 
   className={`${styles.actionButton} ${styles.pay} ${shouldShowPayOnly ? styles.fullWidth : ''} ${!canOpenPayment ? styles.disabledBtn : ''}`}
 >
   <img src="/images/img_payment_02.svg" alt="Pay" />
-  <span>{isEditMode ? 'Pay' : 'Pay'}</span>
+  <span>{t('pos.newSales.payment.pay')}</span>
 </button>
           </div>
         )}

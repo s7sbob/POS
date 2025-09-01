@@ -1,6 +1,7 @@
 // src/Pages/pos/newSales/components/Header.tsx
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Customer, CustomerAddress } from 'src/utils/api/pagesApi/customersApi';
 import * as customersApi from 'src/utils/api/pagesApi/customersApi';
 import { DeliveryCompany } from '../../../../../utils/api/pagesApi/deliveryCompaniesApi';
@@ -8,7 +9,8 @@ import { Invoice } from '../../../../../utils/api/pagesApi/invoicesApi';
 import CustomerDetailsPopup from '../CustomerDetailsPopup';
 import CustomerForm from '../../../customers/components/CustomerForm';
 import '../../styles/Header.css';
-import styles from '../../styles/OrderSummary.module.css'; // استيراد styles الـ OrderSummary
+// import '../../styles/LanguageSwitcher.css';
+import styles from '../../styles/OrderSummary.module.css';
 import TodayOrdersPopup from '../TodayOrdersPopup';
 import DeliveryManagementPopup from '../DeliveryManagementPopup';
 
@@ -24,7 +26,6 @@ interface HeaderProps {
   selectedCustomer?: Customer | null;
   selectedAddress?: CustomerAddress | null;
   onViewOrder?: (invoiceData: Invoice & { isEditMode: boolean }) => void;
-  // ✅ Props جديدة لإدارة العميل
   customerName: string;
   onCustomerNameChange: (name: string) => void;
   onCustomerSelect: (customer: Customer, address: CustomerAddress) => void;
@@ -42,18 +43,18 @@ const Header: React.FC<HeaderProps> = ({
   selectedCustomer,
   selectedAddress,
   onViewOrder,
-  // ✅ Props جديدة
   customerName,
   onCustomerNameChange,
   onCustomerSelect
 }) => {
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [showTodayOrders, setShowTodayOrders] = useState(false);
   const [showDeliveryManagement, setShowDeliveryManagement] = useState(false);
 
-  // ✅ States جديدة لإدارة Customer Search
+  // ✅ States لإدارة Customer Search
   const [showCustomerSearch, setShowCustomerSearch] = useState(!selectedCustomer);
   const [phoneInput, setPhoneInput] = useState('');
   const [searchResults, setSearchResults] = useState<Customer[]>([]);
@@ -400,14 +401,19 @@ const Header: React.FC<HeaderProps> = ({
     }, 100);
   };
 
+  // ✅ تعديل: إزالة DeliveryCompany من قائمة أنواع الطلبات
   const orderTypes = [
-    { id: 1, name: 'Takeaway', displayName: 'Takeaway', icon: '/images/takeaway.png', color: '#28a745', description: 'عميل يأخذ الطلب' },
-    { id: 2, name: 'Dine-in', displayName: 'Dine-in', icon: '/images/dine-in.png', color: '#007bff', description: 'تناول في المطعم' },
-    { id: 3, name: 'Delivery', displayName: 'Delivery', icon: '/images/delivery.png', color: '#dc3545', description: 'توصيل للمنزل' },
-    { id: 4, name: 'Pickup', displayName: 'Pickup', icon: '/images/pickup.png', color: '#ffc107', description: 'استلام من المطعم' }
+    { id: 1, name: 'Takeaway', displayName: t('pos.newSales.orderTypes.takeaway'), icon: '/images/takeaway.png', color: '#28a745', description: t('pos.newSales.orderTypes.takeawayDesc') },
+    { id: 2, name: 'Dine-in', displayName: t('pos.newSales.orderTypes.dineIn'), icon: '/images/dine-in.png', color: '#007bff', description: t('pos.newSales.orderTypes.dineInDesc') },
+    { id: 3, name: 'Delivery', displayName: t('pos.newSales.orderTypes.delivery'), icon: '/images/delivery.png', color: '#dc3545', description: t('pos.newSales.orderTypes.deliveryDesc') },
+    { id: 4, name: 'Pickup', displayName: t('pos.newSales.orderTypes.pickup'), icon: '/images/pickup.png', color: '#ffc107', description: t('pos.newSales.orderTypes.pickupDesc') }
   ];
 
+  // ✅ تعديل: معالج اختيار شركة التوصيل - يقوم بتعيين نوع الطلب إلى DeliveryCompany تلقائياً
   const handleDeliveryCompanySelect = (company: DeliveryCompany) => {
+    // تعيين نوع الطلب إلى DeliveryCompany (invoiceType = 5)
+    onOrderTypeChange('DeliveryCompany');
+    
     if (onDeliveryCompanySelect) {
       onDeliveryCompanySelect(company);
     }
@@ -517,90 +523,102 @@ const Header: React.FC<HeaderProps> = ({
         <div className="header-content">
           <img src="/images/img_foodify_logo_2_78x166.png" alt="Foodify Logo" className="header-logo" />
 
-          {/* ✅ Customer Section - مدمج بين البحث وعرض البيانات */}
-          <div className="customer-section">
-            {showCustomerSearch ? (
-              // ✅ Customer Search Input
-              <div className={styles.customerInputContainer} ref={searchDropdownRef}>
-                <div className={styles.customerInput}>
-                  <input
-                    ref={inputRef}
-                    type="text"
-                    placeholder="Customer Phone Number - رقم هاتف العميل"
-                    value={phoneInput}
-                    onChange={handleInputChange}
-                    onFocus={handleInputFocus}
-                    onBlur={handleInputBlur}
-                    onKeyDown={handleKeyDown}
-                    className={styles.customerField}
-                  />
-                  <button 
-                    className={styles.customerButton}
-                    onClick={handleAddCustomerClick}
-                    disabled={isSearching}
-                  >
-                    <img src="/images/img_group_1000004320.svg" alt="Add customer" />
-                  </button>
-                </div>
-
-                {/* Search Results Dropdown */}
-                {showSearchDropdown && (
-                  <div className={styles.customerDropdown}>
-                    {renderDropdownContent()}
-                  </div>
-                )}
-              </div>
-            ) : (
-              // ✅ عرض بيانات العميل مع زر التعديل
-              selectedCustomer && (
-                <div className="customer-info-section">
-                  <div className="customer-info-card">
-                    <div className="customer-basic-info">
-                      <div className="customer-name">
-                        <span className="customer-icon">👤</span>
-                        <span>{selectedCustomer.name}</span>
-                        {selectedCustomer.isVIP && <span className="vip-badge">VIP</span>}
-                      </div>
-                      <div className="customer-phone">
-                        <span className="phone-icon">📞</span>
-                        <span>{selectedCustomer.phone1}</span>
-                      </div>
-                    </div>
-
-                    {selectedAddress && selectedAddress.addressLine && (
-                      <div className="customer-address">
-                        <span className="address-icon">📍</span>
-                        <span className="address-text">
-                          {selectedAddress.addressLine}
-                          {selectedAddress.zoneName && ` - ${selectedAddress.zoneName}`}
-                        </span>
-                      </div>
-                    )}
-
-                    {/* ✅ زر التعديل */}
+          {/* ✅ Customer Section - مخفي لشركات التوصيل */}
+          {selectedOrderType !== 'DeliveryCompany' && (
+            <div className="customer-section">
+              {showCustomerSearch ? (
+                <div className={styles.customerInputContainer} ref={searchDropdownRef}>
+                  <div className={styles.customerInput}>
+                    <input
+                      ref={inputRef}
+                      type="text"
+                      placeholder={t('pos.newSales.header.customerPhone')}
+                      value={phoneInput}
+                      onChange={handleInputChange}
+                      onFocus={handleInputFocus}
+                      onBlur={handleInputBlur}
+                      onKeyDown={handleKeyDown}
+                      className={styles.customerField}
+                    />
                     <button 
-                      className="edit-customer-btn"
-                      onClick={handleEditCustomer}
-                      title="تغيير العميل"
+                      className={styles.customerButton}
+                      onClick={handleAddCustomerClick}
+                      disabled={isSearching}
+                      title={t('pos.newSales.header.addCustomer')}
                     >
-                      <img src="/images/img_edit.png" alt="Edit" />
-                      <span>تعديل</span>
+                      <img src="/images/img_group_1000004320.svg" alt="Add customer" />
                     </button>
                   </div>
+
+                  {showSearchDropdown && (
+                    <div className={styles.customerDropdown}>
+                      {renderDropdownContent()}
+                    </div>
+                  )}
                 </div>
-              )
-            )}
-          </div>
+              ) : (
+                selectedCustomer && (
+                  <div className="customer-info-section">
+                    <div className="customer-info-card">
+                      <div className="customer-basic-info">
+                        <div className="customer-name">
+                          <span className="customer-icon">👤</span>
+                          <span>{selectedCustomer.name}</span>
+                          {selectedCustomer.isVIP && <span className="vip-badge">{t('pos.newSales.header.vip')}</span>}
+                        </div>
+                        <div className="customer-phone">
+                          <span className="phone-icon">📞</span>
+                          <span>{selectedCustomer.phone1}</span>
+                        </div>
+                      </div>
+
+                      {selectedAddress && selectedAddress.addressLine && (
+                        <div className="customer-address">
+                          <span className="address-icon">📍</span>
+                          <span className="address-text">
+                            {selectedAddress.addressLine}
+                            {selectedAddress.zoneName && ` - ${selectedAddress.zoneName}`}
+                          </span>
+                        </div>
+                      )}
+
+                      <button 
+                        className="edit-customer-btn"
+                        onClick={handleEditCustomer}
+                        title={t('pos.newSales.header.editCustomer')}
+                      >
+                        <img src="/images/img_edit.png" alt="Edit" />
+                        <span>{t('pos.newSales.customer.edit')}</span>
+                      </button>
+                    </div>
+                  </div>
+                )
+              )}
+            </div>
+          )}
 
           <nav className="header-nav">
+            {/* <div className="language-switcher">
+              <button 
+                className="language-btn"
+                onClick={() => i18n.changeLanguage(i18n.language === 'ar' ? 'en' : 'ar')}
+                title={t('pos.newSales.language.switchTo') + ' ' + (i18n.language === 'ar' ? 'English' : 'العربية')}
+              >
+                <span className="language-icon">🌐</span>
+                <span className="language-text">
+                  {i18n.language === 'ar' ? 'EN' : 'عر'}
+                </span>
+              </button>
+            </div> */}
+
             <a
               href="#"
               className="nav-item active today-orders-btn"
               onClick={handleTodayOrdersClick}
-              title="عرض طلبات اليوم"
+              title={t('pos.newSales.header.todayOrders')}
             >
               <img src="/images/img_sending_order.svg" alt="Today Orders" />
-              <span>Today Orders</span>
+              <span>{t('pos.newSales.header.todayOrders')}</span>
             </a>
 
             {(selectedOrderType === 'Delivery' || selectedOrderType === 'Pickup') && (
@@ -611,10 +629,10 @@ const Header: React.FC<HeaderProps> = ({
                   e.preventDefault(); 
                   setShowDeliveryManagement(true);
                 }}
-                title="إدارة التوصيل"
+                title={t('pos.newSales.header.deliveryOrder')}
               >
                 <img src="/images/img_delivery_truck.svg" alt="Delivery Order" />
-                <span>Delivery Order</span>
+                <span>{t('pos.newSales.header.deliveryOrder')}</span>
               </a>
             )}
 
@@ -626,7 +644,7 @@ const Header: React.FC<HeaderProps> = ({
                   e.preventDefault(); 
                   if (onTableClick) onTableClick(); 
                 }}
-                title="اختيار الطاولة"
+                title={t('pos.newSales.header.table')}
               >
                 <img src="/images/img_table_02.svg" alt="Table" />
                 <span>{tableDisplayName}</span>
@@ -635,19 +653,22 @@ const Header: React.FC<HeaderProps> = ({
 
             <a href="#" className="nav-item">
               <img src="/images/img_discount_tag_01.svg" alt="Discount" />
-              <span>Discount</span>
+              <span>{t('pos.newSales.header.discount')}</span>
             </a>
 
             <a href="#" className="nav-item">
               <img src="/images/img_delete_01.svg" alt="Void" />
-              <span>Void</span>
+              <span>{t('pos.newSales.header.void')}</span>
             </a>
 
             <button 
               className="order-type-display clickable" 
               onClick={onResetOrder}
             >
-              {selectedOrderType}
+              {/* ✅ عرض اسم شركة التوصيل بدلاً من DeliveryCompany */}
+              {selectedOrderType === 'DeliveryCompany' && selectedDeliveryCompany 
+                ? selectedDeliveryCompany.name 
+                : selectedOrderType}
             </button>
 
             <div className="menu-dropdown-container" ref={dropdownRef}>
@@ -662,6 +683,7 @@ const Header: React.FC<HeaderProps> = ({
 
               {isDropdownOpen && (
                 <div className="professional-dropdown">
+                  {/* ✅ قسم أنواع الطلبات العادية */}
                   <div className="dropdown-section">
                     <div className="section-header">
                       <h3 className="section-title">نوع الطلب</h3>
@@ -696,10 +718,11 @@ const Header: React.FC<HeaderProps> = ({
                     </div>
                   </div>
 
+                  {/* ✅ قسم شركات التوصيل - ثابت ومنفصل */}
                   {activeDeliveryCompanies.length > 0 && (
                     <div className="dropdown-section">
                       <div className="section-header">
-                        <h3 className="section-title">شركاء التوصيل</h3>
+                        <h3 className="section-title">{t('pos.newSales.deliveryCompanies.title')}</h3>
                         <div className="section-divider"></div>
                       </div>
 
@@ -707,13 +730,15 @@ const Header: React.FC<HeaderProps> = ({
                         {activeDeliveryCompanies.map((company) => (
                           <button
                             key={company.id}
-                            className={`delivery-partner-card ${selectedDeliveryCompany?.id === company.id ? 'selected' : ''}`}
+                            className={`delivery-partner-card ${
+                              selectedOrderType === 'DeliveryCompany' && selectedDeliveryCompany?.id === company.id ? 'selected' : ''
+                            }`}
                             onClick={() => handleDeliveryCompanySelect(company)}
                             style={{
                               '--partner-color': '#0373ed',
                               '--partner-bg': '#f8f9fa'
                             } as React.CSSProperties}
-                            title={`اختيار ${company.name} - ${company.paymentType}`}
+                            title={`${t('pos.newSales.deliveryCompanies.select')} ${company.name} - ${company.paymentType}`}
                           >
                             <div className="partner-icon-container">
                               <img src="/images/default-delivery.png" alt={company.name} className="partner-icon" />
@@ -752,7 +777,6 @@ const Header: React.FC<HeaderProps> = ({
         onClose={() => setShowDeliveryManagement(false)}
       />
 
-      {/* ✅ Customer Details Popup */}
       <CustomerDetailsPopup
         open={showCustomerDetails}
         customer={selectedCustomerForDetails}
@@ -760,7 +784,6 @@ const Header: React.FC<HeaderProps> = ({
         onSelectCustomer={handleCustomerDetailsSelect}
       />
 
-      {/* ✅ Customer Form Popup */}
       {showCustomerForm && (
         <CustomerForm
           key={phoneInput}

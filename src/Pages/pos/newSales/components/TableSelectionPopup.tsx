@@ -1,5 +1,6 @@
 // src/Pages/pos/newSales/components/TableSelectionPopup.tsx
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { TableSection, Table, TableSelection } from '../types/TableSystem';
 import { UnclosedTableInvoice } from '../../../../utils/api/pagesApi/unclosedTablesApi';
 import * as unclosedTablesApi from '../../../../utils/api/pagesApi/unclosedTablesApi';
@@ -23,6 +24,7 @@ const TableSelectionPopup: React.FC<TableSelectionPopupProps> = ({
   tableSections,
   onViewOrder
 }) => {
+  const { t } = useTranslation();
   const [selectedSection, setSelectedSection] = useState<TableSection | null>(null);
   const [unclosedTables, setUnclosedTables] = useState<UnclosedTableInvoice[]>([]);
   const [loading, setLoading] = useState(false);
@@ -139,7 +141,7 @@ const handleTableClick = (table: Table) => {
           {/* زر الإغلاق */}
           <button className={styles.closeBtn} onClick={onClose}>
             <CloseIcon />
-            <span>إغلاق</span>
+            <span>{t("pos.newSales.actions.close")}</span>
           </button>
 
           <main className={styles.mainContent}>
@@ -148,7 +150,7 @@ const handleTableClick = (table: Table) => {
               {loading && (
                 <div className={styles.tableLoadingMessage}>
                   <div className={styles.loadingSpinner}></div>
-                  <span>جاري تحديث حالة الطاولات...</span>
+                  <span>{t("pos.newSales.messages.updatingTableStatus")}</span>
                 </div>
               )}
               
@@ -188,17 +190,17 @@ const handleTableClick = (table: Table) => {
                       
                       <div className={styles.productName}>
                         <span>{table.name}</span>
-                        <small>{table.capacity} أشخاص</small>
+                        <small>{table.capacity} {t("pos.newSales.table.persons")}</small>
                         
                         <div className={`${styles.status} ${occupied ? styles.occupied : styles.available}`}>
-                          {occupied ? 'مشغولة' : 'متاحة'}
+                          {occupied ? t("pos.newSales.table.occupied") : t("pos.newSales.table.available")}
                         </div>
                         
                         {/* معلومات إضافية للطاولات المشغولة */}
                         {occupied && invoice && (
                           <div className={styles.occupiedInfo}>
                             <div className={styles.orderTotal}>
-                              {invoice.totalAfterTaxAndService.toFixed(2)} جنيه
+                              {invoice.totalAfterTaxAndService.toFixed(2)} {t("pos.newSales.products.currency")}
                             </div>
                             
                             <div className={styles.openDuration}>
@@ -241,10 +243,10 @@ const handleTableClick = (table: Table) => {
                       <div>
                         <span>{section.name}</span>
                         <br />
-                        <small>{section.serviceCharge}% خدمة</small>
+                        <small>{section.serviceCharge}% {t("pos.newSales.table.service")}</small>
                         <br />
                         <small className={styles.occupiedStats}>
-                          {occupiedCount}/{section.tables.length} مشغول
+                          {occupiedCount}/{section.tables.length} {t("pos.newSales.table.occupied")}
                         </small>
                       </div>
                     </div>

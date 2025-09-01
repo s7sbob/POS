@@ -2,7 +2,7 @@
 import api from '../../axios';
 
 export interface CustomerAddress {
-  id?: string;
+  id?: string| any;
   addressLine: string;
   floor?: string;
   apartment?: string;

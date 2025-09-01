@@ -30,7 +30,7 @@ export const useOrderManager = ({
     price: PosPrice, 
     selectedOptions: SelectedOption[]
   ) => {
-  const quantity = parseFloat(keypadValue) || 1; // استخدام parseFloat بدلاً من parseInt
+    const quantity = parseFloat(keypadValue) || 1;
     const basePrice = posService.calculateTotalPrice(price.price, selectedOptions, quantity);
     
     // إذا كان Extra أو Without mode مع منتج محدد
@@ -46,29 +46,17 @@ export const useOrderManager = ({
       
       onOrderUpdate(selectedOrderItemId, 'addSubItem', subItem);
     } else {
-      // إضافة منتج جديد (سواء عادي أو Extra/Without منفصل)
-      const subItems: SubItem[] = [];
-      
-      // تحويل الخيارات إلى sub-items
-      selectedOptions.forEach(option => {
-        subItems.push({
-          id: `option_${option.itemId}_${Date.now()}`,
-          type: 'option',
-          name: option.itemName,
-          quantity: option.quantity,
-          price: option.extraPrice * option.quantity,
-          isRequired: true,
-          groupId: option.groupId
-        });
-      });
-      
+      // ✅ الحل الصحيح: الخيارات تروح في selectedOptions مباشرة
       const orderItem: OrderItem = {
         id: `${product.id}_${price.id}_${Date.now()}`,
         product,
         selectedPrice: price,
         quantity,
         totalPrice: basePrice,
-        subItems: subItems.length > 0 ? subItems : undefined,
+        // ✅ الخيارات الأصلية تروح هنا
+        selectedOptions: selectedOptions.length > 0 ? selectedOptions : undefined,
+        // ✅ subItems فارغة (هتتملأ لاحقاً بالإضافات اليدوية)
+        subItems: undefined,
         // إضافة كمنتج Extra/Without منفصل إذا لم يكن هناك منتج محدد
         isExtra: isExtraMode && !selectedOrderItemId,
         isWithout: isWithoutMode && !selectedOrderItemId,

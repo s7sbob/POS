@@ -1,5 +1,6 @@
 // src/Pages/pos/newSales/components/PriceSelectionPopup.tsx
 import React, { useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { PosProduct, PosPrice } from '../types/PosSystem';
 import CloseIcon from '@mui/icons-material/Close';
 import styles from '../styles/PriceSelectionPopup.module.css';
@@ -18,6 +19,7 @@ const PriceSelectionPopup: React.FC<PriceSelectionPopupProps> = ({
   onClose,
   onSelectPrice
 }) => {
+  const { t } = useTranslation();
   const overlayRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -76,7 +78,7 @@ const PriceSelectionPopup: React.FC<PriceSelectionPopupProps> = ({
                 <div className={styles.priceName}>{price.nameArabic}</div>
                 <div className={styles.priceValue}>
                   <span className={styles.price}>{price.price}</span>
-                  <span className={styles.currency}>EGP</span>
+                  <span className={styles.currency}>{t("pos.newSales.products.currency")}</span>
                 </div>
               </button>
             ))}

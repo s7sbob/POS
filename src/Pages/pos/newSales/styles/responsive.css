@@ -2,9 +2,22 @@
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap');
 
-html[dir="rtl"] .pos-system,
-html[dir="rtl"] .pos-system * {
-  direction: ltr !important;
+/* RTL/LTR Support */
+html[dir="rtl"] {
+  font-family: 'Cairo', 'Nunito', sans-serif;
+}
+
+html[dir="ltr"] {
+  font-family: 'Nunito', 'Cairo', sans-serif;
+}
+
+/* RTL specific adjustments */
+html[dir="rtl"] .pos-system {
+  direction: rtl;
+}
+
+html[dir="ltr"] .pos-system {
+  direction: ltr;
 }
 
 /* تحديد نظام الوحدات المرن المحسن */

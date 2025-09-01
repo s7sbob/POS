@@ -2,7 +2,7 @@
 import api from '../../axios';
 
 export interface ProductOptionItem {
-  id?: string;
+  id?: string ;
   name: string;
   productPriceId?: string | null;
   useOriginalPrice: boolean;
@@ -13,7 +13,7 @@ export interface ProductOptionItem {
 
 
 export interface BranchPrice {
-  id?: string;
+  id?: string ;
   productPriceId: string;
   rawBranchId: string;
   price: number;

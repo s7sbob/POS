@@ -1,5 +1,6 @@
 // src/Pages/pos/newSales/components/OrderItemDetailsPopup.tsx
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { OrderItem } from '../types/PosSystem';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
@@ -24,6 +25,7 @@ const OrderItemDetailsPopup: React.FC<OrderItemDetailsPopupProps> = ({
   onClose,
   onUpdateItem
 }) => {
+  const { t } = useTranslation();
   const [quantity, setQuantity] = useState(1);
   const [notes, setNotes] = useState('');
   const [discountPercentage, setDiscountPercentage] = useState(0);
@@ -152,7 +154,7 @@ const OrderItemDetailsPopup: React.FC<OrderItemDetailsPopupProps> = ({
             {orderItem.product.hasMultiplePrices && (
               <span className={styles.productSize}> - {orderItem.selectedPrice.nameArabic}</span>
             )}
-            <span className={styles.unitPrice}>{unitPrice} EGP</span>
+            <span className={styles.unitPrice}>{unitPrice} {t("pos.newSales.products.currency")}</span>
           </div>
 
           {/* الكمية في النص */}
@@ -175,7 +177,7 @@ const OrderItemDetailsPopup: React.FC<OrderItemDetailsPopupProps> = ({
           
           {/* الإجمالي على الشمال */}
           <div className={styles.totalDisplay}>
-            <span className={styles.totalAmount}>{finalTotal.toFixed(2)} EGP</span>
+            <span className={styles.totalAmount}>{finalTotal.toFixed(2)} {t("pos.newSales.products.currency")}</span>
           </div>
         </div>
 
@@ -184,7 +186,7 @@ const OrderItemDetailsPopup: React.FC<OrderItemDetailsPopupProps> = ({
           <textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder="ملاحظات الصنف..."
+            placeholder={t("pos.newSales.orderSummary.notesPlaceholder")}
             className={styles.notesInput}
             rows={3}
           />
@@ -194,7 +196,7 @@ const OrderItemDetailsPopup: React.FC<OrderItemDetailsPopupProps> = ({
         <div className={styles.discountSection}>
           <div className={styles.discountInputs}>
             <div className={styles.discountField}>
-              <label>نسبة الخصم %</label>
+              <label>{t("pos.newSales.orderSummary.discountPercentage")}</label>
               <input
                 ref={percentageInputRef}
                 type="number"
@@ -211,7 +213,7 @@ const OrderItemDetailsPopup: React.FC<OrderItemDetailsPopupProps> = ({
             </div>
             
             <div className={styles.discountField}>
-              <label>قيمة الخصم</label>
+              <label>{t("pos.newSales.orderSummary.discountAmount")}</label>
               <input
                 ref={amountInputRef}
                 type="number"
@@ -232,10 +234,10 @@ const OrderItemDetailsPopup: React.FC<OrderItemDetailsPopupProps> = ({
         {/* أزرار التأكيد والإلغاء */}
         <div className={styles.actionButtons}>
           <button className={styles.confirmBtn} onClick={handleConfirm}>
-            تأكيد
+            {t("pos.newSales.actions.confirm")}
           </button>
           <button className={styles.cancelBtn} onClick={onClose}>
-            إلغاء
+            {t("pos.newSales.actions.cancel")}
           </button>
         </div>
       </div>

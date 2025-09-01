@@ -2,7 +2,7 @@
 import api from '../../axios';
 
 export type DeliveryCompany = {
-  id?: string;
+  id?: string|any;
   name: string;
   paymentType: string;
   companySharePercentage: number;

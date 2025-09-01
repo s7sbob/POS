@@ -1,5 +1,6 @@
 // src/Pages/pos/newSales/components/TodayOrdersPopup.tsx
 import React, { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   DialogTitle,
@@ -44,6 +45,7 @@ import {
 import * as tableSectionsApi from '../../../../utils/api/pagesApi/tableSectionsApi';
 import * as deliveryAgentsApi from '../../../../utils/api/pagesApi/deliveryAgentsApi';
 import * as customersApi from '../../../../utils/api/pagesApi/customersApi';
+import * as deliveryCompaniesApi from '../../../../utils/api/pagesApi/deliveryCompaniesApi';
 import styles from '../styles/TodayOrdersPopup.module.css';
 
 interface TodayOrdersPopupProps {
@@ -59,6 +61,7 @@ const TodayOrdersPopup: React.FC<TodayOrdersPopupProps> = ({
   currentOrderType,
   onViewOrder
 }) => {
+  const { t } = useTranslation();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -76,6 +79,7 @@ const TodayOrdersPopup: React.FC<TodayOrdersPopupProps> = ({
   const [tables, setTables] = useState<{[key: string]: string}>({});
   const [deliveryAgents, setDeliveryAgents] = useState<{[key: string]: string}>({});
   const [customers, setCustomers] = useState<{[key: string]: string}>({});
+  const [deliveryCompanies, setDeliveryCompanies] = useState<{[key: string]: string}>({});
 
   // تحميل البيانات المرجعية
   const loadReferenceData = async () => {
@@ -107,6 +111,14 @@ const TodayOrdersPopup: React.FC<TodayOrdersPopupProps> = ({
         customersMap[customer.id] = customer.name;
       });
       setCustomers(customersMap);
+
+      // تحميل شركات التوصيل
+      const companies = await deliveryCompaniesApi.getAll();
+      const companiesMap: {[key: string]: string} = {};
+      companies.forEach(company => {
+        companiesMap[company.id] = company.name;
+      });
+      setDeliveryCompanies(companiesMap);
 
     } catch (error) {
       console.error('Error loading reference data:', error);
@@ -144,7 +156,8 @@ const TodayOrdersPopup: React.FC<TodayOrdersPopupProps> = ({
         'Takeaway': 1,
         'Dine-in': 2,
         'Delivery': 3,
-        'Pickup': 4
+        'Pickup': 4,
+        'DeliveryCompany': 5
       };
       
       if (currentOrderType && orderTypeMap[currentOrderType]) {
@@ -213,7 +226,7 @@ const TodayOrdersPopup: React.FC<TodayOrdersPopupProps> = ({
       
       onClose();
     } catch (error: any) {
-      const errorMessage = error.message || 'حدث خطأ في تحميل بيانات الطلب';
+      const errorMessage = error.message || t("pos.newSales.todayOrdersPopup.errorLoadingOrder");
       setError(errorMessage);
       console.error('Error loading invoice details:', error);
       
@@ -228,13 +241,18 @@ const TodayOrdersPopup: React.FC<TodayOrdersPopupProps> = ({
     switch (invoice.invoiceType) {
       case 2: // Dine-in
         return {
-          label: 'الطاولة',
-          value: invoice.tableId ? (tables[invoice.tableId] || `طاولة ${invoice.tableId}`) : '--'
+          label: t("pos.newSales.todayOrdersPopup.table"),
+          value: invoice.tableId ? (tables[invoice.tableId] || `${t("pos.newSales.todayOrdersPopup.table")} ${invoice.tableId}`) : '--'
         };
       case 3: // Delivery
         return {
-          label: 'الطيار',
+          label: t("pos.newSales.todayOrdersPopup.deliveryAgent"),
           value: invoice.deliveryAgentId ? (deliveryAgents[invoice.deliveryAgentId] || invoice.deliveryAgentId) : '--'
+        };
+      case 5: // Delivery Company
+        return {
+          label: t("pos.newSales.todayOrdersPopup.deliveryCompany"),
+          value: invoice.deliveryCompanyId ? (deliveryCompanies[invoice.deliveryCompanyId] || invoice.deliveryCompanyId) : '--'
         };
       default:
         return null;
@@ -260,7 +278,7 @@ const TodayOrdersPopup: React.FC<TodayOrdersPopupProps> = ({
       <DialogTitle className={styles.dialogTitle}>
         <Box display="flex" justifyContent="space-between" alignItems="center">
           <Typography variant="h6" component="div">
-            طلبات اليوم ({totalCount} طلب)
+            {t("pos.newSales.todayOrdersPopup.title", { count: totalCount })}
           </Typography>
           <IconButton onClick={onClose} size="small">
             <CloseIcon />
@@ -288,11 +306,11 @@ const TodayOrdersPopup: React.FC<TodayOrdersPopupProps> = ({
               onChange={(e) => setTypeFilter(e.target.value as number | '')}
               label="نوع الطلب"
             >
-              <MenuItem value="">الكل</MenuItem>
-              <MenuItem value={1}>Takeaway</MenuItem>
-              <MenuItem value={2}>Dine-in</MenuItem>
-              <MenuItem value={3}>Delivery</MenuItem>
-              <MenuItem value={4}>Pickup</MenuItem>
+              <MenuItem value="">{t("pos.newSales.todayOrdersPopup.all")}</MenuItem>
+              <MenuItem value={1}>{t("pos.newSales.orderTypes.takeaway")}</MenuItem>
+              <MenuItem value={2}>{t("pos.newSales.orderTypes.dineIn")}</MenuItem>
+              <MenuItem value={3}>{t("pos.newSales.orderTypes.delivery")}</MenuItem>
+              <MenuItem value={4}>{t("pos.newSales.orderTypes.pickup")}</MenuItem>
             </Select>
           </FormControl>
 
@@ -303,7 +321,7 @@ const TodayOrdersPopup: React.FC<TodayOrdersPopupProps> = ({
               onChange={(e) => setStatusFilter(e.target.value as number | '')}
               label="الحالة"
             >
-              <MenuItem value="">الكل</MenuItem>
+              <MenuItem value="">{t("pos.newSales.todayOrdersPopup.all")}</MenuItem>
               <MenuItem value={1}>مكتملة</MenuItem>
               <MenuItem value={2}>معلقة</MenuItem>
               <MenuItem value={3}>ملغية</MenuItem>
@@ -336,14 +354,14 @@ const TodayOrdersPopup: React.FC<TodayOrdersPopupProps> = ({
           <Table stickyHeader>
             <TableHead>
               <TableRow>
-                <TableCell>كود الفاتورة</TableCell>
-                <TableCell>النوع</TableCell>
-                <TableCell>الحالة</TableCell>
-                <TableCell>تاريخ الإنشاء</TableCell>
-                <TableCell>آخر تحديث</TableCell>
-                <TableCell>المبلغ الإجمالي</TableCell>
-                <TableCell>العميل</TableCell>
-                <TableCell>معلومات إضافية</TableCell>
+                <TableCell>{t("pos.newSales.todayOrdersPopup.invoiceCode")}</TableCell>
+                <TableCell>{t("pos.newSales.todayOrdersPopup.type")}</TableCell>
+                <TableCell>{t("pos.newSales.todayOrdersPopup.status")}</TableCell>
+                <TableCell>{t("pos.newSales.todayOrdersPopup.creationDate")}</TableCell>
+                <TableCell>{t("pos.newSales.todayOrdersPopup.lastUpdate")}</TableCell>
+                <TableCell>{t("pos.newSales.todayOrdersPopup.totalAmount")}</TableCell>
+                <TableCell>{t("pos.newSales.todayOrdersPopup.customer")}</TableCell>
+                <TableCell>{t("pos.newSales.todayOrdersPopup.additionalInfo")}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -352,7 +370,8 @@ const TodayOrdersPopup: React.FC<TodayOrdersPopupProps> = ({
                   <TableCell colSpan={9} align="center" className={styles.loadingCell}>
                     <CircularProgress size={40} />
                     <Typography variant="body2" sx={{ mt: 1 }}>
-                      جاري تحميل البيانات...
+                        {t("pos.newSales.messages.loadingData")}
+
                     </Typography>
                   </TableCell>
                 </TableRow>
@@ -360,7 +379,8 @@ const TodayOrdersPopup: React.FC<TodayOrdersPopupProps> = ({
                 <TableRow>
                   <TableCell colSpan={9} align="center" className={styles.emptyCell}>
                     <Typography variant="body1" color="text.secondary">
-                      لا توجد طلبات للعرض
+                        {t("pos.newSales.messages.noOrdersToShow")}
+
                     </Typography>
                   </TableCell>
                 </TableRow>
@@ -388,7 +408,9 @@ const TodayOrdersPopup: React.FC<TodayOrdersPopupProps> = ({
                           size="small"
                           color={invoice.invoiceType === 1 ? 'success' : 
                                  invoice.invoiceType === 2 ? 'primary' : 
-                                 invoice.invoiceType === 3 ? 'warning' : 'info'}
+                                 invoice.invoiceType === 3 ? 'warning' : 
+                                 invoice.invoiceType === 4 ? 'info' :
+                                 invoice.invoiceType === 5 ? 'secondary' : 'default'}
                         />
                       </TableCell>
                       

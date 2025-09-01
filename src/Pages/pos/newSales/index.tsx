@@ -1,6 +1,7 @@
 // src/Pages/pos/newSales/index.tsx
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { PosProduct, CategoryItem, OrderSummary as OrderSummaryType, OrderItem, PosPrice, SelectedOption } from './types/PosSystem';
+import { useTranslation } from 'react-i18next';
 import * as posService from '../../../services/posService';
 import PriceSelectionPopup from './components/PriceSelectionPopup';
 import ProductOptionsPopup from './components/ProductOptionsPopup';
@@ -25,6 +26,14 @@ import { Customer, CustomerAddress } from 'src/utils/api/pagesApi/customersApi';
 import InvoiceDataConverter from '../../../utils/invoiceDataConverter';
 
 const PosSystem: React.FC = () => {
+  const { t, i18n } = useTranslation();
+  
+  // RTL/LTR Support
+  useEffect(() => {
+    const isRTL = i18n.language === 'ar';
+    document.documentElement.dir = isRTL ? 'rtl' : 'ltr';
+    document.documentElement.lang = i18n.language;
+  }, [i18n.language]);
   const [keypadValue, setKeypadValue] = useState('0');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -283,7 +292,7 @@ const [currentBackInvoiceCode, setCurrentBackInvoiceCode] = useState<string | nu
     
     setIsExtraMode(true);
     setIsWithoutMode(false);
-    setSelectedChips(prev => prev.includes('extra') ? prev : [...prev.filter(chip => chip !== 'without'), 'extra']);
+    setSelectedChips(prev => prev.includes(t('pos.newSales.actions.extraChip')) ? prev : [...prev.filter(chip => chip !== t('pos.newSales.actions.withoutChip')), t('pos.newSales.actions.extraChip')]);
     
     const additionCategories = getCategories(true).filter(cat => !cat.parentId);
     if (additionCategories.length > 0) {
@@ -306,7 +315,7 @@ const [currentBackInvoiceCode, setCurrentBackInvoiceCode] = useState<string | nu
     
     setIsWithoutMode(true);
     setIsExtraMode(false);
-    setSelectedChips(prev => prev.includes('without') ? prev : [...prev.filter(chip => chip !== 'extra'), 'without']);
+    setSelectedChips(prev => prev.includes(t("pos.newSales.actions.withoutChip")) ? prev : [...prev.filter(chip => chip !== t("pos.newSales.actions.extraChip")), t("pos.newSales.actions.withoutChip")]);
     
     const additionCategories = getCategories(true).filter(cat => !cat.parentId);
     if (additionCategories.length > 0) {
@@ -372,7 +381,7 @@ const [currentBackInvoiceCode, setCurrentBackInvoiceCode] = useState<string | nu
   // معالج ضغط المنتج
   const handleProductClick = useCallback((product: PosProduct) => {
     if (!canAddProduct(selectedOrderType)) {
-      showWarning('يجب اختيار الطاولة أولاً');
+      showWarning(t("pos.newSales.messages.selectTable"));
       return;
     }
 
@@ -518,11 +527,20 @@ const handleViewOrderFromPopup = useCallback(async (invoiceData: any) => {
       1: 'Takeaway',
       2: 'Dine-in', 
       3: 'Delivery',
-      4: 'Pickup'
+      4: 'Pickup',
+      5: 'DeliveryCompany'
     };
     
     const newOrderType = orderTypeMap[invoiceData.invoiceType] || 'Takeaway';
     setSelectedOrderType(newOrderType);
+    
+    // إذا كان نوع الطلب شركة توصيل، تحديد الشركة المحددة
+    if (invoiceData.invoiceType === 5 && invoiceData.deliveryCompanyId) {
+      const company = deliveryCompanies.find(c => c.id === invoiceData.deliveryCompanyId);
+      if (company) {
+        setSelectedDeliveryCompany(company);
+      }
+    }
     
     // تفعيل وضع التعديل
     setIsEditMode(true);

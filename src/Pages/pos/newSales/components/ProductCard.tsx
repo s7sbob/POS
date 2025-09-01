@@ -1,5 +1,6 @@
 // src/Pages/pos/newSales/components/ProductCard.tsx
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { PosProduct } from '../types/PosSystem';
 import styles from '../styles/ProductCard.module.css';
 
@@ -9,6 +10,7 @@ interface ProductCardProps {
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({ product, onClick }) => {
+  const { t } = useTranslation();
   const handleClick = () => {
     onClick(product);
   };
@@ -31,7 +33,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onClick }) => {
         {/* عرض السعر على الصورة إذا كان المنتج له سعر واحد */}
         {singlePrice !== null && (
           <div className={styles.priceOverlay}>
-            {singlePrice.toFixed(2)} EGP
+            {singlePrice.toFixed(2)} {t("pos.newSales.products.currency")}
           </div>
         )}
       </div>

@@ -1,5 +1,6 @@
 // src/Pages/pos/newSales/components/ActionButtons.tsx
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface ActionButtonsProps {
   selectedChips: string[];
@@ -26,6 +27,7 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
   hasSelectedOrderItem
 
 }) => {
+  const { t } = useTranslation();
   return (
     <div className="action-buttons-bar">
       <div className="action-chips">
@@ -33,26 +35,26 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
           className={`action-chip extra ${selectedChips.includes('extra') || isExtraMode ? 'active' : ''} ${!hasSelectedOrderItem ? 'disabled' : ''}`}
           onClick={hasSelectedOrderItem ? onExtraClick : undefined}
           disabled={!hasSelectedOrderItem}
-          title={!hasSelectedOrderItem ? 'يجب اختيار منتج من الفاتورة أولاً' : ''}
+          title={!hasSelectedOrderItem ? t('pos.newSales.messages.selectProductFirst') : ''}
         >
           <img src="/images/img_addcircle.svg" alt="" />
-          <span>Extra</span>
+          <span>{t("pos.newSales.actions.extra")}</span>
         </button>
         <button 
           className={`action-chip without ${selectedChips.includes('without') || isWithoutMode ? 'active' : ''} ${!hasSelectedOrderItem ? 'disabled' : ''}`}
           onClick={hasSelectedOrderItem ? onWithoutClick : undefined}
           disabled={!hasSelectedOrderItem}
-          title={!hasSelectedOrderItem ? 'يجب اختيار منتج من الفاتورة أولاً' : ''}
+          title={!hasSelectedOrderItem ? t('pos.newSales.messages.selectProductFirst') : ''}
         >
           <img src="/images/img_removecircle.svg" alt="" />
-          <span>Without</span>
+          <span>{t("pos.newSales.actions.without")}</span>
         </button>
         <button 
           className={`action-chip offer ${selectedChips.includes('offer') ? 'active' : ''}`}
           onClick={() => onChipClick('offer')}
         >
           <img src="/images/img_tags.svg" alt="" />
-          <span>Offer</span>
+          <span>{t("pos.newSales.actions.offer")}</span>
         </button>
       </div>
       
@@ -60,7 +62,7 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
         <img src="/images/img_search01.svg" alt="search" className="search-icon" />
         <input
           type="text"
-          placeholder="Search"
+          placeholder={t("pos.newSales.actions.search")}
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
           className="search-input"

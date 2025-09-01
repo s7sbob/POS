@@ -235,11 +235,13 @@ export const calculateTotalPrice = (
   selectedOptions: SelectedOption[], 
   quantity: number = 1
 ): number => {
+  // حساب سعر الخيارات (الخيارات ليها كمية خاصة بيها)
   const optionsPrice = selectedOptions.reduce((total, option) => {
     return total + (option.extraPrice * option.quantity);
   }, 0);
   
-  return (basePrice + optionsPrice) * quantity;
+  // ✅ التصحيح: سعر المنتج * الكمية + سعر الخيارات
+  return (basePrice * quantity) + optionsPrice;
 };
 
 // دالة مساعدة للتحقق من صحة اختيار المجموعة

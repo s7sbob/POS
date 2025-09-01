@@ -1,25 +1,205 @@
 {
-    "Modern": "عصري",
-    "Ecommerce": "التجارة الإلكترونية",
-    "eCommerce": "التجارة الإلكترونية",
-    "Contacts": "جهات الاتصال",
-    "Blog": "مقالات",
-    "Posts": "المشاركات",
-    "Detail": "التفاصيل",
-    "Shop": "متجر",
-    "List": "قائمة",
-    "Checkout": "الدفع",
-    "Chats": "الدردشات",
-    "Users": "المستخدمون",
-    "Profile": "الملف الشخصي",
-    "Followers": "متابعون",
-    "Friends": "أصدقاء",
-    "Gallery": "صالة عرض",
-    "Notes": "ملاحظات",
-    "Calendar": "التقويم",
-    "Email": "بريد إلكتروني",
-    "Tickets": "تذاكر",
- "header": {
+  "Modern": "عصري",
+  "Ecommerce": "التجارة الإلكترونية",
+  "eCommerce": "التجارة الإلكترونية",
+  "Contacts": "جهات الاتصال",
+  "Blog": "مقالات",
+  "Posts": "المشاركات",
+  "Detail": "التفاصيل",
+  "Shop": "متجر",
+  "List": "قائمة",
+  "Checkout": "الدفع",
+  "Chats": "الدردشات",
+  "Users": "المستخدمون",
+  "Profile": "الملف الشخصي",
+  "Followers": "متابعون",
+  "Friends": "أصدقاء",
+  "Gallery": "صالة عرض",
+  "Notes": "ملاحظات",
+  "Calendar": "التقويم",
+  "Email": "بريد إلكتروني",
+  "Tickets": "تذاكر",
+  "pos": {
+    "todayOrders": "طلبات اليوم",
+    "table": "طاولة",
+    "discount": "خصم",
+    "void": "إلغاء",
+    "takeaway": "تيك أواي",
+    "search": "بحث",
+    "extra": "إضافي",
+    "without": "بدون",
+    "offer": "عرض",
+    "orderDetails": "تفاصيل الطلب",
+    "walkInCustomer": "عميل مباشر",
+    "subTotal": "المجموع الفرعي",
+    "tax": "ضريبة",
+    "service": "خدمة",
+    "total": "الإجمالي",
+    "send": "إرسال",
+    "print": "طباعة",
+    "pay": "دفع",
+    "newSales": {
+      "customer": {
+        "details": "تفاصيل العميل",
+        "basicInfo": "المعلومات الأساسية",
+        "name": "الاسم",
+        "phone1": "الهاتف الأول",
+        "phone2": "الهاتف الثاني",
+        "phone3": "الهاتف الثالث",
+        "phone4": "الهاتف الرابع",
+        "vip": "VIP",
+        "blocked": "محظور",
+        "selectAddress": "اختر العنوان ({{count}})",
+        "noAddresses": "لا توجد عناوين",
+        "floor": "الطابق",
+        "apartment": "الشقة",
+        "landmark": "علامة مميزة",
+        "notes": "ملاحظات",
+        "zone": "المنطقة",
+        "deliveryCharge": "رسوم التوصيل",
+        "edit": "تعديل",
+        "saveAndSelect": "حفظ واختيار",
+        "addCustomer": "إضافة عميل"
+      },
+      "actions": {
+        "cancel": "إلغاء",
+        "confirm": "تأكيد",
+        "close": "إغلاق",
+        "save": "حفظ",
+        "edit": "تعديل",
+        "delete": "حذف",
+        "add": "إضافة",
+        "search": "بحث",
+        "extra": "إضافة",
+        "without": "بدون",
+        "offer": "عرض",
+        "extraChip": "إضافة",
+        "withoutChip": "بدون",
+        "next": "التالي",
+        "backToPreviousGroup": "العودة للمجموعة السابقة",
+        "confirmSelection": "تأكيد الاختيار"
+      },
+      "products": {
+        "currency": "جنيه",
+        "quantity": "الكمية",
+        "total": "الإجمالي",
+        "price": "السعر",
+        "unit": "الوحدة",
+        "size": "الحجم",
+        "discount": "الخصم",
+        "tax": "الضريبة",
+        "service": "الخدمة",
+        "groupCount": "المجموعة {{current}} من {{total}}",
+        "required": "مطلوب"
+      },
+      "productOptions": {
+        "selectionCount": "محدد {{selected}} من {{max}}",
+        "minSelection": "الحد الأدنى: {{min}}",
+        "maxReached": "تم الوصول للحد الأقصى"
+      },
+      "orderSummary": {
+        "subtotal": "المجموع الفرعي",
+        "delivery": "التوصيل",
+        "discount": "الخصم",
+        "tax": "الضريبة",
+        "service": "الخدمة",
+        "total": "الإجمالي",
+        "options": "الخيارات",
+        "additions": "الإضافات",
+        "unit": "الوحدة",
+        "notesPlaceholder": "أضف ملاحظات...",
+        "discountPercentage": "نسبة الخصم %",
+        "discountAmount": "قيمة الخصم"
+      },
+      "payment": {
+        "pay": "دفع",
+        "send": "إرسال",
+        "print": "طباعة",
+        "confirmPaymentTitle": "تأكيد الدفع",
+        "editOrderTitle": "تعديل الطلب",
+        "paymentError": "خطأ في عملية الدفع",
+        "createSuccess": "تم إنشاء الطلب رقم {{invoiceNumber}} بنجاح",
+        "updateSuccess": "تم تحديث الطلب بنجاح",
+        "sendSuccess": "تم إرسال الطلب رقم {{invoiceNumber}} بنجاح",
+        "printSuccess": "تم طباعة الطلب رقم {{invoiceNumber}} بنجاح",
+        "paySuccess": "تم دفع الطلب رقم {{invoiceNumber}} بنجاح",
+        "updateSendSuccess": "تم تحديث وإرسال الطلب بنجاح",
+        "updatePrintSuccess": "تم تحديث وطباعة الطلب بنجاح",
+        "updatePaySuccess": "تم تحديث ودفع الطلب بنجاح",
+        "loadingPaymentMethods": "جاري تحميل طرق الدفع...",
+        "maxNonCashWarning": "لا يمكن استخدام أكثر من وسيلتي دفع غير نقدية"
+      },
+      "orderTypes": {
+        "takeaway": "تيك أواي",
+        "takeawayDesc": "طلب للخروج",
+        "dineIn": "في المطعم",
+        "dineInDesc": "تناول في المكان",
+        "delivery": "توصيل",
+        "deliveryDesc": "توصيل للمنزل",
+        "pickup": "استلام",
+        "pickupDesc": "استلام من المطعم",
+        "deliveryCompany": "شركة توصيل",
+        "deliveryCompanyDesc": "توصيل عبر شركة خارجية"
+      },
+      "deliveryCompanies": {
+        "title": "شركات التوصيل",
+        "select": "اختر"
+      },
+      "header": {
+        "customerPhone": "رقم هاتف العميل",
+        "addCustomer": "إضافة عميل",
+        "editCustomer": "تعديل العميل",
+        "todayOrders": "طلبات اليوم",
+        "deliveryOrder": "إدارة التوصيل",
+        "table": "طاولة",
+        "discount": "خصم",
+        "void": "إلغاء",
+        "vip": "VIP"
+      },
+      "table": {
+        "persons": "أشخاص",
+        "occupied": "مشغول",
+        "available": "متاح",
+        "service": "خدمة"
+      },
+      "language": {
+        "switchTo": "التبديل إلى"
+      },
+      "messages": {
+        "selectTable": "يرجى اختيار طاولة أولاً",
+        "selectProductFirst": "اختر منتج من الطلب أولاً",
+        "loadingData": "جاري تحميل البيانات...",
+        "noOrdersToShow": "لا توجد طلبات لعرضها",
+        "updatingTableStatus": "جاري تحديث حالة الطاولات...",
+        "loading": "جاري التحميل..."
+      },
+      "todayOrdersPopup": {
+        "title": "طلبات اليوم ({{count}})",
+        "all": "الكل",
+        "invoiceCode": "رقم الطلب",
+        "type": "النوع",
+        "status": "الحالة",
+        "creationDate": "تاريخ الإنشاء",
+        "lastUpdate": "آخر تحديث",
+        "totalAmount": "المبلغ الإجمالي",
+        "customer": "العميل",
+        "additionalInfo": "معلومات إضافية",
+        "table": "الطاولة",
+        "deliveryAgent": "الطيار",
+        "deliveryCompany": "شركة التوصيل",
+        "errorLoadingOrder": "خطأ في تحميل الطلب"
+      }
+    }
+  
+  },
+        "cancel": "إلغاء",
+        "next": "التالي",
+        "confirmSelection": "تأكيد الاختيار",
+        "backToPreviousGroup": "الرجوع للمجموعة السابقة",
+      
+  
+
+  "header": {
     "print": {
       "tooltip": "خيارات الطباعة",
       "normal": "طباعة عادية",
@@ -61,7 +241,7 @@
       "saved": "تم حفظ الإعدادات بنجاح",
       "saveError": "خطأ في حفظ الإعدادات",
       "testCompleted": "تم إجراء اختبار الطباعة",
-        "basicSettings": "الإعدادات الأساسية",
+      "basicSettings": "الإعدادات الأساسية",
       "advancedSettings": "الإعدادات المتقدمة",
       "systemInfo": "معلومات النظام",
       "testing": "جاري الاختبار...",
@@ -84,18 +264,17 @@
       "networkDesc": "طباعة عبر الشبكة المحلية"
     }
   },
-
   "sidebar": {
     "stock": "المخزون",
-     "tableSections": "أقسام الطاولات",
+    "tableSections": "أقسام الطاولات",
     "posProducts": "منتجات نقاط البيع",
-       "hallCaptains": "كباتن الصالة",
-            "systemAdmin": "إدارة النظام",
-       "deliveryZones": "مناطق التوصيل",
-      "offers": "العروض",
-      "deliveryCompanies": "شركات التوصيل",
+    "hallCaptains": "كباتن الصالة",
+    "systemAdmin": "إدارة النظام",
+    "deliveryZones": "مناطق التوصيل",
+    "offers": "العروض",
+    "deliveryCompanies": "شركات التوصيل",
     "deliveryAgents": "مناديب التوصيل",
-     "additionProducts": "منتجات الإضافات",
+    "additionProducts": "منتجات الإضافات",
     "userManagement": "إدارة المستخدمين",
     "companySettings": "إعدادات الشركة",
     "permissions": "الصلاحيات",
@@ -177,10 +356,10 @@
     "paymentMethods": "طرق الدفع",
     "safesAndAccounts": "الخزائن والحسابات"
   },
- "products": {
+  "products": {
     "title": "المنتجات",
-     "pricing": "التسعير",
-    "defaultPrices": "الأسعار الافتراضية", 
+    "pricing": "التسعير",
+    "defaultPrices": "الأسعار الافتراضية",
     "branchPrices": "أسعار الفرع",
     "branchPrice": "سعر الفرع",
     "difference": "الفرق",
@@ -201,14 +380,14 @@
       "prices": "الأسعار",
       "options": "خيارات المنتج"
     },
-     "types": {
+    "types": {
       "pos": "نقطة بيع",
       "material": "مادة خام",
       "addition": "إضافة",
       "unknown": "غير محدد"
     },
-      "form": {
-         "isActive": "نشط",
+    "form": {
+      "isActive": "نشط",
       "posPriceName": "اسم السعر",
       "posNamePlaceholder": "أدخل اسم السعر...",
       "required": "مطلوب",
@@ -247,10 +426,10 @@
       "optionItemName": "اسم العنصر",
       "extraPrice": "سعر إضافي",
       "commentOnly": "تعليق فقط",
-            "posScreen": "شاشة نقطة البيع",
+      "posScreen": "شاشة نقطة البيع",
       "noPosScreen": "بدون شاشة"
     },
-  "status": {
+    "status": {
       "active": "نشط",
       "title": "الحالة",
       "inactive": "غير نشط"
@@ -259,36 +438,36 @@
       "optionGroupNameRequired": "اسم مجموعة الخيارات مطلوب",
       "optionItemNameRequired": "اسم عنصر الخيار مطلوب"
     },
-       "hasBarcode": "يحتوي على باركود",
+    "hasBarcode": "يحتوي على باركود",
     "optionGroup": "مجموعة خيارات",
     "subtitle": "إدارة المنتجات والأسعار في النظام",
     "searchPlaceholder": "البحث بالاسم أو الباركود...",
     "searchByBarcode": "البحث بالباركود",
-       "components": "المكونات",
-           "loadingComponentDetails": "جاري تحميل تفاصيل المكون",
-           "selectedComponent": "المكون المحدد",
-               "copySuccess": "تم نسخ إعدادات المنتج بنجاح",
+    "components": "المكونات",
+    "loadingComponentDetails": "جاري تحميل تفاصيل المكون",
+    "selectedComponent": "المكون المحدد",
+    "copySuccess": "تم نسخ إعدادات المنتج بنجاح",
     "pasteSuccess": "تم لصق الإعدادات مع {{count}} أسعار",
     "nameRequiredForCopy": "يجب إدخال اسم المنتج أولاً للنسخ",
     "componentsCopySuccess": "تم نسخ المكونات بنجاح",
     "componentsPasteSuccess": "تم لصق المكونات بنجاح",
     "noComponentsToCopy": "لا توجد مكونات للنسخ",
-        "addComponentTitle": "إضافة مكون جديد",
-        "editComponentTitle": "تعديل المكون",
-        "componentName": "اسم المكون",
-        "componentCode": "كود المكون",
-        "componentGroup": "مجموعة المكون",
-        "componentType": "نوع المكون",
-        "componentDescription": "وصف المكون",
-        "componentReorderLevel": "حد الطلب للمكون",
-        "componentCost": "تكلفة المكون",
-        "componentLastPurePrice": "آخر سعر شراء للمكون",
-        "componentExpirationDays": "أيام انتهاء صلاحية المكون",
+    "addComponentTitle": "إضافة مكون جديد",
+    "editComponentTitle": "تعديل المكون",
+    "componentName": "اسم المكون",
+    "componentCode": "كود المكون",
+    "componentGroup": "مجموعة المكون",
+    "componentType": "نوع المكون",
+    "componentDescription": "وصف المكون",
+    "componentReorderLevel": "حد الطلب للمكون",
+    "componentCost": "تكلفة المكون",
+    "componentLastPurePrice": "آخر سعر شراء للمكون",
+    "componentExpirationDays": "أيام انتهاء صلاحية المكون",
     "addComponent": "إضافة مكون",
-        "scrollForMore": "مرر لأسفل لتحميل المزيد",
+    "scrollForMore": "مرر لأسفل لتحميل المزيد",
     "noComponents": "لا توجد مكونات",
     "quantity": "الكمية",
-        "searchProductPrices": "ابحث في أسعار المنتجات...",
+    "searchProductPrices": "ابحث في أسعار المنتجات...",
     "noProductPricesFound": "لا توجد أسعار منتجات",
     "selectedPrice": "السعر المحدد",
     "selectComponent": "اختر المكون",
@@ -335,11 +514,11 @@
     "selectUnit": "اختر الوحدة",
     "barcodeOptional": "الباركود (اختياري)",
     "addPrice": "إضافة سعر",
-      "searchPricesTitle": "البحث في أسعار المنتجات",
+    "searchPricesTitle": "البحث في أسعار المنتجات",
     "searchPricesPlaceholder": "البحث بالاسم أو الباركود...",
     "startTypingPrices": "ابدأ بكتابة اسم المنتج أو الباركود للبحث",
     "salePrice": "سعر البيع",
-     "product": "منتج",
+    "product": "منتج",
     "quickSearchPlaceholder": "بحث سريع...",
     "productAdded": "تم إضافة المنتج",
     "noProductFoundWithBarcode": "لم يتم العثور على منتج بهذا الباركود",
@@ -350,10 +529,9 @@
     "allResultsLoaded": "تم تحميل جميع النتائج",
     "navigateWithArrows": "التنقل بالأسهم",
     "selectWithEnter": "للاختيار",
-     "selectProduct": "اختيار منتج",
-
+    "selectProduct": "اختيار منتج",
     "enterSearchTerm": "أدخل كلمة البحث",
-     "filter": {
+    "filter": {
       "title": "البحث والفلترة",
       "search": "البحث",
       "filters": "الفلاتر",
@@ -368,16 +546,14 @@
       "results": "النتائج",
       "activeFilters": "فلاتر نشطة"
     },
-      "common": {
-    "copy": "نسخ",
-    "paste": "لصق",
-    "clearCopy": "مسح المنسوخ",
-    "currency": "ج.م"
-  }
+    "common": {
+      "copy": "نسخ",
+      "paste": "لصق",
+      "clearCopy": "مسح المنسوخ",
+      "currency": "ج.م"
+    }
   },
-
-
-    "reports": {
+  "reports": {
     "productBalance": {
       "title": "تقرير أرصدة المنتجات",
       "description": "عرض تفصيلي لأرصدة المنتجات في جميع المخازن"
@@ -446,7 +622,6 @@
       "loadFailed": "فشل في تحميل البيانات"
     }
   },
-
   "barcode": {
     "scan": "مسح الباركود",
     "scanTitle": "مسح الباركود",
@@ -459,12 +634,11 @@
     "enterValidNumber": "يرجى إدخال رقم صحيح في حقل",
     "minValue": "القيمة لا يمكن أن تكون أقل من 0",
     "maxPercent": "القيمة لا يمكن أن تزيد عن 100%",
-        "supplierRequired": "يجب اختيار المورد",
+    "supplierRequired": "يجب اختيار المورد",
     "warehouseRequired": "يجب اختيار المخزن",
     "itemsRequired": "يجب إضافة منتج واحد على الأقل"
   },
-
-   "export": {
+  "export": {
     "title": "تصدير البيانات",
     "pdf": "تصدير PDF",
     "excel": "تصدير Excel",
@@ -474,10 +648,10 @@
     "author": "نظام إدارة المخزون",
     "errorPdf": "حدث خطأ أثناء تصدير PDF",
     "errorExcel": "حدث خطأ أثناء تصدير Excel",
-        "exportExcel": "تصدير Excel",
+    "exportExcel": "تصدير Excel",
     "exportPdf": "تصدير PDF"
   },
-   "suppliers": {
+  "suppliers": {
     "title": "الموردين",
     "subtitle": "إدارة الموردين والشركات الموردة",
     "name": "اسم المورد",
@@ -500,7 +674,7 @@
     "phoneRequired": "رقم الهاتف مطلوب",
     "phoneInvalid": "رقم الهاتف غير صحيح",
     "addressRequired": "العنوان مطلوب",
-      "filter": {
+    "filter": {
       "title": "البحث والفلترة",
       "search": "البحث",
       "filters": "الفلاتر",
@@ -515,8 +689,8 @@
       "results": "النتائج",
       "activeFilters": "فلاتر نشطة"
     }
-    },
-"purchaseOrders": {
+  },
+  "purchaseOrders": {
     "title": "أوامر الشراء",
     "list": "قائمة أوامر الشراء",
     "add": "إضافة أمر شراء",
@@ -553,10 +727,10 @@
     "submitted": "مُرسل",
     "active": "نشط",
     "inactive": "غير نشط",
-      "filter": {
+    "filter": {
       "title": "البحث والفلترة",
       "search": "البحث",
-      "filters": "الفلاتر", 
+      "filters": "الفلاتر",
       "dateRange": "نطاق التاريخ",
       "sorting": "الترتيب",
       "searchPlaceholder": "ابحث في أوامر الشراء...",
@@ -571,10 +745,10 @@
       "results": "النتائج",
       "activeFilters": "فلاتر نشطة"
     },
-      "status": {
+    "status": {
       "title": "حالة أمر الشراء",
       "pending": "معلق",
-      "draft": "مسودة", 
+      "draft": "مسودة",
       "submitted": "مؤكد",
       "unknown": "غير معروف"
     },
@@ -586,16 +760,15 @@
       "total": "الإجمالي",
       "status": "الحالة"
     }
-    
   },
-    "purchases": {
+  "purchases": {
     "title": "فواتير الشراء",
     "description": "إدارة فواتير الشراء والمدفوعات",
     "addButton": "إضافة فاتورة شراء",
     "searchPlaceholder": "البحث في فواتير الشراء...",
     "listTitle": "فواتير الشراء",
     "noData": "لا توجد فواتير شراء",
-     "view": {
+    "view": {
       "title": "عرض فاتورة الشراء"
     },
     "filter": {
@@ -640,7 +813,6 @@
       "pending": "معلقة",
       "submitted": "مقدمة"
     },
-    
     "table": {
       "invoiceNumber": "رقم الفاتورة",
       "code": "الكود",
@@ -736,7 +908,7 @@
     "all": "الكل",
     "home": "الرئيسية",
     "add": "إضافة",
-        "copy": "نسخ",
+    "copy": "نسخ",
     "paste": "لصق",
     "clear": "مسح",
     "expoerDate": "تاريخ التصدير",
@@ -755,11 +927,11 @@
     "notSpecified": "غير محدد",
     "required": "مطلوب",
     "refresh": "تحديث",
-        "yes": "نعم",
+    "yes": "نعم",
     "no": "لا",
     "exportedOn": "تم التصدير في",
     "actions": "الإجراءات",
-       "density": "الكثافة",
+    "density": "الكثافة",
     "compact": "مضغوط",
     "standard": "قياسي",
     "comfortable": "مريح",
@@ -810,10 +982,8 @@
     "checkboxSelection": "تحديد الصناديق",
     "noResults": "لا توجد نتائج",
     "saveAndNew": "حفظ مع جديد",
-       "supported": "مدعوم",
+    "supported": "مدعوم",
     "notSupported": "غير مدعوم"
-
-    
   },
   "warehouses": {
     "title": "المخازن",
@@ -836,7 +1006,7 @@
     "totalProducts": "إجمالي المنتجات",
     "qty": "الكمية",
     "created": "تاريخ الإنشاء",
-     "filter": {
+    "filter": {
       "title": "البحث والفلترة",
       "search": "البحث",
       "filters": "الفلاتر",
@@ -851,13 +1021,13 @@
       "results": "النتائج",
       "activeFilters": "فلاتر نشطة"
     },
-      "active": "نشط"
+    "active": "نشط"
   },
   "status": {
     "active": "نشط",
     "inactive": "غير نشط"
   },
-   "units": {
+  "units": {
     "title": "الوحدات",
     "subtitle": "إدارة وحدات القياس في النظام",
     "name": "اسم الوحدة",
@@ -871,7 +1041,7 @@
     "active": "نشط",
     "inactive": "غير نشط",
     "nameRequired": "اسم الوحدة مطلوب",
-     "filter": {
+    "filter": {
       "title": "البحث والفلترة",
       "search": "البحث",
       "filters": "الفلاتر",
@@ -907,7 +1077,7 @@
     "fontColor": "لون الخط",
     "preview": "معاينة",
     "sampleText": "نص تجريبي",
-     "filter": {
+    "filter": {
       "title": "البحث والفلترة",
       "search": "البحث",
       "filters": "الفلاتر",
@@ -927,18 +1097,14 @@
     "noGroups": "لا توجد مجموعات",
     "rootGroups": "المجموعات الرئيسية"
   },
-
-
-
-
-   "adjustment": {
+  "adjustment": {
     "title": "تسوية الجرد",
     "types": {
       "openingBalance": "أرصدة أول المدة",
       "manualAdjustment": "تسوية جرد",
       "notSelected": "لم يتم اختيار نوع التسوية"
     },
-      "search": {
+    "search": {
       "title": "البحث في الأصناف",
       "placeholder": "ابحث بالاسم أو الباركود...",
       "scanBarcode": "مسح الباركود",
@@ -947,7 +1113,7 @@
       "noResults": "لا توجد نتائج للبحث",
       "filteredFrom": "مفلتر من {total}"
     },
-     "barcode": {
+    "barcode": {
       "title": "مسح الباركود",
       "instruction": "امسح الباركود أو أدخله يدوياً",
       "label": "الباركود",
@@ -962,7 +1128,7 @@
       "reason": "السبب",
       "items": "الأصناف",
       "product": "المنتج",
-            "barcode": "الباركود",
+      "barcode": "الباركود",
       "unit": "الوحدة",
       "unitFactor": "معامل التحويل",
       "oldQuantity": "الكمية القديمة",
@@ -985,8 +1151,7 @@
       "newAdjustmentStarted": "تم بدء عملية جرد جديدة بنجاح",
       "saveSuccess": "تم حفظ التسوية بنجاح",
       "submitSuccess": "تم تأكيد التسوية بنجاح",
-            "selectWarehouseToStart": "برجاء اختيار المخزن لبدء تسوية جرد جديدة"
-
+      "selectWarehouseToStart": "برجاء اختيار المخزن لبدء تسوية جرد جديدة"
     },
     "errors": {
       "loadWarehousesFailed": "فشل في تحميل المخازن",
@@ -995,7 +1160,7 @@
       "submitFailed": "فشل في تأكيد التسوية"
     }
   },
-    "adjustments": {
+  "adjustments": {
     "list": {
       "title": "قائمة تسويات الجرد",
       "newAdjustment": "تسوية جرد جديدة",
@@ -1032,8 +1197,7 @@
       "totalItems": "عدد الأصناف",
       "totalDifference": "إجمالي الفرق",
       "status": "الحالة",
-            "warehouse": "المخزن"
-
+      "warehouse": "المخزن"
     },
     "types": {
       "new": "جديدة",
@@ -1058,39 +1222,11 @@
       "totalPositive": "إجمالي الزيادة",
       "totalNegative": "إجمالي النقص"
     },
-     "common": {
-    "all": "الكل",
-    "of": "من"
-  }
+    "common": {
+      "all": "الكل",
+      "of": "من"
+    }
   },
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   "safes": {
     "title": "الخزائن",
     "add": "إضافة خزنة",
@@ -1107,7 +1243,7 @@
     "searchPlaceholder": "ابحث في الخزائن...",
     "types": {
       "cash": "نقدي",
-        "safe": "خزنة"
+      "safe": "خزنة"
     },
     "filter": {
       "title": "البحث والفلترة",
@@ -1184,7 +1320,7 @@
       "updateFailed": "فشل في تحديث الحساب"
     }
   },
-    "posPaymentMethods": {
+  "posPaymentMethods": {
     "title": "طرق الدفع",
     "add": "إضافة طريقة دفع",
     "edit": "تعديل طريقة دفع",
@@ -1197,7 +1333,7 @@
     "inactive": "غير نشط",
     "noPaymentMethods": "لا توجد طرق دفع",
     "searchPlaceholder": "ابحث في طرق الدفع...",
-       "accountType": "نوع الحساب",
+    "accountType": "نوع الحساب",
     "accountNumber": "رقم الحساب",
     "collectionFee": "رسوم التحصيل",
     "filter": {
@@ -1225,12 +1361,7 @@
       "updateFailed": "فشل في تحديث طريقة الدفع"
     }
   },
-
-
-
-
-
- "errors": {
+  "errors": {
     "title": "خطأ",
     "validationError": "خطأ في البيانات",
     "forbidden": "ممنوع",
@@ -1238,7 +1369,7 @@
     "conflict": "تعارض في البيانات",
     "serverError": "خطأ في الخادم",
     "multipleErrors": "أخطاء متعددة",
-        "unauthorized": {
+    "unauthorized": {
       "title": "غير مصرح لك",
       "message": "ليس لديك صلاحية للوصول إلى هذه الصفحة",
       "backToDashboard": "العودة للرئيسية"
@@ -1257,20 +1388,7 @@
   "info": {
     "title": "معلومات"
   },
-
-
-
-
-
-
-
-
-
-
-
-
-
-    "posScreens": {
+  "posScreens": {
     "title": "شاشات نقاط البيع",
     "add": "إضافة شاشة",
     "addChild": "إضافة شاشة فرعية",
@@ -1313,9 +1431,7 @@
       "activeFilters": "فلاتر نشطة"
     }
   },
-
-
-    "import": {
+  "import": {
     "import": "استيراد",
     "downloadTemplate": "تحميل القالب",
     "importTitle": "استيراد البيانات",
@@ -1323,7 +1439,7 @@
     "importing": "جاري الاستيراد",
     "errorsFound": "تم العثور على أخطاء",
     "importComplete": "تم الاستيراد بنجاح",
-        "rowError": "الصف {{row}}:",
+    "rowError": "الصف {{row}}:",
     "addError": "خطأ في الإضافة",
     "successfulRecords": "السجلات الناجحة",
     "failedRecords": "السجلات الفاشلة",
@@ -1337,7 +1453,6 @@
     "validationError": "خطأ في التحقق",
     "importError": "خطأ في الاستيراد"
   },
-
   "auth": {
     "login": {
       "title": "تسجيل الدخول",
@@ -1367,7 +1482,7 @@
       "noBranchesMessage": "لا يوجد فروع مخصصة لهذا المستخدم. يرجى التواصل مع الإدارة."
     },
     "logout": "تسجيل الخروج",
-     "errors": {
+    "errors": {
       "noBranches": "لا يوجد فروع متاحة لهذا المستخدم"
     }
   },
@@ -1378,12 +1493,12 @@
     "password": "كلمة المرور",
     "title": "إدارة المستخدمين",
     "noUsers": "لا توجد مستخدمين",
-        "validation": {
+    "validation": {
       "userNameTooShort": "اسم المستخدم يجب أن يكون أكثر من حرفين",
       "userNameTooLong": "اسم المستخدم طويل جداً",
       "invalidPhone": "رقم هاتف غير صحيح",
       "invalidEmail": "بريد إلكتروني غير صحيح",
-            "requiredFields": "يرجى إدخال جميع البيانات المطلوبة",
+      "requiredFields": "يرجى إدخال جميع البيانات المطلوبة",
       "passwordRequired": "يرجى إدخال كلمة المرور للمستخدم الجديد",
       "passwordTooShort": "كلمة المرور يجب أن تكون 6 أحرف على الأقل"
     },
@@ -1463,7 +1578,7 @@
       "branchUpdateFailed": "خطأ في تحديث بيانات الفرع"
     }
   },
-   "permissions": {
+  "permissions": {
     "title": "إدارة الصلاحيات",
     "description": "إدارة صلاحيات المستخدمين للوصول إلى صفحات ووظائف النظام",
     "loading": "جاري تحميل البيانات...",
@@ -1480,7 +1595,6 @@
       "updateFailed": "خطأ في تحديث الصلاحية"
     }
   },
-
   "branch": {
     "selectBranch": "اختر الفرع"
   },
@@ -1494,8 +1608,7 @@
       "taskList": "قائمة المهام"
     }
   },
-
-   "posProducts": {
+  "posProducts": {
     "title": "منتجات نقاط البيع",
     "searchPlaceholder": "البحث في منتجات نقاط البيع...",
     "searchByBarcode": "البحث بالباركود",
@@ -1512,7 +1625,7 @@
       "updateFailed": "فشل في تحديث المنتج"
     }
   },
-    "materials": {
+  "materials": {
     "title": "المواد الخام",
     "searchPlaceholder": "البحث في المواد الخام...",
     "searchByBarcode": "البحث بالباركود",
@@ -1529,7 +1642,7 @@
       "updateFailed": "فشل في تحديث المادة"
     }
   },
-    "additionProducts": {
+  "additionProducts": {
     "title": "منتجات الإضافات",
     "searchPlaceholder": "البحث في منتجات الإضافات...",
     "searchByBarcode": "البحث بالباركود",
@@ -1546,8 +1659,7 @@
       "updateFailed": "فشل في تحديث المنتج"
     }
   },
-
-    "deliveryZones": {
+  "deliveryZones": {
     "title": "مناطق التوصيل",
     "add": "إضافة منطقة",
     "edit": "تعديل منطقة",
@@ -1606,7 +1718,7 @@
       "deleteFailed": "فشل في حذف المندوب"
     }
   },
-   "tableSections": {
+  "tableSections": {
     "title": "أقسام الطاولات",
     "add": "إضافة قسم",
     "edit": "تعديل قسم",
@@ -1642,7 +1754,6 @@
       "updateFailed": "فشل في تحديث القسم"
     }
   },
-
   "hallCaptains": {
     "title": "كباتن الصالة",
     "add": "إضافة كابتن",
@@ -1726,7 +1837,7 @@
       "deleteFailed": "فشل في حذف العميل"
     }
   },
- "offers": {
+  "offers": {
     "title": "العروض",
     "add": "إضافة عرض",
     "edit": "تعديل عرض",
@@ -1743,16 +1854,16 @@
     "endDateRequired": "تاريخ النهاية مطلوب",
     "form": {
       "name": "اسم العرض",
-       "basicInfo": "المعلومات الأساسية",
+      "basicInfo": "المعلومات الأساسية",
       "offerGroups": "عدد المجموعات",
       "offerItems": "عناصر العرض",
-         "fixedItems": "العناصر الثابتة",
+      "fixedItems": "العناصر الثابتة",
       "noFixedItems": "لا توجد عناصر ثابتة",
       "selectFixedItems": "اختيار عناصر ثابتة",
       "original": "أصلي",
       "addGroup": "إضافة مجموعة",
       "addItem": "إضافة عنصر",
-        "generalItems": "العناصر العامة",
+      "generalItems": "العناصر العامة",
       "groupItems": "عناصر المجموعة",
       "noItemsInGroup": "لا توجد عناصر في هذه المجموعة",
       "selectProduct": "اختر منتج",
@@ -1764,7 +1875,7 @@
       "selectedItems": "العناصر المختارة ({{count}})",
       "addSelectedItems": "إضافة العناصر المختارة",
       "noProductsFound": "لا توجد منتجات",
-            "searchProductsAndPrices": "البحث في المنتجات والأسعار...",
+      "searchProductsAndPrices": "البحث في المنتجات والأسعار...",
       "allGroups": "كل المجموعات",
       "productsFound": "تم العثور على {{count}} منتج",
       "selected": "مختار ({{count}})",
@@ -1804,7 +1915,7 @@
       "items": "العناصر",
       "period": "الفترة"
     },
-      "groupTitleRequired": "عنوان المجموعة مطلوب",
+    "groupTitleRequired": "عنوان المجموعة مطلوب",
     "productRequired": "المنتج مطلوب",
     "errors": {
       "loadFailed": "فشل في تحميل العروض",
@@ -1812,7 +1923,7 @@
       "updateFailed": "فشل في تحديث العرض"
     }
   },
-"deliveryCompanies": {
+  "deliveryCompanies": {
     "title": "شركات التوصيل",
     "add": "إضافة شركة",
     "edit": "تعديل شركة",
@@ -1850,6 +1961,7 @@
       "isActive": "نشطة",
       "cash": "نقدي",
       "visa": "فيزا",
+      "inChoice": "InChoice",
       "percentages": "النسب المئوية"
     },
     "errors": {
@@ -1858,28 +1970,7 @@
       "updateFailed": "فشل في تحديث الشركة"
     }
   },
-   "pos": {
-    "todayOrders": "طلبات اليوم",
-    "table": "طاولة", 
-    "discount": "خصم",
-    "void": "إلغاء",
-    "takeaway": "تيك أواي",
-    "search": "بحث",
-    "extra": "إضافي",
-    "without": "بدون", 
-    "offer": "عرض",
-    "orderDetails": "تفاصيل الطلب",
-    "walkInCustomer": "عميل مباشر",
-    "subTotal": "المجموع الفرعي",
-    "tax": "ضريبة",
-    "service": "خدمة", 
-    "total": "الإجمالي",
-    "send": "إرسال",
-    "print": "طباعة",
-    "pay": "دفع"
-  },
-
-    "landing": {
+  "landing": {
     "nav": {
       "home": "الرئيسية",
       "features": "المميزات",
@@ -1889,7 +1980,7 @@
     },
     "header": {
       "signIn": "تسجيل الدخول",
-         "mobile": {
+      "mobile": {
         "signIn": "دخول",
         "language": "اللغة",
         "theme": "السمة",
@@ -1911,7 +2002,7 @@
       },
       "growth": "نمو",
       "support": "دعم فني",
-        "mobile": {
+      "mobile": {
         "hideStats": "إخفاء الإحصائيات",
         "showStats": "عرض الإحصائيات"
       }
@@ -1919,13 +2010,13 @@
     "features": {
       "title": "كل ما تحتاجه لإدارة متجرك",
       "subtitle": "نظام شامل ومتكامل يوفر لك جميع الأدوات اللازمة لإدارة عملك بكفاءة عالية",
-        "mobile": {
+      "mobile": {
         "clickForDetails": "انقر للتفاصيل"
       },
       "pos": {
         "title": "نظام نقاط البيع",
         "description": "واجهة سهلة وسريعة لمعالجة المبيعات مع دعم عدة طرق دفع",
-         "highlights": {
+        "highlights": {
           "fast": "معالجة سريعة",
           "payment": "طرق دفع متعددة",
           "easy": "واجهة سهلة"
@@ -1934,7 +2025,7 @@
       "inventory": {
         "title": "إدارة المخزون",
         "description": "تتبع المخزون في الوقت الفعلي مع تنبيهات انخفاض المخزون",
-          "highlights": {
+        "highlights": {
           "realtime": "تتبع فوري",
           "alerts": "تنبيهات ذكية",
           "reports": "تقارير مفصلة"
@@ -1943,7 +2034,7 @@
       "customers": {
         "title": "إدارة العملاء",
         "description": "قاعدة بيانات شاملة للعملاء مع برامج الولاء والخصومات",
-          "highlights": {
+        "highlights": {
           "database": "قاعدة بيانات شاملة",
           "loyalty": "برامج ولاء",
           "discounts": "خصومات ذكية"
@@ -1952,7 +2043,7 @@
       "analytics": {
         "title": "التحليلات والتقارير",
         "description": "تقارير مفصلة وتحليلات متقدمة لمساعدتك في اتخاذ القرارات الصحيحة",
-            "highlights": {
+        "highlights": {
           "advanced": "تحليلات متقدمة",
           "insights": "رؤى عميقة",
           "decisions": "قرارات ذكية"
@@ -1961,7 +2052,7 @@
       "cloud": {
         "title": "التخزين السحابي",
         "description": "بياناتك محفوظة بأمان في السحابة مع إمكانية الوصول من أي مكان",
-          "highlights": {
+        "highlights": {
           "secure": "حفظ آمن",
           "anywhere": "وصول من أي مكان",
           "backup": "نسخ احتياطية"
@@ -1970,7 +2061,7 @@
       "security": {
         "title": "الأمان المتقدم",
         "description": "حماية عالية المستوى لبياناتك مع التشفير المتقدم",
-             "highlights": {
+        "highlights": {
           "encryption": "تشفير متقدم",
           "protection": "حماية عالية",
           "guaranteed": "أمان مضمون"
@@ -2095,7 +2186,7 @@
       "subtitle": "هل لديك أسئلة؟ نحن هنا لمساعدتك. تواصل معنا عبر أي من الطرق التالية",
       "getInTouch": "تواصل معنا",
       "description": "فريقنا جاهز لمساعدتك والإجابة على جميع استفساراتك. لا تتردد في التواصل معنا",
-        "mobile": {
+      "mobile": {
         "sendDetailedMessage": "أرسل لنا رسالة مفصلة",
         "workingHoursAndResponse": "مواعيد العمل والاستجابة",
         "workingHours": "ساعات العمل",
@@ -2190,7 +2281,6 @@
       "madeIn": "في مصر"
     }
   }
-
-
-
 }
+
+

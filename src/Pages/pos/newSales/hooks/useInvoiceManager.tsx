@@ -42,6 +42,7 @@ export const useInvoiceManager = () => {
       case 'Dine-in': return 2;
       case 'Delivery': return 3;
       case 'Pickup': return 4;
+      case 'DeliveryCompany': return 5;
       default: return 1;
     }
   };
@@ -76,61 +77,88 @@ export const useInvoiceManager = () => {
   };
 
   // دالة تحويل عنصر الطلب إلى عنصر فاتورة
-  const convertOrderItemToInvoiceItem = (
-    item: OrderItem, 
-    existingItem?: invoicesApi.InvoiceItem
-  ): invoicesApi.CreateInvoiceItem => {
-    // معالجة الـ subItems كـ Childrens
-    const childrens: invoicesApi.CreateInvoiceItem[] = [];
-    if (item.subItems && item.subItems.length > 0) {
-      item.subItems.forEach(subItem => {
-        childrens.push({
-          ProductId: subItem.productId || item.product.id, // Fallback to parent product ID
-          ProductPriceId: item.selectedPrice.id, // Fallback to parent price ID
-          Barcode: item.selectedPrice.barcode || '1234567890123',
-          UnitId: null,
-          PosPriceName: subItem.name,
-          UnitFactor: 1,
-          Qty: subItem.quantity,
-          UnitPrice: subItem.price,
-          UnitCost: 0, // Or fetch cost if available
-          ItemDiscountPercentage: 0,
-          ItemTaxPercentage: 0, // Or from settings
-          ServicePercentage: 0, // Or from settings
-          WareHouseId: getWareHouseId(),
-          Components: [],
-        });
+const convertOrderItemToInvoiceItem = (
+  item: OrderItem, 
+  existingItem?: invoicesApi.InvoiceItem
+): invoicesApi.CreateInvoiceItem => {
+  const childrens: invoicesApi.CreateInvoiceItem[] = [];
+  
+  // ✅ معالجة الـ subItems كـ Childrens
+  if (item.subItems && item.subItems.length > 0) {
+    item.subItems.forEach(subItem => {
+      childrens.push({
+        ProductId: subItem.productId || item.product.id,
+        ProductPriceId: item.selectedPrice.id,
+        Barcode: item.selectedPrice.barcode || '1234567890123',
+        UnitId: null,
+        PosPriceName: subItem.name,
+        UnitFactor: 1,
+        Qty: subItem.quantity,
+        UnitPrice: subItem.type === 'without' ? 0 : subItem.price / subItem.quantity,
+        UnitCost: 0,
+        ItemDiscountPercentage: 0,
+        ItemTaxPercentage: 0,
+        ServicePercentage: 0,
+        WareHouseId: getWareHouseId(),
+        Components: [],
+        // ✅ تصحيح salesInvoiceItemType
+        SalesInvoiceItemType: subItem.type === 'without' ? 
+          invoicesApi.SalesInvoiceItemType.Without :    // 3 = بدون
+          invoicesApi.SalesInvoiceItemType.Addition     // 2 = إضافة (Extra)
       });
-    }
+    });
+  }
 
-    const invoiceItem: invoicesApi.CreateInvoiceItem = {
-      ProductId: item.product.id,
-      ProductPriceId: item.selectedPrice.id,
-      Barcode: item.selectedPrice.barcode || '1234567890123',
-      UnitId: null,
-      PosPriceName: item.selectedPrice.nameArabic,
-      UnitFactor: 1,
-      Qty: item.quantity,
-      UnitPrice: item.selectedPrice.price,
-      UnitCost: 45, // This should be fetched from product data
-      ItemDiscountPercentage: item.discountPercentage || 0,
-      ItemTaxPercentage: 0, // This should be from settings
-      ServicePercentage: 0, // This should be from settings
-      WareHouseId: getWareHouseId(),
-      Components: [], // Components are now handled by childrens
-      Childrens: childrens.length > 0 ? childrens : undefined,
-    };
+  // ✅ معالجة الـ selectedOptions كـ Childrens
+  if (item.selectedOptions && item.selectedOptions.length > 0) {
+    item.selectedOptions.forEach(option => {
+      childrens.push({
+        ProductId: item.product.id,
+        ProductPriceId: item.selectedPrice.id,
+        Barcode: item.selectedPrice.barcode || '1234567890123',
+        UnitId: null,
+        PosPriceName: option.itemName,
+        UnitFactor: 1,
+        Qty: option.quantity,
+        UnitPrice: option.extraPrice / option.quantity,
+        UnitCost: 0,
+        ItemDiscountPercentage: 0,
+        ItemTaxPercentage: 0,
+        ServicePercentage: 0,
+        WareHouseId: getWareHouseId(),
+        Components: [],
+        // ✅ تصحيح salesInvoiceItemType للخيارات
+        SalesInvoiceItemType: invoicesApi.SalesInvoiceItemType.Optional // 4 = خيارات أصلية
+      });
+    });
+  }
 
-    // إضافة الـ id إذا كان العنصر موجود مسبقاً
-    if (existingItem) {
-      (invoiceItem as any).id = existingItem.id;
-      console.log(`🔄 تحديث item موجود: ${item.product.id} -> ID: ${existingItem.id}`);
-    } else {
-      console.log(`✨ إضافة item جديد: ${item.product.id}`);
-    }
-
-    return invoiceItem;
+  const invoiceItem: invoicesApi.CreateInvoiceItem = {
+    ProductId: item.product.id,
+    ProductPriceId: item.selectedPrice.id,
+    Barcode: item.selectedPrice.barcode || '1234567890123',
+    UnitId: null,
+    PosPriceName: item.selectedPrice.nameArabic,
+    UnitFactor: 1,
+    Qty: item.quantity,
+    UnitPrice: item.selectedPrice.price,
+    UnitCost: 45,
+    ItemDiscountPercentage: item.discountPercentage || 0,
+    ItemTaxPercentage: 0,
+    ServicePercentage: 0,
+    WareHouseId: getWareHouseId(),
+    Components: [],
+    Childrens: childrens.length > 0 ? childrens : undefined,
+    // ✅ المنتج الرئيسي
+    SalesInvoiceItemType: invoicesApi.SalesInvoiceItemType.Product // 1 = منتج رئيسي
   };
+
+  if (existingItem) {
+    (invoiceItem as any).id = existingItem.id;
+  }
+
+  return invoiceItem;
+};
 
   // دالة تحويل طرق الدفع
   const convertPaymentsToInvoicePayments = (

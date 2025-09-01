@@ -1,5 +1,6 @@
 // src/Pages/pos/newSales/components/ProductOptionsPopup.tsx
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { PosProduct, PosPrice, ProductOptionGroup, ProductOptionItem, SelectedOption } from '../types/PosSystem';
 import CloseIcon from '@mui/icons-material/Close';
 import AddIcon from '@mui/icons-material/Add';
@@ -26,6 +27,7 @@ const ProductOptionsPopup: React.FC<ProductOptionsPopupProps> = ({
   onClose,
   onComplete
 }) => {
+  const { t } = useTranslation();
   const [selectedOptions, setSelectedOptions] = useState<SelectedOption[]>([]);
   const [groupSelections, setGroupSelections] = useState<{[groupId: string]: {[itemId: string]: number}}>({});
   const [currentGroupIndex, setCurrentGroupIndex] = useState(0);
@@ -182,7 +184,7 @@ const ProductOptionsPopup: React.FC<ProductOptionsPopupProps> = ({
   <div className={styles.popupTitleSection}>
     <h3 className={styles.popupTitle}>{product.nameArabic}</h3>
     <div className={styles.popupSubtitle}>
-      {selectedPrice.nameArabic} - الكمية: {quantity}
+      {selectedPrice.nameArabic} - {t("pos.newSales.products.quantity")}: {quantity}
     </div>
   </div>
   <div style={{ display: 'flex', gap: '8px' }}>
@@ -190,7 +192,7 @@ const ProductOptionsPopup: React.FC<ProductOptionsPopupProps> = ({
       <button 
         className={styles.popupClose} 
         onClick={handlePrevious}
-        title="الرجوع للمجموعة السابقة"
+        title={t("pos.newSales.actions.backToPreviousGroup")}
       >
         <ArrowBackIcon />
       </button>
@@ -205,7 +207,7 @@ const ProductOptionsPopup: React.FC<ProductOptionsPopupProps> = ({
           {/* مؤشر التقدم */}
           <div className={styles.progressIndicator}>
             <div className={styles.progressText}>
-              مجموعة {currentGroupIndex + 1} من {optionGroups.length}
+              {t("pos.newSales.products.groupCount", { current: currentGroupIndex + 1, total: optionGroups.length })}
             </div>
             <div className={styles.progressBar}>
               <div 
@@ -221,16 +223,16 @@ const ProductOptionsPopup: React.FC<ProductOptionsPopupProps> = ({
                 <div className={styles.groupTitle}>
                   <span className={styles.groupName}>{currentGroup.name}</span>
                   {currentGroup.isRequired && (
-                    <span className={styles.requiredBadge}>مطلوب</span>
+                    <span className={styles.requiredBadge}>{t("pos.newSales.products.required")}</span>
                   )}
                 </div>
                 <div className={styles.groupInfo}>
                   <span className={styles.selectionCount}>
-                    {totalSelected} من {currentGroup.maxSelection}
+                    {t("pos.newSales.productOptions.selectionCount", { selected: totalSelected, max: currentGroup.maxSelection })}
                   </span>
                   {currentGroup.minSelection > 0 && (
                     <span className={styles.minSelection}>
-                      (الحد الأدنى: {currentGroup.minSelection})
+                      {t("pos.newSales.productOptions.minSelection", { min: currentGroup.minSelection })}
                     </span>
                   )}
                 </div>
@@ -256,7 +258,7 @@ const ProductOptionsPopup: React.FC<ProductOptionsPopupProps> = ({
                             <div className={styles.optionName}>{item.name}</div>
                             {item.extraPrice > 0 && (
                               <div className={styles.optionPrice}>
-                                +{item.extraPrice} EGP
+                                +{item.extraPrice} {t("pos.newSales.products.currency")}
                               </div>
                             )}
                           </div>
@@ -286,7 +288,7 @@ const ProductOptionsPopup: React.FC<ProductOptionsPopupProps> = ({
                                   </div>
                                 ) : (
                                   <div className={styles.maxReached}>
-                                    <span>الحد الأقصى</span>
+                                    <span>{t("pos.newSales.productOptions.maxReached")}</span>
                                   </div>
                                 )}
                               </div>
@@ -314,15 +316,15 @@ const ProductOptionsPopup: React.FC<ProductOptionsPopupProps> = ({
           
           <div className={styles.totalSection}>
             <div className={styles.totalRow}>
-              <span className={styles.totalLabel}>الإجمالي:</span>
-              <span className={styles.totalValue}>{calculateTotalPrice().toFixed(2)} EGP</span>
+              <span className={styles.totalLabel}>{t("pos.newSales.products.total")}:</span>
+              <span className={styles.totalValue}>{calculateTotalPrice().toFixed(2)} {t("pos.newSales.products.currency")}</span>
             </div>
           </div>
         </div>
         
         <div className={styles.popupFooter}>
           <button className={styles.btnCancel} onClick={onClose}>
-            إلغاء
+            {t("pos.newSales.actions.cancel")}
           </button>
           
           {currentGroupIndex < optionGroups.length - 1 ? (
@@ -331,7 +333,7 @@ const ProductOptionsPopup: React.FC<ProductOptionsPopupProps> = ({
               onClick={handleNext}
               disabled={currentGroup.isRequired && !isCurrentGroupValid()}
             >
-              التالي
+              {t("pos.newSales.actions.next")}
               <ArrowForwardIcon />
             </button>
           ) : (
@@ -340,7 +342,7 @@ const ProductOptionsPopup: React.FC<ProductOptionsPopupProps> = ({
               onClick={handleComplete}
               disabled={!isAllGroupsValid()}
             >
-              تأكيد الاختيار
+              {t("pos.newSales.actions.confirmSelection")}
             </button>
           )}
         </div>

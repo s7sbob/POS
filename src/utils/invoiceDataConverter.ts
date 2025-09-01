@@ -1,7 +1,7 @@
 // src/utils/invoiceDataConverter.ts
 import * as customersApi from '../utils/api/pagesApi/customersApi';
 import * as productsApi from '../utils/api/pagesApi/productsApi';
-import { Invoice, InvoiceItem } from '../utils/api/pagesApi/invoicesApi';
+import { Invoice, InvoiceItem, SalesInvoiceItemType } from '../utils/api/pagesApi/invoicesApi';
 import { OrderItem, OrderSummary as OrderSummaryType, PosProduct, PosPrice, SubItem, SelectedOption } from '../Pages/pos/newSales/types/PosSystem';
 import { Customer } from '../utils/api/pagesApi/customersApi';
 
@@ -77,7 +77,14 @@ class InvoiceDataConverter {
   private static async convertInvoiceItems(invoiceItems: InvoiceItem[]): Promise<OrderItem[]> {
     const orderItems: OrderItem[] = [];
 
-    for (const item of invoiceItems) {
+    // تصفية المنتجات الرئيسية فقط (salesInvoiceItemType = 1 أو 0)
+    const mainItems = invoiceItems.filter(item => 
+      item.salesInvoiceItemType === SalesInvoiceItemType.Product || 
+      item.salesInvoiceItemType === 0 || // fallback للقيم القديمة
+      !item.parentLineId // fallback للمنطق القديم
+    );
+
+    for (const item of mainItems) {
       try {
         const orderItem = await this.convertSingleInvoiceItem(item);
         if (orderItem) {
@@ -91,252 +98,198 @@ class InvoiceDataConverter {
     return orderItems;
   }
 
+  // ✅ تحويل عنصر واحد من الفاتورة باستخدام salesInvoiceItemType
+  private static async convertSingleInvoiceItem(item: InvoiceItem): Promise<OrderItem | null> {
+    try {
+      // جلب بيانات المنتج
+      let product = await this.getProductData(item.productId);
+      if (!product) {
+        product = this.createDummyProduct(item);
+      }
 
-// تحديد ما إذا كان الـ component خيار أم إضافة - مبسط أكتر
-private static isComponentAnOption(component: any, product: PosProduct): boolean {
-  // إذا كان النوع محدد صراحة كـ option
-  if (component.type === 'option') {
-    return true;
-  }
-  
-  // إذا كان النوع محدد صراحة كـ extra أو without
-  if (component.type === 'extra' || component.type === 'without') {
-    return false;
-  }
+      // جلب بيانات السعر
+      const selectedPrice = this.getPriceData(item, product);
 
-  // إذا كان له groupId وموجود في option groups الخاصة بالمنتج
-  if (component.groupId && product.productOptionGroups) {
-    const optionGroup = product.productOptionGroups.find(group => group.id === component.groupId);
-    if (optionGroup) {
-      return true; // موجود في option group يعني option
+      console.log('🔄 تحويل العنصر:', product.nameArabic);
+      console.log('📊 عدد childrens:', item.childrens?.length || 0);
+
+      // ✅ فصل childrens حسب salesInvoiceItemType
+      const { subItems, selectedOptions } = this.separateChildrensByType(item.childrens || [], product);
+
+      // معالجة components إذا كانت موجودة (للتوافق مع النظام القديم)
+      const componentOptions = this.extractOptionsFromComponents(item.components || [], product);
+      const componentSubItems = this.extractSubItemsFromComponents(item.components || [], product);
+
+      // دمج النتائج
+      const allSelectedOptions = [...selectedOptions, ...componentOptions];
+      const allSubItems = [...subItems, ...componentSubItems];
+
+      // ✅ حساب السعر الإجمالي الصحيح
+      const basePrice = selectedPrice.price * item.qty;
+      const optionsPrice = allSelectedOptions.reduce((sum, option) => sum + (option.extraPrice * option.quantity), 0);
+      const subItemsPrice = allSubItems.reduce((sum, subItem) => {
+        return sum + (subItem.type === 'without' ? 0 : subItem.price);
+      }, 0);
+      
+      const calculatedTotalPrice = basePrice + optionsPrice + subItemsPrice;
+
+      // تحويل إلى OrderItem
+      const orderItem: OrderItem = {
+        id: item.id,
+        product: product,
+        selectedPrice: selectedPrice,
+        quantity: item.qty,
+        totalPrice: calculatedTotalPrice,
+        notes: this.extractNotesFromItem(item),
+        discountPercentage: item.itemDiscountPercentage,
+        discountAmount: item.itemDiscountValue,
+        subItems: allSubItems.length > 0 ? allSubItems : undefined,
+        selectedOptions: allSelectedOptions.length > 0 ? allSelectedOptions : undefined
+      };
+
+      console.log('📊 نتيجة التحويل:', {
+        productName: product.nameArabic,
+        selectedOptionsCount: allSelectedOptions.length,
+        subItemsCount: allSubItems.length,
+        basePrice,
+        optionsPrice,
+        subItemsPrice,
+        totalPrice: calculatedTotalPrice
+      });
+
+      return orderItem;
+    } catch (error) {
+      console.error('❌ خطأ في تحويل العنصر:', item.id, error);
+      return null;
     }
   }
 
-  // ✅ افتراضياً: إذا كان له groupId يُعتبر option، وإلا subItem
-  // هذا منطق أكثر أماناً
-  return !!component.groupId;
-}
-
-
-
-// ✅ فصل Components إلى خيارات وإضافات - مصحح
-private static separateComponentsIntoTypes(components: any[], product: PosProduct): {
+// ✅ فصل childrens حسب salesInvoiceItemType - مصحح
+private static separateChildrensByType(childrens: InvoiceItem[], product: PosProduct): {
   subItems: SubItem[];
   selectedOptions: SelectedOption[];
 } {
   const subItems: SubItem[] = [];
   const selectedOptions: SelectedOption[] = [];
 
-  if (!components || !Array.isArray(components)) {
+  if (!childrens || !Array.isArray(childrens)) {
     return { subItems, selectedOptions };
   }
 
-  components.forEach((component, index) => {
-    console.log('🔍 معالجة component:', {
-      name: component.name || component.ComponentName,
-      type: component.type,
-      extraPrice: component.extraPrice,
-      price: component.price,
-      groupId: component.groupId
+  childrens.forEach((child, index) => {
+    console.log('🔍 معالجة child:', {
+      name: child.posPriceName,
+      salesInvoiceItemType: child.salesInvoiceItemType,
+      unitPrice: child.unitPrice,
+      qty: child.qty
     });
 
-    // تحديد النوع بناءً على البيانات
-    const isOption = this.isComponentAnOption(component, product);
+    switch (child.salesInvoiceItemType) {
+      case SalesInvoiceItemType.Addition: // 2
+        // ✅ إضافة (Extra) - قابلة للتعديل والحذف
+        subItems.push({
+          id: child.id || `addition_${index}_${Date.now()}`,
+          type: 'extra',
+          name: child.posPriceName || 'إضافة',
+          quantity: child.qty || 1,
+          price: child.unitPrice * (child.qty || 1),
+          isRequired: false,
+          productId: child.productId,
+          groupId: undefined
+        });
+        console.log('✅ تم إضافة Addition (Extra):', child.posPriceName);
+        break;
 
-    if (isOption) {
-      // ✅ هذا خيار (Option) - يروح في selectedOptions
-      selectedOptions.push({
-        groupId: component.groupId || 'default_group',
-        itemId: component.id || `option_${index}_${Date.now()}`,
-        itemName: component.name || component.ComponentName || 'خيار',
-        quantity: component.quantity || 1,
-        extraPrice: component.extraPrice || component.price || 0,
-        isCommentOnly: component.isCommentOnly || false
-      });
-    } else {
-      // ✅ هذه إضافة أو حذف (SubItem)
-      let type: 'extra' | 'without' = 'extra'; // ✅ الافتراضي extra مش without
-      let price = component.extraPrice || component.price || 0;
+      case SalesInvoiceItemType.Without: // 3
+        // ✅ بدون - قابلة للتعديل والحذف
+        subItems.push({
+          id: child.id || `without_${index}_${Date.now()}`,
+          type: 'without',
+          name: child.posPriceName || 'بدون',
+          quantity: child.qty || 1,
+          price: 0, // بدون دايماً سعره صفر
+          isRequired: false,
+          productId: child.productId,
+          groupId: undefined
+        });
+        console.log('✅ تم إضافة Without:', child.posPriceName);
+        break;
 
-      // ✅ تحديد النوع بشكل صحيح
-      if (component.type) {
-        // إذا كان النوع محدد صراحة
-        type = component.type === 'without' ? 'without' : 'extra';
-      } else {
-        // إذا كان السعر 0 أو سالب، قد يكون without
-        // لكن نتأكد إنه مش مجرد خيار مجاني
-        if (price <= 0) {
-          // تحقق إضافي: هل ده حقاً "without" أم خيار مجاني؟
-          const nameIndicatesWithout = (component.name || component.ComponentName || '')
-            .toLowerCase()
-            .includes('بدون') || 
-            (component.name || component.ComponentName || '')
-            .toLowerCase()
-            .includes('without') ||
-            (component.name || component.ComponentName || '')
-            .toLowerCase()
-            .includes('no ');
-            
-          if (nameIndicatesWithout) {
-            type = 'without';
-            price = 0;
-          } else {
-            // خيار مجاني، يُعامل كـ extra بسعر 0
-            type = 'extra';
-            price = 0;
-          }
+      case SalesInvoiceItemType.Optional: // 4
+        // ✅ خيارات أصلية - غير قابلة للتعديل أو الحذف
+        selectedOptions.push({
+          groupId: 'options_group', // يمكن تطويره لاحقاً
+          itemId: child.id || `option_${index}_${Date.now()}`,
+          itemName: child.posPriceName || 'خيار',
+          quantity: child.qty || 1,
+          extraPrice: child.unitPrice || 0,
+          isCommentOnly: false
+        });
+        console.log('✅ تم إضافة Optional (خيار أصلي):', child.posPriceName);
+        break;
+
+      default:
+        // للتوافق مع القيم القديمة - نحاول نخمن النوع
+        console.warn('⚠️ salesInvoiceItemType غير معروف:', child.salesInvoiceItemType);
+        
+        const nameIndicatesWithout = (child.posPriceName || '')
+          .toLowerCase()
+          .includes('بدون') || 
+          (child.posPriceName || '')
+          .toLowerCase()
+          .includes('without');
+          
+        if (nameIndicatesWithout || child.unitPrice <= 0) {
+          subItems.push({
+            id: child.id || `legacy_without_${index}_${Date.now()}`,
+            type: 'without',
+            name: child.posPriceName || 'بدون',
+            quantity: child.qty || 1,
+            price: 0,
+            isRequired: false,
+            productId: child.productId,
+            groupId: undefined
+          });
         } else {
-          // السعر أكبر من 0، يعني extra
-          type = 'extra';
+          subItems.push({
+            id: child.id || `legacy_extra_${index}_${Date.now()}`,
+            type: 'extra',
+            name: child.posPriceName || 'إضافة',
+            quantity: child.qty || 1,
+            price: child.unitPrice * (child.qty || 1),
+            isRequired: false,
+            productId: child.productId,
+            groupId: undefined
+          });
         }
-      }
-
-      subItems.push({
-        id: component.id || `subitem_${index}_${Date.now()}`,
-        type: type,
-        name: component.name || component.ComponentName || 'إضافة',
-        quantity: component.quantity || 1,
-        price: price, // ✅ نحافظ على السعر الأصلي
-        isRequired: component.isRequired || false,
-        productId: component.ProductComponentId || component.productComponentId,
-        groupId: component.groupId
-      });
-
-      console.log('✅ تم إضافة SubItem:', {
-        name: component.name || component.ComponentName,
-        type: type,
-        price: price,
-        originalPrice: component.extraPrice || component.price
-      });
+        break;
     }
   });
 
-  console.log('📊 نتيجة الفصل:', {
-    subItemsCount: subItems.length,
-    selectedOptionsCount: selectedOptions.length,
-    subItems: subItems.map(s => ({ name: s.name, type: s.type, price: s.price })),
-    selectedOptions: selectedOptions.map(o => ({ name: o.itemName, price: o.extraPrice }))
+  console.log('📊 نتيجة فصل childrens:', {
+    subItemsCount: subItems.length, // الإضافات والبدون (قابلة للحذف)
+    selectedOptionsCount: selectedOptions.length // الخيارات الأصلية (غير قابلة للحذف)
   });
 
   return { subItems, selectedOptions };
 }
 
 
-
-
-  // تحويل عنصر واحد من الفاتورة
-private static async convertSingleInvoiceItem(item: InvoiceItem): Promise<OrderItem | null> {
-  try {
-    // جلب بيانات المنتج
-    let product = await this.getProductData(item.productId);
-    if (!product) {
-      // إنشاء منتج وهمي إذا لم نجده
-      product = this.createDummyProduct(item);
-    }
-
-    // جلب بيانات السعر
-    const selectedPrice = this.getPriceData(item, product);
-
-    // ✅ فصل Components إلى نوعين: خيارات وإضافات
-    // SubItems تأتي الآن من childrens
-    const subItems: SubItem[] = this.convertChildrensToSubItems(item.childrens || []);
-    // SelectedOptions لا تزال تأتي من components
-    const selectedOptions: SelectedOption[] = this.extractSelectedOptions(item, product);
-
-    // ✅ حساب السعر الإجمالي الصحيح (سعر المنتج + الخيارات + الإضافات)
-    const basePrice = selectedPrice.price * item.qty;
-    const optionsPrice = selectedOptions.reduce((sum, option) => sum + (option.extraPrice * option.quantity), 0);
-    const subItemsPrice = subItems.reduce((sum, subItem) => {
-      return sum + (subItem.type === 'without' ? 0 : subItem.price);
-    }, 0);
-    
-    const calculatedTotalPrice = basePrice + optionsPrice + subItemsPrice;
-
-    // تحويل إلى OrderItem
-    const orderItem: OrderItem = {
-      id: item.id,
-      product: product,
-      selectedPrice: selectedPrice,
-      quantity: item.qty,
-      totalPrice: calculatedTotalPrice, // ✅ السعر الصحيح مع الإضافات والخيارات
-      notes: this.extractNotesFromItem(item),
-      discountPercentage: item.itemDiscountPercentage,
-      discountAmount: item.itemDiscountValue,
-      subItems: subItems.length > 0 ? subItems : undefined, // الإضافات والحذوفات فقط
-      selectedOptions: selectedOptions.length > 0 ? selectedOptions : undefined // الخيارات فقط
-    };    console.log('🔍 تحويل العنصر:', {
-      productName: product.nameArabic,
-      basePrice,
-      optionsPrice,
-      subItemsPrice,
-      totalPrice: calculatedTotalPrice,
-      originalSubTotal: item.subTotal,
-      subItems: subItems.length,
-      selectedOptions: selectedOptions.length
-    });
-
-    return orderItem;
-  } catch (error) {
-    console.error('❌ خطأ في تحويل العنصر:', item.id, error);
-    return null;
-  }
-}
-
-  // ✅ إضافة دالة تحويل الـ childrens إلى subItems
-  private static convertChildrensToSubItems(childrens: InvoiceItem[]): SubItem[] {
-    if (!childrens || !Array.isArray(childrens)) {
+  // ✅ للتوافق مع النظام القديم - استخراج options من components
+  private static extractOptionsFromComponents(components: any[], product: PosProduct): SelectedOption[] {
+    if (!components || !Array.isArray(components)) {
       return [];
     }
 
-    return childrens.map((child, index) => {
-      let type: 'extra' | 'without' = 'extra';
-      let price = child.unitPrice || 0;
-
-      // Determine if it's 'without' based on name or price
-      const nameIndicatesWithout = (child.posPriceName || '')
-        .toLowerCase()
-        .includes('بدون') || 
-        (child.posPriceName || '')
-        .toLowerCase()
-        .includes('without') ||
-        (child.posPriceName || '')
-        .toLowerCase()
-        .includes('no ');
-            
-      if (price <= 0 && nameIndicatesWithout) {
-        type = 'without';
-        price = 0;
-      } else {
-        type = 'extra';
-      }
-
-      return {
-        id: child.id || `child_${index}_${Date.now()}`,
-        type: type,
-        name: child.posPriceName || `مكون ${index + 1}`,
-        quantity: child.qty || 1,
-        price: price,
-        productId: child.productId,
-        groupId: undefined // Childrens from API don't have groupId in this context
-      };
-    });
-  }
-
-  // ✅ إضافة دالة استخراج الـ options المختارة
-  private static extractSelectedOptions(item: InvoiceItem, product: PosProduct): SelectedOption[] {
     const selectedOptions: SelectedOption[] = [];
 
-    // إذا كان المنتج له option groups
+    // إذا كان المنتج له option groups، حاول تطبيقها
     if (product.productOptionGroups && product.productOptionGroups.length > 0) {
-      // البحث في الـ components عن الخيارات
-      item.components?.forEach(component => {
-        // البحث عن الـ option في مجموعات المنتج
+      components.forEach(component => {
         product.productOptionGroups?.forEach(group => {
           const optionItem = group.optionItems.find(opt => 
-            opt.id === component.id || 
-            opt.name === component.name ||
-            opt.name === component.ComponentName ||
-            opt.productPriceId === component.ProductComponentId
+            opt.name === (component.name || component.ComponentName) ||
+            opt.id === component.id
           );
 
           if (optionItem) {
@@ -345,7 +298,7 @@ private static async convertSingleInvoiceItem(item: InvoiceItem): Promise<OrderI
               itemId: optionItem.id,
               itemName: optionItem.name,
               quantity: component.quantity || 1,
-              extraPrice: component.extraPrice || optionItem.extraPrice,
+              extraPrice: component.extraPrice || optionItem.extraPrice || 0,
               isCommentOnly: optionItem.isCommentOnly || false
             });
           }
@@ -353,31 +306,34 @@ private static async convertSingleInvoiceItem(item: InvoiceItem): Promise<OrderI
       });
     }
 
-    // إذا لم نجد options في المنتج، حول الـ components من نوع option إلى selectedOptions
-    if (selectedOptions.length === 0) {
-      item.components?.forEach(component => {
-        if (component.type === 'option' || (!component.type && component.groupId)) {
-          selectedOptions.push({
-            groupId: component.groupId || 'default_group',
-            itemId: component.id || `option_${Date.now()}`,
-            itemName: component.name || component.ComponentName || 'خيار',
-            quantity: component.quantity || 1,
-            extraPrice: component.extraPrice || component.price || 0,
-            isCommentOnly: component.isCommentOnly || false
-          });
-        }
-      });
-    }
-
     return selectedOptions;
   }
 
-  // ✅ إضافة دالة استخراج الملاحظات
+  // ✅ للتوافق مع النظام القديم - استخراج sub items من components
+  private static extractSubItemsFromComponents(components: any[], product: PosProduct): SubItem[] {
+    if (!components || !Array.isArray(components)) {
+      return [];
+    }
+
+    // فقط الـ components اللي مش options (للتوافق العكسي)
+    return components
+      .filter(component => component.type === 'extra' || component.type === 'without')
+      .map((component, index) => ({
+        id: component.id || `component_${index}_${Date.now()}`,
+        type: component.type === 'without' ? 'without' : 'extra',
+        name: component.name || component.ComponentName || 'إضافة',
+        quantity: component.quantity || 1,
+        price: component.type === 'without' ? 0 : (component.extraPrice || component.price || 0),
+        isRequired: false,
+        productId: component.ProductComponentId || component.productComponentId,
+        groupId: component.groupId
+      }));
+  }
+
+  // باقي الدوال تبقى كما هي...
   private static extractNotesFromItem(item: InvoiceItem): string | undefined {
-    // يمكن استخراج الملاحظات من أماكن مختلفة
     if (item.notes) return item.notes;
     
-    // البحث في الـ components عن ملاحظات
     const commentComponents = item.components?.filter(c => 
       c.isCommentOnly || c.type === 'comment' || c.name?.includes('ملاحظة')
     );
@@ -389,22 +345,17 @@ private static async convertSingleInvoiceItem(item: InvoiceItem): Promise<OrderI
     return undefined;
   }
 
-  // جلب بيانات المنتج
   private static async getProductData(productId: string): Promise<PosProduct | null> {
     try {
-      // التحقق من الكاش أولاً
       if (this.productsCache.has(productId)) {
         return this.productsCache.get(productId)!;
       }
 
-      // جلب من الـ API
       console.log('🔍 جلب بيانات المنتج من الـ API:', productId);
       const apiProduct = await productsApi.getById(productId);
       
-      // تحويل إلى PosProduct
       const posProduct = this.convertApiProductToPosProduct(apiProduct);
       
-      // حفظ في الكاش
       this.productsCache.set(productId, posProduct);
       
       return posProduct;
@@ -414,20 +365,16 @@ private static async convertSingleInvoiceItem(item: InvoiceItem): Promise<OrderI
     }
   }
 
-  // جلب بيانات السعر
   private static getPriceData(item: InvoiceItem, product: PosProduct): PosPrice {
-    // البحث في أسعار المنتج أولاً
     const priceFromProduct = product.productPrices.find(p => p.id === item.productPriceId);
     if (priceFromProduct) {
       return priceFromProduct;
     }
 
-    // التحقق من الكاش
     if (this.pricesCache.has(item.productPriceId)) {
       return this.pricesCache.get(item.productPriceId)!;
     }
 
-    // إنشاء سعر من بيانات العنصر
     const newPrice: PosPrice = {
       id: item.productPriceId,
       name: item.posPriceName,
@@ -440,7 +387,6 @@ private static async convertSingleInvoiceItem(item: InvoiceItem): Promise<OrderI
     return newPrice;
   }
 
-  // إنشاء منتج وهمي
   private static createDummyProduct(item: InvoiceItem): PosProduct {
     return {
       id: item.productId,
@@ -458,11 +404,10 @@ private static async convertSingleInvoiceItem(item: InvoiceItem): Promise<OrderI
       }],
       hasMultiplePrices: false,
       displayPrice: item.unitPrice,
-      productOptionGroups: [] // يمكن تطويرها لاحقاً
+      productOptionGroups: []
     };
   }
 
-  // تحويل منتج الـ API إلى PosProduct
   private static convertApiProductToPosProduct(apiProduct: any): PosProduct {
     const prices: PosPrice[] = apiProduct.productPrices?.map((price: any) => ({
       id: price.productPriceId || price.id,
@@ -472,7 +417,6 @@ private static async convertSingleInvoiceItem(item: InvoiceItem): Promise<OrderI
       barcode: price.barcode || '0000000000000'
     })) || [];
 
-    // تحويل option groups إذا كانت موجودة
     const productOptionGroups = apiProduct.productOptionGroups?.map((group: any) => ({
       id: group.id || '',
       name: group.name,
@@ -506,38 +450,35 @@ private static async convertSingleInvoiceItem(item: InvoiceItem): Promise<OrderI
     };
   }
 
-// حساب ملخص الطلب مع الأسعار الصحيحة
-private static calculateOrderSummary(orderItems: OrderItem[], invoice: Invoice): OrderSummaryType {
-  // حساب المجموع من الـ OrderItems المحولة (تتضمن الخيارات والإضافات)
-  const subtotal = orderItems.reduce((sum, item) => sum + item.totalPrice, 0);
-  
-  console.log('📊 حساب ملخص الطلب:', {
-    itemsCount: orderItems.length,
-    calculatedSubtotal: subtotal,
-    originalInvoiceSubtotal: invoice.totalBeforeDiscount,
-    difference: Math.abs(subtotal - invoice.totalBeforeDiscount)
-  });
-  
-  return {
-    items: orderItems,
-    subtotal: subtotal, // ✅ المجموع الصحيح مع الخيارات والإضافات
-    discount: invoice.headerDiscountValue || 0,
-    tax: invoice.taxAmount || 0,
-    service: invoice.serviceAmount || 0,
-    total: invoice.totalAfterTaxAndService || subtotal
-  };
-}
+  private static calculateOrderSummary(orderItems: OrderItem[], invoice: Invoice): OrderSummaryType {
+    const subtotal = orderItems.reduce((sum, item) => sum + item.totalPrice, 0);
+    
+    console.log('📊 حساب ملخص الطلب:', {
+      itemsCount: orderItems.length,
+      calculatedSubtotal: subtotal,
+      originalInvoiceSubtotal: invoice.totalBeforeDiscount,
+      difference: Math.abs(subtotal - invoice.totalBeforeDiscount)
+    });
+    
+    return {
+      items: orderItems,
+      subtotal: subtotal,
+      discount: invoice.headerDiscountValue || 0,
+      tax: invoice.taxAmount || 0,
+      service: invoice.serviceAmount || 0,
+      total: invoice.totalAfterTaxAndService || subtotal,
+      totalAfterTaxAndService: 0,
+      totalAfterDiscount: 0,
+    };
+  }
 
-
-  // حساب رسوم التوصيل
   private static calculateDeliveryCharge(invoice: Invoice): number {
-    if (invoice.invoiceType === 3) { // Delivery
-      return 0; // يمكن تطويرها لاحقاً
+    if (invoice.invoiceType === 3) {
+      return 0;
     }
     return 0;
   }
 
-  // تنظيف الكاش
   static clearCache(): void {
     this.productsCache.clear();
     this.customersCache.clear();
@@ -545,12 +486,10 @@ private static calculateOrderSummary(orderItems: OrderItem[], invoice: Invoice):
     console.log('🧹 تم تنظيف كاش بيانات الفاتورة');
   }
 
-  // إضافة منتج للكاش
   static cacheProduct(product: PosProduct): void {
     this.productsCache.set(product.id, product);
   }
 
-  // إضافة عميل للكاش
   static cacheCustomer(customer: Customer): void {
     this.customersCache.set(customer.id, customer);
   }

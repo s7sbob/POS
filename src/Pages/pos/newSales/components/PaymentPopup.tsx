@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { OrderSummary as OrderSummaryType } from '../types/PosSystem';
 import { Customer, CustomerAddress } from 'src/utils/api/pagesApi/customersApi';
 import PaymentLeft from './paymentPopup components/PaymentLeft';
@@ -71,6 +72,7 @@ const PaymentPopup: React.FC<PaymentPopupProps> = ({
   actionType = 'pay' // ✅ إضافة جديدة
 }) => {
   const overlayRef = useRef<HTMLDivElement>(null);
+  const { t } = useTranslation();
   const { paymentMethods, loading, error } = usePosPaymentMethods();
   
   // إضافة state للإشعارات المحلية
@@ -126,17 +128,17 @@ const PaymentPopup: React.FC<PaymentPopupProps> = ({
 const getSuccessMessage = (invoiceNumber: string): string => {
   if (isEditMode) {
     switch (actionType) {
-      case 'send': return 'تم تحديث وإرسال الطلب بنجاح!';
-      case 'print': return 'تم تحديث وطباعة الطلب بنجاح!';
-      case 'pay': return 'تم تحديث ودفع الطلب بنجاح!';
-      default: return 'تم تحديث الطلب بنجاح!';
+      case 'send': return t('pos.newSales.paymentPopup.updateSendSuccess');
+      case 'print': return t('pos.newSales.paymentPopup.updatePrintSuccess');
+      case 'pay': return t('pos.newSales.paymentPopup.updatePaySuccess');
+      default: return t('pos.newSales.paymentPopup.updateSuccess');
     }
   } else {
     switch (actionType) {
-      case 'send': return `تم إرسال الطلب بنجاح! رقم الفاتورة: ${invoiceNumber}`;
-      case 'print': return `تم طباعة الطلب بنجاح! رقم الفاتورة: ${invoiceNumber}`;
-      case 'pay': return `تم دفع الطلب بنجاح! رقم الفاتورة: ${invoiceNumber}`;
-      default: return `تم إنشاء الطلب بنجاح! رقم الفاتورة: ${invoiceNumber}`;
+      case 'send': return t('pos.newSales.paymentPopup.sendSuccess', { invoiceNumber });
+      case 'print': return t('pos.newSales.paymentPopup.printSuccess', { invoiceNumber });
+      case 'pay': return t('pos.newSales.paymentPopup.paySuccess', { invoiceNumber });
+      default: return t('pos.newSales.paymentPopup.createSuccess', { invoiceNumber });
     }
   }
 };
@@ -199,7 +201,7 @@ const getSuccessMessage = (invoiceNumber: string): string => {
       
       // إذا كان يحاول تفعيل طريقة ثالثة غير نقدية
       if (!isCurrentlyActive && activeNonCashPayments.length >= 2) {
-        showLocalWarning('لا يمكن استخدام أكثر من وسيلتي دفع غير نقدية');
+        showLocalWarning(t("pos.newSales.paymentPopup.maxNonCashWarning"));
         return;
       }
     }
@@ -365,33 +367,7 @@ const getSuccessMessage = (invoiceNumber: string): string => {
     }
   }, [nonCashTotal, totalAmount, selectedPaymentMethod, lastNonCashTotal]);
 
-  // تهيئة طرق الدفع
-  useEffect(() => {
-    if (!isOpen || !paymentMethods?.length) return;
-    
-    const cashMethod = getCashMethod();
-    const initialPayments = paymentMethods.map(method => {
-      const isCash = method.name.toLowerCase().includes('كاش') || 
-                     method.name.toLowerCase().includes('cash');
-      
-      return {
-        method: method.name,
-        amount: isCash ? totalAmount : 0,
-        isSelected: isCash,
-        wasModified: false
-      };
-    });
-    
-    setSelectedPayments(initialPayments);
-    
-    if (cashMethod) {
-      setSelectedPaymentMethod(cashMethod.name);
-      setPaidAmount(totalAmount.toFixed(2));
-      setIsFirstInput(true);
-    }
-    
-    setLastNonCashTotal(0);
-  }, [isOpen, paymentMethods, totalAmount]);
+
 
   // معالج تغيير المبلغ مع تحديد flag التعديل
   const handleAmountChange = (amount: string) => {
@@ -535,6 +511,8 @@ const getSuccessMessage = (invoiceNumber: string): string => {
     }
   };
 
+
+  
   const handlePaymentMethodSelect = (method: string) => {
     setSelectedPaymentMethod(method);
     
@@ -629,8 +607,8 @@ const handleFinishPayment = useCallback(async () => {
 
     showLocalSuccess(
       isEditMode 
-        ? `تم تحديث الطلب بنجاح!`
-        : `تم إنشاء الطلب بنجاح! رقم الفاتورة: ${invoiceResult.invoiceNumber}`
+        ? t("pos.newSales.paymentPopup.updateSuccess")
+        : t("pos.newSales.paymentPopup.createSuccess", { invoiceNumber: invoiceResult.invoiceNumber })
     );
 
     // إرسال النتيجة للمكون الأصلي
@@ -642,12 +620,12 @@ const handleFinishPayment = useCallback(async () => {
 
   } catch (error: any) {
     console.error('Error processing payment:', error);
-    showLocalError(error.message || 'حدث خطأ في معالجة الدفع');
+    showLocalError(error.message || t("pos.newSales.paymentPopup.paymentError"));
     
     onPaymentComplete({
       success: false,
       payments: selectedPayments,
-      error: error.message || 'حدث خطأ في معالجة الدفع'
+      error: error.message || t("pos.newSales.paymentPopup.paymentError")
     });
   } finally {
     setIsSubmitting(false);
@@ -669,6 +647,119 @@ const handleFinishPayment = useCallback(async () => {
 ]);
 
 
+
+  // تهيئة طرق الدفع مع دعم شركات التوصيل
+  useEffect(() => {
+    if (!isOpen || !paymentMethods?.length) return;
+    
+    const cashMethod = getCashMethod();
+    
+    // التحقق من نوع الطلب وشركة التوصيل
+    const isDeliveryCompany = orderType === 'DeliveryCompany';
+    const deliveryCompanyPaymentType = selectedDeliveryCompany?.paymentType;
+    
+    let initialPayments;
+    let defaultSelectedMethod;
+    let defaultAmount;
+    
+    if (isDeliveryCompany && deliveryCompanyPaymentType) {
+      // منطق شركات التوصيل
+      if (deliveryCompanyPaymentType.toLowerCase() === 'cash') {
+        // دفع كاش تلقائي - إرسال الطلب مباشرة بدون إظهار popup
+        initialPayments = paymentMethods.map(method => {
+          const isCash = method.name.toLowerCase().includes('كاش') || 
+                         method.name.toLowerCase().includes('cash');
+          
+          return {
+            method: method.name,
+            amount: isCash ? totalAmount : 0,
+            isSelected: isCash,
+            wasModified: false
+          };
+        });
+        
+        // إرسال الطلب تلقائياً
+        setTimeout(() => {
+          handleFinishPayment();
+        }, 100);
+        
+        return;
+      } else if (deliveryCompanyPaymentType.toLowerCase() === 'visa') {
+        // دفع فيزا تلقائي - إرسال الطلب مباشرة بدون إظهار popup
+        const visaMethod = paymentMethods.find(
+          m => m.name.toLowerCase().includes('فيزا') || 
+               m.name.toLowerCase().includes('visa') ||
+               m.name.toLowerCase().includes('card')
+        );
+        
+        initialPayments = paymentMethods.map(method => {
+          const isVisa = method.name.toLowerCase().includes('فيزا') || 
+                         method.name.toLowerCase().includes('visa') ||
+                         method.name.toLowerCase().includes('card');
+          
+          return {
+            method: method.name,
+            amount: isVisa ? totalAmount : 0,
+            isSelected: isVisa,
+            wasModified: false
+          };
+        });
+        
+        // إرسال الطلب تلقائياً
+        setTimeout(() => {
+          handleFinishPayment();
+        }, 100);
+        
+        return;
+      } else {
+        // نوع دفع آخر (InChoice) - إظهار شاشة الدفع العادية
+        initialPayments = paymentMethods.map(method => {
+          const isCash = method.name.toLowerCase().includes('كاش') || 
+                         method.name.toLowerCase().includes('cash');
+          
+          return {
+            method: method.name,
+            amount: isCash ? totalAmount : 0,
+            isSelected: isCash,
+            wasModified: false
+          };
+        });
+        
+        if (cashMethod) {
+          defaultSelectedMethod = cashMethod.name;
+          defaultAmount = totalAmount.toFixed(2);
+        }
+      }
+    } else {
+      // منطق الطلبات العادية
+      initialPayments = paymentMethods.map(method => {
+        const isCash = method.name.toLowerCase().includes('كاش') || 
+                       method.name.toLowerCase().includes('cash');
+        
+        return {
+          method: method.name,
+          amount: isCash ? totalAmount : 0,
+          isSelected: isCash,
+          wasModified: false
+        };
+      });
+      
+      if (cashMethod) {
+        defaultSelectedMethod = cashMethod.name;
+        defaultAmount = totalAmount.toFixed(2);
+      }
+    }
+    
+    setSelectedPayments(initialPayments);
+    
+    if (defaultSelectedMethod) {
+      setSelectedPaymentMethod(defaultSelectedMethod);
+      setPaidAmount(defaultAmount || totalAmount.toFixed(2));
+      setIsFirstInput(true);
+    }
+    
+    setLastNonCashTotal(0);
+  }, [isOpen, paymentMethods, totalAmount, orderType, selectedDeliveryCompany, handleFinishPayment]);
   if (!isOpen) return null;
 
   return (
@@ -679,7 +770,7 @@ const handleFinishPayment = useCallback(async () => {
             <img src="/images/img_foodify_logo_2_78x166.png" alt="Foodify" />
           </div>
           <h2 className={styles.title}>
-            {isEditMode ? 'تعديل الطلب' : 'تأكيد الدفع'}
+            {isEditMode ? t('pos.newSales.paymentPopup.editOrderTitle') : t('pos.newSales.paymentPopup.confirmPaymentTitle')}
           </h2>
           <button className={styles.closeBtn} onClick={onClose}>×</button>
         </div>
@@ -716,7 +807,8 @@ const handleFinishPayment = useCallback(async () => {
                 height: '100%',
                 fontFamily: 'Cairo, sans-serif'
               }}>
-                جاري تحميل طرق الدفع...
+                              {t("pos.newSales.paymentPopup.loadingPaymentMethods")}
+
               </div>
             ) : error ? (
               <div style={{ color: 'red', textAlign: 'center', marginTop: 20 }}>{error}</div>
