@@ -9,6 +9,7 @@ import CustomerDetailsPopup from './CustomerDetailsPopup';
 import CustomerForm from '../../customers/components/CustomerForm';
 import styles from '../styles/OrderSummary.module.css';
 import PaymentPopup from './PaymentPopup';
+import SimplePaymentChoicePopup from './SimplePaymentChoicePopup';
 import { useInvoiceManager } from '../hooks/useInvoiceManager';
 
 interface OrderSummaryProps {
@@ -81,6 +82,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
   const [searchCache, setSearchCache] = useState<{[key: string]: Customer[]}>({});
   const [inputHasFocus, setInputHasFocus] = useState(false);
   const [showPaymentPopup, setShowPaymentPopup] = useState(false);
+  const [showSimplePaymentChoice, setShowSimplePaymentChoice] = useState(false);
   const [pendingEnterAction, setPendingEnterAction] = useState<string | null>(null);
 const { saveInvoice, isSubmitting, nextInvoiceCode, fetchNextInvoiceCode } = useInvoiceManager();
 
@@ -584,6 +586,72 @@ const handleDirectSave = useCallback(async (actionType: 'send' | 'print') => {
     selectedCustomer, selectedAddress, selectedDeliveryCompany, selectedTable, 
     customerName, onOrderCompleted]);
 
+// دالة جديدة للدفع المباشر (cash أو visa)
+const handleDirectPayment = useCallback(async (paymentType: 'cash' | 'visa') => {
+  try {
+    console.log(`🔄 بدء معالجة الدفع المباشر بـ ${paymentType}...`);
+    
+    // ✅ تأكد من وجود items قبل المتابعة
+    if (!orderSummary.items || orderSummary.items.length === 0) {
+      console.error('❌ لا توجد عناصر في الطلب');
+      return;
+    }
+    
+    // حساب المبلغ الإجمالي
+    const deliveryCharge = 0;
+    const subtotalWithDelivery = orderSummary.subtotal + deliveryCharge;
+    const taxAmount = 0;
+    const finalTotal = subtotalWithDelivery + taxAmount - orderSummary.discount;
+    
+    // إنشاء دفعة بالنوع المحدد بالمبلغ الكامل
+    const payments: { method: string; amount: number; isSelected: boolean }[] = [
+      {
+        method: paymentType,
+        amount: finalTotal,
+        isSelected: true
+      }
+    ];
+    
+    const invoiceStatus = 3; // PAID
+    
+    // ✅ حفظ الفاتورة مع البيانات الكاملة
+    const result = await saveInvoice(
+      orderSummary,
+      orderType,
+      payments,
+      invoiceStatus,
+      {
+        isEditMode,
+        invoiceId: currentInvoiceId,
+        selectedCustomer,
+        selectedAddress,
+        selectedDeliveryCompany,
+        selectedTable,
+        servicePercentage: 0,
+        taxPercentage: 0,
+        discountPercentage: 0,
+        notes: customerName
+      }
+    );
+    
+    console.log(`✅ تم الدفع بـ ${paymentType} بنجاح! رقم الفاتورة: ${result.invoiceNumber}`);
+    
+    if (onOrderCompleted) {
+      onOrderCompleted({
+        success: true,
+        invoice: result,
+        actionType: 'pay',
+        paymentType: paymentType
+      });
+    }
+    
+  } catch (error) {
+    console.error(`❌ خطأ في الدفع بـ ${paymentType}:`, error);
+  }
+}, [saveInvoice, orderSummary, orderType, isEditMode, currentInvoiceId, 
+    selectedCustomer, selectedAddress, selectedDeliveryCompany, selectedTable, 
+    customerName, onOrderCompleted]);
+
 
 const handleActionButtonClick = useCallback(async (actionType: 'send' | 'print' | 'pay') => {
   if (!canOpenPayment) {
@@ -596,11 +664,42 @@ const handleActionButtonClick = useCallback(async (actionType: 'send' | 'print' 
   
   if (actionType === 'pay') {
     setSelectedActionType(actionType);
-    setShowPaymentPopup(true);
+    
+    // التحقق من نوع الدفع لشركات التوصيل
+    const isDeliveryCompany = orderType === 'DeliveryCompany';
+    const deliveryCompanyPaymentType = selectedDeliveryCompany?.paymentType;
+    
+    if (isDeliveryCompany && deliveryCompanyPaymentType) {
+      if (deliveryCompanyPaymentType.toLowerCase() === 'cash' || 
+          deliveryCompanyPaymentType.toLowerCase() === 'visa') {
+        // للـ cash و visa: حفظ مباشر بدون popup
+        await handleDirectPayment(deliveryCompanyPaymentType.toLowerCase());
+      } else if (deliveryCompanyPaymentType.toLowerCase() === 'inchoice') {
+        // للـ inchoice: إظهار popup بسيط للاختيار
+        setShowSimplePaymentChoice(true);
+      } else {
+        // أي نوع آخر: إظهار popup الدفع الكامل
+        setShowPaymentPopup(true);
+      }
+    } else {
+      // للطلبات العادية: إظهار popup الدفع الكامل
+      setShowPaymentPopup(true);
+    }
   } else {
     await handleDirectSave(actionType);
   }
-}, [canOpenPayment, orderSummary.items.length, handleDirectSave]);
+}, [canOpenPayment, orderSummary.items.length, handleDirectSave, handleDirectPayment, orderType, selectedDeliveryCompany]);
+
+// معالج اختيار نوع الدفع من الـ popup البسيط
+const handleSimplePaymentChoice = useCallback(async (paymentType: 'cash' | 'visa') => {
+  setShowSimplePaymentChoice(false);
+  await handleDirectPayment(paymentType);
+}, [handleDirectPayment]);
+
+// معالج إغلاق الـ popup البسيط
+const handleCloseSimplePaymentChoice = useCallback(() => {
+  setShowSimplePaymentChoice(false);
+}, []);
 
 
 
@@ -925,6 +1024,14 @@ const handleActionButtonClick = useCallback(async (actionType: 'send' | 'print' 
           }}
         />
       )}
+
+      {/* Simple Payment Choice Popup */}
+      <SimplePaymentChoicePopup
+        isOpen={showSimplePaymentChoice}
+        onClose={handleCloseSimplePaymentChoice}
+        onSelectPaymentType={handleSimplePaymentChoice}
+        totalAmount={finalTotal}
+      />
     </aside>
   );
 };

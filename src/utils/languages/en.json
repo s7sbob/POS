@@ -188,6 +188,13 @@
         "deliveryAgent": "Delivery Agent",
         "deliveryCompany": "Delivery Company",
         "errorLoadingOrder": "Error loading order"
+      },
+      "simplePaymentChoice": {
+        "title": "Choose Payment Method",
+        "totalAmount": "Total Amount",
+        "question": "How would you like to pay?",
+        "cash": "Cash",
+        "visa": "Visa"
       }
     }
   },

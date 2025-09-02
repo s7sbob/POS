@@ -188,6 +188,13 @@
         "deliveryAgent": "الطيار",
         "deliveryCompany": "شركة التوصيل",
         "errorLoadingOrder": "خطأ في تحميل الطلب"
+      },
+      "simplePaymentChoice": {
+        "title": "اختيار طريقة الدفع",
+        "totalAmount": "المبلغ الإجمالي",
+        "question": "كيف تريد الدفع؟",
+        "cash": "كاش",
+        "visa": "فيزا"
       }
     }
   
