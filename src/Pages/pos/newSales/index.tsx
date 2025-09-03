@@ -17,6 +17,10 @@ import './styles/numberpad.css';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import OrderItemDetailsPopup from './components/OrderItemDetailsPopup';
 import TableSelectionPopup from './components/TableSelectionPopup';
+import InvoiceSelectionPopup from './components/InvoiceSelectionPopup';
+import SplitReceiptPopup from './components/SplitReceiptPopup';
+import { Invoice } from '../../../utils/api/pagesApi/invoicesApi';
+import { useInvoiceManager } from './hooks/useInvoiceManager';
 import { useTableManager } from './hooks/useTableManager';
 import { TableSelection } from './types/TableSystem';
 import { useError } from '../../../contexts/ErrorContext';
@@ -41,7 +45,7 @@ const PosSystem: React.FC = () => {
   const [selectedChips, setSelectedChips] = useState<string[]>([]);
   const [selectedOrderType, setSelectedOrderType] = useState('Takeaway');
   const [showTablePopup, setShowTablePopup] = useState(false);
-const { showWarning, showError } = useError();
+  const { showWarning, showError, showSuccess } = useError();
   const [deliveryCompanies, setDeliveryCompanies] = useState<DeliveryCompany[]>([]);
   const [selectedDeliveryCompany, setSelectedDeliveryCompany] = useState<DeliveryCompany | null>(null);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
@@ -121,8 +125,43 @@ const { showWarning, showError } = useError();
 
   const [isEditMode, setIsEditMode] = useState(false);
   const [currentInvoiceId, setCurrentInvoiceId] = useState<string | null>(null);
-const [isLoadingOrder, setIsLoadingOrder] = useState(false);
-const [currentBackInvoiceCode, setCurrentBackInvoiceCode] = useState<string | null>(null);
+  const [isLoadingOrder, setIsLoadingOrder] = useState(false);
+  const [currentBackInvoiceCode, setCurrentBackInvoiceCode] = useState<string | null>(null);
+  const [currentInvoiceStatus, setCurrentInvoiceStatus] = useState<number>(1);
+
+  // إدارة الانقسام والنقل
+  const [showSplitPopup, setShowSplitPopup] = useState(false);
+  const [showInvoiceSelectPopup, setShowInvoiceSelectPopup] = useState(false);
+  const [invoiceOptions, setInvoiceOptions] = useState<Invoice[]>([]);
+  const [moveTableMode, setMoveTableMode] = useState(false);
+
+  // استخدم مدير الفاتورة لإنشاء وتحديث الفواتير خارج الـ OrderSummary
+  const { saveInvoice } = useInvoiceManager();
+
+  /**
+   * تنفيذ عملية النقل عند الضغط على زر الأدوات فى الهيدر.
+   * يقوم بالتحقق من وجود فاتورة حالية ثم يفتح شاشة اختيار الطاولة.
+   */
+  const handleToolsMoveTable = useCallback(() => {
+    if (!currentInvoiceId) {
+      showWarning('لا يوجد طلب لنقله');
+      return;
+    }
+    setMoveTableMode(true);
+    setShowTablePopup(true);
+  }, [currentInvoiceId, showWarning]);
+
+  /**
+   * تنفيذ عملية فصل الشيك عند الضغط على زر الأدوات فى الهيدر.
+   * يقوم بالتحقق من وجود عناصر فى الطلب الحالى ثم يفتح شاشة الفصل.
+   */
+  const handleToolsSplitReceipt = useCallback(() => {
+    if (orderItems.length === 0) {
+      showWarning('لا توجد عناصر لفصلها');
+      return;
+    }
+    setShowSplitPopup(true);
+  }, [orderItems, showWarning]);
 
   // تحميل البيانات مرة واحدة
   useEffect(() => {
@@ -201,6 +240,74 @@ const [currentBackInvoiceCode, setCurrentBackInvoiceCode] = useState<string | nu
       // لا نحتاج لإعادة تحميل البيانات لأنها محملة مسبقاً
     }
   });
+
+  // تعديل حساب ملخص الطلب ليشمل الخدمة
+  const calculateOrderSummary = useCallback((): OrderSummaryType => {
+    const subtotal = orderItems.reduce((sum, item) => sum + item.totalPrice, 0);
+    const serviceCharge = getServiceCharge();
+    const service = (subtotal * serviceCharge) / 100;
+    const discountPercentage = 0;
+    const discount = (subtotal * discountPercentage) / 100;
+    const tax = 0;
+    
+    // حساب المجاميع بالترتيب الصحيح
+    const totalAfterDiscount = subtotal - discount;
+    const totalAfterTaxAndService = totalAfterDiscount + tax + service + deliveryCharge;
+    
+    return {
+      items: orderItems,
+      subtotal,
+      discount,
+      tax,
+      service,
+      total: totalAfterTaxAndService,
+      totalAfterDiscount,
+      totalAfterTaxAndService
+    };
+  }, [orderItems, getServiceCharge, deliveryCharge]);
+
+  // واستخدمه في كل مرة:
+  const orderSummary = calculateOrderSummary();
+
+  // معالج نقل الطلب لطاولة جديدة
+  const handleMoveToTable = useCallback(async (selection: TableSelection) => {
+    try {
+      // فى حالة عدم وجود فاتورة حالية، فقط قم باختيار الطاولة الجديدة
+      if (!currentInvoiceId) {
+        selectTable(selection);
+        setShowTablePopup(false);
+        return;
+      }
+      // حساب ملخص الطلب الحالى
+      const summary = calculateOrderSummary();
+      await saveInvoice(
+        summary,
+        selectedOrderType,
+        [],
+        currentInvoiceStatus,
+        {
+          isEditMode: true,
+          invoiceId: currentInvoiceId,
+          selectedCustomer,
+          selectedAddress,
+          selectedDeliveryCompany,
+          selectedTable: selection,
+          servicePercentage: selection.section.serviceCharge || 0,
+          taxPercentage: 0,
+          discountPercentage: 0,
+          notes: undefined
+        }
+      );
+      // تحديث الطاولة المختارة فى الواجهة
+      selectTable(selection);
+      showSuccess('تم نقل الطلب إلى الطاولة الجديدة بنجاح');
+    } catch (error) {
+      console.error('❌ خطأ فى نقل الطلب للطاولة الجديدة:', error);
+      showError('فشل نقل الطلب للطاولة الجديدة');
+    } finally {
+      setShowTablePopup(false);
+    }
+  }, [currentInvoiceId, calculateOrderSummary, selectedOrderType, currentInvoiceStatus, selectedCustomer, selectedAddress, selectedDeliveryCompany, selectTable, saveInvoice, showSuccess, showError]);
 
   // إضافة معالج double click
   const handleOrderItemDoubleClick = useCallback((item: OrderItem) => {
@@ -402,13 +509,16 @@ const [currentBackInvoiceCode, setCurrentBackInvoiceCode] = useState<string | nu
   }, [addToOrder, showWarning, hasProductOptions, selectedOrderType, canAddProduct]);
 
   // إضافة معالج اختيار الطاولة
-const handleTableSelect = useCallback((selection: TableSelection) => {
-  selectTable(selection);
-  setShowTablePopup(false);
-}, [selectTable]);
-
-
-
+  const handleTableSelect = useCallback((selection: TableSelection) => {
+    if (moveTableMode) {
+      // إذا كنا فى وضع النقل، قم بنقل الطلب للطاولة الجديدة
+      handleMoveToTable(selection);
+      setMoveTableMode(false);
+    } else {
+      selectTable(selection);
+      setShowTablePopup(false);
+    }
+  }, [moveTableMode, handleMoveToTable, selectTable]);
 
   // إضافة معالج فتح popup الطاولة
   const handleTableClick = useCallback(() => {
@@ -453,148 +563,94 @@ const handleTableSelect = useCallback((selection: TableSelection) => {
     setSelectedPriceForOptions(null);
   }, [selectedProductForOptions, selectedPriceForOptions, addToOrder]);
 
-  // تعديل حساب ملخص الطلب ليشمل الخدمة
-const calculateOrderSummary = useCallback((): OrderSummaryType => {
-  console.log('🔄 حساب orderSummary مع:', orderItems.length, 'عنصر');
-  
-  orderItems.forEach((item, index) => {
-    console.log(`   ${index + 1}: ${item.product.nameArabic} (الكمية: ${item.quantity}) - ID: ${item.id}`);
-  });
-  
-  const subtotal = orderItems.reduce((sum, item) => sum + item.totalPrice, 0);
-  const serviceCharge = getServiceCharge();
-  const service = (subtotal * serviceCharge) / 100;
-  const discountPercentage = 0;
-  const discount = (subtotal * discountPercentage) / 100;
-  const tax = 0;
-  
-  // حساب المجاميع بالترتيب الصحيح
-  const totalAfterDiscount = subtotal - discount;
-  const totalAfterTaxAndService = totalAfterDiscount + tax + service + deliveryCharge;
-  
-  const summary = {
-    items: orderItems,
-    subtotal,
-    discount,
-    tax,
-    service,
-    total: totalAfterTaxAndService,
-    totalAfterDiscount,
-    totalAfterTaxAndService
-  };
-  
-  console.log('📊 orderSummary محسوب:', {
-    itemsCount: summary.items.length,
-    subtotal: summary.subtotal,
-    total: summary.total
-  });
-  
-  return summary;
-}, [orderItems, getServiceCharge, deliveryCharge]);
+  // معالج عرض الطلب من popup
+  const handleViewOrderFromPopup = useCallback(async (invoiceData: any) => {
+    try {
+      setIsLoadingOrder(true);
+      setCurrentBackInvoiceCode(invoiceData.backInvoiceCode || null);
 
-// واستخدمه في كل مرة:
-const orderSummary = calculateOrderSummary();
+      const convertedData = await InvoiceDataConverter.convertInvoiceForEdit(invoiceData);
+      setOrderItems(convertedData.orderItems);
+      setDeliveryCharge(convertedData.deliveryCharge);
+      setCurrentInvoiceId(invoiceData.id);
 
-// معالج عرض الطلب من popup
-const handleViewOrderFromPopup = useCallback(async (invoiceData: any) => {
-  console.log('🔄 بدء معالجة الطلب للعرض:', invoiceData);
-  
-  try {
-    setIsLoadingOrder(true); // ✅ استبدل setLoading بـ setIsLoadingOrder
-        setCurrentBackInvoiceCode(invoiceData.backInvoiceCode || null); // ✅ إضافة جديدة
+      if (convertedData.selectedCustomer) {
+        setSelectedCustomer(convertedData.selectedCustomer);
+        setCustomerName(`${convertedData.selectedCustomer.name} - ${convertedData.selectedCustomer.phone1}`);
+        if (convertedData.selectedCustomer.addresses.length > 0) {
+          setSelectedAddress(convertedData.selectedCustomer.addresses[0]);
+        }
+      }
 
-    // استخدام المحول الجديد
-    const convertedData = await InvoiceDataConverter.convertInvoiceForEdit(invoiceData);
-    
-    // تطبيق البيانات على الواجهة
-    setOrderItems(convertedData.orderItems);
-    setDeliveryCharge(convertedData.deliveryCharge);
-    setCurrentInvoiceId(invoiceData.id);
-
-     // تطبيق بيانات العميل
-    if (convertedData.selectedCustomer) {
-      setSelectedCustomer(convertedData.selectedCustomer);
-      setCustomerName(`${convertedData.selectedCustomer.name} - ${convertedData.selectedCustomer.phone1}`);
+      const orderTypeMap: { [key: number]: string } = {
+        1: 'Takeaway',
+        2: 'Dine-in', 
+        3: 'Delivery',
+        4: 'Pickup',
+        5: 'DeliveryCompany'
+      };
       
-      // تطبيق أول عنوان إذا كان متوفر
-      if (convertedData.selectedCustomer.addresses.length > 0) {
-        setSelectedAddress(convertedData.selectedCustomer.addresses[0]);
+      const newOrderType = orderTypeMap[invoiceData.invoiceType] || 'Takeaway';
+      setSelectedOrderType(newOrderType);
+      
+      if (invoiceData.invoiceType === 5 && invoiceData.deliveryCompanyId) {
+        const company = deliveryCompanies.find(c => c.id === invoiceData.deliveryCompanyId);
+        if (company) {
+          setSelectedDeliveryCompany(company);
+        }
       }
-    }
-    
-    // تطبيق نوع الطلب
-    const orderTypeMap: { [key: number]: string } = {
-      1: 'Takeaway',
-      2: 'Dine-in', 
-      3: 'Delivery',
-      4: 'Pickup',
-      5: 'DeliveryCompany'
-    };
-    
-    const newOrderType = orderTypeMap[invoiceData.invoiceType] || 'Takeaway';
-    setSelectedOrderType(newOrderType);
-    
-    // إذا كان نوع الطلب شركة توصيل، تحديد الشركة المحددة
-    if (invoiceData.invoiceType === 5 && invoiceData.deliveryCompanyId) {
-      const company = deliveryCompanies.find(c => c.id === invoiceData.deliveryCompanyId);
-      if (company) {
-        setSelectedDeliveryCompany(company);
+      
+      setIsEditMode(true);
+      setCurrentInvoiceId(invoiceData.id);
+      if (typeof invoiceData.invoiceStatus === 'number') {
+        setCurrentInvoiceStatus(invoiceData.invoiceStatus);
+      } else {
+        setCurrentInvoiceStatus(1);
       }
+    } catch (error) {
+      console.error('❌ خطأ في تحويل بيانات الطلب:', error);
+      showError('فشل في تحميل بيانات الطلب للتعديل');
+    } finally {
+      setIsLoadingOrder(false);
     }
+  }, [setOrderItems, setSelectedCustomer, setCustomerName, setSelectedAddress, setSelectedOrderType, setIsEditMode, setCurrentInvoiceId, showError]);
+
+  const handleViewTableOrder = useCallback((invoiceData: any) => {
+    setShowTablePopup(false);
     
-    // تفعيل وضع التعديل
-    setIsEditMode(true);
-    setCurrentInvoiceId(invoiceData.id);
-    
-    console.log('✅ تم تطبيق بيانات الطلب بنجاح');
-    
-  } catch (error) {
-    console.error('❌ خطأ في تحويل بيانات الطلب:', error);
-    showError('فشل في تحميل بيانات الطلب للتعديل');
-  } finally {
-    setIsLoadingOrder(false); // ✅ استبدل setLoading بـ setIsLoadingOrder
-  }
-}, [setOrderItems, setSelectedCustomer, setCustomerName, setSelectedAddress, 
-    setSelectedOrderType, setIsEditMode, setCurrentInvoiceId, showError]);
+    if (invoiceData.isNewInvoice) {
+      setOrderItems([]);
+      setIsEditMode(false);
+      setCurrentInvoiceId(null);
+      setSelectedCustomer(null);
+      setSelectedAddress(null);
+      setCustomerName('');
+      setCurrentInvoiceStatus(1);
+      return;
+    }
 
+    if (invoiceData.isMultiInvoice && invoiceData.invoices) {
+      setInvoiceOptions(invoiceData.invoices);
+      setShowInvoiceSelectPopup(true);
+      return;
+    }
+    handleViewOrderFromPopup(invoiceData);
+  }, [handleViewOrderFromPopup]);
 
-    const handleViewTableOrder = useCallback((invoiceData: any) => {
-  setShowTablePopup(false);
-  
-  // إذا كانت إشارة لبدء فاتورة جديدة
-  if (invoiceData.isNewInvoice) {
-    // مسح الطلب الحالي وبدء فاتورة جديدة
-    setOrderItems([]);
-    setIsEditMode(false);
-    setCurrentInvoiceId(null);
-    setSelectedCustomer(null);
-    setSelectedAddress(null);
-    setCustomerName('');
-    console.log('✅ تم بدء فاتورة جديدة للطاولة');
-    return;
-  }
-  
-  // استخدام نفس معالج عرض الطلب الموجود
-  handleViewOrderFromPopup(invoiceData);
-}, [handleViewOrderFromPopup]);
+  useEffect(() => {
+    const allProducts = getProducts(false);
+    allProducts.forEach(product => {
+      InvoiceDataConverter.cacheProduct(product);
+    });
+  }, [getProducts]);
 
-    useEffect(() => {
-  // حفظ المنتجات المحملة في كاش المحول
-  const allProducts = getProducts(false); // المنتجات العادية
-  allProducts.forEach(product => {
-    InvoiceDataConverter.cacheProduct(product);
-  });
-}, [getProducts]);
-
-// أضف في معالج اختيار العميل
-const handleCustomerSelect = useCallback((customer: Customer, address: CustomerAddress) => {
-  // حفظ العميل في الكاش
-  InvoiceDataConverter.cacheCustomer(customer);
-  
-  setSelectedCustomer(customer);
-  setSelectedAddress(address);
-  setCustomerName(`${customer.name} - ${customer.phone1}`);
-}, []);
+  // أضف في معالج اختيار العميل
+  const handleCustomerSelect = useCallback((customer: Customer, address: CustomerAddress) => {
+    InvoiceDataConverter.cacheCustomer(customer);
+    setSelectedCustomer(customer);
+    setSelectedAddress(address);
+    setCustomerName(`${customer.name} - ${customer.phone1}`);
+  }, []);
 
   // حذف منتج من الطلب
   const removeOrderItem = useCallback((itemId: string) => {
@@ -654,23 +710,15 @@ const handleCustomerSelect = useCallback((customer: Customer, address: CustomerA
   // ✅ إصلاح دعم لوحة المفاتيح العادية مع حل خطأ contentEditable
   useEffect(() => {
     const handleKeyPress = (event: KeyboardEvent) => {
-      // التحقق من عدم وجود popup مفتوح
       const isAnyPopupOpen = showPricePopup || showOptionsPopup || showOrderDetailsPopup || showTablePopup;
-      
-      // التحقق من عدم وجود input مركز عليه - مع إصلاح خطأ contentEditable
       const activeElement = document.activeElement;
       const isInputFocused = activeElement?.tagName === 'INPUT' || 
                             activeElement?.tagName === 'TEXTAREA' || 
                             (activeElement as HTMLElement)?.contentEditable === 'true';
-      
-      // إذا كان هناك popup مفتوح أو input مركز عليه، لا نتدخل
       if (isAnyPopupOpen || isInputFocused) {
         return;
       }
-      
       const key = event.key;
-      
-      // الأرقام والنقطة العشرية
       if (/^[0-9]$/.test(key)) {
         event.preventDefault();
         handleNumberClick(key);
@@ -679,7 +727,6 @@ const handleCustomerSelect = useCallback((customer: Customer, address: CustomerA
         handleNumberClick('.');
       } else if (key === 'Backspace') {
         event.preventDefault();
-        // حذف آخر رقم
         if (keypadValue.length > 1) {
           const newValue = keypadValue.slice(0, -1);
           if (validateKeypadInput(newValue)) {
@@ -693,22 +740,11 @@ const handleCustomerSelect = useCallback((customer: Customer, address: CustomerA
         handleClearClick();
       } else if (key === 'Enter') {
         event.preventDefault();
-        // يمكن إضافة وظيفة معينة عند الضغط على Enter
       }
     };
-
     document.addEventListener('keydown', handleKeyPress);
     return () => document.removeEventListener('keydown', handleKeyPress);
-  }, [
-    keypadValue, 
-    handleNumberClick, 
-    handleClearClick, 
-    validateKeypadInput,
-    showPricePopup,
-    showOptionsPopup,
-    showOrderDetailsPopup,
-    showTablePopup
-  ]);
+  }, [keypadValue, handleNumberClick, handleClearClick, validateKeypadInput, showPricePopup, showOptionsPopup, showOrderDetailsPopup, showTablePopup]);
 
   const handleChipClick = useCallback((chipType: string) => {
     setSelectedChips(prev => 
@@ -718,48 +754,30 @@ const handleCustomerSelect = useCallback((customer: Customer, address: CustomerA
     );
   }, []);
 
+  const handleResetOrder = useCallback(() => {
+    setOrderItems([]);
+    setSelectedOrderItemId(null);
+    setCustomerName('');
+    setKeypadValue('0');
+    setSelectedCustomer(null);
+    setSelectedAddress(null);
+    setDeliveryCharge(0);
+    setIsEditMode(false);
+    setCurrentInvoiceId(null);
+    clearSelectedTable();
+    setIsExtraMode(false);
+    setIsWithoutMode(false);
+    setSelectedChips([]);
+    handleBackToMainProducts();
+    setSearchQuery('');
+    console.log('Order reset successfully');
+  }, [handleBackToMainProducts, clearSelectedTable]);
 
-
-
-
-const handleResetOrder = useCallback(() => {
-  setOrderItems([]);
-  setSelectedOrderItemId(null);
-  setCustomerName('');
-  setKeypadValue('0');
-  
-  setSelectedCustomer(null);
-  setSelectedAddress(null);
-  setDeliveryCharge(0);
-  
-  // إعادة تعيين وضع التعديل
-  setIsEditMode(false);
-  setCurrentInvoiceId(null);
-  
-  clearSelectedTable();
-
-  setIsExtraMode(false);
-  setIsWithoutMode(false);
-  setSelectedChips([]);
-  
-  handleBackToMainProducts();
-  setSearchQuery('');
-  
-  // تنظيف الكاش عند الحاجة (اختياري)
-  // InvoiceDataConverter.clearCache();
-  
-  console.log('Order reset successfully');
-}, [handleBackToMainProducts, clearSelectedTable]);
-
-    const handleOrderCompleted = useCallback((result: any) => {
-  console.log('تم إنهاء الطلب بنجاح:', result);
-  
-  // إعادة تعيين جميع المتغيرات كما لو تم الضغط على Reset
-  handleResetOrder();
-  
-  // يمكنك إضافة أي منطق إضافي هنا مثل عرض رسالة نجاح
-  console.log('تم إعادة تعيين النظام بنجاح');
-}, [handleResetOrder]);
+  const handleOrderCompleted = useCallback((result: any) => {
+    console.log('تم إنهاء الطلب بنجاح:', result);
+    handleResetOrder();
+    console.log('تم إعادة تعيين النظام بنجاح');
+  }, [handleResetOrder]);
 
   // عرض حالة التحميل
   if (loading) {
@@ -780,7 +798,6 @@ const handleResetOrder = useCallback(() => {
     );
   }
 
-
   return (
     <div className="pos-system" style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
       <Header
@@ -794,17 +811,16 @@ const handleResetOrder = useCallback(() => {
         onDeliveryCompanySelect={setSelectedDeliveryCompany}
         selectedCustomer={selectedCustomer}
         selectedAddress={selectedAddress}
-        onViewOrder={handleViewOrderFromPopup} // إضافة هذا
-          customerName={customerName}
-  onCustomerNameChange={setCustomerName}
-  onCustomerSelect={handleCustomerSelect}
-
+        onViewOrder={handleViewOrderFromPopup}
+        customerName={customerName}
+        onCustomerNameChange={setCustomerName}
+        onCustomerSelect={handleCustomerSelect}
+        onMoveTable={handleToolsMoveTable}
+        onSplitReceipt={handleToolsSplitReceipt}
+        hasCurrentOrder={!!currentInvoiceId}
       />
-
       <main className="main-content">
         <section className="products-section">
-
-
           <ActionButtons
             selectedChips={selectedChips}
             onChipClick={handleChipClick}
@@ -816,7 +832,6 @@ const handleResetOrder = useCallback(() => {
             onSearchChange={setSearchQuery}
             hasSelectedOrderItem={true}
           />
-
           <div className="product-grid">
             {displayedProducts.map((product) => (
               <ProductCard
@@ -827,7 +842,6 @@ const handleResetOrder = useCallback(() => {
             ))}
           </div>
         </section>
-
         <aside className="categories-sidebar">
           <div className="categories-list">
             {isAdditionMode && (
@@ -839,7 +853,6 @@ const handleResetOrder = useCallback(() => {
                 <span>رجوع للمنتجات الأساسية</span>
               </button>
             )}
-            
             {showingChildren && (
               <button
                 onClick={handleBackToParent}
@@ -849,7 +862,6 @@ const handleResetOrder = useCallback(() => {
                 <span>رجوع</span>
               </button>
             )}
-            
             {categories.map((category) => (
               <button
                 key={category.id}
@@ -862,53 +874,46 @@ const handleResetOrder = useCallback(() => {
             ))}
           </div>
         </aside>
-
-      <div className="order-section">
-        <div className="order-summary-container">
-          <OrderSummary
-            orderSummary={orderSummary}
-            customerName={customerName}
-            onCustomerNameChange={setCustomerName}
-            onRemoveOrderItem={removeOrderItem}
-            onRemoveSubItem={handleRemoveSubItem}
-            selectedOrderItemId={selectedOrderItemId}
-            onOrderItemSelect={handleOrderItemSelect}
-            onOrderItemDoubleClick={handleOrderItemDoubleClick}
-            selectedCustomer={selectedCustomer}
-            selectedAddress={selectedAddress}
-            onCustomerSelect={handleCustomerSelect}
-            orderType={selectedOrderType}
-            onDeliveryChargeChange={handleDeliveryChargeChange}
-            readOnly={false}
-            onOrderCompleted={handleOrderCompleted}
-            selectedTable={selectedTable}
-            selectedDeliveryCompany={selectedDeliveryCompany}
-            isEditMode={isEditMode}
-            currentInvoiceId={currentInvoiceId}
-            currentBackInvoiceCode={currentBackInvoiceCode}
-          />
+        <div className="order-section">
+          <div className="order-summary-container">
+            <OrderSummary
+              orderSummary={orderSummary}
+              customerName={customerName}
+              onCustomerNameChange={setCustomerName}
+              onRemoveOrderItem={removeOrderItem}
+              onRemoveSubItem={handleRemoveSubItem}
+              selectedOrderItemId={selectedOrderItemId}
+              onOrderItemSelect={handleOrderItemSelect}
+              onOrderItemDoubleClick={handleOrderItemDoubleClick}
+              selectedCustomer={selectedCustomer}
+              selectedAddress={selectedAddress}
+              onCustomerSelect={handleCustomerSelect}
+              orderType={selectedOrderType}
+              onDeliveryChargeChange={handleDeliveryChargeChange}
+              readOnly={false}
+              onOrderCompleted={handleOrderCompleted}
+              selectedTable={selectedTable}
+              selectedDeliveryCompany={selectedDeliveryCompany}
+              isEditMode={isEditMode}
+              currentInvoiceId={currentInvoiceId}
+              currentBackInvoiceCode={currentBackInvoiceCode}
+            />
+          </div>
+          <div className="number-pad-section">
+            <div className="keypad-grid">
+              {['7', '8', '9', '4', '5', '6', '1', '2', '3', 'C', '0', '.'].map((key) => (
+                <button 
+                  key={key}
+                  className={`keypad-key ${key === 'C' ? 'clear-key' : ''}`}
+                  onClick={() => key === 'C' ? handleClearClick() : handleNumberClick(key)}
+                >
+                  {key === 'C' ? `C (${keypadValue})` : key}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
-        
-        {/* ✅ الـ numberpad في مكانها الجديد */}
-        <div className="number-pad-section">
-          {/* <div className="keypad-display">
-            {keypadValue}
-          </div> */}
-<div className="keypad-grid">
-  {['7', '8', '9', '4', '5', '6', '1', '2', '3', 'C', '0', '.'].map((key) => (
-    <button 
-      key={key}
-      className={`keypad-key ${key === 'C' ? 'clear-key' : ''}`}
-      onClick={() => key === 'C' ? handleClearClick() : handleNumberClick(key)}
-    >
-      {key === 'C' ? `C (${keypadValue})` : key}
-    </button>
-  ))}
-</div>
-        </div>
-      </div>
-    </main>
-
+      </main>
       <PriceSelectionPopup
         product={selectedProduct}
         quantity={getNumericValue()}
@@ -919,7 +924,6 @@ const handleResetOrder = useCallback(() => {
         }}
         onSelectPrice={handlePriceSelect}
       />
-
       <ProductOptionsPopup
         product={selectedProductForOptions}
         selectedPrice={selectedPriceForOptions}
@@ -932,7 +936,6 @@ const handleResetOrder = useCallback(() => {
         }}
         onComplete={handleOptionsComplete}
       />
-
       <OrderItemDetailsPopup
         orderItem={selectedOrderItemForDetails}
         isOpen={showOrderDetailsPopup}
@@ -943,19 +946,39 @@ const handleResetOrder = useCallback(() => {
         onUpdateItem={handleUpdateOrderItem}
         onRemoveItem={removeOrderItem}
       />
-
-<TableSelectionPopup
-  isOpen={showTablePopup}
-  onClose={() => setShowTablePopup(false)}
-  onSelectTable={handleTableSelect}
-  onViewOrder={handleViewTableOrder} // إضافة جديدة
-  tableSections={tableSections}
-/>
-
-      
+      <TableSelectionPopup
+        isOpen={showTablePopup}
+        onClose={() => setShowTablePopup(false)}
+        onSelectTable={handleTableSelect}
+        onViewOrder={handleViewTableOrder}
+        tableSections={tableSections}
+      />
+      <InvoiceSelectionPopup
+        isOpen={showInvoiceSelectPopup}
+        invoices={invoiceOptions as any}
+        onSelect={(invoice) => {
+          setShowInvoiceSelectPopup(false);
+          handleViewOrderFromPopup(invoice);
+        }}
+        onClose={() => setShowInvoiceSelectPopup(false)}
+      />
+      <SplitReceiptPopup
+        isOpen={showSplitPopup}
+        onClose={() => setShowSplitPopup(false)}
+        orderItems={orderItems}
+        orderType={selectedOrderType}
+        currentInvoiceId={currentInvoiceId}
+        currentInvoiceStatus={currentInvoiceStatus}
+        selectedTable={selectedTable}
+        selectedCustomer={selectedCustomer}
+        selectedAddress={selectedAddress}
+        selectedDeliveryCompany={selectedDeliveryCompany}
+        onSplitComplete={(remainingItems) => {
+          setOrderItems(remainingItems);
+        }}
+      />
     </div>
   );
 };
 
 export default PosSystem;
-

@@ -95,8 +95,14 @@ useEffect(() => {
     setSelectedSection(section);
   };
 
+  // احصل على جميع الفواتير المفتوحة لطاولة معينة
+  const getTableInvoices = (tableId: string) => {
+    return unclosedTables.filter(invoice => invoice.tableDTO?.id === tableId);
+  };
+
+  // العودة لأول فاتورة فقط للحفاظ على التوافق مع السلوك القديم
   const getTableInvoice = (tableId: string) => {
-    return unclosedTables.find(invoice => invoice.tableDTO?.id === tableId);
+    return getTableInvoices(tableId)[0];
   };
 
   const isTableOccupied = (tableId: string) => {
@@ -106,27 +112,33 @@ useEffect(() => {
 const handleTableClick = (table: Table) => {
   if (!selectedSection) return;
 
-  const invoice = getTableInvoice(table.id || '');
-  
+  // الحصول على جميع الفواتير المفتوحة لهذه الطاولة
+  const invoicesForTable = getTableInvoices(table.id || '');
+
+  // حدد الطاولة في كل الأحوال
+  onSelectTable({
+    section: selectedSection,
+    table: table
+  });
+
+  // إذا كانت هناك أكثر من فاتورة على الطاولة، اطلب من المستخدم اختيار إحداها
+  if (invoicesForTable && invoicesForTable.length > 1) {
+    if (onViewOrder) {
+      onViewOrder({ isMultiInvoice: true, invoices: invoicesForTable });
+    }
+    return;
+  }
+
+  // الحصول على أول فاتورة (إن وجدت)
+  const invoice = invoicesForTable[0];
+
   if (invoice) {
-    // ✅ إذا كانت الطاولة مشغولة: اختارها أولاً ثم اعرض الطلب
-    onSelectTable({
-      section: selectedSection,
-      table: table
-    });
-    
-    // ثم اعرض محتويات الطلب
+    // اعرض محتويات الطلب الوحيد
     if (onViewOrder) {
       onViewOrder(invoice);
     }
   } else {
-    // إذا كانت الطاولة فارغة، اختيارها فقط وبدء فاتورة جديدة
-    onSelectTable({
-      section: selectedSection,
-      table: table
-    });
-    
-    // إشارة لبدء فاتورة جديدة
+    // إذا كانت الطاولة فارغة، إشارة لبدء فاتورة جديدة
     if (onViewOrder) {
       onViewOrder({ isNewInvoice: true });
     }

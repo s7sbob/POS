@@ -29,6 +29,22 @@ interface HeaderProps {
   customerName: string;
   onCustomerNameChange: (name: string) => void;
   onCustomerSelect: (customer: Customer, address: CustomerAddress) => void;
+
+  /**
+   * Callback executed when the user chooses to move the current order to another table.
+   * Only provided when the POS is in Dine‑in mode and there is an active order.
+   */
+  onMoveTable?: () => void;
+  /**
+   * Callback executed when the user chooses to split the current check into multiple receipts.
+   * Only provided when the POS is in Dine‑in mode and there is an active order.
+   */
+  onSplitReceipt?: () => void;
+  /**
+   * Indicates whether there is an active order on the current table. When true and
+   * the order type is “Dine‑in”, a Tools menu will be displayed in the header.
+   */
+  hasCurrentOrder?: boolean;
 }
 
 const Header: React.FC<HeaderProps> = ({ 
@@ -45,14 +61,22 @@ const Header: React.FC<HeaderProps> = ({
   onViewOrder,
   customerName,
   onCustomerNameChange,
-  onCustomerSelect
+  onCustomerSelect,
+  onMoveTable,
+  onSplitReceipt,
+  hasCurrentOrder
 }) => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  // Ref for the tools menu container to detect outside clicks
+  const toolsRef = useRef<HTMLDivElement>(null);
   const [showTodayOrders, setShowTodayOrders] = useState(false);
   const [showDeliveryManagement, setShowDeliveryManagement] = useState(false);
+
+  // State to control the visibility of the tools dropdown
+  const [isToolsOpen, setIsToolsOpen] = useState(false);
 
   // ✅ States لإدارة Customer Search
   const [showCustomerSearch, setShowCustomerSearch] = useState(!selectedCustomer);
@@ -86,6 +110,23 @@ const Header: React.FC<HeaderProps> = ({
       setInputHasFocus(false);
     }
   }, [selectedCustomer]);
+
+  // Close the tools dropdown when clicking anywhere outside of it
+  useEffect(() => {
+    if (!isToolsOpen) return;
+    const handleOutsideClick = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      // Close the dropdown if the click is outside the dropdown container
+      // If the click is not inside the tools container, close the dropdown
+      if (toolsRef.current && !toolsRef.current.contains(target)) {
+        setIsToolsOpen(false);
+      }
+    };
+    document.addEventListener('click', handleOutsideClick);
+    return () => {
+      document.removeEventListener('click', handleOutsideClick);
+    };
+  }, [isToolsOpen]);
 
   // ✅ دالة البحث
   const searchCustomers = useCallback(async (query: string): Promise<Customer[]> => {
@@ -660,6 +701,85 @@ const Header: React.FC<HeaderProps> = ({
               <img src="/images/img_delete_01.svg" alt="Void" />
               <span>{t('pos.newSales.header.void')}</span>
             </a>
+
+            {/* أدوات: تظهر فقط فى حالة Dine‑in مع وجود طلب حالي */}
+            {selectedOrderType === 'Dine-in' && hasCurrentOrder && (
+              <div ref={toolsRef} className="tools-container" style={{ position: 'relative' }}>
+                <button
+                  className="nav-item"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setIsToolsOpen(!isToolsOpen);
+                  }}
+                  title="أدوات"
+                >
+                  <img src="/images/img_menu_01.svg" alt="Tools" />
+                  <span>أدوات</span>
+                </button>
+                {isToolsOpen && (
+                  <div
+                    className="tools-dropdown"
+                    style={{
+                      position: 'absolute',
+                      top: '100%',
+                      right: 0,
+                      background: '#ffffff',
+                      border: '1px solid #e9ecef',
+                      borderRadius: '6px',
+                      padding: '4px 0',
+                      boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+                      zIndex: 1000,
+                      minWidth: '140px',
+                    }}
+                  >
+                    <button
+                      className="tools-option"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setIsToolsOpen(false);
+                        onMoveTable && onMoveTable();
+                      }}
+                      style={{
+                        display: 'block',
+                        width: '100%',
+                        padding: '8px 16px',
+                        background: 'transparent',
+                        border: 'none',
+                        textAlign: 'right',
+                        cursor: 'pointer',
+                        fontSize: '14px',
+                        color: '#333',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      نقل ترابيزة
+                    </button>
+                    <button
+                      className="tools-option"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setIsToolsOpen(false);
+                        onSplitReceipt && onSplitReceipt();
+                      }}
+                      style={{
+                        display: 'block',
+                        width: '100%',
+                        padding: '8px 16px',
+                        background: 'transparent',
+                        border: 'none',
+                        textAlign: 'right',
+                        cursor: 'pointer',
+                        fontSize: '14px',
+                        color: '#333',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      فصل الشيك
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
 
             <button 
               className="order-type-display clickable" 

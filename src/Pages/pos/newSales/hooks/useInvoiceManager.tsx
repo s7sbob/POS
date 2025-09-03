@@ -279,7 +279,13 @@ const convertOrderItemToInvoiceItem = (
     servicePercentage: number = 0,
     taxPercentage: number = 0,
     discountPercentage: number = 0,
-    notes?: string
+    notes?: string,
+    /**
+     * Whether to preserve items from the original invoice that are not
+     * present in the current order summary.  Default true; pass false
+     * when you want to remove missing items (e.g. split receipt).
+     */
+    preserveMissingItems: boolean = true
   ): Promise<invoicesApi.InvoiceResponse> => {
     setIsSubmitting(true);
 
@@ -311,34 +317,35 @@ const convertOrderItemToInvoiceItem = (
         allItems.push(invoiceItem);
       });
 
-      // 2. إضافة العناصر الأصلية التي لم تعد موجودة في الواجهة
-      // هذا مهم للاحتفاظ بالعناصر التي لم يتم حذفها صراحة
-      originalInvoice.items?.forEach(originalItem => {
-        const itemKey = `${originalItem.productId}-${originalItem.productPriceId}`;
-        
-        // إذا لم يتم معالجة هذا العنصر من الواجهة، احتفظ به
-        if (!processedItemsKeys.has(itemKey)) {
-          const preservedItem: invoicesApi.CreateInvoiceItem = {
-            id: originalItem.id, // ✅ الـ ID الأصلي مهم جداً
-            ProductId: originalItem.productId,
-            ProductPriceId: originalItem.productPriceId,
-            Barcode: originalItem.barcode,
-            UnitId: originalItem.unitId,
-            PosPriceName: originalItem.posPriceName,
-            UnitFactor: originalItem.unitFactor,
-            Qty: originalItem.qty,
-            UnitPrice: originalItem.unitPrice,
-            UnitCost: originalItem.unitCost,
-            ItemDiscountPercentage: originalItem.itemDiscountPercentage,
-            ItemTaxPercentage: originalItem.itemTaxPercentage,
-            ServicePercentage: originalItem.servicePercentage,
-            WareHouseId: originalItem.wareHouseId,
-            Components: originalItem.components || [],
-          };
-          allItems.push(preservedItem);
-          console.log(`🔒 الاحتفاظ بعنصر أصلي: ${originalItem.id} (${originalItem.posPriceName})`);
-        }
-      });
+      // 2. إضافة العناصر الأصلية التي لم تعد موجودة في الواجهة (اختياري)
+      if (preserveMissingItems) {
+        originalInvoice.items?.forEach(originalItem => {
+          const itemKey = `${originalItem.productId}-${originalItem.productPriceId}`;
+          
+          // إذا لم يتم معالجة هذا العنصر من الواجهة، احتفظ به
+          if (!processedItemsKeys.has(itemKey)) {
+            const preservedItem: invoicesApi.CreateInvoiceItem = {
+              id: originalItem.id, // ✅ الـ ID الأصلي مهم جداً
+              ProductId: originalItem.productId,
+              ProductPriceId: originalItem.productPriceId,
+              Barcode: originalItem.barcode,
+              UnitId: originalItem.unitId,
+              PosPriceName: originalItem.posPriceName,
+              UnitFactor: originalItem.unitFactor,
+              Qty: originalItem.qty,
+              UnitPrice: originalItem.unitPrice,
+              UnitCost: originalItem.unitCost,
+              ItemDiscountPercentage: originalItem.itemDiscountPercentage,
+              ItemTaxPercentage: originalItem.itemTaxPercentage,
+              ServicePercentage: originalItem.servicePercentage,
+              WareHouseId: originalItem.wareHouseId,
+              Components: originalItem.components || [],
+            };
+            allItems.push(preservedItem);
+            console.log(`🔒 الاحتفاظ بعنصر أصلي: ${originalItem.id} (${originalItem.posPriceName})`);
+          }
+        });
+      }
 
       // ✅ معالجة المدفوعات بنفس الطريقة
       const allPayments = convertPaymentsToInvoicePayments(payments, originalInvoice.payments || []);
@@ -445,6 +452,13 @@ const convertOrderItemToInvoiceItem = (
   };
 
   // دالة موحدة للإنشاء والتحديث
+  /**
+   * Create or update an invoice.  When updating an existing invoice the default
+   * behaviour is to preserve any items/payments present on the original invoice
+   * that are not present in the current order summary.  For certain workflows
+   * (e.g. splitting a cheque) you may want to remove missing items entirely.
+   * To do so, pass preserveMissingItems: false in the options.
+   */
   const saveInvoice = async (
     orderSummary: OrderSummary,
     orderType: string,
@@ -461,6 +475,13 @@ const convertOrderItemToInvoiceItem = (
       taxPercentage?: number;
       discountPercentage?: number;
       notes?: string;
+      /**
+       * Determines whether missing items from the original invoice should be
+       * preserved in the update.  Defaults to true.  Set to false when you
+       * want the update to send only the items in orderSummary (e.g. when
+       * splitting a cheque and removing items from the original invoice).
+       */
+      preserveMissingItems?: boolean;
     } = {}
   ): Promise<invoicesApi.InvoiceResponse> => {
     const {
@@ -473,7 +494,8 @@ const convertOrderItemToInvoiceItem = (
       servicePercentage = 0,
       taxPercentage = 0,
       discountPercentage = 0,
-      notes
+      notes,
+      preserveMissingItems = true
     } = options;
 
     if (isEditMode && invoiceId) {
@@ -490,7 +512,8 @@ const convertOrderItemToInvoiceItem = (
         servicePercentage,
         taxPercentage,
         discountPercentage,
-        notes
+        notes,
+        preserveMissingItems
       );
     } else {
       return await createInvoice(

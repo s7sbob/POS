@@ -1,0 +1,74 @@
+/* أنماط البوب أب لاختيار الفاتورة */
+
+.popupOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.popupContainer {
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 20px;
+  max-width: 90%;
+  max-height: 80%;
+  overflow-y: auto;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.title {
+  margin-bottom: 16px;
+  font-size: 1.2rem;
+  font-weight: bold;
+  text-align: center;
+}
+
+.invoicesContainer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: center;
+}
+
+.invoiceCard {
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 12px 16px;
+  cursor: pointer;
+  min-width: 180px;
+  transition: transform 0.2s ease;
+  background-color: #f8f8f8;
+}
+
+.invoiceCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.invoiceCode,
+.invoiceStatus,
+.invoiceItemsCount {
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+}
+
+.closeButton {
+  margin-top: 16px;
+  padding: 8px 16px;
+  background-color: #e0e0e0;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.closeButton:hover {
+  background-color: #d0d0d0;
+}

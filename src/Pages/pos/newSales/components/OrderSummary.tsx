@@ -564,7 +564,9 @@ const handleDirectSave = useCallback(async (actionType: 'send' | 'print') => {
         servicePercentage: 0,
         taxPercentage: 0,
         discountPercentage: 0,
-        notes: customerName
+        notes: customerName,
+        // عند تعديل فاتورة موجودة يجب إزالة المنتجات المحذوفة
+        preserveMissingItems: !isEditMode ? true : false
       }
     );
     
@@ -630,7 +632,8 @@ const handleDirectPayment = useCallback(async (paymentType: 'cash' | 'visa') => 
         servicePercentage: 0,
         taxPercentage: 0,
         discountPercentage: 0,
-        notes: customerName
+        notes: customerName,
+        preserveMissingItems: !isEditMode ? true : false
       }
     );
     
