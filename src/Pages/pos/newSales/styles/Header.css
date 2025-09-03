@@ -1191,3 +1191,24 @@
     display: none;
   }
 }
+
+/* إضافة أنيميشن للـ Tools dropdown */
+@keyframes fadeInDown {
+  0% {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.tools-dropdown {
+  animation: fadeInDown 0.2s ease-out;
+}
+
+.tools-option-card:hover {
+  transform: translateY(-2px) !important;
+}
+

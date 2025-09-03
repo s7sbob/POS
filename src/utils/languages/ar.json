@@ -61,6 +61,22 @@
         "saveAndSelect": "حفظ واختيار",
         "addCustomer": "إضافة عميل"
       },
+      "split": {
+        "title": "تقسيم الكمية",
+        "originalQuantity": "الكمية الأصلية",
+        "unitPrice": "سعر الوحدة",
+        "totalPrice": "السعر الإجمالي",
+        "totalSplit": "إجمالي المقسم",
+        "remaining": "المتبقي",
+        "redistributeEqually": "إعادة توزيع بالتساوي",
+        "portions": "الأجزاء",
+        "portion": "الجزء",
+        "portionPrice": "سعر الجزء",
+        "notes": "ملاحظات",
+        "notesPlaceholder": "أضف ملاحظات للجزء...",
+        "addPortion": "إضافة جزء جديد",
+        "confirm": "تأكيد التقسيم"
+      },
       "actions": {
         "cancel": "إلغاء",
         "confirm": "تأكيد",
@@ -157,9 +173,13 @@
         "vip": "VIP"
       },
       "table": {
+        "selection": "اختيار الطاولة",
+        "sections": "الأقسام",
+        "available": "متاحة",
+        "occupied": "مشغولة",
+        "preparing": "قيد التحضير",
+        "delivering": "قيد التوصيل",
         "persons": "أشخاص",
-        "occupied": "مشغول",
-        "available": "متاح",
         "service": "خدمة"
       },
       "language": {
@@ -171,7 +191,7 @@
         "loadingData": "جاري تحميل البيانات...",
         "noOrdersToShow": "لا توجد طلبات لعرضها",
         "updatingTableStatus": "جاري تحديث حالة الطاولات...",
-        "loading": "جاري التحميل..."
+        "loading": "جاري التحميل..."        
       },
       "todayOrdersPopup": {
         "title": "طلبات اليوم ({{count}})",

@@ -1,4 +1,4 @@
-/* أنماط البوب أب لاختيار الفاتورة */
+/* src/Pages/pos/newSales/styles/InvoiceSelectionPopup.module.css */
 
 .popupOverlay {
   position: fixed;
@@ -6,69 +6,324 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.7);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 2000;
+  z-index: 1000;
+  padding: 20px; /* إضافة padding للأطراف */
 }
 
 .popupContainer {
-  background-color: #fff;
-  border-radius: 8px;
-  padding: 20px;
-  max-width: 90%;
-  max-height: 80%;
-  overflow-y: auto;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-}
-
-.title {
-  margin-bottom: 16px;
-  font-size: 1.2rem;
-  font-weight: bold;
-  text-align: center;
-}
-
-.invoicesContainer {
+  background: white;
+  border-radius: 16px;
+  width: 50%;
+  max-width: 800px; /* حد أقصى للعرض */
+  max-height: 85vh; /* حد أقصى للارتفاع - هذا المهم للـ scroll */
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
   display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  justify-content: center;
+  flex-direction: column; /* تنسيق عمودي */
+}
+
+.closeBtn {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  z-index: 1001;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  font-family: 'Cairo', sans-serif;
+}
+
+.closeBtn:hover {
+  background: #c82333;
+  transform: translateY(-2px);
+}
+
+.posSystem {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* منع overflow من الكونتينر الأساسي */
+}
+
+.mainContent {
+  flex: 1;
+  padding: 80px 30px 30px 30px;
+  overflow-y: auto; /* إضافة scroll هنا */
+  overflow-x: hidden;
+}
+
+/* تنسيق scrollbar مخصص للمظهر الأفضل */
+.mainContent::-webkit-scrollbar {
+  width: 8px;
+}
+
+.mainContent::-webkit-scrollbar-track {
+  background: #f8f9fa;
+  border-radius: 4px;
+}
+
+.mainContent::-webkit-scrollbar-thumb {
+  background: #dee2e6;
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+.mainContent::-webkit-scrollbar-thumb:hover {
+  background: #adb5bd;
+}
+
+/* Firefox scrollbar styling */
+.mainContent {
+  scrollbar-width: thin;
+  scrollbar-color: #dee2e6 #f8f9fa;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 30px;
+  flex-shrink: 0; /* منع انكماش العنوان */
+}
+
+.headerIcon {
+  color: #0373ed;
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.header h2 {
+  font-size: 24px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 8px 0;
+  font-family: 'Cairo', sans-serif;
+}
+
+.header p {
+  font-size: 14px;
+  color: #666;
+  margin: 0;
+  font-family: 'Cairo', sans-serif;
+}
+
+.invoicesGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+  margin-bottom: 20px; /* مساحة في الأسفل */
 }
 
 .invoiceCard {
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  padding: 12px 16px;
+  background: white;
+  border: 2px solid #e9ecef;
+  border-radius: 12px;
+  padding: 20px;
   cursor: pointer;
-  min-width: 180px;
-  transition: transform 0.2s ease;
-  background-color: #f8f8f8;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.invoiceCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(135deg, #0373ed 0%, #764ba2 100%);
 }
 
 .invoiceCard:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(3, 115, 237, 0.2);
+  border-color: #0373ed;
 }
 
-.invoiceCode,
-.invoiceStatus,
-.invoiceItemsCount {
-  margin-bottom: 8px;
-  font-size: 0.9rem;
+.invoiceHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
 }
 
-.closeButton {
-  margin-top: 16px;
-  padding: 8px 16px;
-  background-color: #e0e0e0;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.9rem;
+.invoiceCode {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  font-family: 'Cairo', sans-serif;
 }
 
-.closeButton:hover {
-  background-color: #d0d0d0;
+.statusBadge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-family: 'Cairo', sans-serif;
+}
+
+.statusBadge.preparing {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.statusBadge.delivering {
+  background: #d1ecf1;
+  color: #0c5460;
+}
+
+.statusBadge.completed {
+  background: #d4edda;
+  color: #155724;
+}
+
+.statusBadge.unknown {
+  background: #e2e3e5;
+  color: #383d41;
+}
+
+.invoiceContent {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.invoiceDetail {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid #f8f9fa;
+}
+
+.invoiceDetail:last-child {
+  border-bottom: none;
+}
+
+.detailLabel {
+  font-size: 12px;
+  color: #666;
+  font-family: 'Cairo', sans-serif;
+}
+
+.detailValue {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  font-family: 'Cairo', sans-serif;
+}
+
+.timeIcon {
+  font-size: 16px;
+  color: #666;
+  margin-left: 8px;
+}
+
+/* مؤشر وجود المزيد من المحتوى للتمرير */
+.scrollIndicator {
+  position: sticky;
+  bottom: 0;
+  background: linear-gradient(to top, rgba(255,255,255,0.9) 0%, transparent 100%);
+  height: 20px;
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .popupOverlay {
+    padding: 10px;
+  }
+  
+  .popupContainer {
+    width: 95%;
+    max-height: 90vh;
+  }
+  
+  .mainContent {
+    padding: 70px 20px 20px 20px;
+  }
+  
+  .invoicesGrid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .header h2 {
+    font-size: 20px;
+  }
+  
+  .headerIcon {
+    font-size: 36px;
+  }
+}
+
+@media (max-width: 480px) {
+  .popupContainer {
+    max-height: 95vh;
+  }
+  
+  .invoiceCard {
+    padding: 16px;
+  }
+  
+  .invoiceCode {
+    font-size: 16px;
+  }
+  
+  .statusBadge {
+    font-size: 9px;
+    padding: 3px 6px;
+  }
+  
+  .mainContent {
+    padding: 60px 15px 15px 15px;
+  }
+}
+
+/* إضافة styles للحالات الخاصة */
+.emptyState {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+  font-family: 'Cairo', sans-serif;
+}
+
+.loadingState {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px;
+  color: #666;
+  font-family: 'Cairo', sans-serif;
+}
+
+.loadingSpinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #0373ed;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-right: 10px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }

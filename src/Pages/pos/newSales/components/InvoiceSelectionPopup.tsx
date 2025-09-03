@@ -1,8 +1,9 @@
 // src/Pages/pos/newSales/components/InvoiceSelectionPopup.tsx
 import React from 'react';
-// لاحظ أن هذا الملف موجود داخل src/Pages/pos/newSales/components
-// لذلك يلزم أربعة مستويات صعود للوصول إلى src/utils
 import { Invoice } from '../../../../utils/api/pagesApi/invoicesApi';
+import CloseIcon from '@mui/icons-material/Close';
+import ReceiptIcon from '@mui/icons-material/Receipt';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import styles from '../styles/InvoiceSelectionPopup.module.css';
 
 interface InvoiceSelectionPopupProps {
@@ -12,10 +13,19 @@ interface InvoiceSelectionPopupProps {
   onClose: () => void;
 }
 
-/**
- * عرض بسيط لإختيار واحدة من عدة فواتير على نفس الطاولة.
- * إذا كانت الطاولة تحتوي على أكثر من فاتورة، يتم فتح هذا البوب أب للسماح للمستخدم باختيار أي فاتورة يريد فتحها.
- */
+const getStatusInfo = (status: number) => {
+  switch (status) {
+    case 1:
+      return { label: 'قيد التحضير', class: 'preparing' };
+    case 2:
+      return { label: 'قيد التسليم', class: 'delivering' };
+    case 3:
+      return { label: 'مكتمل', class: 'completed' };
+    default:
+      return { label: 'غير معروف', class: 'unknown' };
+  }
+};
+
 const InvoiceSelectionPopup: React.FC<InvoiceSelectionPopupProps> = ({
   isOpen,
   invoices,
@@ -27,21 +37,69 @@ const InvoiceSelectionPopup: React.FC<InvoiceSelectionPopupProps> = ({
   return (
     <div className={styles.popupOverlay} onClick={onClose}>
       <div className={styles.popupContainer} onClick={(e) => e.stopPropagation()}>
-        <h3 className={styles.title}>اختيار ريسيت</h3>
-        <div className={styles.invoicesContainer}>
-          {invoices.map((inv) => (
-            <div
-              key={inv.id}
-              className={styles.invoiceCard}
-              onClick={() => onSelect(inv)}
-            >
-              <div className={styles.invoiceCode}>كود: {inv.backInvoiceCode || inv.androidInvoiceCode || inv.id}</div>
-              <div className={styles.invoiceStatus}>الحالة: {inv.invoiceStatus === 1 ? 'قيد التحضير' : inv.invoiceStatus === 2 ? 'قيد التسليم' : inv.invoiceStatus === 3 ? 'مكتمل' : 'غير معروف'}</div>
-              <div className={styles.invoiceItemsCount}>عدد العناصر: {inv.items?.length || 0}</div>
+        <div className={styles.posSystem}>
+          {/* زر الإغلاق */}
+          <button className={styles.closeBtn} onClick={onClose}>
+            <CloseIcon />
+            <span>إغلاق</span>
+          </button>
+
+          <main className={styles.mainContent}>
+            <div className={styles.header}>
+              <ReceiptIcon className={styles.headerIcon} />
+              <h2>اختيار الريسيت</h2>
+              <p>يوجد عدة ريسيتات على هذه الطاولة، اختر الريسيت المطلوب</p>
             </div>
-          ))}
+
+            <div className={styles.invoicesGrid}>
+              {invoices.map((invoice) => {
+                const statusInfo = getStatusInfo(invoice.invoiceStatus);
+                
+                return (
+                  <div
+                    key={invoice.id}
+                    className={styles.invoiceCard}
+                    onClick={() => onSelect(invoice)}
+                  >
+                    <div className={styles.invoiceHeader}>
+                      <span className={styles.invoiceCode}>
+                        #{invoice.backInvoiceCode || invoice.androidInvoiceCode || invoice.id?.slice(-6)}
+                      </span>
+                      <span className={`${styles.statusBadge} ${styles[statusInfo.class]}`}>
+                        {statusInfo.label}
+                      </span>
+                    </div>
+                    
+                    <div className={styles.invoiceContent}>
+                      <div className={styles.invoiceDetail}>
+                        <span className={styles.detailLabel}>عدد العناصر</span>
+                        <span className={styles.detailValue}>{invoice.items?.length || 0}</span>
+                      </div>
+                      
+                      {invoice.totalAfterTaxAndService && (
+                        <div className={styles.invoiceDetail}>
+                          <span className={styles.detailLabel}>المبلغ الإجمالي</span>
+                          <span className={styles.detailValue}>
+                            {invoice.totalAfterTaxAndService.toFixed(2)} جنيه
+                          </span>
+                        </div>
+                      )}
+                      
+                      {invoice.createdAt && (
+                        <div className={styles.invoiceDetail}>
+                          <AccessTimeIcon className={styles.timeIcon} />
+                          <span className={styles.detailValue}>
+                            {new Date(invoice.createdAt).toLocaleString('ar-EG')}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </main>
         </div>
-        <button className={styles.closeButton} onClick={onClose}>إلغاء</button>
       </div>
     </div>
   );

@@ -712,6 +712,11 @@ const Header: React.FC<HeaderProps> = ({
                     setIsToolsOpen(!isToolsOpen);
                   }}
                   title="أدوات"
+                  style={{
+                    background: isToolsOpen ? '#f8f9ff' : 'transparent',
+                    borderRadius: '8px',
+                    transition: 'all 0.2s ease'
+                  }}
                 >
                   <img src="/images/img_menu_01.svg" alt="Tools" />
                   <span>أدوات</span>
@@ -725,57 +730,136 @@ const Header: React.FC<HeaderProps> = ({
                       right: 0,
                       background: '#ffffff',
                       border: '1px solid #e9ecef',
-                      borderRadius: '6px',
-                      padding: '4px 0',
-                      boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+                      borderRadius: '12px',
+                      padding: '8px',
+                      boxShadow: '0 8px 25px rgba(93, 135, 255, 0.15)',
                       zIndex: 1000,
-                      minWidth: '140px',
+                      minWidth: '200px',
+                      animation: 'fadeInDown 0.2s ease-out'
                     }}
                   >
-                    <button
-                      className="tools-option"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        setIsToolsOpen(false);
-                        onMoveTable && onMoveTable();
-                      }}
-                      style={{
-                        display: 'block',
-                        width: '100%',
-                        padding: '8px 16px',
-                        background: 'transparent',
-                        border: 'none',
-                        textAlign: 'right',
-                        cursor: 'pointer',
-                        fontSize: '14px',
-                        color: '#333',
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      نقل ترابيزة
-                    </button>
-                    <button
-                      className="tools-option"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        setIsToolsOpen(false);
-                        onSplitReceipt && onSplitReceipt();
-                      }}
-                      style={{
-                        display: 'block',
-                        width: '100%',
-                        padding: '8px 16px',
-                        background: 'transparent',
-                        border: 'none',
-                        textAlign: 'right',
-                        cursor: 'pointer',
-                        fontSize: '14px',
-                        color: '#333',
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      فصل الشيك
-                    </button>
+                    <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: '1fr 1fr',
+                      gap: '8px'
+                    }}>
+                      <div
+                        className="tools-option-card"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setIsToolsOpen(false);
+                          onMoveTable && onMoveTable();
+                        }}
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          padding: '16px 12px',
+                          background: '#f8f9fa',
+                          border: '1px solid #e9ecef',
+                          borderRadius: '8px',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                          textAlign: 'center'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = '#f8f9ff';
+                          e.currentTarget.style.borderColor = '#5D87FF';
+                          e.currentTarget.style.transform = 'translateY(-2px)';
+                          e.currentTarget.style.boxShadow = '0 4px 12px rgba(93, 135, 255, 0.15)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = '#f8f9fa';
+                          e.currentTarget.style.borderColor = '#e9ecef';
+                          e.currentTarget.style.transform = 'translateY(0)';
+                          e.currentTarget.style.boxShadow = 'none';
+                        }}
+                      >
+                        <div style={{
+                          width: '32px',
+                          height: '32px',
+                          backgroundColor: '#5D87FF',
+                          borderRadius: '50%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          marginBottom: '8px'
+                        }}>
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M2 17L12 22L22 17" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M2 12L12 17L22 12" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        </div>
+                        <span style={{
+                          fontSize: '12px',
+                          fontWeight: '500',
+                          color: '#2A3547',
+                          lineHeight: '1.2'
+                        }}>
+                          نقل ترابيزة
+                        </span>
+                      </div>
+
+                      <div
+                        className="tools-option-card"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setIsToolsOpen(false);
+                          onSplitReceipt && onSplitReceipt();
+                        }}
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          padding: '16px 12px',
+                          background: '#f8f9fa',
+                          border: '1px solid #e9ecef',
+                          borderRadius: '8px',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                          textAlign: 'center'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = '#f8f9ff';
+                          e.currentTarget.style.borderColor = '#5D87FF';
+                          e.currentTarget.style.transform = 'translateY(-2px)';
+                          e.currentTarget.style.boxShadow = '0 4px 12px rgba(93, 135, 255, 0.15)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = '#f8f9fa';
+                          e.currentTarget.style.borderColor = '#e9ecef';
+                          e.currentTarget.style.transform = 'translateY(0)';
+                          e.currentTarget.style.boxShadow = 'none';
+                        }}
+                      >
+                        <div style={{
+                          width: '32px',
+                          height: '32px',
+                          backgroundColor: '#28a745',
+                          borderRadius: '50%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          marginBottom: '8px'
+                        }}>
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M16 4H18C19.1046 4 20 4.89543 20 6V18C20 19.1046 19.1046 20 18 20H6C4.89543 20 4 19.1046 4 18V6C4 4.89543 4.89543 4 6 4H8" stroke="white" strokeWidth="2"/>
+                            <path d="M15 2H9C8.44772 2 8 2.44772 8 3V5C8 5.55228 8.44772 6 9 6H15C15.5523 6 16 5.55228 16 5V3C16 2.44772 15.5523 2 15 2Z" stroke="white" strokeWidth="2"/>
+                            <path d="M12 11V17" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+                            <path d="M9 14L12 11L15 14" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        </div>
+                        <span style={{
+                          fontSize: '12px',
+                          fontWeight: '500',
+                          color: '#2A3547',
+                          lineHeight: '1.2'
+                        }}>
+                          فصل الشيك
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>

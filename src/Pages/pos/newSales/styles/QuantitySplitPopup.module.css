@@ -1,0 +1,412 @@
+/* src/Pages/pos/newSales/styles/QuantitySplitPopup.module.css */
+
+/* نفس الأنماط الأساسية */
+.popupOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.popupContainer {
+  background: white;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 900px;
+  height: 85vh;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+.closeBtn {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  z-index: 1001;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  font-family: 'Cairo', sans-serif;
+}
+
+.closeBtn:hover {
+  background: #c82333;
+  transform: translateY(-2px);
+}
+
+.posSystem {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.mainContent {
+  flex: 1;
+  padding: 80px 20px 20px 20px;
+  overflow-y: auto;
+}
+
+/* معلومات المنتج */
+.productInfoSection {
+  margin-bottom: 30px;
+}
+
+.productCard {
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.productHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.productIcon {
+  color: #0373ed;
+  font-size: 24px;
+}
+
+.productHeader h2 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+  font-family: 'Cairo', sans-serif;
+}
+
+.productStats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.statItem {
+  text-align: center;
+}
+
+.statLabel {
+  display: block;
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 4px;
+  font-family: 'Cairo', sans-serif;
+}
+
+.statValue {
+  display: block;
+  font-size: 18px;
+  font-weight: 600;
+  color: #0373ed;
+  font-family: 'Cairo', sans-serif;
+}
+
+/* حالة التقسيم */
+.splitStatus {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+.statusInfo {
+  display: flex;
+  gap: 12px;
+}
+
+.statusChip {
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: 'Cairo', sans-serif;
+}
+
+.statusChip.success {
+  background: #d4edda;
+  color: #155724;
+}
+
+.statusChip.warning {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.statusChip.error {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.redistributeBtn {
+  background: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Cairo', sans-serif;
+}
+
+.redistributeBtn:hover {
+  background: #5a6268;
+}
+
+/* أجزاء التقسيم */
+.portionsSection {
+  margin-bottom: 20px;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.sectionHeader h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+  font-family: 'Cairo', sans-serif;
+}
+
+.addPortionBtn {
+  background: #0373ed;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Cairo', sans-serif;
+}
+
+.addPortionBtn:hover:not(:disabled) {
+  background: #0056b3;
+}
+
+.addPortionBtn:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+}
+
+.portionsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.portionCard {
+  background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+  border: 2px solid #0373ed;
+  border-radius: 12px;
+  padding: 16px;
+  transition: all 0.3s ease;
+}
+
+.portionCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(3, 115, 237, 0.15);
+}
+
+.portionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  font-weight: 600;
+  color: #333;
+  font-family: 'Cairo', sans-serif;
+}
+
+.deleteBtn {
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 6px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+}
+
+.deleteBtn:hover {
+  background: #c82333;
+}
+
+.quantityControl {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 8px;
+  padding: 8px;
+}
+
+.quantityBtn {
+  background: #0373ed;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.quantityBtn:hover:not(:disabled) {
+  background: #0056b3;
+}
+
+.quantityBtn:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+}
+
+.quantityInput {
+  width: 60px;
+  padding: 6px 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  text-align: center;
+  font-size: 14px;
+  font-family: 'Cairo', sans-serif;
+}
+
+.portionPrice {
+  text-align: center;
+  margin-bottom: 12px;
+  font-size: 12px;
+  color: #333;
+  font-weight: 600;
+  font-family: 'Cairo', sans-serif;
+}
+
+.notesInput {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 12px;
+  font-family: 'Cairo', sans-serif;
+  resize: vertical;
+  min-height: 60px;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+/* شريط الإجراءات */
+.actionsBar {
+  height: 80px;
+  background: white;
+  border-top: 1px solid #e9ecef;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+}
+
+.cancelBtn,
+.confirmBtn {
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: 'Cairo', sans-serif;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cancelBtn {
+  background: #6c757d;
+  color: white;
+}
+
+.cancelBtn:hover {
+  background: #5a6268;
+}
+
+.confirmBtn {
+  background: #0373ed;
+  color: white;
+}
+
+.confirmBtn:hover:not(:disabled) {
+  background: #0056b3;
+}
+
+.confirmBtn:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .popupContainer {
+    width: 95%;
+    height: 90vh;
+  }
+  
+  .productStats {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .portionsGrid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .splitStatus {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  
+  .statusInfo {
+    justify-content: center;
+  }
+}

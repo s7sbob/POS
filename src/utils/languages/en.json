@@ -61,6 +61,22 @@
         "saveAndSelect": "Save & Select",
         "addCustomer": "Add Customer"
       },
+            "split": {
+        "title": "Split Quantity",
+        "originalQuantity": "Original Quantity",
+        "unitPrice": "Unit Price",
+        "totalPrice": "Total Price",
+        "totalSplit": "Total Split",
+        "remaining": "Remaining",
+        "redistributeEqually": "Redistribute Equally",
+        "portions": "Portions",
+        "portion": "Portion",
+        "portionPrice": "Portion Price",
+        "notes": "Notes",
+        "notesPlaceholder": "Add notes for the portion...",
+        "addPortion": "Add New Portion",
+        "confirm": "Confirm Split"
+      },
       "actions": {
         "cancel": "Cancel",
         "confirm": "Confirm",
@@ -157,10 +173,14 @@
         "vip": "VIP"
       },
       "table": {
-        "persons": "persons",
+        "selection": "Table Selection",
+        "sections": "Sections",
+        "persons": "Persons",
         "occupied": "Occupied",
         "available": "Available",
-        "service": "Service"
+        "service": "Service",
+        "preparing": "Preparing",
+        "delivering": "Delivering"
       },
       "language": {
         "switchTo": "Switch to"
