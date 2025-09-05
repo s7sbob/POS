@@ -764,12 +764,20 @@ const PosSystem: React.FC = () => {
     setDeliveryCharge(0);
     setIsEditMode(false);
     setCurrentInvoiceId(null);
-    clearSelectedTable();
+    clearSelectedTable(); // ✅ مسح التربيزة المحددة
     setIsExtraMode(false);
     setIsWithoutMode(false);
     setSelectedChips([]);
     handleBackToMainProducts();
     setSearchQuery('');
+
+      // ✅ إضافة: إذا كان النوع Dine-in، افتح popup اختيار التربيزات
+  if (selectedOrderType === 'Dine-in') {
+    setTimeout(() => {
+      setShowTablePopup(true);
+    }, 200); // تأخير بسيط للسماح بإتمام Reset
+  }
+  
     console.log('Order reset successfully');
   }, [handleBackToMainProducts, clearSelectedTable]);
 

@@ -5,7 +5,6 @@ import { TableSelection } from '../types/TableSystem';
 import { Customer, CustomerAddress } from '../../../../utils/api/pagesApi/customersApi';
 import { DeliveryCompany } from '../../../../utils/api/pagesApi/deliveryCompaniesApi';
 import { useInvoiceManager } from '../hooks/useInvoiceManager';
-// إزالة QuantitySplitPopup import
 import CloseIcon from '@mui/icons-material/Close';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -145,7 +144,31 @@ const SplitReceiptPopup: React.FC<SplitReceiptPopupProps> = ({
     }
   }, [isOpen, orderItems]);
 
+  // التحقق من إمكانية إضافة ريسيت جديد
+  const canAddNewReceipt = () => {
+    // إذا مافيش ريسيتات أو آخر ريسيت مش فاضي
+    return receipts.length === 0 || receipts[receipts.length - 1].length > 0;
+  };
+
+  // التحقق من إمكانية التأكيد
+  const canConfirm = () => {
+    // يجب أن تكون الفاتورة الأصلية غير فارغة
+    const hasSourceItems = sourceItems.length > 0;
+    
+    // يجب أن يكون هناك ريسيت واحد على الأقل غير فارغ
+    const hasNonEmptyReceipts = receipts.some(receipt => receipt.length > 0);
+    
+    // يجب ألا يكون هناك ريسيتات فارغة (كل الريسيتات إما ممتلئة أو محذوفة)
+    const hasNoEmptyReceipts = receipts.every(receipt => receipt.length > 0);
+    
+    return hasSourceItems && hasNonEmptyReceipts && hasNoEmptyReceipts;
+  };
+
   const addReceipt = () => {
+    if (!canAddNewReceipt()) {
+      alert('يجب تعبئة الريسيت السابق قبل إضافة ريسيت جديد');
+      return;
+    }
     setReceipts((prev) => [...prev, []]);
   };
 
@@ -159,13 +182,11 @@ const SplitReceiptPopup: React.FC<SplitReceiptPopupProps> = ({
     e.preventDefault();
   };
 
-  // تعامل مع إسقاط العنصر في ريسيت معين
   const handleDropToReceipt = (receiptIndex: number) => {
     return (e: React.DragEvent) => {
       e.preventDefault();
       if (!draggedItem) return;
       
-      // إذا الكمية أكبر من 1، اعرض نافذة اختيار الكمية
       if (draggedItem.quantity > 1) {
         setPendingDrop({
           item: draggedItem,
@@ -173,7 +194,6 @@ const SplitReceiptPopup: React.FC<SplitReceiptPopupProps> = ({
         });
         setQuantityPromptOpen(true);
       } else {
-        // نقل العنصر مباشرة
         moveItemToReceipt(draggedItem, receiptIndex, 1);
       }
       
@@ -181,34 +201,29 @@ const SplitReceiptPopup: React.FC<SplitReceiptPopupProps> = ({
     };
   };
 
-  // تعامل مع إسقاط العنصر مرة أخرى في المصدر
   const handleDropToSource = (e: React.DragEvent) => {
     e.preventDefault();
     if (!draggedItem) return;
     
-    // إذا العنصر في ريسيت ومش في المصدر، وكميته > 1
     const isInSource = sourceItems.some(item => item.id === draggedItem.id);
     
     if (!isInSource && draggedItem.quantity > 1) {
       setPendingDrop({
         item: draggedItem,
-        targetIndex: null // null يعني المصدر
+        targetIndex: null
       });
       setQuantityPromptOpen(true);
     } else {
-      // نقل العنصر مباشرة للمصدر
       moveItemToSource(draggedItem, draggedItem.quantity);
     }
     
     setDraggedItem(null);
   };
 
-  // نقل كمية معينة لريسيت
   const moveItemToReceipt = (item: OrderItem, receiptIndex: number, quantityToMove: number) => {
     const remainingQuantity = item.quantity - quantityToMove;
     const unitPrice = item.totalPrice / item.quantity;
     
-    // إنشاء العنصر الجديد للريسيت
     const newItemForReceipt: OrderItem = {
       ...item,
       id: uuidv4(),
@@ -216,7 +231,6 @@ const SplitReceiptPopup: React.FC<SplitReceiptPopupProps> = ({
       totalPrice: unitPrice * quantityToMove
     };
     
-    // إضافة للريسيت المستهدف
     setReceipts(prev => 
       prev.map((list, idx) => {
         const filtered = list.filter(it => it.id !== item.id);
@@ -227,7 +241,6 @@ const SplitReceiptPopup: React.FC<SplitReceiptPopupProps> = ({
       })
     );
     
-    // تحديث أو حذف من المصدر
     if (remainingQuantity > 0) {
       const updatedSourceItem: OrderItem = {
         ...item,
@@ -238,16 +251,13 @@ const SplitReceiptPopup: React.FC<SplitReceiptPopupProps> = ({
         prev.map(it => it.id === item.id ? updatedSourceItem : it)
       );
     } else {
-      // حذف من المصدر
       setSourceItems(prev => prev.filter(it => it.id !== item.id));
     }
   };
 
-  // نقل كمية معينة للمصدر
   const moveItemToSource = (item: OrderItem, quantityToMove: number) => {
     const unitPrice = item.totalPrice / item.quantity;
     
-    // البحث عن العنصر في الريسيتات وتحديثه أو حذفه
     const updatedReceipts = receipts.map(list => {
       const existingItem = list.find(it => it.id === item.id);
       if (!existingItem) return list;
@@ -267,7 +277,6 @@ const SplitReceiptPopup: React.FC<SplitReceiptPopupProps> = ({
     
     setReceipts(updatedReceipts);
     
-    // إضافة أو تحديث في المصدر
     const existingSourceItem = sourceItems.find(it => it.product.id === item.product.id);
     if (existingSourceItem) {
       const newQuantity = existingSourceItem.quantity + quantityToMove;
@@ -289,17 +298,14 @@ const SplitReceiptPopup: React.FC<SplitReceiptPopupProps> = ({
     }
   };
 
-  // تأكيد نقل الكمية
   const handleQuantityConfirm = (quantity: number) => {
     if (!pendingDrop) return;
     
     const { item, targetIndex } = pendingDrop;
     
     if (targetIndex === null) {
-      // نقل للمصدر
       moveItemToSource(item, quantity);
     } else {
-      // نقل لريسيت
       moveItemToReceipt(item, targetIndex, quantity);
     }
     
@@ -310,7 +316,6 @@ const SplitReceiptPopup: React.FC<SplitReceiptPopupProps> = ({
   const removeReceipt = (index: number) => {
     const receiptItems = receipts[index];
     
-    // إرجاع كل العناصر للمصدر
     receiptItems.forEach(item => {
       const existingSourceItem = sourceItems.find(si => si.product.id === item.product.id);
       if (existingSourceItem) {
@@ -354,17 +359,23 @@ const SplitReceiptPopup: React.FC<SplitReceiptPopupProps> = ({
 
   const handleConfirmSplit = async () => {
     try {
-      // التحقق من عدم ترك الفاتورة الأصلية فارغة
+      // التحقق الأول: عدم ترك الفاتورة الأصلية فارغة
       if (sourceItems.length === 0) {
-        alert('لا يمكن ترك الفاتورة الأصلية فارغة. يجب الاحتفاظ بعنصر واحد على الأقل.');
+        alert('⚠️ لا يمكن ترك الفاتورة الأصلية فارغة. يجب الاحتفاظ بعنصر واحد على الأقل.');
         return;
       }
       
-      // فلترة الريسيتات غير الفارغة
-      const nonEmptyReceipts = receipts.filter(receipt => receipt.length > 0);
+      // التحقق الثاني: وجود ريسيتات فارغة
+      const emptyReceipts = receipts.filter(receipt => receipt.length === 0);
+      if (emptyReceipts.length > 0) {
+        alert('⚠️ يوجد ريسيتات فارغة. يجب تعبئة كل الريسيتات أو حذف الفارغة منها قبل التأكيد.');
+        return;
+      }
       
+      // التحقق الثالث: وجود ريسيت واحد على الأقل غير فارغ
+      const nonEmptyReceipts = receipts.filter(receipt => receipt.length > 0);
       if (nonEmptyReceipts.length === 0) {
-        alert('يجب إضافة عناصر للريسيتات الجديدة قبل التأكيد.');
+        alert('⚠️ يجب إضافة عناصر للريسيتات الجديدة قبل التأكيد.');
         return;
       }
 
@@ -428,8 +439,9 @@ const SplitReceiptPopup: React.FC<SplitReceiptPopupProps> = ({
 
   if (!isOpen) return null;
 
-  // التحقق من إمكانية التأكيد
-  const canConfirm = sourceItems.length > 0 && receipts.some(receipt => receipt.length > 0);
+  // حساب الإحصائيات للعرض
+  const nonEmptyReceiptsCount = receipts.filter(r => r.length > 0).length;
+  const emptyReceiptsCount = receipts.filter(r => r.length === 0).length;
 
   return (
     <>
@@ -485,8 +497,18 @@ const SplitReceiptPopup: React.FC<SplitReceiptPopupProps> = ({
               {/* قسم الريسيتات */}
               <section className={styles.receiptsSection}>
                 <div className={styles.sectionHeader}>
-                  <h3>الريسيتات الجديدة ({receipts.filter(r => r.length > 0).length})</h3>
-                  <button className={styles.addReceiptBtn} onClick={addReceipt}>
+                  {/* <div>
+                    <h3>الريسيتات الجديدة</h3>
+                    <small>
+                      ممتلئة: {nonEmptyReceiptsCount} | فارغة: {emptyReceiptsCount}
+                    </small>
+                  </div> */}
+                  <button 
+                    className={`${styles.addReceiptBtn} ${!canAddNewReceipt() ? styles.disabled : ''}`}
+                    onClick={addReceipt}
+                    disabled={!canAddNewReceipt()}
+                    title={!canAddNewReceipt() ? 'يجب تعبئة الريسيت السابق أولاً' : 'إضافة ريسيت جديد'}
+                  >
                     <AddIcon />
                     <span>إضافة ريسيت</span>
                   </button>
@@ -494,9 +516,9 @@ const SplitReceiptPopup: React.FC<SplitReceiptPopupProps> = ({
 
                 <div className={styles.receiptsGrid}>
                   {receipts.map((list, index) => (
-                    <div key={index} className={styles.receiptCard}>
+                    <div key={index} className={`${styles.receiptCard} ${list.length === 0 ? styles.emptyReceiptCard : ''}`}>
                       <div className={styles.receiptHeader}>
-                        <span>ريسيت {index + 1}</span>
+                        <span>ريسيت {index + 1} {list.length === 0 && '(فارغ)'}</span>
                         <button 
                           className={styles.deleteBtn}
                           onClick={() => removeReceipt(index)}
@@ -506,13 +528,14 @@ const SplitReceiptPopup: React.FC<SplitReceiptPopupProps> = ({
                       </div>
                       
                       <div 
-                        className={`${styles.receiptDropZone} ${list.length === 0 ? styles.emptyReceipt : ''}`}
+                        className={`${styles.receiptDropZone} ${list.length === 0 ? styles.emptyReceiptDropZone : ''}`}
                         onDragOver={allowDrop}
                         onDrop={handleDropToReceipt(index)}
                       >
                         {list.length === 0 ? (
-                          <div >
-                            <p>اسحب العناصر هنا</p>
+                          <div className={styles.emptyReceiptMessage}>
+                            <p>⚠️ اسحب العناصر هنا</p>
+                            <small>لا يمكن ترك الريسيت فارغاً</small>
                           </div>
                         ) : (
                           <>
@@ -553,9 +576,14 @@ const SplitReceiptPopup: React.FC<SplitReceiptPopupProps> = ({
                 إلغاء
               </button>
               <button 
-                className={styles.confirmBtn}
+                className={`${styles.confirmBtn} ${!canConfirm() ? styles.disabled : ''}`}
                 onClick={handleConfirmSplit}
-                disabled={!canConfirm}
+                disabled={!canConfirm()}
+                title={
+                  !canConfirm() 
+                    ? 'تأكد من أن الفاتورة الأصلية غير فارغة وجميع الريسيتات ممتلئة' 
+                    : 'تأكيد الفصل'
+                }
               >
                 <ReceiptIcon />
                 <span>تأكيد الفصل</span>
