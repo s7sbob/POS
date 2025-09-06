@@ -164,6 +164,9 @@ export interface CreateInvoiceRequest {
   Notes?: string;
   Items: CreateInvoiceItem[];
   Payments: CreateInvoicePayment[];
+  // إضافة الحقول الجديدة لشركات التوصيل
+  DocumentNumber?: string | null;
+  DefaultPaymentMethod?: string | null;
 }
 
 // Interface جديد للتحديث مع جميع الحقول المطلوبة
@@ -198,6 +201,9 @@ export interface UpdateInvoiceRequest {
   TotalAfterTaxAndService?: number;
   TotalCost?: number;
   GrossProfit?: number;
+  // إضافة الحقول الجديدة لشركات التوصيل
+  DocumentNumber?: string | null;
+  DefaultPaymentMethod?: string | null;
   CreatedAt?: string;
   PrintedAt?: string | null;
   PreparedAt?: string;

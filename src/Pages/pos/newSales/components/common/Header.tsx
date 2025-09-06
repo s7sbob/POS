@@ -13,6 +13,8 @@ import '../../styles/Header.css';
 import styles from '../../styles/OrderSummary.module.css';
 import TodayOrdersPopup from '../TodayOrdersPopup';
 import DeliveryManagementPopup from '../DeliveryManagementPopup';
+import SimpleDocumentNumberPopup from '../SimpleDocumentNumberPopup';
+import SimplePaymentChoicePopup from '../SimplePaymentChoicePopup';
 
 interface HeaderProps {
   selectedOrderType: string;
@@ -45,6 +47,16 @@ interface HeaderProps {
    * the order type is “Dine‑in”, a Tools menu will be displayed in the header.
    */
   hasCurrentOrder?: boolean;
+  
+  // إضافة callback جديد لمعالجة اختيار شركة التوصيل مع الحقول الإضافية
+  onDeliveryCompanySelectWithDetails?: (
+    company: DeliveryCompany, 
+    documentNumber: string, 
+    defaultPaymentMethod?: string
+  ) => void;
+  
+  // إضافة trigger لإعادة فتح popup شركة التوصيل
+  triggerReopenDeliveryPopup?: boolean;
 }
 
 const Header: React.FC<HeaderProps> = ({ 
@@ -64,7 +76,9 @@ const Header: React.FC<HeaderProps> = ({
   onCustomerSelect,
   onMoveTable,
   onSplitReceipt,
-  hasCurrentOrder
+  hasCurrentOrder,
+  onDeliveryCompanySelectWithDetails,
+  triggerReopenDeliveryPopup
 }) => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
@@ -91,6 +105,32 @@ const Header: React.FC<HeaderProps> = ({
   const [searchCache, setSearchCache] = useState<{[key: string]: Customer[]}>({});
   const [inputHasFocus, setInputHasFocus] = useState(false);
   const [pendingEnterAction, setPendingEnterAction] = useState<string | null>(null);
+
+  // ✅ States للـ popups الجديدة لشركات التوصيل
+  const [showDocumentNumberPopup, setShowDocumentNumberPopup] = useState(false);
+  const [showPaymentChoicePopup, setShowPaymentChoicePopup] = useState(false);
+  const [selectedDeliveryCompanyForPopup, setSelectedDeliveryCompanyForPopup] = useState<DeliveryCompany | null>(null);
+
+  // ✅ دالة لإعادة فتح popup شركة التوصيل من الخارج
+  const reopenDeliveryCompanyPopup = useCallback((company: DeliveryCompany) => {
+    console.log('🔄 إعادة فتح popup لشركة التوصيل:', company.name);
+    
+    setSelectedDeliveryCompanyForPopup(company);
+    
+    const paymentType = company.paymentType?.toLowerCase();
+    if (paymentType === 'inchoice') {
+      setShowPaymentChoicePopup(true);
+    } else {
+      setShowDocumentNumberPopup(true);
+    }
+  }, []);
+
+  // ✅ مراقبة trigger لإعادة فتح popup شركة التوصيل
+  useEffect(() => {
+    if (triggerReopenDeliveryPopup && selectedDeliveryCompany) {
+      reopenDeliveryCompanyPopup(selectedDeliveryCompany);
+    }
+  }, [triggerReopenDeliveryPopup, selectedDeliveryCompany, reopenDeliveryCompanyPopup]);
 
   // ✅ useRef للمتغيرات المساعدة
   const searchDebounceTimer = useRef<NodeJS.Timeout | null>(null);
@@ -450,18 +490,54 @@ const Header: React.FC<HeaderProps> = ({
     { id: 4, name: 'Pickup', displayName: t('pos.newSales.orderTypes.pickup'), icon: '/images/pickup.png', color: '#ffc107', description: t('pos.newSales.orderTypes.pickupDesc') }
   ];
 
-  // ✅ تعديل: معالج اختيار شركة التوصيل - يقوم بتعيين نوع الطلب إلى DeliveryCompany تلقائياً
+  // ✅ تعديل: معالج اختيار شركة التوصيل - يفتح الـ popups المناسبة
   const handleDeliveryCompanySelect = (company: DeliveryCompany) => {
     // تعيين نوع الطلب إلى DeliveryCompany (invoiceType = 5)
     onOrderTypeChange('DeliveryCompany');
     
-    if (onDeliveryCompanySelect) {
-      onDeliveryCompanySelect(company);
-    }
+    // حفظ الشركة المختارة
+    setSelectedDeliveryCompanyForPopup(company);
     setIsDropdownOpen(false);
+    
+    // تحديد الـ flow بناءً على نوع الدفع
+    const paymentType = company.paymentType?.toLowerCase();
+    
+    if (paymentType === 'inchoice') {
+      // للـ inchoice: إظهار popup اختيار طريقة الدفع أولاً
+      setShowPaymentChoicePopup(true);
+    } else {
+      // للـ cash و visa وأي نوع آخر: إظهار popup رقم الفاتورة مباشرة
+      setShowDocumentNumberPopup(true);
+    }
   };
 
   const activeDeliveryCompanies = deliveryCompanies.filter(company => company.isActive);
+
+  // ✅ معالج إكمال اختيار طريقة الدفع (للـ inchoice)
+  const handlePaymentChoiceComplete = (paymentType: 'cash' | 'visa', documentNumber: string) => {
+    if (selectedDeliveryCompanyForPopup && onDeliveryCompanySelectWithDetails) {
+      onDeliveryCompanySelectWithDetails(selectedDeliveryCompanyForPopup, documentNumber, paymentType);
+    }
+    setShowPaymentChoicePopup(false);
+    setSelectedDeliveryCompanyForPopup(null);
+  };
+
+  // ✅ معالج إكمال إدخال رقم الفاتورة (للـ cash و visa)
+  const handleDocumentNumberComplete = (documentNumber: string) => {
+    if (selectedDeliveryCompanyForPopup && onDeliveryCompanySelectWithDetails) {
+      const paymentType = selectedDeliveryCompanyForPopup.paymentType?.toLowerCase();
+      onDeliveryCompanySelectWithDetails(selectedDeliveryCompanyForPopup, documentNumber, paymentType);
+    }
+    setShowDocumentNumberPopup(false);
+    setSelectedDeliveryCompanyForPopup(null);
+  };
+
+  // ✅ معالج إغلاق الـ popups
+  const handleClosePopups = () => {
+    setShowPaymentChoicePopup(false);
+    setShowDocumentNumberPopup(false);
+    setSelectedDeliveryCompanyForPopup(null);
+  };
 
   const handleTodayOrdersClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -1009,6 +1085,24 @@ const Header: React.FC<HeaderProps> = ({
           }}
         />
       )}
+
+      {/* Simple Payment Choice Popup للـ inchoice */}
+      <SimplePaymentChoicePopup
+        isOpen={showPaymentChoicePopup}
+        onClose={handleClosePopups}
+        onSelectPaymentType={() => {}} // لن يستخدم هذا
+        totalAmount={0} // لن يستخدم هذا
+        onCompletePayment={handlePaymentChoiceComplete}
+        requiresDocumentNumber={true}
+      />
+
+      {/* Simple Document Number Popup للـ cash و visa */}
+      <SimpleDocumentNumberPopup
+        isOpen={showDocumentNumberPopup}
+        onClose={handleClosePopups}
+        onConfirm={handleDocumentNumberComplete}
+        deliveryCompanyName={selectedDeliveryCompanyForPopup?.name}
+      />
     </>
   );
 };

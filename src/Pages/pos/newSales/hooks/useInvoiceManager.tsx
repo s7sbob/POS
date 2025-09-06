@@ -208,7 +208,10 @@ const convertOrderItemToInvoiceItem = (
     servicePercentage: number = 0,
     taxPercentage: number = 0,
     discountPercentage: number = 0,
-    notes?: string
+    notes?: string,
+    // إضافة الحقول الجديدة
+    documentNumber?: string | null,
+    defaultPaymentMethod?: string | null
   ): Promise<invoicesApi.InvoiceResponse> => {
     setIsSubmitting(true);
 
@@ -231,7 +234,10 @@ const convertOrderItemToInvoiceItem = (
         CompletedAt: new Date().toISOString(),
         Notes: notes || `طلب ${orderType}`,
         Items: orderSummary.items.map(item => convertOrderItemToInvoiceItem(item)),
-        Payments: convertPaymentsToInvoicePayments(payments)
+        Payments: convertPaymentsToInvoicePayments(payments),
+        // إضافة الحقول الجديدة
+        DocumentNumber: documentNumber,
+        DefaultPaymentMethod: defaultPaymentMethod
       };
 
       const result = await invoicesApi.addInvoice(invoiceData);
@@ -285,7 +291,10 @@ const convertOrderItemToInvoiceItem = (
      * present in the current order summary.  Default true; pass false
      * when you want to remove missing items (e.g. split receipt).
      */
-    preserveMissingItems: boolean = true
+    preserveMissingItems: boolean = true,
+    // إضافة الحقول الجديدة
+    documentNumber?: string | null,
+    defaultPaymentMethod?: string | null
   ): Promise<invoicesApi.InvoiceResponse> => {
     setIsSubmitting(true);
 
@@ -417,7 +426,10 @@ const convertOrderItemToInvoiceItem = (
         Payments: allPayments,  // ✅ كل المدفوعات (الأصلية + الجديدة + المحدثة)
         BranchId: originalInvoice.branchId,
         CompanyID: originalInvoice.companyID,
-        IsActive: originalInvoice.isActive
+        IsActive: originalInvoice.isActive,
+        // إضافة الحقول الجديدة
+        DocumentNumber: documentNumber,
+        DefaultPaymentMethod: defaultPaymentMethod
       };
 
       console.log('📤 إرسال بيانات التحديث الشاملة:');
@@ -482,6 +494,9 @@ const convertOrderItemToInvoiceItem = (
        * splitting a cheque and removing items from the original invoice).
        */
       preserveMissingItems?: boolean;
+      // إضافة الحقول الجديدة
+      documentNumber?: string | null;
+      defaultPaymentMethod?: string | null;
     } = {}
   ): Promise<invoicesApi.InvoiceResponse> => {
     const {
@@ -495,7 +510,9 @@ const convertOrderItemToInvoiceItem = (
       taxPercentage = 0,
       discountPercentage = 0,
       notes,
-      preserveMissingItems = true
+      preserveMissingItems = true,
+      documentNumber = null,
+      defaultPaymentMethod = null
     } = options;
 
     if (isEditMode && invoiceId) {
@@ -513,7 +530,9 @@ const convertOrderItemToInvoiceItem = (
         taxPercentage,
         discountPercentage,
         notes,
-        preserveMissingItems
+        preserveMissingItems,
+        documentNumber,
+        defaultPaymentMethod
       );
     } else {
       return await createInvoice(
@@ -528,7 +547,9 @@ const convertOrderItemToInvoiceItem = (
         servicePercentage,
         taxPercentage,
         discountPercentage,
-        notes
+        notes,
+        documentNumber,
+        defaultPaymentMethod
       );
     }
   };

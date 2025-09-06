@@ -52,6 +52,13 @@ const PosSystem: React.FC = () => {
   const [selectedAddress, setSelectedAddress] = useState<CustomerAddress | null>(null);
   const [taxRate, setTaxRate] = useState(0);
   const [deliveryCharge, setDeliveryCharge] = useState(0);
+  
+  // إضافة states للحقول الجديدة لشركات التوصيل
+  const [documentNumber, setDocumentNumber] = useState<string | null>(null);
+  const [defaultPaymentMethod, setDefaultPaymentMethod] = useState<string | null>(null);
+  
+  // إضافة trigger لإعادة فتح popup شركة التوصيل
+  const [triggerReopenDeliveryPopup, setTriggerReopenDeliveryPopup] = useState(false);
 
   // إضافة Table Manager Hook
   const {
@@ -308,6 +315,26 @@ const PosSystem: React.FC = () => {
       setShowTablePopup(false);
     }
   }, [currentInvoiceId, calculateOrderSummary, selectedOrderType, currentInvoiceStatus, selectedCustomer, selectedAddress, selectedDeliveryCompany, selectTable, saveInvoice, showSuccess, showError]);
+
+  // معالج اختيار شركة التوصيل مع الحقول الإضافية
+  const handleDeliveryCompanySelectWithDetails = useCallback((
+    company: DeliveryCompany, 
+    docNumber: string, 
+    paymentMethod?: string
+  ) => {
+    console.log('🚚 تم اختيار شركة التوصيل مع التفاصيل:', {
+      company: company.name,
+      documentNumber: docNumber,
+      defaultPaymentMethod: paymentMethod
+    });
+    
+    // تعيين الشركة المختارة والحقول الإضافية
+    setSelectedDeliveryCompany(company);
+    setDocumentNumber(docNumber);
+    setDefaultPaymentMethod(paymentMethod || null);
+    
+    showSuccess(`تم اختيار شركة ${company.name} برقم فاتورة: ${docNumber}`);
+  }, [showSuccess]);
 
   // إضافة معالج double click
   const handleOrderItemDoubleClick = useCallback((item: OrderItem) => {
@@ -770,16 +797,43 @@ const PosSystem: React.FC = () => {
     setSelectedChips([]);
     handleBackToMainProducts();
     setSearchQuery('');
+    
+    // ✅ إعادة تعيين الحقول الجديدة لشركات التوصيل
+    setDocumentNumber(null);
+    setDefaultPaymentMethod(null);
+    
+    // ✅ إضافة: في حالة شركات التوصيل، مسح البيانات المدخلة فقط (الشركة تفضل مختارة)
+    if (selectedOrderType === 'DeliveryCompany' && selectedDeliveryCompany) {
+      const paymentType = selectedDeliveryCompany.paymentType?.toLowerCase();
+      
+      console.log('🔄 تم مسح بيانات الفاتورة لشركة التوصيل - الشركة لا تزال مختارة');
+      console.log(`📋 نوع الدفع للشركة: ${paymentType}`);
+      console.log(`🏢 الشركة المختارة: ${selectedDeliveryCompany.name}`);
+      
+      // الشركة تفضل مختارة، بس البيانات المدخلة (documentNumber & defaultPaymentMethod) اتمسحت
+      // المستخدم هيحتاج يدخل البيانات تاني كأنه لسه مختار الشركة
+      
+      // إعادة تشغيل الـ flow حسب نوع الدفع للشركة
+      setTimeout(() => {
+        console.log('🔄 تفعيل إعادة فتح popup شركة التوصيل');
+        setTriggerReopenDeliveryPopup(true);
+        
+        // إعادة تعيين الـ trigger بعد فترة قصيرة
+        setTimeout(() => {
+          setTriggerReopenDeliveryPopup(false);
+        }, 100);
+      }, 300); // تأخير بسيط للسماح بإتمام Reset
+    }
 
-      // ✅ إضافة: إذا كان النوع Dine-in، افتح popup اختيار التربيزات
-  if (selectedOrderType === 'Dine-in') {
-    setTimeout(() => {
-      setShowTablePopup(true);
-    }, 200); // تأخير بسيط للسماح بإتمام Reset
-  }
+    // ✅ إضافة: إذا كان النوع Dine-in، افتح popup اختيار التربيزات
+    if (selectedOrderType === 'Dine-in') {
+      setTimeout(() => {
+        setShowTablePopup(true);
+      }, 200); // تأخير بسيط للسماح بإتمام Reset
+    }
   
     console.log('Order reset successfully');
-  }, [handleBackToMainProducts, clearSelectedTable]);
+  }, [handleBackToMainProducts, clearSelectedTable, selectedOrderType, selectedDeliveryCompany]);
 
   const handleOrderCompleted = useCallback((result: any) => {
     console.log('تم إنهاء الطلب بنجاح:', result);
@@ -826,6 +880,8 @@ const PosSystem: React.FC = () => {
         onMoveTable={handleToolsMoveTable}
         onSplitReceipt={handleToolsSplitReceipt}
         hasCurrentOrder={!!currentInvoiceId}
+        onDeliveryCompanySelectWithDetails={handleDeliveryCompanySelectWithDetails}
+        triggerReopenDeliveryPopup={triggerReopenDeliveryPopup}
       />
       <main className="main-content">
         <section className="products-section">
@@ -905,6 +961,8 @@ const PosSystem: React.FC = () => {
               isEditMode={isEditMode}
               currentInvoiceId={currentInvoiceId}
               currentBackInvoiceCode={currentBackInvoiceCode}
+              documentNumber={documentNumber}
+              defaultPaymentMethod={defaultPaymentMethod}
             />
           </div>
           <div className="number-pad-section">
