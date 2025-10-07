@@ -129,6 +129,8 @@ export interface CreateInvoiceItem {
   Components: any[];
   Childrens?: CreateInvoiceItem[]; // Added for extra/without items
   SalesInvoiceItemType?: number; // 1=Product, 2=Addition, 3=Without, 4=Optional
+   OfferId?: string | null;
+  OfferGroupId?: string | null;
 }
 
 

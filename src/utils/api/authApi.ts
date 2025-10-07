@@ -17,6 +17,7 @@ export interface Branch {
   address: string;
   phone: string;
   refCompanyId: string;
+  defWareHouse: string | null; // ⭐ إضافة الحقل ده
   company: Company;
   assignedUsers?: any;
   assignedUserIds?: string[];

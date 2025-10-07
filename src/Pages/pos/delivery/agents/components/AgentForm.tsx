@@ -132,7 +132,6 @@ const AgentForm: React.FC<Props> = ({
                 name="phone"
                 control={control}
                 rules={{ 
-                  required: t('deliveryAgents.phoneRequired'),
                   pattern: {
                     value: /^[0-9+\-\s()]+$/,
                     message: t('deliveryAgents.phoneInvalid')
@@ -143,7 +142,6 @@ const AgentForm: React.FC<Props> = ({
                     {...field}
                     label={t('deliveryAgents.form.phone')}
                     fullWidth
-                    required
                     error={!!fieldState.error}
                     helperText={fieldState.error?.message}
                     placeholder="01012345678"

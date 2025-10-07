@@ -142,7 +142,6 @@ const CaptainForm: React.FC<Props> = ({
                 name="phone"
                 control={control}
                 rules={{ 
-                  required: t('hallCaptains.phoneRequired'),
                   pattern: {
                     value: /^01[0-9]{9}$/,
                     message: t('hallCaptains.phoneInvalid')
@@ -153,7 +152,6 @@ const CaptainForm: React.FC<Props> = ({
                     {...field}
                     label={t('hallCaptains.form.phone')}
                     fullWidth
-                    required
                     error={!!fieldState.error}
                     helperText={fieldState.error?.message}
                     placeholder="01012345678"

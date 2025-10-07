@@ -155,25 +155,48 @@ const OfferForm: React.FC<Props> = ({
     return result;
   };
 
-  React.useEffect(() => {
-    if (open) {
-      if (mode === 'add') {
-        reset(defaults);
-      } else if (initialValues) {
-        reset({
-          name: initialValues.name,
-          priceType: initialValues.priceType,
-          fixedPrice: initialValues.fixedPrice || 0,
-          startDate: initialValues.startDate ? initialValues.startDate.split('T')[0] : '',
-          endDate: initialValues.endDate ? initialValues.endDate.split('T')[0] : '',
-          orderTypeId: initialValues.orderTypeId || '1',
-          isActive: initialValues.isActive,
-          offerGroups: initialValues.offerGroups || [],
-          offerItems: initialValues.offerItems || []
-        });
-      }
+React.useEffect(() => {
+  if (open) {
+    if (mode === 'add') {
+      reset(defaults);
+    } else if (initialValues) {
+      // ✅ تجميع كل المنتجات من المجموعات والمستقلة
+      const groupItems = initialValues.offerGroups?.flatMap(group => 
+        group.items?.map(item => ({
+          ...item,
+          offerGroupId: group.id
+        })) || []
+      ) || [];
+
+      // ✅ المنتجات المستقلة (اللي offerGroupId = null)
+      const independentItems = initialValues.offerItems?.filter(item => 
+        !item.offerGroupId || item.offerGroupId === null
+      ) || [];
+
+      const allItems = [...groupItems, ...independentItems];
+
+      reset({
+        name: initialValues.name,
+        priceType: initialValues.priceType,
+        fixedPrice: initialValues.fixedPrice || 0,
+        startDate: initialValues.startDate ? initialValues.startDate.split('T')[0] : '',
+        endDate: initialValues.endDate ? initialValues.endDate.split('T')[0] : '',
+        orderTypeId: initialValues.orderTypeId || '1',
+        isActive: initialValues.isActive,
+        offerGroups: initialValues.offerGroups?.map(group => ({
+          id: group.id,
+          title: group.title,
+          minSelection: group.minSelection,
+          maxSelection: group.maxSelection,
+          isMandatory: group.isMandatory,
+          isActive: group.isActive
+        })) || [],
+        offerItems: allItems
+      });
     }
-  }, [open, mode, initialValues, reset]);
+  }
+}, [open, mode, initialValues, reset]);
+
 
   React.useEffect(() => {
     if (isSubmitSuccessful && mode === 'add') {
@@ -184,16 +207,19 @@ const OfferForm: React.FC<Props> = ({
     }
   }, [isSubmitSuccessful, mode, reset]);
 
-  const addOfferGroup = () => {
-    appendGroup({
-      title: '',
-      minSelection: 1,
-      maxSelection: 1,
-      isMandatory: true,
-      isActive: true
-    });
-    setTabValue(0);
-  };
+const addOfferGroup = () => {
+  // ✅ بدون ID مؤقت - خلي المجموعة تاخد ID من الـ backend
+  appendGroup({
+    title: '',
+    minSelection: 1,
+    maxSelection: 1,
+    isMandatory: true,
+    isActive: true,
+    items: []
+  });
+  setTabValue(0);
+};
+
 
   const addOfferItem = () => {
     setCurrentGroupIndex(null);
@@ -214,8 +240,11 @@ const handleMultiSelectSubmit = (selectedProducts: Array<{
   console.log('Received selected products:', selectedProducts);
   
   if (currentGroupIndex !== null) {
-    // للمجموعات: استبدال كامل للعناصر
-    const groupId = groupFields[currentGroupIndex].id || `group_${currentGroupIndex}`;
+    // ✅ استخدام الـ ID الحقيقي للمجموعة من الفورم
+    const actualGroup = watch(`offerGroups.${currentGroupIndex}`);
+    const groupId = actualGroup.id; // ✅ استخدام الـ ID الموجود فعلاً
+    
+    console.log('Using group ID:', groupId, 'from group:', actualGroup);
     
     // إزالة كل العناصر الموجودة في هذه المجموعة
     const itemsToRemove: number[] = [];
@@ -232,12 +261,12 @@ const handleMultiSelectSubmit = (selectedProducts: Array<{
       removeItem(index);
     });
     
-    // إضافة كل المنتجات المختارة الجديدة
+    // إضافة كل المنتجات المختارة الجديدة مع الـ groupId الصحيح
     selectedProducts.forEach(product => {
-      console.log('Adding product to group:', product);
+      console.log('Adding product to group:', product, 'groupId:', groupId);
       appendItem({
         productPriceId: product.productPriceId,
-        offerGroupId: groupId,
+        offerGroupId: groupId, // ✅ استخدام الـ ID الصحيح
         quantity: 1,
         isDefaultSelected: true,
         useOriginalPrice: true,
@@ -249,8 +278,6 @@ const handleMultiSelectSubmit = (selectedProducts: Array<{
     setTabValue(0);
   } else {
     // للعناصر الثابتة: استبدال كامل للعناصر
-    
-    // إزالة كل العناصر الثابتة الموجودة
     const itemsToRemove: number[] = [];
     itemFields.forEach((_item, index) => {
       const itemGroupId = watch(`offerItems.${index}.offerGroupId`);
@@ -259,17 +286,16 @@ const handleMultiSelectSubmit = (selectedProducts: Array<{
       }
     });
     
-    // إزالة من الآخر للأول لتجنب تغيير الفهارس
     itemsToRemove.reverse().forEach(index => {
       console.log('Removing fixed item at index:', index);
       removeItem(index);
     });
     
-    // إضافة كل المنتجات المختارة الجديدة
     selectedProducts.forEach(product => {
       console.log('Adding fixed product:', product);
       appendItem({
         productPriceId: product.productPriceId,
+        offerGroupId: null,
         quantity: 1,
         isDefaultSelected: true,
         useOriginalPrice: true,
@@ -285,111 +311,151 @@ const handleMultiSelectSubmit = (selectedProducts: Array<{
   setCurrentGroupIndex(null);
 };
 
-  const getGroupItems = (groupIndex: number) => {
-    const groupId = groupFields[groupIndex].id || `group_${groupIndex}`;
-    return itemFields.filter((_, index) => 
-      watch(`offerItems.${index}.offerGroupId`) === groupId
-    );
-  };
 
-  const getNonGroupItems = () => {
-    return itemFields.filter((_, index) => 
-      !watch(`offerItems.${index}.offerGroupId`)
-    );
-  };
 
-  const getPreSelectedItems = () => {
-    if (currentGroupIndex !== null) {
-      const groupId = groupFields[currentGroupIndex].id || `group_${currentGroupIndex}`;
-      return itemFields
-        .filter((_, index) => watch(`offerItems.${index}.offerGroupId`) === groupId)
-        .map((_, index) => watch(`offerItems.${index}.productPriceId`))
-        .filter(Boolean);
-    } else {
-      return itemFields
-        .filter((_, index) => !watch(`offerItems.${index}.offerGroupId`))
-        .map((_, index) => watch(`offerItems.${index}.productPriceId`))
-        .filter(Boolean);
-    }
-  };
+const getGroupItems = (groupIndex: number) => {
+  const actualGroup = watch(`offerGroups.${groupIndex}`);
+  const groupId = actualGroup?.id;
+  
+  if (!groupId) return [];
+  
+  return itemFields.filter((_, index) => {
+    const itemGroupId = watch(`offerItems.${index}.offerGroupId`);
+    return itemGroupId === groupId;
+  });
+};
 
-  const submit = async (data: FormValues, saveAction: 'save' | 'saveAndNew') => {
-    if (isSubmitting) return;
+
+
+const getNonGroupItems = () => {
+  return itemFields.filter((_, index) => {
+    const offerGroupId = watch(`offerItems.${index}.offerGroupId`);
+    return !offerGroupId || offerGroupId === null || offerGroupId === '';
+  });
+};
+
+
+
+const getPreSelectedItems = () => {
+  if (currentGroupIndex !== null) {
+    const actualGroup = watch(`offerGroups.${currentGroupIndex}`);
+    const groupId = actualGroup?.id;
     
-    setIsSubmitting(true);
-    try {
-      if (mode === 'edit' && initialValues) {
-        const updateData = {
-          id: initialValues.id,
-          name: data.name,
-          priceType: data.priceType,
-          fixedPrice: Number(data.fixedPrice),
-          startDate: new Date(data.startDate).toISOString(),
-          endDate: new Date(data.endDate).toISOString(),
-          orderTypeId: data.orderTypeId,
-          isActive: data.isActive,
-          offerGroups: data.offerGroups.map(group => ({
-            ...(group.id && { id: group.id }),
-            ...(initialValues.id && { offerId: initialValues.id }),
-            title: group.title,
-            minSelection: Number(group.minSelection),
-            maxSelection: Number(group.maxSelection),
-            isMandatory: group.isMandatory,
-            isActive: group.isActive
-          })),
-          offerItems: data.offerItems.map(item => ({
-            ...(item.id && { id: item.id }),
-            ...(initialValues.id && { offerId: initialValues.id }),
-            productPriceId: item.productPriceId,
-            offerGroupId: item.offerGroupId || null,
-            quantity: Number(item.quantity),
-            isDefaultSelected: true,
-            useOriginalPrice: item.useOriginalPrice,
-            customPrice: item.useOriginalPrice ? null : Number(item.customPrice),
-            isActive: item.isActive
-          }))
-        };
-        await onSubmit(updateData, saveAction);
-      } else {
-        const addData = {
-          name: data.name,
-          priceType: data.priceType,
-          fixedPrice: Number(data.fixedPrice),
-          startDate: new Date(data.startDate).toISOString(),
-          endDate: new Date(data.endDate).toISOString(),
-          orderTypeId: data.orderTypeId,
-          isActive: data.isActive,
-          offerGroups: data.offerGroups.map(group => ({
-            title: group.title,
-            minSelection: Number(group.minSelection),
-            maxSelection: Number(group.maxSelection),
-            isMandatory: group.isMandatory,
-            isActive: group.isActive
-          })),
-          offerItems: data.offerItems.map(item => ({
-            productPriceId: item.productPriceId,
-            offerGroupId: item.offerGroupId || null,
-            quantity: Number(item.quantity),
-            isDefaultSelected: true,
-            useOriginalPrice: item.useOriginalPrice,
-            customPrice: item.useOriginalPrice ? null : Number(item.customPrice),
-            isActive: item.isActive
-          }))
-        };
-        await onSubmit(addData, saveAction);
-      }
+    if (!groupId) return [];
+    
+    return itemFields
+      .map((_, index) => {
+        const itemGroupId = watch(`offerItems.${index}.offerGroupId`);
+        const productPriceId = watch(`offerItems.${index}.productPriceId`);
+        return itemGroupId === groupId ? productPriceId : null;
+      })
+      .filter(Boolean);
+  } else {
+    return itemFields
+      .map((_, index) => {
+        const itemGroupId = watch(`offerItems.${index}.offerGroupId`);
+        const productPriceId = watch(`offerItems.${index}.productPriceId`);
+        return (!itemGroupId || itemGroupId === null || itemGroupId === '') ? productPriceId : null;
+      })
+      .filter(Boolean);
+  }
+};
 
-      if (mode === 'add' && saveAction === 'saveAndNew') {
-        setTimeout(() => {
-          reset(defaults);
-        }, 100);
-      }
-    } catch (error) {
-      // Error handled by global error handler
-    } finally {
-      setIsSubmitting(false);
+
+
+const submit = async (data: FormValues, saveAction: 'save' | 'saveAndNew') => {
+  if (isSubmitting) return;
+  
+  setIsSubmitting(true);
+  try {
+    // ✅ فصل المنتجات حسب النوع
+    const groupItems = data.offerItems.filter(item => item.offerGroupId);
+    const independentItems = data.offerItems.filter(item => !item.offerGroupId);
+    
+    const processedData = {
+      ...data,
+      // ✅ المجموعات مع منتجاتها في items
+      offerGroups: data.offerGroups.map((group, groupIndex) => {
+        const groupId = group.id || `temp_group_${groupIndex}_${Date.now()}`;
+        
+        // الحصول على المنتجات الخاصة بهذه المجموعة
+        const groupSpecificItems = groupItems
+          .filter(item => item.offerGroupId === groupId)
+          .map(item => ({
+            ...(item.id && { id: item.id }),
+            ...(mode === 'edit' && initialValues && { offerId: initialValues.id }),
+            productPriceId: item.productPriceId,
+            offerGroupId: groupId,
+            quantity: Number(item.quantity),
+            isDefaultSelected: Boolean(item.isDefaultSelected),
+            useOriginalPrice: Boolean(item.useOriginalPrice),
+            customPrice: item.useOriginalPrice ? null : Number(item.customPrice || 0),
+            branchId: null,
+            companyID: null,
+            isActive: Boolean(item.isActive)
+          }));
+
+        return {
+          ...(group.id && { id: group.id }),
+          ...(mode === 'edit' && initialValues && { offerId: initialValues.id }),
+          title: group.title,
+          minSelection: Number(group.minSelection),
+          maxSelection: Number(group.maxSelection),
+          isMandatory: Boolean(group.isMandatory),
+          items: groupSpecificItems, // ✅ المنتجات داخل المجموعة
+          branchId: null,
+          companyID: null,
+          isActive: Boolean(group.isActive)
+        };
+      }),
+      
+      // ✅ المنتجات المستقلة بس في offerItems
+      offerItems: independentItems.map(item => ({
+        ...(item.id && { id: item.id }),
+        ...(mode === 'edit' && initialValues && { offerId: initialValues.id }),
+        productPriceId: item.productPriceId,
+        offerGroupId: null, // ✅ null للمنتجات المستقلة
+        quantity: Number(item.quantity),
+        isDefaultSelected: Boolean(item.isDefaultSelected),
+        useOriginalPrice: Boolean(item.useOriginalPrice),
+        customPrice: item.useOriginalPrice ? null : Number(item.customPrice || 0),
+        branchId: null,
+        companyID: null,
+        isActive: Boolean(item.isActive)
+      }))
+    };
+
+    const apiData = {
+      ...(mode === 'edit' && initialValues && { id: initialValues.id }),
+      name: processedData.name,
+      priceType: processedData.priceType,
+      fixedPrice: Number(processedData.fixedPrice),
+      startDate: new Date(processedData.startDate).toISOString(),
+      endDate: new Date(processedData.endDate).toISOString(),
+      orderTypeId: processedData.orderTypeId,
+      isActive: Boolean(processedData.isActive),
+      offerGroups: processedData.offerGroups,
+      offerItems: processedData.offerItems // ✅ المنتجات المستقلة بس
+    };
+
+    console.log('Sending to API:', JSON.stringify(apiData, null, 2));
+    
+    await onSubmit(apiData, saveAction);
+
+    if (mode === 'add' && saveAction === 'saveAndNew') {
+      setTimeout(() => {
+        reset(defaults);
+      }, 100);
     }
-  };
+  } catch (error) {
+    console.error('Submit error:', error);
+    throw error;
+  } finally {
+    setIsSubmitting(false);
+  }
+};
+
+
 
   // مكون لعرض العناصر في 3 أعمدة مع تمييز المجموعات والعناصر الثابتة
   const ItemsGrid: React.FC<{ items: any[], groupIndex?: number }> = ({ items, groupIndex }) => {
@@ -1009,7 +1075,7 @@ const handleMultiSelectSubmit = (selectedProducts: Array<{
           t('offers.form.selectItemsForGroup') : 
           t('offers.form.selectFixedItems')
         }
-        preSelectedItems={getPreSelectedItems()}
+        preSelectedItems={getPreSelectedItems().filter((item): item is string => item !== null)}
       />
     </>
   );

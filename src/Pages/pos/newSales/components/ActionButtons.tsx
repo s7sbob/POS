@@ -7,12 +7,13 @@ interface ActionButtonsProps {
   onChipClick: (chipType: string) => void;
   isExtraMode: boolean;
   isWithoutMode: boolean;
+  showOffers: boolean; // إضافة جديدة
   onExtraClick: () => void;
   onWithoutClick: () => void;
+  onOffersClick: () => void; // إضافة جديدة
   searchQuery: string;
   onSearchChange: (query: string) => void;
-    hasSelectedOrderItem: boolean; // إضافة جديدة
-
+  hasSelectedOrderItem: boolean;
 }
 
 const ActionButtons: React.FC<ActionButtonsProps> = ({
@@ -20,14 +21,16 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
   onChipClick,
   isExtraMode,
   isWithoutMode,
+  showOffers, // إضافة جديدة
   onExtraClick,
   onWithoutClick,
+  onOffersClick, // إضافة جديدة
   searchQuery,
   onSearchChange,
   hasSelectedOrderItem
-
 }) => {
   const { t } = useTranslation();
+
   return (
     <div className="action-buttons-bar">
       <div className="action-chips">
@@ -40,6 +43,7 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
           <img src="/images/img_addcircle.svg" alt="" />
           <span>{t("pos.newSales.actions.extra")}</span>
         </button>
+
         <button 
           className={`action-chip without ${selectedChips.includes('without') || isWithoutMode ? 'active' : ''} ${!hasSelectedOrderItem ? 'disabled' : ''}`}
           onClick={hasSelectedOrderItem ? onWithoutClick : undefined}
@@ -49,9 +53,10 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
           <img src="/images/img_removecircle.svg" alt="" />
           <span>{t("pos.newSales.actions.without")}</span>
         </button>
+
         <button 
-          className={`action-chip offer ${selectedChips.includes('offer') ? 'active' : ''}`}
-          onClick={() => onChipClick('offer')}
+          className={`action-chip offer ${selectedChips.includes('offer') || showOffers ? 'active' : ''}`}
+          onClick={onOffersClick} // تحديث المعالج
         >
           <img src="/images/img_tags.svg" alt="" />
           <span>{t("pos.newSales.actions.offer")}</span>
@@ -62,7 +67,7 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
         <img src="/images/img_search01.svg" alt="search" className="search-icon" />
         <input
           type="text"
-          placeholder={t("pos.newSales.actions.search")}
+          placeholder={showOffers ? "البحث في العروض..." : t("pos.newSales.actions.search")}
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
           className="search-input"

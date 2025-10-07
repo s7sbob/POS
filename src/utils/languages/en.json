@@ -1500,7 +1500,9 @@
       "companyEmail": "Company Email",
       "branchName": "Branch Name",
       "branchAddress": "Branch Address",
-      "branchPhone": "Branch Phone"
+      "branchPhone": "Branch Phone",
+      "defaultWarehouse": "Default Warehouse",
+      "defaultWarehouseHelper": "Default warehouse ID for this branch"
     },
     "info": {
       "currentCompanyInfo": "Current Company Information",

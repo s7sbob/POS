@@ -11,10 +11,14 @@ interface ProductCardProps {
 
 const ProductCard: React.FC<ProductCardProps> = ({ product, onClick }) => {
   const { t } = useTranslation();
+  
   const handleClick = () => {
     onClick(product);
   };
 
+  // تحديد ما إذا كان المنتج هو عرض
+  const isOffer = product.id.startsWith('offer-');
+  
   // تحديد ما إذا كان المنتج له سعر واحد أم أكثر
   const hasMultiplePrices = product.hasMultiplePrices;
   const singlePrice = !hasMultiplePrices && product.productPrices.length > 0 
@@ -22,7 +26,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onClick }) => {
     : null;
 
   return (
-    <div className={styles.productCard} onClick={handleClick}>
+    <div 
+      className={styles.productCard} 
+      onClick={handleClick}
+      data-offer={isOffer ? 'true' : 'false'} // إضافة data attribute للعروض
+    >
       <div className={styles.productImageContainer}>
         <img 
           src={product.image} 
@@ -30,7 +38,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onClick }) => {
           className={styles.productImage}
         />
         
-        {/* عرض السعر على الصورة إذا كان المنتج له سعر واحد */}
+        {/* عرض السعر على الصورة */}
         {singlePrice !== null && (
           <div className={styles.priceOverlay}>
             {singlePrice.toFixed(2)} {t("pos.newSales.products.currency")}
@@ -40,7 +48,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onClick }) => {
       
       <div className={styles.productInfo}>
         <h3 className={styles.productName}>
-          {product.nameArabic}
+          {isOffer && '🏷️ '}{product.nameArabic}
         </h3>
       </div>
     </div>

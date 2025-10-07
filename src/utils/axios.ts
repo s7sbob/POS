@@ -15,7 +15,7 @@ export const setGlobalSuccessHandler = (handler: (message: string) => void) => {
 };
 
 const api = axios.create({
-  baseURL: 'https://horexapi.watsorder.com',
+  baseURL: 'https://foodifyapi.watsorder.com',
   headers: { 'Content-Type': 'application/json' }
 });
 

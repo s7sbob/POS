@@ -28,6 +28,10 @@ import * as deliveryCompaniesApi from '../../../utils/api/pagesApi/deliveryCompa
 import { DeliveryCompany } from '../../../utils/api/pagesApi/deliveryCompaniesApi';
 import { Customer, CustomerAddress } from 'src/utils/api/pagesApi/customersApi';
 import InvoiceDataConverter from '../../../utils/invoiceDataConverter';
+import * as offersApi from '../../../utils/api/pagesApi/offersApi';
+import { Offer } from '../../../utils/api/pagesApi/offersApi';
+import OfferOptionsPopup from './components/OfferOptionsPopup';
+import { OfferData, SelectedOfferItem } from './types/PosSystem';
 
 const PosSystem: React.FC = () => {
   const { t, i18n } = useTranslation();
@@ -52,7 +56,9 @@ const PosSystem: React.FC = () => {
   const [selectedAddress, setSelectedAddress] = useState<CustomerAddress | null>(null);
   const [taxRate, setTaxRate] = useState(0);
   const [deliveryCharge, setDeliveryCharge] = useState(0);
-  
+  const [showOfferOptionsPopup, setShowOfferOptionsPopup] = useState(false);
+  const [selectedOffer, setSelectedOffer] = useState<OfferData | null>(null);
+
   // إضافة states للحقول الجديدة لشركات التوصيل
   const [documentNumber, setDocumentNumber] = useState<string | null>(null);
   const [defaultPaymentMethod, setDefaultPaymentMethod] = useState<string | null>(null);
@@ -74,16 +80,18 @@ const PosSystem: React.FC = () => {
   } = useTableManager();
 
   // استخدام Data Manager الجديد
-  const {
-    loading,
-    error,
-    getProducts,
-    getCategories,
-    defaultCategoryId,
-    searchProducts,
-    getProductsByScreenId,
-    hasProductOptions
-  } = useDataManager();
+const {
+  loading,
+  error,
+  getProducts,
+  getCategories,
+  getOffers, // جديد
+  searchOffers, // جديد
+  defaultCategoryId,
+  searchProducts,
+  getProductsByScreenId,
+  hasProductOptions
+} = useDataManager();
 
   // دالة لجلب رسوم التوصيل من الـ zone
   const getDeliveryCharge = useCallback((): number => {
@@ -98,11 +106,13 @@ const PosSystem: React.FC = () => {
     setDeliveryCharge(charge);
   }, []);
 
-  // Extra/Without States
+  // Extra/Without/Offer States
   const [isExtraMode, setIsExtraMode] = useState(false);
   const [isWithoutMode, setIsWithoutMode] = useState(false);
   const [selectedOrderItemId, setSelectedOrderItemId] = useState<string | null>(null);
-  
+  const [showOffers, setShowOffers] = useState(false);
+  const [loadingOffers, setLoadingOffers] = useState(false);
+
   // Categories States
   const [showingChildren, setShowingChildren] = useState<string | null>(null);
   const [, setParentCategory] = useState<CategoryItem | null>(null);
@@ -123,6 +133,7 @@ const PosSystem: React.FC = () => {
 
   // الحصول على البيانات الحالية
   const isAdditionMode = isExtraMode || isWithoutMode;
+  const isSpecialMode = isAdditionMode || showOffers; // إضافة العروض للوضع الخاص
   const currentProducts = getProducts(isAdditionMode);
   const currentCategories = getCategories(isAdditionMode);
   const rootCategories = currentCategories.filter(cat => !cat.parentId);
@@ -183,18 +194,7 @@ const PosSystem: React.FC = () => {
     loadDeliveryCompanies();
   }, []);
 
-  // المنتجات المعروضة
-  const displayedProducts = useMemo(() => {
-    if (searchQuery.trim()) {
-      return searchProducts(currentProducts, searchQuery);
-    }
-    
-    if (selectedCategory) {
-      return getProductsByScreenId(currentProducts, selectedCategory);
-    }
-    
-    return [];
-  }, [currentProducts, selectedCategory, searchQuery, searchProducts, getProductsByScreenId]);
+
 
   // تحديث دالة updateOrderItem
   const updateOrderItem = useCallback((itemId: string, updateType: 'addSubItem' | 'removeSubItem', data: any) => {
@@ -248,6 +248,32 @@ const PosSystem: React.FC = () => {
     }
   });
 
+
+
+// دالة محسنة للحصول على بيانات المنتج من productPriceId
+const getProductByPriceId = useCallback(async (priceId: string) => {
+  console.log('🔍 البحث عن المنتج للسعر:', priceId);
+  
+  const allProducts = getProducts(false);
+  
+  // البحث في جميع المنتجات عن السعر المطلوب
+  for (const product of allProducts) {
+    const price = product.productPrices.find(p => p.id === priceId);
+    if (price) {
+      console.log('✅ تم العثور على المنتج:', {
+        productName: product.nameArabic,
+        priceName: price.nameArabic,
+        price: price.price
+      });
+      return { product, price };
+    }
+  }
+  
+  console.warn('❌ لم يتم العثور على منتج للسعر:', priceId);
+  return null;
+}, [getProducts]);
+
+
   // تعديل حساب ملخص الطلب ليشمل الخدمة
   const calculateOrderSummary = useCallback((): OrderSummaryType => {
     const subtotal = orderItems.reduce((sum, item) => sum + item.totalPrice, 0);
@@ -272,9 +298,57 @@ const PosSystem: React.FC = () => {
       totalAfterTaxAndService
     };
   }, [orderItems, getServiceCharge, deliveryCharge]);
-
   // واستخدمه في كل مرة:
   const orderSummary = calculateOrderSummary();
+
+
+  // دالة تحويل العرض إلى شكل منتج للعرض
+const convertOfferToProduct = useCallback((offer: Offer): PosProduct => {
+  return {
+    id: `offer-${offer.id}`,
+    name: offer.name,
+    nameArabic: offer.name,
+    image: '/images/offer-placeholder.png', // يمكنك تغيير هذا لصورة العرض الخاصة بك
+    categoryId: 'offers',
+    productType: 99, // نوع خاص للعروض
+    productPrices: [{
+      id: `offer-price-${offer.id}`,
+      name: offer.name,
+      nameArabic: offer.name,
+      price: offer.fixedPrice || 0,
+      barcode: `offer-${offer.id}`
+    }],
+    hasMultiplePrices: false,
+    displayPrice: offer.fixedPrice,
+    productOptionGroups: []
+  };
+}, []);
+
+
+
+// المنتجات أو العروض المعروضة - محدث
+const displayedProducts = useMemo(() => {
+  // في حالة عرض العروض
+  if (showOffers) {
+    const offers = getOffers();
+    if (searchQuery.trim()) {
+      const filteredOffers = searchOffers(offers, searchQuery);
+      return filteredOffers.map(offer => convertOfferToProduct(offer));
+    }
+    return offers.map(offer => convertOfferToProduct(offer));
+  }
+  
+  // الكود الأصلي للمنتجات
+  if (searchQuery.trim()) {
+    return searchProducts(currentProducts, searchQuery);
+  }
+  
+  if (selectedCategory) {
+    return getProductsByScreenId(currentProducts, selectedCategory);
+  }
+  
+  return [];
+}, [showOffers, getOffers, searchOffers, searchQuery, convertOfferToProduct, searchProducts, currentProducts, selectedCategory, getProductsByScreenId]);
 
   // معالج نقل الطلب لطاولة جديدة
   const handleMoveToTable = useCallback(async (selection: TableSelection) => {
@@ -457,20 +531,55 @@ const PosSystem: React.FC = () => {
     }
   }, [selectedOrderItemId, orderItems, getCategories]);
 
-  // معالج الرجوع للمنتجات الأساسية
-  const handleBackToMainProducts = useCallback(() => {
+// معالج الرجوع للمنتجات الأساسية - محدث
+const handleBackToMainProducts = useCallback(() => {
+  setIsExtraMode(false);
+  setIsWithoutMode(false);
+  setShowOffers(false); // إضافة هذا السطر
+  setSelectedOrderItemId(null);
+  setSelectedChips(prev => prev.filter(chip => 
+    chip !== 'extra' && 
+    chip !== 'without' && 
+    chip !== 'offer' // إضافة هذا السطر
+  ));
+  
+  if (defaultCategoryId) {
+    setSelectedCategory(defaultCategoryId);
+  }
+  
+  setShowingChildren(null);
+  setParentCategory(null);
+}, [defaultCategoryId]);
+
+  // معالج زر العروض
+const handleOffersClick = useCallback(() => {
+  if (!showOffers) {
+    // تفعيل وضع العروض
+    setShowOffers(true);
     setIsExtraMode(false);
     setIsWithoutMode(false);
     setSelectedOrderItemId(null);
-    setSelectedChips(prev => prev.filter(chip => chip !== 'extra' && chip !== 'without'));
-    
-    if (defaultCategoryId) {
-      setSelectedCategory(defaultCategoryId);
-    }
-    
+    setSelectedCategory('');
+    setSearchQuery('');
     setShowingChildren(null);
     setParentCategory(null);
-  }, [defaultCategoryId]);
+    setSelectedChips(prev => {
+      const newChips = prev.filter(chip => 
+        chip !== t('pos.newSales.actions.extraChip') && 
+        chip !== t('pos.newSales.actions.withoutChip')
+      );
+      if (!newChips.includes('offer')) {
+        newChips.push('offer');
+      }
+      return newChips;
+    });
+    
+    console.log('🏷️ تم تفعيل وضع العروض');
+  } else {
+    // إلغاء وضع العروض والعودة للمنتجات العادية
+    handleBackToMainProducts();
+  }
+}, [showOffers, handleBackToMainProducts, t]);
 
   // معالج اختيار منتج في الفاتورة
   const handleOrderItemSelect = useCallback((itemId: string) => {
@@ -512,28 +621,8 @@ const PosSystem: React.FC = () => {
     }
   }, [rootCategories]);
 
-  // معالج ضغط المنتج
-  const handleProductClick = useCallback((product: PosProduct) => {
-    if (!canAddProduct(selectedOrderType)) {
-      showWarning(t("pos.newSales.messages.selectTable"));
-      return;
-    }
 
-    if (product.hasMultiplePrices) {
-      setSelectedProduct(product);
-      setShowPricePopup(true);
-    } else if (product.productPrices.length > 0) {
-      const price = product.productPrices[0];
-      
-      if (hasProductOptions(product)) {
-        setSelectedProductForOptions(product);
-        setSelectedPriceForOptions(price);
-        setShowOptionsPopup(true);
-      } else {
-        addToOrder(product, price, []);
-      }
-    }
-  }, [addToOrder, showWarning, hasProductOptions, selectedOrderType, canAddProduct]);
+
 
   // إضافة معالج اختيار الطاولة
   const handleTableSelect = useCallback((selection: TableSelection) => {
@@ -589,6 +678,228 @@ const PosSystem: React.FC = () => {
     setSelectedProductForOptions(null);
     setSelectedPriceForOptions(null);
   }, [selectedProductForOptions, selectedPriceForOptions, addToOrder]);
+
+
+
+  // دالة للحصول على القيمة الرقمية
+  const getNumericValue = useCallback((): number => {
+    const value = parseFloat(keypadValue);
+    return isNaN(value) || value <= 0 ? 1 : value;
+  }, [keypadValue]);
+
+// معالج إكمال اختيار العرض - محدث مع console.log للتتبع
+const handleOfferComplete = useCallback((offerData: OfferData, selectedOfferItems: SelectedOfferItem[]) => {
+  console.log('✅ تم إكمال اختيار العرض:', offerData.name);
+  console.log('📋 العناصر المختارة:', selectedOfferItems);
+  
+  if (selectedOfferItems.length === 0) {
+    console.error('❌ لا توجد عناصر مختارة في العرض');
+    showError('لا توجد منتجات في هذا العرض');
+    return;
+  }
+  
+  // حساب السعر الإجمالي الصحيح للعرض
+  const calculateOfferTotalPrice = () => {
+    if (offerData.priceType === 'Fixed') {
+      console.log('💰 عرض بسعر ثابت:', offerData.fixedPrice);
+      return offerData.fixedPrice;
+    }
+    
+    // للعروض الديناميكية: جمع أسعار كل المنتجات
+    const dynamicTotal = selectedOfferItems.reduce((total, item) => {
+      const itemTotal = item.price * item.quantity;
+      console.log(`💰 منتج ${item.productName}: ${item.price} × ${item.quantity} = ${itemTotal}`);
+      return total + itemTotal;
+    }, 0);
+    
+    console.log('💰 إجمالي العرض الديناميكي:', dynamicTotal);
+    return dynamicTotal;
+  };
+  
+  const offerTotalPrice = calculateOfferTotalPrice();
+  
+  // إنشاء منتج وهمي للعرض
+  const offerAsProduct: PosProduct = {
+    id: `offer-${offerData.id}`,
+    name: offerData.name,
+    nameArabic: offerData.name,
+    image: '/images/offer-placeholder.png',
+    categoryId: 'offers',
+    productType: 99,
+    productPrices: [{
+      id: `offer-price-${offerData.id}`,
+      name: offerData.name,
+      nameArabic: offerData.name,
+      price: offerTotalPrice,
+      barcode: `offer-${offerData.id}`
+    }],
+    hasMultiplePrices: false,
+    displayPrice: offerTotalPrice,
+    productOptionGroups: []
+  };
+  
+  // إنشاء OrderItem للعرض
+  const orderItem: OrderItem = {
+    id: `order-${Date.now()}-${Math.random()}`,
+    product: offerAsProduct,
+    selectedPrice: offerAsProduct.productPrices[0],
+    quantity: getNumericValue(),
+    totalPrice: offerTotalPrice * getNumericValue(),
+    offerId: offerData.id,
+    offerData: offerData,
+    selectedOfferItems: selectedOfferItems,
+    isOfferItem: true
+  };
+  
+  console.log('📦 OrderItem تم إنشاؤه:', {
+    name: orderItem.product.nameArabic,
+    totalPrice: orderItem.totalPrice,
+    selectedOfferItemsCount: selectedOfferItems.length,
+    offerItems: selectedOfferItems.map(item => ({
+      name: item.productName,
+      price: item.price,
+      quantity: item.quantity
+    }))
+  });
+  
+  // إضافة للطلب
+  setOrderItems(prev => [...prev, orderItem]);
+  
+  showSuccess(`تم إضافة العرض: ${offerData.name} بسعر ${offerTotalPrice.toFixed(2)} ج.م`);
+  
+  // إغلاق الـ popup
+  setShowOfferOptionsPopup(false);
+  setSelectedOffer(null);
+}, [getNumericValue, showSuccess, showError]);
+
+
+
+
+
+// معالج اختيار العرض - محدث للتعامل مع العروض البسيطة
+// معالج اختيار العرض - محدث للهيكل الجديد
+const handleOfferSelect = useCallback(async (offer: any) => {
+  console.log('🏷️ تم اختيار العرض:', offer.name);
+  console.log('📋 هيكل العرض:', {
+    offerGroups: offer.offerGroups?.length || 0,
+    groupsWithItems: offer.offerGroups?.map((g: { title: any; items: string | any[]; }) => ({ title: g.title, itemsCount: g.items?.length || 0 })),
+    fixedItems: offer.offerItems?.filter((item: { offerGroupId: any; }) => !item.offerGroupId).length || 0
+  });
+  
+  // تحويل offer إلى OfferData
+  const offerData: OfferData = {
+    id: offer.id,
+    name: offer.name,
+    priceType: offer.priceType,
+    fixedPrice: offer.fixedPrice,
+    startDate: offer.startDate,
+    endDate: offer.endDate,
+    orderTypeId: offer.orderTypeId,
+    isActive: offer.isActive,
+    offerGroups: offer.offerGroups?.map((group: any) => ({
+      id: group.id,
+      offerId: group.offerId,
+      title: group.title,
+      minSelection: group.minSelection,
+      maxSelection: group.maxSelection,
+      isMandatory: group.isMandatory,
+      items: group.items || [], // ✅ تمرير العناصر من داخل المجموعة
+      isActive: group.isActive
+    })) || [],
+    offerItems: offer.offerItems || []
+  };
+  
+  // التحقق من وجود مجموعات نشطة
+  const activeGroups = offerData.offerGroups.filter(group => group.isActive && group.items.length > 0);
+  
+  if (activeGroups.length > 0) {
+    console.log('🔄 فتح popup للعرض مع المجموعات');
+    setSelectedOffer(offerData);
+    setShowOfferOptionsPopup(true);
+  } else {
+    // ✅ للعروض البسيطة: أضف العناصر الثابتة فقط
+    console.log('🔄 معالجة العرض البسيط...');
+    
+    // تحميل بيانات العناصر الثابتة (التي ليس لها offerGroupId)
+    const selectedOfferItems: SelectedOfferItem[] = [];
+    
+    const fixedItems = offerData.offerItems.filter(item => 
+      !item.offerGroupId && item.isDefaultSelected
+    );
+    
+    console.log('📦 العناصر الثابتة المحددة:', fixedItems.length);
+    
+    for (const offerItem of fixedItems) {
+      const productData = await getProductByPriceId(offerItem.productPriceId);
+      if (productData) {
+        // حساب السعر الصحيح
+        const correctPrice = offerItem.useOriginalPrice 
+          ? productData.price.price 
+          : (offerItem.customPrice || 0);
+          
+        selectedOfferItems.push({
+          groupId: null,
+          offerItemId: offerItem.id,
+          productPriceId: offerItem.productPriceId,
+          quantity: offerItem.quantity,
+          price: correctPrice,
+          productName: productData.product.nameArabic,
+          priceName: productData.price.nameArabic,
+          isFixed: true
+        });
+        
+        console.log(`✅ تم تحميل: ${productData.product.nameArabic} - ${productData.price.nameArabic} بسعر ${correctPrice}`);
+      }
+    }
+    
+    console.log('📋 إجمالي العناصر المحملة:', selectedOfferItems.length);
+    
+    if (selectedOfferItems.length > 0) {
+      await handleOfferComplete(offerData, selectedOfferItems);
+    } else {
+      console.warn('⚠️ لا توجد عناصر في هذا العرض');
+      showError('هذا العرض لا يحتوي على منتجات');
+    }
+  }
+}, [getProductByPriceId, handleOfferComplete, showError]);
+
+
+
+
+// معالج ضغط المنتج - محدث
+const handleProductClick = useCallback((product: PosProduct) => {
+  // التحقق من العروض
+  if (product.id.startsWith('offer-')) {
+    const offerId = product.id.replace('offer-', '');
+    const offers = getOffers();
+    const offer = offers.find(o => o.id === offerId);
+    if (offer) {
+      handleOfferSelect(offer);
+      return;
+    }
+  }
+  
+  // الكود الأصلي للمنتجات
+  if (!canAddProduct(selectedOrderType)) {
+    showWarning(t("pos.newSales.messages.selectTable"));
+    return;
+  }
+
+  if (product.hasMultiplePrices) {
+    setSelectedProduct(product);
+    setShowPricePopup(true);
+  } else if (product.productPrices.length > 0) {
+    const price = product.productPrices[0];
+    
+    if (hasProductOptions(product)) {
+      setSelectedProductForOptions(product);
+      setSelectedPriceForOptions(price);
+      setShowOptionsPopup(true);
+    } else {
+      addToOrder(product, price, []);
+    }
+  }
+}, [getOffers, handleOfferSelect, addToOrder, showWarning, hasProductOptions, selectedOrderType, canAddProduct, t]);
 
   // معالج عرض الطلب من popup
   const handleViewOrderFromPopup = useCallback(async (invoiceData: any) => {
@@ -723,11 +1034,7 @@ const PosSystem: React.FC = () => {
     }
   }, [keypadValue, validateKeypadInput]);
 
-  // دالة للحصول على القيمة الرقمية
-  const getNumericValue = useCallback((): number => {
-    const value = parseFloat(keypadValue);
-    return isNaN(value) || value <= 0 ? 1 : value;
-  }, [keypadValue]);
+
 
   // دالة المسح
   const handleClearClick = useCallback(() => {
@@ -794,6 +1101,7 @@ const PosSystem: React.FC = () => {
     clearSelectedTable(); // ✅ مسح التربيزة المحددة
     setIsExtraMode(false);
     setIsWithoutMode(false);
+    setShowOffers(false); // إضافة هذا السطر
     setSelectedChips([]);
     handleBackToMainProducts();
     setSearchQuery('');
@@ -885,17 +1193,19 @@ const PosSystem: React.FC = () => {
       />
       <main className="main-content">
         <section className="products-section">
-          <ActionButtons
-            selectedChips={selectedChips}
-            onChipClick={handleChipClick}
-            isExtraMode={isExtraMode}
-            isWithoutMode={isWithoutMode}
-            onExtraClick={handleExtraClick}
-            onWithoutClick={handleWithoutClick}
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-            hasSelectedOrderItem={true}
-          />
+<ActionButtons
+  selectedChips={selectedChips}
+  onChipClick={handleChipClick}
+  isExtraMode={isExtraMode}
+  isWithoutMode={isWithoutMode}
+  showOffers={showOffers} // إضافة جديدة
+  onExtraClick={handleExtraClick}
+  onWithoutClick={handleWithoutClick}
+  onOffersClick={handleOffersClick} // إضافة جديدة
+  searchQuery={searchQuery}
+  onSearchChange={setSearchQuery}
+  hasSelectedOrderItem={orderItems.length > 0} // تحسين
+/>
           <div className="product-grid">
             {displayedProducts.map((product) => (
               <ProductCard
@@ -908,15 +1218,25 @@ const PosSystem: React.FC = () => {
         </section>
         <aside className="categories-sidebar">
           <div className="categories-list">
-            {isAdditionMode && (
-              <button
-                onClick={handleBackToMainProducts}
-                className="category-item back-button main-back"
-              >
-                <ArrowBackIcon />
-                <span>رجوع للمنتجات الأساسية</span>
-              </button>
-            )}
+{showOffers && ( // إضافة زر رجوع للعروض
+  <button
+    onClick={handleBackToMainProducts}
+    className="category-item back-button main-back offers-back"
+  >
+    <ArrowBackIcon />
+    <span>رجوع للمنتجات</span>
+  </button>
+)}
+
+{(isAdditionMode && !showOffers) && ( // تعديل الشرط
+  <button
+    onClick={handleBackToMainProducts}
+    className="category-item back-button main-back"
+  >
+    <ArrowBackIcon />
+    <span>رجوع للمنتجات الأساسية</span>
+  </button>
+)}
             {showingChildren && (
               <button
                 onClick={handleBackToParent}
@@ -990,6 +1310,21 @@ const PosSystem: React.FC = () => {
         }}
         onSelectPrice={handlePriceSelect}
       />
+      <OfferOptionsPopup
+  offer={selectedOffer}
+  quantity={getNumericValue()}
+  isOpen={showOfferOptionsPopup}
+  onClose={() => {
+    setShowOfferOptionsPopup(false);
+    setSelectedOffer(null);
+  }}
+  onComplete={(selectedOfferItems) => {
+    if (selectedOffer) {
+      handleOfferComplete(selectedOffer, selectedOfferItems);
+    }
+  }}
+  getProductByPriceId={getProductByPriceId}
+/>
       <ProductOptionsPopup
         product={selectedProductForOptions}
         selectedPrice={selectedPriceForOptions}

@@ -10,7 +10,8 @@ import {
   ListItemIcon,
   ListItemText,
   useMediaQuery,
-  useTheme
+  useTheme,
+  CircularProgress
 } from '@mui/material';
 import { IconBuilding, IconChevronDown, IconCheck } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
@@ -25,6 +26,7 @@ const BranchSelector: React.FC<Props> = ({ compact = false }) => {
   const { t } = useTranslation();
   const { selectedBranch, branches, selectBranch } = useAuth();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [loading, setLoading] = useState(false);
   const open = Boolean(anchorEl);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -41,12 +43,29 @@ const BranchSelector: React.FC<Props> = ({ compact = false }) => {
 
   const handleBranchSelect = async (branch: Branch) => {
     try {
+      setLoading(true);
+      
       await selectBranch(branch);
-      handleClose();
-    } catch (error) {
+      
+      // ⭐ تحديث warehouse_id في localStorage
+      if (branch.defWareHouse) {
+        localStorage.setItem('warehouse_id', branch.defWareHouse);
+        console.log('✅ Warehouse updated:', branch.defWareHouse);
+      } else {
+        localStorage.removeItem('warehouse_id');
+        console.warn('⚠️ No default warehouse set for branch:', branch.name);
       }
+      
+      handleClose();
+      
+    } catch (error) {
+      console.error('Error selecting branch:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
+  // ⭐ التحقق من وجود selectedBranch
   if (!selectedBranch) return null;
 
   return (
@@ -67,9 +86,14 @@ const BranchSelector: React.FC<Props> = ({ compact = false }) => {
           },
           borderRadius: 1
         }}
-        disabled={branches.length <= 1}
+        disabled={branches.length <= 1 || loading}
       >
-        <IconBuilding size={18} />
+        {loading ? (
+          <CircularProgress size={18} />
+        ) : (
+          <IconBuilding size={18} />
+        )}
+        
         {!compact && (
           <Box sx={{ textAlign: 'left', flex: 1 }}>
             <Typography 
@@ -83,6 +107,7 @@ const BranchSelector: React.FC<Props> = ({ compact = false }) => {
             >
               {selectedBranch.name}
             </Typography>
+            {/* ⭐ Optional Chaining لتجنب الـ Error */}
             <Typography 
               variant="caption" 
               sx={{ 
@@ -92,11 +117,11 @@ const BranchSelector: React.FC<Props> = ({ compact = false }) => {
               }}
               noWrap
             >
-              {selectedBranch.company.name}
+              {selectedBranch.company?.name || t('branch.noCompany') || 'Company'}
             </Typography>
           </Box>
         )}
-        {branches.length > 1 && <IconChevronDown size={14} />}
+        {branches.length > 1 && !loading && <IconChevronDown size={14} />}
       </Button>
 
       <Menu
@@ -111,7 +136,7 @@ const BranchSelector: React.FC<Props> = ({ compact = false }) => {
       >
         <Box sx={{ px: 2, py: 1 }}>
           <Typography variant="subtitle2" color="text.secondary">
-            {t('branch.selectBranch')}
+            {t('branch.selectBranch') || 'Select Branch'}
           </Typography>
         </Box>
         <Divider />
@@ -121,6 +146,7 @@ const BranchSelector: React.FC<Props> = ({ compact = false }) => {
             key={branch.id}
             onClick={() => handleBranchSelect(branch)}
             selected={branch.id === selectedBranch?.id}
+            disabled={loading}
             sx={{ py: 1.5 }}
           >
             <ListItemIcon>
@@ -134,8 +160,12 @@ const BranchSelector: React.FC<Props> = ({ compact = false }) => {
               <Typography variant="body2" sx={{ fontWeight: 500 }}>
                 {branch.name}
               </Typography>
+              {/* ⭐ Optional Chaining هنا كمان */}
               <Typography variant="caption" color="text.secondary">
-                {branch.company.name}
+                {branch.company?.name || t('branch.noCompany') || 'Company'}
+                {branch.defWareHouse && (
+                  <> • {t('branch.hasWarehouse') || '✓ Warehouse'}</>
+                )}
               </Typography>
             </ListItemText>
           </MenuItem>

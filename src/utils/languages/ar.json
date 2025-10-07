@@ -1572,7 +1572,9 @@
       "companyEmail": "بريد الشركة الإلكتروني",
       "branchName": "اسم الفرع",
       "branchAddress": "عنوان الفرع",
-      "branchPhone": "هاتف الفرع"
+      "branchPhone": "هاتف الفرع",
+            "defaultWarehouse": "المخزن الافتراضي",
+      "defaultWarehouseHelper": "معرف المخزن الافتراضي للفرع"
     },
     "info": {
       "currentCompanyInfo": "معلومات الشركة الحالية",
@@ -2309,5 +2311,3 @@
     }
   }
 }
-
-

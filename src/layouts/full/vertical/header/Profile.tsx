@@ -10,8 +10,16 @@ import {
   ListItemIcon,
   ListItemText,
   Typography,
-  Divider} from '@mui/material';
-import { IconListCheck, IconMail, IconUser, IconSettings, IconLogout, IconBuilding } from '@tabler/icons-react';
+  Divider
+} from '@mui/material';
+import { 
+  IconListCheck, 
+  IconMail, 
+  IconUser, 
+  IconSettings, 
+  IconLogout, 
+  IconBuilding 
+} from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from 'src/contexts/AuthContext';
 
@@ -77,7 +85,9 @@ const Profile = () => {
       >
         {/* User Info */}
         <Box sx={{ mb: 2 }}>
-          <Typography variant="h6">{user?.userName || t('profile.user')}</Typography>
+          <Typography variant="h6">
+            {user?.userName || t('profile.user') || 'User'}
+          </Typography>
           <Typography
             color="textSecondary"
             variant="caption"
@@ -86,6 +96,8 @@ const Profile = () => {
           >
             {user?.phoneNo || ''}
           </Typography>
+          
+          {/* ⭐ Optional Chaining للفرع والشركة */}
           {selectedBranch && (
             <Typography
               color="textSecondary"
@@ -93,8 +105,10 @@ const Profile = () => {
               fontSize="11px"
               fontWeight="400"
               display="block"
+              sx={{ mt: 0.5 }}
             >
-              {selectedBranch.name} - {selectedBranch.company.name}
+              {selectedBranch.name}
+              {selectedBranch.company?.name && ` - ${selectedBranch.company.name}`}
             </Typography>
           )}
         </Box>
@@ -106,35 +120,45 @@ const Profile = () => {
           <ListItemIcon>
             <IconUser width={20} />
           </ListItemIcon>
-          <ListItemText>{t('profile.menu.userManagement')}</ListItemText>
+          <ListItemText>
+            {t('profile.menu.userManagement') || 'User Management'}
+          </ListItemText>
         </MenuItem>
 
         <MenuItem component={Link} to="/company" onClick={handleClose2}>
           <ListItemIcon>
             <IconBuilding width={20} />
           </ListItemIcon>
-          <ListItemText>{t('profile.menu.companySettings')}</ListItemText>
+          <ListItemText>
+            {t('profile.menu.companySettings') || 'Company Settings'}
+          </ListItemText>
         </MenuItem>
 
         <MenuItem component={Link} to="/permissions" onClick={handleClose2}>
           <ListItemIcon>
             <IconSettings width={20} />
           </ListItemIcon>
-          <ListItemText>{t('profile.menu.permissions')}</ListItemText>
+          <ListItemText>
+            {t('profile.menu.permissions') || 'Permissions'}
+          </ListItemText>
         </MenuItem>
 
         <MenuItem>
           <ListItemIcon>
             <IconMail width={20} />
           </ListItemIcon>
-          <ListItemText>{t('profile.menu.inbox')}</ListItemText>
+          <ListItemText>
+            {t('profile.menu.inbox') || 'Inbox'}
+          </ListItemText>
         </MenuItem>
 
         <MenuItem>
           <ListItemIcon>
             <IconListCheck width={20} />
           </ListItemIcon>
-          <ListItemText>{t('profile.menu.taskList')}</ListItemText>
+          <ListItemText>
+            {t('profile.menu.taskList') || 'Task List'}
+          </ListItemText>
         </MenuItem>
 
         <Divider />
@@ -143,7 +167,9 @@ const Profile = () => {
           <ListItemIcon>
             <IconLogout width={20} />
           </ListItemIcon>
-          <ListItemText>{t('auth.logout')}</ListItemText>
+          <ListItemText>
+            {t('auth.logout') || 'Logout'}
+          </ListItemText>
         </MenuItem>
       </Menu>
     </Box>

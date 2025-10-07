@@ -34,13 +34,41 @@ const OffersPage: React.FC<Props> = (props) => {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const isDownSm = useMediaQuery(theme.breakpoints.down('sm'));
 
-  const [offersData, setOffersData] = React.useState<OffersResponse>({
-    totalCount: 0,
-    pageCount: 1,
-    pageNumber: 1,
-    pageSize: 20,
-    data: []
-  });
+const [offersData, setOffersData] = React.useState<{
+  totalCount: number;
+  pageCount: number;
+  pageNumber: number;
+  pageSize: number;
+  data: Offer[];
+}>({
+  totalCount: 0,
+  pageCount: 1,
+  pageNumber: 1,
+  pageSize: 20,
+  data: []
+});
+
+const fetchOffers = async (page = 1) => {
+  try {
+    setLoad(true);
+    const response = await apiSrv.getAll(page, offersData.pageSize);
+    
+    // ✅ تحديث البيانات لتتماشى مع الشكل الجديد
+    setOffersData({
+      totalCount: response.data.length, // أو أي منطق آخر للعد
+      pageCount: Math.ceil(response.data.length / offersData.pageSize),
+      pageNumber: page,
+      pageSize: offersData.pageSize,
+      data: response.data
+    });
+  } catch (e: any) {
+    setErr(e?.message || t('offers.errors.loadFailed'));
+  } finally {
+    setLoad(false);
+  }
+};
+
+
   const [selectedOffer, setSelectedOffer] = React.useState<Offer | null>(null);
   const [searchQuery, setSearchQuery] = React.useState('');
   const [error, setErr] = React.useState('');
@@ -60,17 +88,6 @@ const OffersPage: React.FC<Props> = (props) => {
     sortOrder: 'asc'
   });
 
-  const fetchOffers = async (page = 1) => {
-    try {
-      setLoad(true);
-      const data = await apiSrv.getAll(page, offersData.pageSize);
-      setOffersData(data);
-    } catch (e: any) {
-      setErr(e?.message || t('offers.errors.loadFailed'));
-    } finally {
-      setLoad(false);
-    }
-  };
 
   React.useEffect(() => {
     fetchOffers();

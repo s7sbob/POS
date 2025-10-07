@@ -263,7 +263,6 @@ const CompanyForm: React.FC<Props> = ({
                 name="phone"
                 control={control}
                 rules={{ 
-                  required: t('deliveryCompanies.phoneRequired'),
                   pattern: {
                     value: /^01[0-9]{9}$/,
                     message: t('deliveryCompanies.phoneInvalid')
@@ -274,7 +273,6 @@ const CompanyForm: React.FC<Props> = ({
                     {...field}
                     label={t('deliveryCompanies.form.phone')}
                     fullWidth
-                    required
                     error={!!fieldState.error}
                     helperText={fieldState.error?.message}
                     placeholder="01012345678"
@@ -290,7 +288,6 @@ const CompanyForm: React.FC<Props> = ({
                 name="email"
                 control={control}
                 rules={{ 
-                  required: t('deliveryCompanies.emailRequired'),
                   pattern: {
                     value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
                     message: t('deliveryCompanies.emailInvalid')
@@ -302,7 +299,6 @@ const CompanyForm: React.FC<Props> = ({
                     label={t('deliveryCompanies.form.email')}
                     type="email"
                     fullWidth
-                    required
                     error={!!fieldState.error}
                     helperText={fieldState.error?.message}
                     onFocus={(e) => e.target.select()}
@@ -316,13 +312,11 @@ const CompanyForm: React.FC<Props> = ({
               <Controller
                 name="contactPerson"
                 control={control}
-                rules={{ required: t('deliveryCompanies.contactPersonRequired') }}
                 render={({ field, fieldState }) => (
                   <TextField
                     {...field}
                     label={t('deliveryCompanies.form.contactPerson')}
                     fullWidth
-                    required
                     error={!!fieldState.error}
                     helperText={fieldState.error?.message}
                     onFocus={(e) => e.target.select()}

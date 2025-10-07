@@ -878,6 +878,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
   };
 
 
+  
 
   const shouldShowAllButtons = orderType !== 'Takeaway';
   const shouldShowPayOnly = orderType === 'Takeaway';
@@ -942,15 +943,41 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
 
               {item.notes && renderNotes(item.notes)}
 
-              {/* ✅ عرض الخيارات المختارة (selectedOptions) */}
-              {item.selectedOptions && item.selectedOptions.length > 0 && (
-                <div className={styles.itemOptions}>
-                  <div className={styles.optionsHeader}>
-                    {/* <span className={styles.optionsLabel}>{t('pos.newSales.orderSummary.options')}:</span> */}
-                  </div>
-                  {renderOptions(item.selectedOptions)}
-                </div>
-              )}
+{/* ✅ عرض تفاصيل العرض بنفس شكل الخيارات تماماً */}
+{item.isOfferItem && item.selectedOfferItems && item.selectedOfferItems.length > 0 && (
+  <div className={styles.itemOptions}>
+    <div className={styles.optionsHeader}>
+      <span className={styles.optionsLabel}>🏷️ مكونات العرض:</span>
+    </div>
+    {item.selectedOfferItems.map((offerItem, index) => (
+      <div key={index} className={styles.optionDetail}>
+        <span className={styles.optionText}>
+          {offerItem.quantity} × {offerItem.productName} - {offerItem.priceName}
+        </span>
+        <div className={styles.optionPrices}>
+          <div className={styles.optionPrice}>
+            {offerItem.price > 0 ? `${offerItem.price.toFixed(2)}` : '0'}
+          </div>
+          <div className={styles.optionTotal}>
+            {(offerItem.price * offerItem.quantity).toFixed(2)}
+          </div>
+        </div>
+      </div>
+    ))}
+  </div>
+)}
+
+
+
+{/* ✅ عرض الخيارات المختارة (selectedOptions) */}
+{item.selectedOptions && item.selectedOptions.length > 0 && (
+  <div className={styles.itemOptions}>
+    <div className={styles.optionsHeader}>
+      {/* <span className={styles.optionsLabel}>{t('pos.newSales.orderSummary.options')}:</span> */}
+    </div>
+    {renderOptions(item.selectedOptions)}
+  </div>
+)}
 
               {/* ✅ عرض الإضافات والحذوفات (subItems) */}
               {item.subItems && item.subItems.length > 0 && (

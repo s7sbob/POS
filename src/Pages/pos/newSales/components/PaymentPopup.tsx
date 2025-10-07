@@ -85,7 +85,7 @@ const PaymentPopup: React.FC<PaymentPopupProps> = ({
   const [selectedPayments, setSelectedPayments] = useState<PaymentMethodData[]>([]);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | null>(null);
   const [paidAmount, setPaidAmount] = useState('0');
-  const [lastNonCashTotal, setLastNonCashTotal] = useState(0);
+  const lastNonCashTotalRef = useRef(0);
   const [isFirstInput, setIsFirstInput] = useState(true);
   const { saveInvoice, isSubmitting: isInvoiceSubmitting } = useInvoiceManager();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -333,11 +333,11 @@ const getSuccessMessage = (invoiceNumber: string): string => {
   };
 
   // تحديث مبلغ الكاش تلقائياً عند تغيير طرق الدفع غير الكاش
-  useEffect(() => {
+useEffect(() => {
     const cashMethod = getCashMethod();
     if (!cashMethod) return;
 
-    if (nonCashTotal !== lastNonCashTotal) {
+    if (Math.abs(nonCashTotal - lastNonCashTotalRef.current) > 0.01) {
       const autoCalculatedCashAmount = Math.max(0, totalAmount - nonCashTotal);
 
       setSelectedPayments(prevPayments => {
@@ -363,10 +363,38 @@ const getSuccessMessage = (invoiceNumber: string): string => {
         setIsFirstInput(true);
       }
 
-      setLastNonCashTotal(nonCashTotal);
+      lastNonCashTotalRef.current = nonCashTotal;
     }
-  }, [nonCashTotal, totalAmount, selectedPaymentMethod, lastNonCashTotal]);
+}, [nonCashTotal, totalAmount, selectedPaymentMethod]);
 
+
+  // تهيئة طرق الدفع
+  useEffect(() => {
+    if (!isOpen || !paymentMethods?.length) return;
+    
+    const cashMethod = getCashMethod();
+    const initialPayments = paymentMethods.map(method => {
+      const isCash = method.name.toLowerCase().includes('كاش') || 
+                     method.name.toLowerCase().includes('cash');
+      
+      return {
+        method: method.name,
+        amount: isCash ? totalAmount : 0,
+        isSelected: isCash,
+        wasModified: false
+      };
+    });
+    
+    setSelectedPayments(initialPayments);
+    
+    if (cashMethod) {
+      setSelectedPaymentMethod(cashMethod.name);
+      setPaidAmount(totalAmount.toFixed(2));
+      setIsFirstInput(true);
+    }
+    
+lastNonCashTotalRef.current = 0;
+  }, [isOpen, paymentMethods, totalAmount]);
 
 
   // معالج تغيير المبلغ مع تحديد flag التعديل
@@ -758,8 +786,8 @@ const handleFinishPayment = useCallback(async () => {
       setIsFirstInput(true);
     }
     
-    setLastNonCashTotal(0);
-  }, [isOpen, paymentMethods, totalAmount, orderType, selectedDeliveryCompany, handleFinishPayment]);
+lastNonCashTotalRef.current = 0;
+}, [isOpen, paymentMethods, totalAmount, orderType, selectedDeliveryCompany?.id]);
   if (!isOpen) return null;
 
   return (

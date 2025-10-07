@@ -56,28 +56,33 @@ const OfferTable: React.FC<Props> = ({
       width: 140,
       renderCell: ({ value }) => formatDate(value)
     },
-    { 
-      field: 'offerGroups', 
-      headerName: t('offers.form.groups'), 
-      width: 100,
-      sortable: false,
-      renderCell: ({ value }) => (
-        <Typography variant="body2" fontWeight={500}>
-          {value?.length || 0}
-        </Typography>
-      )
-    },
-    { 
-      field: 'offerItems', 
-      headerName: t('offers.form.items'), 
-      width: 100,
-      sortable: false,
-      renderCell: ({ value }) => (
-        <Typography variant="body2" fontWeight={500}>
-          {value?.length || 0}
-        </Typography>
-      )
-    },
+{ 
+  field: 'offerGroups', 
+  headerName: t('offers.form.groups'), 
+  width: 100,
+  sortable: false,
+  renderCell: ({ value }) => (
+    <Typography variant="body2" fontWeight={500}>
+      {value?.length || 0}
+    </Typography>
+  )
+},
+{ 
+  field: 'offerItems', 
+  headerName: t('offers.form.items'), 
+  width: 100,
+  sortable: false,
+  renderCell: ({ value, row }) => {
+    const independentItems = value?.filter((item: { offerGroupId: any; }) => !item.offerGroupId)?.length || 0;
+    const groupItems = row.offerGroups?.reduce((total, group) => 
+      total + (group.items?.length || 0), 0) || 0;
+    return (
+      <Typography variant="body2" fontWeight={500}>
+        {independentItems + groupItems}
+      </Typography>
+    );
+  }
+},
     { 
       field: 'isActive', 
       headerName: t('common.status'), 

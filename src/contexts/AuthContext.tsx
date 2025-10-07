@@ -46,45 +46,47 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useGlobalErrorHandler();
 
   // تحميل البيانات من localStorage عند بدء التطبيق
-  useEffect(() => {
-    const initAuth = async () => {
-      try {
-        if (isAuthenticated()) {
-          const savedToken = localStorage.getItem('auth_token');
-          const savedUser = localStorage.getItem('user_data');
-          const savedBranch = localStorage.getItem('selected_branch');
-          const savedBranches = localStorage.getItem('user_branches');
+useEffect(() => {
+  const initAuth = async () => {
+    try {
+      if (isAuthenticated()) {
+        const savedToken = localStorage.getItem('auth_token');
+        const savedUser = localStorage.getItem('user_data');
+        const savedBranch = localStorage.getItem('selected_branch');
+        const savedBranches = localStorage.getItem('user_branches');
 
-          if (savedToken && savedUser && savedBranch) {
-            const userData = JSON.parse(savedUser);
-            const branchData = JSON.parse(savedBranch);
-            const branchesData = savedBranches ? JSON.parse(savedBranches) : [];
+        if (savedToken && savedUser && savedBranch) {
+          const userData = JSON.parse(savedUser);
+          const branchData = JSON.parse(savedBranch);
+          const branchesData = savedBranches ? JSON.parse(savedBranches) : [];
 
-            setToken(savedToken);
-            setUser(userData);
-            setSelectedBranch(branchData);
-            setBranches(branchesData);
-            
-            // تأكد من تحديث headers
-            const savedTenantId = localStorage.getItem('tenant_id');
-            setAuthHeaders(savedToken, branchData.refCompanyId, branchData.id, savedTenantId || '');
-            
-            // ⭐ تحديث حالة المصادقة فوراً
-            setIsAuthenticatedState(true);
-            
-            // تحميل صفحات المستخدم في الخلفية
-            loadUserPages();
+          setToken(savedToken);
+          setUser(userData);
+          setSelectedBranch(branchData);
+          setBranches(branchesData);
+          
+          const savedTenantId = localStorage.getItem('tenant_id');
+          setAuthHeaders(savedToken, branchData.refCompanyId, branchData.id, savedTenantId || '');
+          
+          // ⭐ التأكد من حفظ warehouse_id
+          if (branchData.defWareHouse) {
+            localStorage.setItem('warehouse_id', branchData.defWareHouse);
           }
+          
+          setIsAuthenticatedState(true);
+          loadUserPages();
         }
-      } catch (error) {
-        logout();
-      } finally {
-        setIsLoading(false);
       }
-    };
+    } catch (error) {
+      logout();
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    initAuth();
-  }, []);
+  initAuth();
+}, []);
+
 
   // تحميل صفحات المستخدم مع retry mechanism
   const loadUserPages = async (retries = 3) => {
@@ -111,13 +113,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 const login = async (phoneNo: string, password: string, tenantId: string, onSuccess?: (branches: Branch[], selectedBranch?: Branch) => void) => {
   try {
     setIsLoading(true);
-    const response: LoginResponse = await loginApi(phoneNo, password, tenantId); // ⭐ تمرير tenantId
+    const response: LoginResponse = await loginApi(phoneNo, password, tenantId);
     const branches = response.branches?.data || [];
+    
     if (branches.length === 0) {
       throw new Error(t('auth.errors.noBranches'));
     }
 
-    // حفظ البيانات
     setToken(response.token);
     setBranches(branches);
     
@@ -129,17 +131,22 @@ const login = async (phoneNo: string, password: string, tenantId: string, onSucc
     };
     setUser(userData);
 
-    // حفظ في localStorage
     localStorage.setItem('auth_token', response.token);
     localStorage.setItem('user_data', JSON.stringify(userData));
     localStorage.setItem('user_branches', JSON.stringify(branches));
 
-    // إذا كان فرع واحد، اختره تلقائياً
+    // إذا كان فرع واحد
     if (branches.length === 1) {
       const selectedBranch = branches[0];
       
       setSelectedBranch(selectedBranch);
-      setAuthHeaders(response.token, selectedBranch.refCompanyId, selectedBranch.id, tenantId); // ⭐ تمرير tenantId
+      setAuthHeaders(response.token, selectedBranch.refCompanyId, selectedBranch.id, tenantId);
+      
+      // ⭐ حفظ الـ DefaultWarehouse
+      if (selectedBranch.defWareHouse) {
+        localStorage.setItem('warehouse_id', selectedBranch.defWareHouse);
+      }
+      
       localStorage.setItem('selected_branch', JSON.stringify(selectedBranch));
       setIsAuthenticatedState(true);
       
@@ -151,7 +158,12 @@ const login = async (phoneNo: string, password: string, tenantId: string, onSucc
       
     } else {
       const firstBranch = branches[0];
-      setAuthHeaders(response.token, firstBranch.refCompanyId, firstBranch.id, tenantId); // ⭐ تمرير tenantId
+      setAuthHeaders(response.token, firstBranch.refCompanyId, firstBranch.id, tenantId);
+      
+      // ⭐ حفظ الـ warehouse من أول فرع مؤقتاً
+      if (firstBranch.defWareHouse) {
+        localStorage.setItem('warehouse_id', firstBranch.defWareHouse);
+      }
       
       setIsAuthenticatedState(true);
       
@@ -168,32 +180,37 @@ const login = async (phoneNo: string, password: string, tenantId: string, onSucc
     setIsLoading(false);
   }
 };
+
   // دالة داخلية لاختيار الفرع
-  const selectBranchInternal = async (branch: Branch, isFromLogin = false) => {
-    try {
-      setSelectedBranch(branch);
-      
-      // تحديث headers في axios
-      if (token) {
-        const savedTenantId = localStorage.getItem('tenant_id') || '';
-        setAuthHeaders(token, branch.refCompanyId, branch.id, savedTenantId);
-      }
-      
-      // حفظ الفرع المختار
-      localStorage.setItem('selected_branch', JSON.stringify(branch));
-      
-      // ⭐ تحديث حالة المصادقة فوراً
-      setIsAuthenticatedState(true);
-      
-      // تحميل الصفحات في الخلفية
-      setTimeout(() => loadUserPages(), 200);
-      
-    } catch (error) {
-      if (!isFromLogin) {
-        throw error;
-      }
+const selectBranchInternal = async (branch: Branch, isFromLogin = false) => {
+  try {
+    setSelectedBranch(branch);
+    
+    if (token) {
+      const savedTenantId = localStorage.getItem('tenant_id') || '';
+      setAuthHeaders(token, branch.refCompanyId, branch.id, savedTenantId);
     }
-  };
+    
+    // ⭐ حفظ الـ warehouse الخاص بالفرع المختار
+    if (branch.defWareHouse) {
+      localStorage.setItem('warehouse_id', branch.defWareHouse);
+    } else {
+      // إزالة warehouse_id إذا مكانش موجود
+      localStorage.removeItem('warehouse_id');
+    }
+    
+    localStorage.setItem('selected_branch', JSON.stringify(branch));
+    setIsAuthenticatedState(true);
+    
+    setTimeout(() => loadUserPages(), 200);
+    
+  } catch (error) {
+    if (!isFromLogin) {
+      throw error;
+    }
+  }
+};
+
 
   // اختيار فرع (للاستخدام الخارجي)
   const selectBranch = (branch: Branch) => {

@@ -64,6 +64,74 @@ export interface CategoryItem {
   selected?: boolean;
 }
 
+export interface SubItem {
+  id: string;
+  type: 'option' | 'extra' | 'without';
+  name: string;
+  quantity: number;
+  price: number;
+  isRequired?: boolean; // للمجموعات المطلوبة
+  groupId?: string; // للمجموعات
+  productId?: string; // للإضافات/بدون
+}
+
+
+export interface ConvertedOfferProduct extends PosProduct {
+  originalOffer: any; // سيحتوي على بيانات العرض الأصلي
+  isOfferProduct: boolean;
+}
+
+
+export interface OfferGroup {
+  id: string;
+  offerId: string;
+  title: string;
+  minSelection: number;
+  maxSelection: number;
+  isMandatory: boolean;
+  items: OfferItem[]; // ✅ إضافة العناصر داخل المجموعة مباشرة
+  isActive: boolean;
+}
+
+
+export interface OfferItem {
+  id: string;
+  offerId: string;
+  productPriceId: string;
+  offerGroupId: string | null;
+  quantity: number;
+  isDefaultSelected: boolean;
+  useOriginalPrice: boolean;
+  customPrice: number | null;
+  isActive: boolean;
+}
+
+export interface OfferData {
+  id: string;
+  name: string;
+  priceType: 'Fixed' | 'Dynamic';
+  fixedPrice: number;
+  startDate: string;
+  endDate: string;
+  orderTypeId: string;
+  isActive: boolean;
+  offerGroups: OfferGroup[];
+  offerItems: OfferItem[];
+}
+
+export interface SelectedOfferItem {
+  groupId: string | null;
+  offerItemId: string;
+  productPriceId: string;
+  priceName: string; // ✅ إضافة جديدة
+  quantity: number;
+  price: number;
+  productName: string;
+  isFixed: boolean; // true إذا كان offerGroupId = null
+}
+
+
+
 export interface OrderItem {
   id: string;
   product: PosProduct;
@@ -78,19 +146,13 @@ export interface OrderItem {
   subItems?: SubItem[]; // جديد - للعناصر الفرعية
   discountPercentage?: number; // جديد
   discountAmount?: number; // جديد
+    // إضافة بيانات العرض
+  offerId?: string;
+  offerData?: OfferData;
+  selectedOfferItems?: SelectedOfferItem[];
+  isOfferItem?: boolean;
 }
 
-
-export interface SubItem {
-  id: string;
-  type: 'option' | 'extra' | 'without';
-  name: string;
-  quantity: number;
-  price: number;
-  isRequired?: boolean; // للمجموعات المطلوبة
-  groupId?: string; // للمجموعات
-  productId?: string; // للإضافات/بدون
-}
 
 export interface OrderSummary {
   totalAfterTaxAndService: number;

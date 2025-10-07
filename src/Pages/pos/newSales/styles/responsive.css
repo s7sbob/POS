@@ -953,3 +953,62 @@ body {
   }
 }
 
+
+
+
+
+/* إضافات للعروض */
+.offers-back {
+  background: linear-gradient(135deg, var(--primary-orange) 0%, #ff8a50 100%) !important;
+  color: white !important;
+  border: 2px solid var(--primary-orange) !important;
+}
+
+.offers-back:hover {
+  background: linear-gradient(135deg, #e6a429 0%, #ff7043 100%) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 183, 77, 0.3);
+}
+
+.offers-back span {
+  color: white !important;
+  font-weight: 600;
+}
+
+/* تحسين زر العروض النشط */
+.action-chip.offer.active {
+  background: linear-gradient(135deg, var(--primary-orange) 0%, #ff8a50 100%);
+  box-shadow: 0 4px 15px rgba(255, 183, 77, 0.4);
+  transform: translateY(-1px);
+}
+
+.action-chip.offer.active:hover {
+  background: linear-gradient(135deg, #e6a429 0%, #ff7043 100%);
+  box-shadow: 0 6px 20px rgba(255, 183, 77, 0.5);
+}
+
+/* تخصيص مظهر المنتجات المحولة من العروض */
+.product-card[data-offer="true"] {
+  border: 2px solid var(--primary-orange);
+  background: linear-gradient(135deg, rgba(255, 183, 77, 0.1) 0%, rgba(255, 138, 80, 0.1) 100%);
+}
+
+.product-card[data-offer="true"]:hover {
+  border-color: #e6a429;
+  background: linear-gradient(135deg, rgba(255, 183, 77, 0.2) 0%, rgba(255, 138, 80, 0.2) 100%);
+  box-shadow: 0 6px 20px rgba(255, 183, 77, 0.3);
+}
+
+/* إضافة أيقونة العرض */
+.product-card[data-offer="true"]::before {
+  content: '🏷️';
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 18px;
+  z-index: 2;
+}
+
+.product-card {
+  position: relative;
+}

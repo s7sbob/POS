@@ -1461,3 +1461,62 @@
 
 
 
+/* تنسيق العروض في OrderSummary */
+.offerDetails {
+  margin-top: 8px;
+  padding: 12px;
+  background: linear-gradient(135deg, rgba(255, 183, 77, 0.1) 0%, rgba(255, 138, 80, 0.1) 100%);
+  border-left: 4px solid var(--primary-orange);
+  border-radius: 6px;
+}
+
+.offerHeader {
+  margin-bottom: 8px;
+}
+
+.offerLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--primary-orange);
+}
+
+.offerItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(255, 183, 77, 0.2);
+}
+
+.offerItem:last-child {
+  border-bottom: none;
+}
+
+.offerItemInfo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+}
+
+.offerItemBadge {
+  font-size: 12px;
+}
+
+.offerItemName {
+  font-size: 11px;
+  color: var(--text-secondary);
+  line-height: 1.3;
+}
+
+.fixedLabel {
+  font-size: 10px;
+  color: var(--primary-blue);
+  font-weight: 500;
+}
+
+.offerItemPrice {
+  font-size: 11px;
+  color: var(--text-primary);
+  font-weight: 500;
+}

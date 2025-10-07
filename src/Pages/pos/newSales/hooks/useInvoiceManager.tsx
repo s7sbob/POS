@@ -47,9 +47,18 @@ export const useInvoiceManager = () => {
     }
   };
 
-  const getWareHouseId = (): string => {
-    return localStorage.getItem('warehouse_id') || 'e81866c0-791d-449f-bc04-c5d65bb3820c';
-  };
+const getWareHouseId = (): string => {
+  const warehouseId = localStorage.getItem('warehouse_id');
+  
+  if (!warehouseId) {
+    console.warn('⚠️ لا يوجد warehouse_id في localStorage! تأكد من إعداد defWareHouse للفرع.');
+    // يمكنك رمي خطأ هنا أو إرجاع قيمة افتراضية مؤقتة
+    throw new Error('لم يتم تحديد المخزن الافتراضي للفرع. يرجى التواصل مع الإدارة.');
+  }
+  
+  return warehouseId;
+};
+
 
   const getRawBranchId = (): string => {
     return localStorage.getItem('branch_id') || 'branch_1';
@@ -77,13 +86,40 @@ export const useInvoiceManager = () => {
   };
 
   // دالة تحويل عنصر الطلب إلى عنصر فاتورة
+// تحديث دالة convertOrderItemToInvoiceItem لتشمل العروض
 const convertOrderItemToInvoiceItem = (
   item: OrderItem, 
   existingItem?: invoicesApi.InvoiceItem
 ): invoicesApi.CreateInvoiceItem => {
   const childrens: invoicesApi.CreateInvoiceItem[] = [];
   
-  // ✅ معالجة الـ subItems كـ Childrens
+  // ✅ معالجة العروض
+  if (item.isOfferItem && item.selectedOfferItems) {
+    item.selectedOfferItems.forEach(offerItem => {
+      childrens.push({
+        ProductId: item.product.id, // يمكن تحسينه للحصول على ProductId الحقيقي
+        ProductPriceId: offerItem.productPriceId,
+        Barcode: '1234567890123',
+        UnitId: null,
+        PosPriceName: offerItem.productName,
+        UnitFactor: 1,
+        Qty: offerItem.quantity,
+        UnitPrice: offerItem.price / offerItem.quantity,
+        UnitCost: 0,
+        ItemDiscountPercentage: 0,
+        ItemTaxPercentage: 0,
+        ServicePercentage: 0,
+        WareHouseId: getWareHouseId(),
+        Components: [],
+        SalesInvoiceItemType: invoicesApi.SalesInvoiceItemType.Product,
+        // إضافة بيانات العرض
+        OfferId: item.offerId,
+        OfferGroupId: offerItem.groupId
+      });
+    });
+  }
+  
+  // معالجة الـ subItems كـ Childrens (الكود الموجود)
   if (item.subItems && item.subItems.length > 0) {
     item.subItems.forEach(subItem => {
       childrens.push({
@@ -101,15 +137,14 @@ const convertOrderItemToInvoiceItem = (
         ServicePercentage: 0,
         WareHouseId: getWareHouseId(),
         Components: [],
-        // ✅ تصحيح salesInvoiceItemType
         SalesInvoiceItemType: subItem.type === 'without' ? 
-          invoicesApi.SalesInvoiceItemType.Without :    // 3 = بدون
-          invoicesApi.SalesInvoiceItemType.Addition     // 2 = إضافة (Extra)
+          invoicesApi.SalesInvoiceItemType.Without :
+          invoicesApi.SalesInvoiceItemType.Addition
       });
     });
   }
 
-  // ✅ معالجة الـ selectedOptions كـ Childrens
+  // معالجة الـ selectedOptions كـ Childrens (الكود الموجود)
   if (item.selectedOptions && item.selectedOptions.length > 0) {
     item.selectedOptions.forEach(option => {
       childrens.push({
@@ -127,8 +162,7 @@ const convertOrderItemToInvoiceItem = (
         ServicePercentage: 0,
         WareHouseId: getWareHouseId(),
         Components: [],
-        // ✅ تصحيح salesInvoiceItemType للخيارات
-        SalesInvoiceItemType: invoicesApi.SalesInvoiceItemType.Optional // 4 = خيارات أصلية
+        SalesInvoiceItemType: invoicesApi.SalesInvoiceItemType.Optional
       });
     });
   }
@@ -149,8 +183,10 @@ const convertOrderItemToInvoiceItem = (
     WareHouseId: getWareHouseId(),
     Components: [],
     Childrens: childrens.length > 0 ? childrens : undefined,
-    // ✅ المنتج الرئيسي
-    SalesInvoiceItemType: invoicesApi.SalesInvoiceItemType.Product // 1 = منتج رئيسي
+    SalesInvoiceItemType: invoicesApi.SalesInvoiceItemType.Product,
+    // إضافة معرف العرض للمنتج الرئيسي
+    OfferId: item.offerId || null,
+    OfferGroupId: null // المنتج الرئيسي للعرض لا يكون له offerGroupId
   };
 
   if (existingItem) {
@@ -159,6 +195,7 @@ const convertOrderItemToInvoiceItem = (
 
   return invoiceItem;
 };
+
 
   // دالة تحويل طرق الدفع
   const convertPaymentsToInvoicePayments = (

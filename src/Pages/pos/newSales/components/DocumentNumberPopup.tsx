@@ -110,7 +110,7 @@ const DocumentNumberPopup: React.FC<DocumentNumberPopupProps> = ({
               onClick={handleConfirm}
               disabled={!documentNumber.trim()}
             >
-              تأكيد الدفع
+             حفظ
             </button>
           </div>
         </div>

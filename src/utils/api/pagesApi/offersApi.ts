@@ -1,18 +1,6 @@
 // File: src/utils/api/pagesApi/offersApi.ts
 import api from '../../axios';
 
-export type OfferGroup = {
-  id?: string;
-  offerId?: string;
-  title: string;
-  minSelection: number;
-  maxSelection: number;
-  isMandatory: boolean;
-  isActive?: boolean;
-  branchId?: string | null;
-  companyID?: string | null;
-};
-
 export type OfferItem = {
   id?: string;
   offerId?: string;
@@ -22,6 +10,19 @@ export type OfferItem = {
   isDefaultSelected: boolean;
   useOriginalPrice: boolean;
   customPrice?: number | null;
+  isActive?: boolean;
+  branchId?: string | null;
+  companyID?: string | null;
+};
+
+export type OfferGroup = {
+  id?: string;
+  offerId?: string;
+  title: string;
+  minSelection: number;
+  maxSelection: number;
+  isMandatory: boolean;
+  items: OfferItem[]; // ✅ العناصر موجودة مباشرة داخل المجموعة
   isActive?: boolean;
   branchId?: string | null;
   companyID?: string | null;
@@ -37,22 +38,20 @@ export type Offer = {
   orderTypeId: string;
   isActive: boolean;
   offerGroups: OfferGroup[];
-  offerItems: OfferItem[];
+  offerItems: OfferItem[]; // ✅ كل العناصر (مجموعات + مستقلة)
   branchId?: string | null;
   companyID?: string | null;
 };
 
 export type OffersResponse = {
-  totalCount: number;
-  pageCount: number;
-  pageNumber: number;
-  pageSize: number;
+  isvalid: boolean;
+  errors: any[];
   data: Offer[];
 };
 
 export const getAll = async (pageNumber = 1, pageSize = 20): Promise<OffersResponse> => {
   const { data } = await api.get(`/GetOffers?pageNumber=${pageNumber}&pageSize=${pageSize}`);
-  return data.data;
+  return data;
 };
 
 export const getById = async (id: string): Promise<Offer> => {
