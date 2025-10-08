@@ -987,7 +987,8 @@ const handleProductClick = useCallback((product: PosProduct) => {
     InvoiceDataConverter.cacheCustomer(customer);
     setSelectedCustomer(customer);
     setSelectedAddress(address);
-    setCustomerName(`${customer.name} - ${customer.phone1}`);
+    // قم بحفظ اسم العميل فقط لعرضه فى الواجهة؛ لا تدمج رقم الهاتف مع الاسم
+    setCustomerName(customer.name);
   }, []);
 
   // حذف منتج من الطلب

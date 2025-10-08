@@ -567,7 +567,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
           servicePercentage: 0,
           taxPercentage: 0,
           discountPercentage: 0,
-          notes: customerName,
+          // لا ترسل اسم العميل ضمن حقل الـ notes؛ سيتم إرسال الاسم والعنوان في حقول منفصلة
           // عند تعديل فاتورة موجودة يجب إزالة المنتجات المحذوفة
           preserveMissingItems: !isEditMode ? true : false,
           // إضافة الحقول الجديدة لشركات التوصيل
@@ -663,7 +663,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
           servicePercentage: 0,
           taxPercentage: 0,
           discountPercentage: 0,
-          notes: customerName,
+          // لا ترسل اسم العميل ضمن حقل الـ notes؛ سيتم إرسال الاسم والعنوان في حقول منفصلة
           preserveMissingItems: !isEditMode ? true : false,
           // إضافة الحقول الجديدة لشركات التوصيل
           documentNumber: documentNumber,
@@ -734,7 +734,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
           servicePercentage: 0,
           taxPercentage: 0,
           discountPercentage: 0,
-          notes: customerName,
+          // لا ترسل اسم العميل ضمن حقل الـ notes؛ سيتم إرسال الاسم والعنوان في حقول منفصلة
           preserveMissingItems: !isEditMode ? true : false,
           // إضافة الحقول الجديدة لشركات التوصيل
           documentNumber: orderType === 'DeliveryCompany' ? documentNumber : null,

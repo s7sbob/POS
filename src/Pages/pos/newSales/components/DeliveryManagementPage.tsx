@@ -113,6 +113,25 @@ interface DeliveryOrder {
   deliveryAgentId?: string | null;
   invoiceStatus: number;
   selected: boolean;
+
+  /**
+   * The name of the customer associated with this order.  Derived from
+   * invoice.customerName or invoice.customer.name.
+   */
+  customerName?: string;
+  /**
+   * Primary phone number for the customer.  Pulled from invoice.customer.phone1.
+   */
+  customerPhone?: string;
+  /**
+   * The delivery address line for the order.  Derived from
+   * invoice.customerAddress.addressLine when available.
+   */
+  customerAddressLine?: string;
+  /**
+   * The name of the delivery zone (if available) from the customer address.
+   */
+  zoneName?: string;
 }
 
 
@@ -330,14 +349,22 @@ const DeliveryManagementPage: React.FC = () => {
       
       const transformedOrders: DeliveryOrder[] = response.data.map((invoice: invoicesApi.Invoice) => ({
         id: invoice.id,
-      backInvoiceCode: invoice.backInvoiceCode, // ✅ مباشرة بدون تحويل
+        backInvoiceCode: invoice.backInvoiceCode, // ✅ مباشرة بدون تحويل
+        // Keep the raw notes for reference (may contain comments from cashier)
         notes: invoice.notes || '',
         totalAfterTaxAndService: invoice.totalAfterTaxAndService,
         createdAt: invoice.createdAt,
         preparedAt: invoice.preparedAt,
         deliveryAgentId: invoice.deliveryAgentId,
         invoiceStatus: invoice.invoiceStatus,
-        selected: false
+        selected: false,
+        // Extract customer details from the invoice object.  Prefer the
+        // customerName field if provided, otherwise fall back to the nested
+        // customer object.  Phone and address come from the nested objects.
+        customerName: invoice.customerName || (invoice as any).customer?.name || '',
+        customerPhone: (invoice as any).customer?.phone1 || '',
+        customerAddressLine: (invoice as any).customerAddress?.addressLine || '',
+        zoneName: (invoice as any).customerAddress?.zoneName || ''
       }));
       
       setOrders(transformedOrders);
@@ -497,7 +524,7 @@ const hideNotification = () => {
       const agentPendingOrders = await deliveryAgentsApi.getDeliveryAgentPendingOrders(agentId);
       
       // Transform the data to match the existing DeliveryOrder interface
-      const transformedOrders: DeliveryOrder[] = agentPendingOrders.map((order) => ({
+      const transformedOrders: DeliveryOrder[] = agentPendingOrders.map((order: any) => ({
         id: order.id,
         backInvoiceCode: order.backInvoiceCode, // ✅ إضافة هذا السطر
         notes: order.notes || '',
@@ -506,7 +533,12 @@ const hideNotification = () => {
         preparedAt: order.preparedAt,
         deliveryAgentId: order.deliveryAgentId,
         invoiceStatus: order.invoiceStatus,
-        selected: false
+        selected: false,
+        // Extract customer info from nested fields
+        customerName: order.customerName || order.customer?.name || '',
+        customerPhone: order.customer?.phone1 || '',
+        customerAddressLine: order.customerAddress?.addressLine || '',
+        zoneName: order.customerAddress?.zoneName || ''
       }));
       
       // Update the orders state with agent's pending orders
@@ -1180,10 +1212,10 @@ const hideNotification = () => {
                         <TableCell>
                           <Stack direction="row" alignItems="center" spacing={1}>
                             <Avatar sx={{ width: 28, height: 28, bgcolor: 'primary.light', fontSize: '0.8rem' }}>
-                              {order.notes ? order.notes.charAt(0) : 'ع'}
+                              {(order.customerName && order.customerName.trim().charAt(0)) || 'ع'}
                             </Avatar>
                             <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                              {order.notes ? order.notes.split(' - ')[0] || 'عميل' : 'عميل'}
+                              {order.customerName && order.customerName.trim() !== '' ? order.customerName : 'عميل'}
                             </Typography>
                           </Stack>
                         </TableCell>
@@ -1191,7 +1223,7 @@ const hideNotification = () => {
                           <Stack direction="row" alignItems="center" spacing={0.5}>
                             <LocationIcon fontSize="small" color="action" />
                             <Typography variant="body2" color="text.secondary">
-                              عنوان التوصيل
+                              {order.customerAddressLine && order.customerAddressLine.trim() !== '' ? order.customerAddressLine : 'عنوان التوصيل'}
                             </Typography>
                           </Stack>
                         </TableCell>
@@ -1199,7 +1231,7 @@ const hideNotification = () => {
                           <Stack direction="row" alignItems="center" spacing={0.5}>
                             <PhoneIcon fontSize="small" color="action" />
                             <Typography variant="body2" color="text.secondary">
-                              {order.notes ? order.notes.split(' - ')[1] || 'غير محدد' : 'غير محدد'}
+                              {order.customerPhone && order.customerPhone.trim() !== '' ? order.customerPhone : 'غير محدد'}
                             </Typography>
                           </Stack>
                         </TableCell>
@@ -1210,7 +1242,7 @@ const hideNotification = () => {
                         </TableCell>
                         <TableCell>
                           <Chip 
-                            label="منطقة التوصيل"
+                            label={order.zoneName && order.zoneName.trim() !== '' ? order.zoneName : 'منطقة التوصيل'}
                             size="small"
                             color="secondary"
                             variant="outlined"

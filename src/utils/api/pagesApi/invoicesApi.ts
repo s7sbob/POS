@@ -65,12 +65,26 @@ export interface Invoice {
   wareHouseId: string;
   rawBranchId: string;
   customerId?: string | null;
+  /**
+   * Identifier of the customer's selected address.  When present, the API
+   * will also include a full `customerAddress` object with the details.
+   */
+  customerAddressId?: string | null;
+  /**
+   * Full address object for the invoice customer.  Only provided when
+   * `customerAddressId` is not null.
+   */
+  customerAddress?: any;
+  /**
+   * Full customer object returned by the server.  Only provided when the
+   * invoice is expanded via certain API calls.
+   */
+  customer?: any;
   deliveryAgentId?: string | null;
   deliveryCompanyId?: string | null;
   tableId?: string | null;
   hallCaptainId?: string | null;
   customerName?: string | null;
-  customerAddress?: string | null;
   tableGuestsCount?: number | null;
   shiftCode?: string | null;
   dayCode?: string | null;
@@ -158,6 +172,19 @@ export interface CreateInvoiceRequest {
   HallCaptainId?: string | null;
   DeliveryCompanyId?: string | null;
   DeliveryAgentId?: string | null;
+  /**
+   * Optional customer name.  When provided the API will store the human‑readable
+   * name of the customer on the invoice.  This should mirror the selected
+   * customer's `name` rather than packing it into the `Notes` field.
+   */
+  CustomerName?: string | null;
+  /**
+   * Identifier of the customer address to attach to the invoice.  Use the
+   * `id` from the selected `CustomerAddress` object.  The API will then
+   * resolve the full address on the server and populate `customerAddress`
+   * in the response.
+   */
+  CustomerAddressId?: string | null;
   TaxPercentage: number;
   ServicePercentage: number;
   HeaderDiscountPercentage: number;
@@ -186,7 +213,10 @@ export interface UpdateInvoiceRequest {
   DeliveryCompanyId?: string | null;
   DeliveryAgentId?: string | null;
   CustomerName?: string | null;
-  CustomerAddress?: string | null;
+  /**
+   * Identifier of the customer address associated with this invoice.
+   */
+  CustomerAddressId?: string | null;
   TableGuestsCount?: number | null;
   ShiftCode?: string | null;
   DayCode?: string | null;

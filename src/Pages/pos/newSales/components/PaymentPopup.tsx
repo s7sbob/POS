@@ -628,7 +628,7 @@ const handleFinishPayment = useCallback(async () => {
         servicePercentage: 0, // يمكن تخصيصه
         taxPercentage: 0, // يمكن تخصيصه
         discountPercentage: 0, // يمكن تخصيصه
-        notes: customerName,
+        // لا ترسل اسم العميل ضمن حقل الـ notes؛ سيتم إرسال الاسم والعنوان في حقول منفصلة
         
       }
     );

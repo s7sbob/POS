@@ -253,13 +253,17 @@ const convertOrderItemToInvoiceItem = (
     setIsSubmitting(true);
 
     try {
-      const invoiceData: invoicesApi.CreateInvoiceRequest = {
+        const invoiceData: invoicesApi.CreateInvoiceRequest = {
         backInvoiceCode: null, // استخدام الكود الجديد من الـ API
         InvoiceType: getInvoiceType(orderType),
         InvoiceStatus: invoiceStatus,
         WareHouseId: getWareHouseId(),
         RawBranchId: getRawBranchId(),
         CustomerId: selectedCustomer?.id || null,
+        // Pass the customer's name and address separately so they are not packed into the Notes field
+        CustomerName: selectedCustomer?.name || null,
+        // Send the ID of the selected address rather than the address text itself
+        CustomerAddressId: selectedAddress?.id || null,
         TableId: selectedTable?.table.id || null,
         HallCaptainId: null,
         DeliveryCompanyId: selectedDeliveryCompany?.id || null,
@@ -433,7 +437,8 @@ const convertOrderItemToInvoiceItem = (
         DeliveryCompanyId: selectedDeliveryCompany?.id || originalInvoice.deliveryCompanyId,
         DeliveryAgentId: originalInvoice.deliveryAgentId,
         CustomerName: selectedCustomer?.name || originalInvoice.customerName,
-        CustomerAddress: selectedAddress?.addressLine || originalInvoice.customerAddress,
+        // Send the ID of the selected address; the API will populate the full address
+        CustomerAddressId: selectedAddress?.id || (originalInvoice as any).customerAddressId,
         TableGuestsCount: originalInvoice.tableGuestsCount,
         ShiftCode: originalInvoice.shiftCode,
         DayCode: originalInvoice.dayCode,
