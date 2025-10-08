@@ -1,9 +1,20 @@
 // File: src/pages/delivery/agents/components/AgentForm.tsx
 import React from 'react';
 import {
-  Dialog, DialogTitle, DialogContent, DialogActions,
-  Grid, TextField, Button, Typography,
-  FormControl, InputLabel, Select, MenuItem
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Grid,
+  TextField,
+  Button,
+  Typography,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Switch,
+  FormControlLabel
 } from '@mui/material';
 import { IconDeviceFloppy, IconPlus as IconPlusNew } from '@tabler/icons-react';
 import { useForm, Controller } from 'react-hook-form';
@@ -15,6 +26,8 @@ type FormValues = {
   name: string;
   phone: string;
   branchId: string;
+  /** Whether the delivery agent is active */
+  isActive: boolean;
 };
 
 interface Props {
@@ -36,7 +49,8 @@ const AgentForm: React.FC<Props> = ({
   const defaults: FormValues = {
     name: '',
     phone: '',
-    branchId: defaultBranch?.id || ''
+    branchId: defaultBranch?.id || '',
+    isActive: true
   };
 
   const { control, handleSubmit, reset, formState: { isSubmitSuccessful } } = useForm<FormValues>({
@@ -51,7 +65,8 @@ const AgentForm: React.FC<Props> = ({
         reset({
           name: initialValues.name,
           phone: initialValues.phone,
-          branchId: initialValues.branchId || defaultBranch?.id || ''
+          branchId: initialValues.branchId || defaultBranch?.id || '',
+          isActive: initialValues.isActive ?? true
         });
       }
     }
@@ -76,14 +91,16 @@ const AgentForm: React.FC<Props> = ({
           id: initialValues.id,
           name: data.name,
           phone: data.phone,
-          branchId: data.branchId
+          branchId: data.branchId,
+          isActive: data.isActive
         };
         await onSubmit(updateData, saveAction);
       } else {
         const addData = {
           name: data.name,
           phone: data.phone,
-          branchId: data.branchId
+          branchId: data.branchId,
+          isActive: data.isActive
         };
         await onSubmit(addData, saveAction);
       }
@@ -176,6 +193,25 @@ const AgentForm: React.FC<Props> = ({
                       </Typography>
                     )}
                   </FormControl>
+                )}
+              />
+            </Grid>
+
+            {/* Active status toggle */}
+            <Grid item xs={12}>
+              <Controller
+                name="isActive"
+                control={control}
+                render={({ field }) => (
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={field.value}
+                        onChange={(e) => field.onChange(e.target.checked)}
+                      />
+                    }
+                    label={t('deliveryAgents.form.status')}
+                  />
                 )}
               />
             </Grid>

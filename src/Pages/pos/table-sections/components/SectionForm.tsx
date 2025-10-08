@@ -1,9 +1,22 @@
 // File: src/pages/pos/table-sections/components/SectionForm.tsx
 import React from 'react';
 import {
-  Dialog, DialogTitle, DialogContent, DialogActions,
-  Grid, TextField, Button, Box, Typography, IconButton,
-  Card, CardContent, Stack, Divider
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Grid,
+  TextField,
+  Button,
+  Box,
+  Typography,
+  IconButton,
+  Card,
+  CardContent,
+  Stack,
+  Divider,
+  Switch,
+  FormControlLabel
 } from '@mui/material';
 import { IconDeviceFloppy, IconPlus as IconPlusNew, IconTrash, IconPlus } from '@tabler/icons-react';
 import { useForm, Controller, useFieldArray } from 'react-hook-form';
@@ -14,6 +27,8 @@ type FormValues = {
   name: string;
   serviceCharge: number;
   tables: Table[];
+  /** Indicates whether the section is active */
+  isActive: boolean;
 };
 
 interface Props {
@@ -33,7 +48,8 @@ const SectionForm: React.FC<Props> = ({
   const defaults: FormValues = {
     name: '',
     serviceCharge: 0,
-    tables: []
+    tables: [],
+    isActive: true
   };
 
   const { control, handleSubmit, reset, formState: { isSubmitSuccessful } } = useForm<FormValues>({
@@ -58,7 +74,8 @@ const SectionForm: React.FC<Props> = ({
             name: table.name,
             sectionId: table.sectionId,
             capacity: table.capacity
-          }))
+          })),
+          isActive: initialValues.isActive ?? true
         });
       }
     }
@@ -96,7 +113,8 @@ const SectionForm: React.FC<Props> = ({
             name: table.name,
             sectionId: initialValues.id,
             capacity: Number(table.capacity)
-          }))
+          })),
+          isActive: data.isActive
         };
         await onSubmit(updateData, saveAction);
       } else {
@@ -106,7 +124,8 @@ const SectionForm: React.FC<Props> = ({
           tables: data.tables.map(table => ({
             name: table.name,
             capacity: Number(table.capacity)
-          }))
+          })),
+          isActive: data.isActive
         };
         await onSubmit(addData, saveAction);
       }
@@ -167,6 +186,25 @@ const SectionForm: React.FC<Props> = ({
                     helperText={fieldState.error?.message}
                     inputProps={{ min: 0, step: 0.01 }}
                     onFocus={(e) => e.target.select()}
+                  />
+                )}
+              />
+            </Grid>
+
+            {/* Active status toggle */}
+            <Grid item xs={12}>
+              <Controller
+                name="isActive"
+                control={control}
+                render={({ field }) => (
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={field.value}
+                        onChange={(e) => field.onChange(e.target.checked)}
+                      />
+                    }
+                    label={t('tableSections.form.status')}
                   />
                 )}
               />

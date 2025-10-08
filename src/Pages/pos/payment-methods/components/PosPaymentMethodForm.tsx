@@ -18,6 +18,7 @@ import {
   useMediaQuery,
   useTheme
 } from '@mui/material';
+import { Switch, FormControlLabel } from '@mui/material';
 import { useForm, Controller, useFieldArray } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { PosPaymentMethod } from 'src/utils/api/pagesApi/posPaymentMethodsApi';
@@ -49,13 +50,16 @@ const PosPaymentMethodForm: React.FC<Props> = ({
     name: string;
     safeOrAccountID: string;
     branches: any[]; // Replace 'any' with the actual branch type if available
+    // Activation status for the payment method
+    isActive: boolean;
   };
   
   const { control, handleSubmit, reset, watch, formState: { errors } } = useForm<FormValues>({
     defaultValues: {
       name: '',
       safeOrAccountID: '',
-      branches: []
+      branches: [],
+      isActive: true
     }
   });
   
@@ -69,13 +73,15 @@ const PosPaymentMethodForm: React.FC<Props> = ({
       reset({
         name: initialValues.name,
         safeOrAccountID: initialValues.safeOrAccountID || '',
-        branches: initialValues.branches || []
+        branches: initialValues.branches || [],
+        isActive: initialValues.isActive ?? true
       });
     } else if (mode === 'add') {
       reset({
         name: '',
         safeOrAccountID: '',
-        branches: []
+        branches: [],
+        isActive: true
       });
     }
   }, [mode, initialValues, reset]);
@@ -89,13 +95,17 @@ const PosPaymentMethodForm: React.FC<Props> = ({
         ? { ...data, id: initialValues?.id }
         : data;
 
+      // ensure activation state is preserved
+      submitData.isActive = data.isActive;
+
       await onSubmit(submitData, saveAction);
       
       if (saveAction === 'saveAndNew') {
         reset({
           name: '',
           safeOrAccountID: '',
-          branches: []
+          branches: [],
+          isActive: true
         });
       }
     } catch (error) {
@@ -186,6 +196,23 @@ const PosPaymentMethodForm: React.FC<Props> = ({
               </Stack>
             </Box>
           )}
+
+          {/* Activation status toggle */}
+          <Controller
+            name="isActive"
+            control={control}
+            render={({ field }) => (
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={field.value}
+                    onChange={(e) => field.onChange(e.target.checked)}
+                  />
+                }
+                label={t('posPaymentMethods.status')}
+              />
+            )}
+          />
 
           {/* يمكن إضافة إدارة الفروع هنا لاحقاً */}
           <Typography variant="body2" color="text.secondary">

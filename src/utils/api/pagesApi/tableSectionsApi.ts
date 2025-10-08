@@ -79,6 +79,7 @@ export const add = async (body: {
   name: string;
   serviceCharge: number;
   tables: Table[];
+  isActive?: boolean;
 }): Promise<TableSection> => {
   try {
     const requestBody = {
@@ -87,7 +88,9 @@ export const add = async (body: {
       tables: body.tables.map(table => ({
         name: table.name,
         capacity: Number(table.capacity)
-      }))
+      })),
+      // include activation state; default to true
+      isActive: body.isActive ?? true
     };
     
     const { data } = await api.post('/AddSection', requestBody);
@@ -102,6 +105,7 @@ export const update = async (body: {
   name: string;
   serviceCharge: number;
   tables: Table[];
+  isActive?: boolean;
 }): Promise<TableSection> => {
   try {
     const requestBody = {
@@ -114,7 +118,8 @@ export const update = async (body: {
         sectionId: body.id,
         sectionName: body.name,
         capacity: Number(table.capacity)
-      }))
+      })),
+      isActive: body.isActive ?? true
     };
     
     const { data } = await api.post('/UpdateSection', requestBody);

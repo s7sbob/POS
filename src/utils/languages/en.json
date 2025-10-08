@@ -1448,6 +1448,9 @@
     "password": "Password",
     "title": "User Management",
     "noUsers": "No users found",
+    "status": "Status",
+    "active": "Active",
+    "inactive": "Inactive",
     "table": {
       "userName": "User Name",
       "phoneNumber": "Phone Number",
@@ -1761,6 +1764,9 @@
     "tableNameRequired": "Table name is required",
     "capacityRequired": "Table capacity is required",
     "totalTables": "Total Tables: {{count}}",
+    "status": "Status",
+    "active": "Active",
+    "inactive": "Inactive",
     "form": {
       "name": "Section Name",
       "serviceCharge": "Service Charge",
@@ -1796,6 +1802,9 @@
     "phoneRequired": "Phone number is required",
     "phoneInvalid": "Invalid phone number",
     "branchRequired": "Branch is required",
+    "status": "Status",
+    "active": "Active",
+    "inactive": "Inactive",
     "form": {
       "name": "Captain Name",
       "phone": "Phone Number",

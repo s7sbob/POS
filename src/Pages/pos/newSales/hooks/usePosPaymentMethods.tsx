@@ -59,9 +59,12 @@ export function usePosPaymentMethods() {
       try {
         setLoading(true);
         const res = await posPaymentMethodsApi.getAll();
+        // Only include active payment methods and exclude built-in special IDs
         const usable = Array.isArray(res)
-          ? res.filter((m) =>
-              !['CL', 'ضيافة', 'نقاط'].includes(m.id)
+          ? res.filter(
+              (m) =>
+                m.isActive &&
+                !['CL', 'ضيافة', 'نقاط'].includes(m.id)
             )
           : [];
         const sorted = sortPaymentMethods(usable);

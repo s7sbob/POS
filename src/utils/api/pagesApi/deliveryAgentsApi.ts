@@ -155,27 +155,50 @@ export const getByBranch = async (branchId: string): Promise<DeliveryAgent[]> =>
   }
 };
 
+/**
+ * Add a new delivery agent. If `isActive` is not supplied it defaults to true.
+ */
 export const add = async (body: {
   name: string;
   phone: string;
   branchId: string;
+  isActive?: boolean;
 }): Promise<DeliveryAgent> => {
   try {
-    const { data } = await api.post('/AddAgent', body);
+    const payload = {
+      name: body.name,
+      phone: body.phone,
+      branchId: body.branchId,
+      // ensure agents are active by default
+      isActive: body.isActive ?? true
+    };
+    const { data } = await api.post('/AddAgent', payload);
     return toDeliveryAgent(data.data);
   } catch (error) {
     throw error;
   }
 };
 
+/**
+ * Update an existing delivery agent. When `isActive` is provided it
+ * determines whether the agent remains active; otherwise it defaults to true.
+ */
 export const update = async (body: {
   id: string;
   name: string;
   phone: string;
   branchId: string;
+  isActive?: boolean;
 }): Promise<DeliveryAgent> => {
   try {
-    const { data } = await api.post('/UpdateAgent', body);
+    const payload = {
+      id: body.id,
+      name: body.name,
+      phone: body.phone,
+      branchId: body.branchId,
+      isActive: body.isActive ?? true
+    };
+    const { data } = await api.post('/UpdateAgent', payload);
     return toDeliveryAgent(data.data);
   } catch (error) {
     throw error;

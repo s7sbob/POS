@@ -44,6 +44,12 @@ export interface User {
   email: string;
   phoneNo: string;
   password?: string;
+  /**
+   * Indicates whether the user account is active. When false, the user
+   * will not appear in selection lists (e.g. on the POS page). This field
+   * defaults to true when creating new users.
+   */
+  isActive?: boolean;
 }
 
 export interface UserPage {
@@ -72,8 +78,20 @@ export const login = async (phoneNo: string, password: string, tenantId: string)
 };
 
 // تسجيل مستخدم جديد
-export const register = async (userName: string, phoneNo: string, password: string): Promise<boolean> => {
-  const response = await api.post(`/Register?UserName=${userName}&PhoneNo=${phoneNo}&Password=${password}`);
+/**
+ * Register a new user account. Accepts an optional `isActive` flag that
+ * controls whether the user is active upon creation. Defaults to true if
+ * omitted.
+ */
+export const register = async (
+  userName: string,
+  phoneNo: string,
+  password: string,
+  isActive: boolean = true
+): Promise<boolean> => {
+  const response = await api.post(
+    `/Register?UserName=${userName}&PhoneNo=${phoneNo}&Password=${password}&isActive=${isActive}`
+  );
   return response.data;
 };
 

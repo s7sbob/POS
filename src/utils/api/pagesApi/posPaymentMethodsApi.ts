@@ -44,6 +44,8 @@ export interface AddPosPaymentMethodRequest {
     safeOrAccountID: string;
     isVisible: boolean;
   }>;
+  /** Whether the payment method is active. Defaults to true when omitted. */
+  isActive?: boolean;
 }
 
 export interface UpdatePosPaymentMethodRequest {
@@ -52,6 +54,8 @@ export interface UpdatePosPaymentMethodRequest {
   safeOrAccountID: string;
   safeOrAccount?: any;
   branches: PosPaymentMethodBranch[];
+  /** Whether the payment method is active. Defaults to true when omitted. */
+  isActive?: boolean;
 }
 
 export const getAll = async (): Promise<PosPaymentMethod[]> => {
@@ -74,7 +78,9 @@ export const getById = async (id: string): Promise<PosPaymentMethod> => {
 
 export const add = async (data: AddPosPaymentMethodRequest): Promise<PosPaymentMethod> => {
   try {
-    const response = await api.post('/AddPosPaymentMethod', data);
+    // ensure the method includes an activation state
+    const payload = { ...data, isActive: data.isActive ?? true };
+    const response = await api.post('/AddPosPaymentMethod', payload);
     return response.data.data;
   } catch (error) {
     throw error;
@@ -83,7 +89,9 @@ export const add = async (data: AddPosPaymentMethodRequest): Promise<PosPaymentM
 
 export const update = async (data: UpdatePosPaymentMethodRequest): Promise<PosPaymentMethod> => {
   try {
-    const response = await api.post('/UpdatePosPaymentMethod', data);
+    // merge id and ensure active state is included
+    const payload = { ...data, isActive: data.isActive ?? true };
+    const response = await api.post('/UpdatePosPaymentMethod', payload);
     return response.data.data;
   } catch (error) {
     throw error;

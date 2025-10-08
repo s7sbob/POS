@@ -25,6 +25,10 @@ import {
   CardContent,
   useMediaQuery,
   useTheme
+  ,
+  Switch,
+  FormControlLabel,
+  Chip
 } from '@mui/material';
 import {
   IconPlus,
@@ -61,7 +65,9 @@ const UsersManagementPage: React.FC = () => {
   const [formData, setFormData] = useState({
     userName: '',
     phoneNo: '',
-    password: ''
+    password: '',
+    // users are active by default when created
+    isActive: true
   });
 
   // تحميل المستخدمين
@@ -91,7 +97,7 @@ const UsersManagementPage: React.FC = () => {
   // فتح dialog للإضافة
   const handleAdd = () => {
     setEditingUser(null);
-    setFormData({ userName: '', phoneNo: '', password: '' });
+    setFormData({ userName: '', phoneNo: '', password: '', isActive: true });
     setDialogOpen(true);
   };
 
@@ -101,7 +107,8 @@ const UsersManagementPage: React.FC = () => {
     setFormData({
       userName: user.userName,
       phoneNo: user.phoneNo,
-      password: ''
+      password: '',
+      isActive: user.isActive ?? true
     });
     setDialogOpen(true);
   };
@@ -134,7 +141,12 @@ const UsersManagementPage: React.FC = () => {
           severity: 'warning'
         });
       } else {
-        const success = await register(formData.userName, formData.phoneNo, formData.password);
+        const success = await register(
+          formData.userName,
+          formData.phoneNo,
+          formData.password,
+          formData.isActive
+        );
         
         if (success) {
           setSnackbar({
@@ -181,6 +193,16 @@ const UsersManagementPage: React.FC = () => {
               <Stack direction="row" alignItems="center" spacing={1}>
                 <IconMail size={16} />
                 <Typography variant="body2">{user.email || t('common.notSpecified')}</Typography>
+              </Stack>
+
+              {/* User status chip */}
+              <Stack direction="row" alignItems="center" spacing={1}>
+                <Chip
+                  label={user.isActive ? t('users.active') : t('users.inactive')}
+                  color={user.isActive ? 'success' : 'default'}
+                  size="small"
+                  variant="outlined"
+                />
               </Stack>
             </Stack>
           </Box>
@@ -273,13 +295,16 @@ const UsersManagementPage: React.FC = () => {
                 <TableCell>{t('users.table.userName')}</TableCell>
                 <TableCell>{t('users.table.phoneNumber')}</TableCell>
                 <TableCell>{t('users.table.email')}</TableCell>
+                {/* Status column to display user activation state */}
+                <TableCell>{t('users.status')}</TableCell>
                 <TableCell>{t('users.table.actions')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {users.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={4} align="center">
+                  {/* Increase colspan to account for the additional status column */}
+                  <TableCell colSpan={5} align="center">
                     <Typography color="text.secondary">
                       {t('users.noUsers')}
                     </Typography>
@@ -296,6 +321,15 @@ const UsersManagementPage: React.FC = () => {
                     </TableCell>
                     <TableCell>{user.phoneNo}</TableCell>
                     <TableCell>{user.email || t('common.notSpecified')}</TableCell>
+                    {/* Display user activation status */}
+                    <TableCell>
+                      <Chip
+                        label={user.isActive ? t('users.active') : t('users.inactive')}
+                        color={user.isActive ? 'success' : 'default'}
+                        size="small"
+                        variant="outlined"
+                      />
+                    </TableCell>
                     <TableCell>
                       <IconButton
                         size="small"
@@ -345,6 +379,17 @@ const UsersManagementPage: React.FC = () => {
               fullWidth
               required={!editingUser}
               helperText={editingUser ? t('users.form.passwordHelp') : ''}
+            />
+
+            {/* Active status toggle */}
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={formData.isActive}
+                  onChange={(e) => setFormData(prev => ({ ...prev, isActive: e.target.checked }))}
+                />
+              }
+              label={t('users.status')}
             />
           </Stack>
         </DialogContent>

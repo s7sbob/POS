@@ -1520,6 +1520,9 @@
     "password": "كلمة المرور",
     "title": "إدارة المستخدمين",
     "noUsers": "لا توجد مستخدمين",
+    "status": "الحالة",
+    "active": "نشط",
+    "inactive": "غير نشط",
     "validation": {
       "userNameTooShort": "اسم المستخدم يجب أن يكون أكثر من حرفين",
       "userNameTooLong": "اسم المستخدم طويل جداً",
@@ -1763,6 +1766,9 @@
     "tableNameRequired": "اسم الطاولة مطلوب",
     "capacityRequired": "سعة الطاولة مطلوبة",
     "totalTables": "إجمالي الطاولات: {{count}}",
+    "status": "الحالة",
+    "active": "نشط",
+    "inactive": "غير نشط",
     "form": {
       "name": "اسم القسم",
       "serviceCharge": "رسوم الخدمة",
@@ -1798,6 +1804,9 @@
     "phoneRequired": "رقم الهاتف مطلوب",
     "phoneInvalid": "رقم الهاتف غير صحيح",
     "branchRequired": "الفرع مطلوب",
+    "status": "الحالة",
+    "active": "نشط",
+    "inactive": "غير نشط",
     "form": {
       "name": "اسم الكابتن",
       "phone": "رقم الهاتف",
