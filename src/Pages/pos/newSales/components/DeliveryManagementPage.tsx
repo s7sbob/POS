@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
   Box,
-  Container,
   Typography,
   Table,
   TableBody,
@@ -13,39 +12,25 @@ import {
   Checkbox,
   Chip,
   Button,
-  useTheme,
-  useMediaQuery,
   createTheme,
   ThemeProvider,
   CssBaseline,
   Avatar,
   Card,
-  CardContent,
   Divider,
   Stack,
   IconButton,
-  Tooltip,
   Badge,
   Grid,
-  AppBar,
-  Toolbar,
   alpha,
-  Fab,
-  Zoom,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   Snackbar,
   Alert,
   AlertTitle,
   Slide,
-  Grow,
   Backdrop,
 } from '@mui/material';
 import {
   AccessTime as TimeIcon,
-  Person as PersonIcon,
   LocationOn as LocationIcon,
   Phone as PhoneIcon,
   ChevronLeft,
@@ -53,18 +38,9 @@ import {
   DeliveryDining as DeliveryIcon,
   Assignment as OrderIcon,
   CheckCircle as CheckIcon,
-  Schedule as ScheduleIcon,
   TwoWheeler as BikeIcon,
-  AccountCircle as AccountIcon,
-  ExitToApp as ExitIcon,
-  ArrowBack as ArrowBackIcon,
-  FilterList as FilterIcon,
-  Search as SearchIcon,
-  Refresh as RefreshIcon,
-  NotificationImportant as UrgentIcon
-} from '@mui/icons-material';
+  AccountCircle as AccountIcon} from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
 import * as invoicesApi from 'src/utils/api/pagesApi/invoicesApi';
 import * as deliveryAgentsApi from 'src/utils/api/pagesApi/deliveryAgentsApi';
 import { TransitionProps } from '@mui/material/transitions';
@@ -299,7 +275,6 @@ const theme = createTheme({
 
 const DeliveryManagementPage: React.FC = () => {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const [notification, setNotification] = useState<NotificationState>({
   open: false,
   message: '',
@@ -664,14 +639,17 @@ const hideNotification = () => {
 
       showNotification(`تم تعيين ${selectedOrders.length} طلب للطيار ${agent.name} وبدء التوصيل`);
       
-      // Note: Removed automatic refresh to prevent losing current state
-      // The orders will be updated locally and user can manually refresh if needed
-      
-    } catch (error) {
-      console.error('Error updating orders:', error);
-      showNotification('حدث خطأ أثناء تحديث الطلبات');
-    }
-  };
+ // إضافة: عمل refresh للصفحة بعد الطباعة
+    setTimeout(() => {
+      fetchDeliveryOrders();
+      setSelectAll(false);
+    }, 1000);
+    
+  } catch (error) {
+    console.error('Error updating orders:', error);
+    showNotification('حدث خطأ أثناء تحديث الطلبات');
+  }
+};
 
   const handleFinishAgentAccounting = async () => {
     // Check if any orders are selected
@@ -744,15 +722,18 @@ const hideNotification = () => {
 
       showNotification(`تم إنهاء حساب الطيار وتسليم ${selectedOrders.length} طلب بنجاح`, 'success');
 
-      // Note: Removed automatic refresh to prevent losing current state
-      // The orders will be updated locally and user can manually refresh if needed
-      
-    } catch (error) {
-      console.error('Error updating invoices:', error);
-      showNotification('حدث خطأ أثناء تحديث الطلبات', 'error');
-    }
-  };
-
+    // إضافة: عمل refresh والرجوع للشاشة الرئيسية
+    setTimeout(() => {
+      setFilteredByAgent(null);
+      fetchDeliveryOrders();
+      fetchDeliveryAgents();
+    }, 1000);
+    
+  } catch (error) {
+    console.error('Error updating invoices:', error);
+    showNotification('حدث خطأ أثناء تحديث الطلبات', 'error');
+  }
+};
 
   return (
     <ThemeProvider theme={theme}>
@@ -770,7 +751,7 @@ const hideNotification = () => {
           flexDirection: 'column',
           overflow: 'hidden'
         }}>
-          <Box sx={{ 
+          {/* <Box sx={{ 
             p: 2, // **MODIFICATION**: Reduced padding
             background: 'linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)',
             color: 'white'
@@ -783,7 +764,7 @@ const hideNotification = () => {
                 إدارة الطيارين
               </Typography>
             </Stack>
-          </Box>
+          </Box> */}
 
 
           <Box sx={{ flex: 1, p: 1.5, overflow: 'auto' }}>
@@ -966,62 +947,6 @@ const hideNotification = () => {
         {/* Enhanced Main Content */}
         <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
           
-          {/* Enhanced Header */}
-          <AppBar 
-            position="static" 
-            elevation={0}
-            sx={{ 
-              bgcolor: 'background.paper', 
-              borderBottom: '1px solid',
-              borderColor: 'divider',
-              color: 'text.primary'
-            }}
-          >
-            <Toolbar sx={{ justifyContent: 'space-between', minHeight: '64px' }}>
-              <Stack direction="row" alignItems="center" spacing={2}>
-                <Avatar sx={{ bgcolor: 'primary.light' }}>
-                  <OrderIcon />
-                </Avatar>
-                <Box>
-                  <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
-                    شاشة متابعة الطلبات
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    إدارة ومتابعة طلبات التوصيل
-                  </Typography>
-                </Box>
-              </Stack>
-
-
-              <Stack direction="row" spacing={1}>
-                {/* {filteredByAgent && (
-                  <Button 
-                    variant="outlined" 
-                    color="secondary" 
-                    startIcon={<RefreshIcon />}
-                    size="small"
-                    sx={{ borderRadius: 2 }}
-                  </Button>
-                )} */}
-                <Tooltip title="تحديث">
-                  <IconButton 
-                    color="primary"
-                    onClick={() => {
-                      fetchDeliveryAgents();
-                      fetchDeliveryOrders();
-                    }}
-                  >
-                    <RefreshIcon />
-                  </IconButton>
-                </Tooltip>
-                <Tooltip title="فلترة">
-                  <IconButton color="primary">
-                    <FilterIcon />
-                  </IconButton>
-                </Tooltip>
-              </Stack>
-            </Toolbar>
-          </AppBar>
 
 
 {/* Stats Cards and Action Buttons */}
