@@ -612,12 +612,20 @@ const handleFinishPayment = useCallback(async () => {
   try {
     setIsSubmitting(true);
 
-    // استخدام الـ hook الجديد
+    // Calculate the applied discount percentage based on the current
+    // order summary.  If the subtotal is zero the percentage is zero.
+    const discountPercentageForSave = orderSummary.subtotal > 0
+      ? (orderSummary.discount / orderSummary.subtotal) * 100
+      : 0;
+
+    // Use the invoice manager hook to create or update the invoice.  Pass
+    // through the calculated discount percentage so the API stores it as
+    // HeaderDiscountPercentage.
     const invoiceResult = await saveInvoice(
       orderSummary,
       orderType,
       selectedPayments,
-      getInvoiceStatus(), // ✅ إضافة هذا البرامتر
+      getInvoiceStatus(),
       {
         isEditMode,
         invoiceId: currentInvoiceId,
@@ -625,11 +633,10 @@ const handleFinishPayment = useCallback(async () => {
         selectedAddress,
         selectedDeliveryCompany,
         selectedTable,
-        servicePercentage: 0, // يمكن تخصيصه
-        taxPercentage: 0, // يمكن تخصيصه
-        discountPercentage: 0, // يمكن تخصيصه
-        // لا ترسل اسم العميل ضمن حقل الـ notes؛ سيتم إرسال الاسم والعنوان في حقول منفصلة
-        
+        servicePercentage: 0,
+        taxPercentage: 0,
+        discountPercentage: discountPercentageForSave,
+        // Do not send the customer name in the notes field; it will be sent separately.
       }
     );
 

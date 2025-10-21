@@ -19,6 +19,11 @@ const PaymentOrderSummary: React.FC<PaymentOrderSummaryProps> = ({
   selectedCustomer,
   selectedAddress,
   deliveryCharge}) => {
+  // حساب إجمالي خصم العناصر لعرضه مع الخصم الرأسى
+  const itemDiscountTotal = orderSummary.items.reduce((sum, item) => {
+    return sum + (item.discountAmount || 0);
+  }, 0);
+  const aggregatedDiscount = itemDiscountTotal + orderSummary.discount;
   // حساب الإجمالي النهائي
   const subtotalWithDelivery = orderSummary.subtotal + deliveryCharge;
   const taxAmount = 0;
@@ -179,7 +184,7 @@ const PaymentOrderSummary: React.FC<PaymentOrderSummaryProps> = ({
           
           <div className={styles.summaryRow}>
             <span>Discount</span>
-            <span>{orderSummary.discount.toFixed(2)} <small>EGP</small></span>
+            <span>{aggregatedDiscount.toFixed(2)} <small>EGP</small></span>
           </div>
           
           <div className={styles.summaryRow}>

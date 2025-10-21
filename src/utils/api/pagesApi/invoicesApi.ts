@@ -145,6 +145,23 @@ export interface CreateInvoiceItem {
   SalesInvoiceItemType?: number; // 1=Product, 2=Addition, 3=Without, 4=Optional
    OfferId?: string | null;
   OfferGroupId?: string | null;
+
+  /**
+   * Share of the invoice‑wide discount applied to this item.  The API
+   * expects the absolute value of the discount on each item when
+   * `headerDiscountValue` is specified at the invoice level.  When
+   * omitted the server assumes no invoice‑level discount was applied
+   * to this line.  The corresponding percentage may be set to zero.
+   */
+  HeaderDiscountValue?: number;
+
+  /**
+   * Percentage of the invoice‑wide discount applied to this item.
+   * Typically set to zero because the absolute discount amount is
+   * provided in `HeaderDiscountValue`.  Included here for
+   * completeness and future compatibility with API changes.
+   */
+  HeaderDiscountPercentage?: number;
 }
 
 
@@ -188,6 +205,13 @@ export interface CreateInvoiceRequest {
   TaxPercentage: number;
   ServicePercentage: number;
   HeaderDiscountPercentage: number;
+  /**
+   * Absolute value of the discount applied to the entire invoice.  When
+   * provided the API will store both the percentage and the amount for
+   * auditing.  If omitted the server will derive the amount from the
+   * percentage and the total.
+   */
+  HeaderDiscountValue?: number;
   PreparedAt?: string;
   CompletedAt?: string;
   Notes?: string;
@@ -196,6 +220,16 @@ export interface CreateInvoiceRequest {
   // إضافة الحقول الجديدة لشركات التوصيل
   DocumentNumber?: string | null;
   DefaultPaymentMethod?: string | null;
+
+  /**
+   * Optional financial totals.  When provided the API will persist these
+   * values directly rather than recalculating them from the items.
+   * They mirror the fields present on UpdateInvoiceRequest.  If omitted
+   * the server will compute them from the provided items and discounts.
+   */
+  TotalBeforeDiscount?: number;
+  TotalAfterDiscount?: number;
+  TotalAfterTaxAndService?: number;
 }
 
 // Interface جديد للتحديث مع جميع الحقول المطلوبة
@@ -355,6 +389,37 @@ export const updateInvoice = async (invoiceData: UpdateInvoiceRequest): Promise<
     return response.data.data;
   } catch (error) {
     console.error('❌ خطأ في تحديث الفاتورة:', error);
+    throw error;
+  }
+};
+
+// دالة لإلغاء الفاتورة بالكامل
+// تستدعي نقطة النهاية `CancelInvoice` مع معلمات الاستعلام اللازمة. يتوقع هذا
+// الـ endpoint إرفاق معرف الفاتورة ومعرف المستخدم (اختياري) وسبب الإلغاء.
+// تستخدم الدالة إتصال GET حيث أن غالبية نقاط نهاية النظام تعمل مع استعلامات GET.
+// إذا تم تمرير معرف المستخدم فسيُضاف إلى السلسلة، أما إذا لم يُحدد فسيتم
+// إهماله. يتم ترميز سبب الإلغاء لتجنب مشاكل الترميز في عنوان الـ URL.
+export const cancelInvoice = async (
+  invoiceId: string,
+  userId: string | null = null,
+  reason: string = ''
+): Promise<any> => {
+  try {
+    // بناء عنوان الـ URL مع المعلمات. encodeURIComponent يضمن سلامة النص.
+    let query = `/CancelInvoice?invoiceId=${invoiceId}`;
+    if (userId) {
+      query += `&userId=${userId}`;
+    }
+    // حتى لو لم يكن هناك سبب، نرسل حقل السبب ليتمكن الخادم من معالجته
+    query += `&reason=${encodeURIComponent(reason)}`;
+    console.log('📤 إرسال طلب إلغاء الفاتورة:', query);
+    // يستخدم هذا الـ endpoint طريقة POST حتى لو كانت المعلمات في الاستعلام.
+    // نرسل طلب POST إلى المسار بما في ذلك الاستعلام دون جسم إضافي.
+    const response = await api.post(query);
+    console.log('📥 استجابة إلغاء الفاتورة:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('❌ خطأ في إلغاء الفاتورة:', error);
     throw error;
   }
 };

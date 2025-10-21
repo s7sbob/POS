@@ -514,7 +514,14 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
     }
   }, [selectedCustomer]);
 
-  // حساب الإجمالي النهائي
+  // حساب إجمالي خصم العناصر لعرضه مع الخصم الرأسى
+  const itemDiscountTotal = orderSummary.items.reduce((sum, item) => {
+    return sum + (item.discountAmount || 0);
+  }, 0);
+  // الخصم الإجمالي المعروض هو مجموع خصومات العناصر والخصم الكلى للفاتورة
+  const aggregatedDiscount = itemDiscountTotal + orderSummary.discount;
+
+  // حساب الإجمالي النهائي: نطرح الخصم الرأسى فقط لأن خصومات العناصر تم احتسابها بالفعل فى subtotal
   const subtotalWithDelivery = orderSummary.subtotal + deliveryCharge;
   const taxAmount = 0;
   const finalTotal = subtotalWithDelivery + taxAmount - orderSummary.discount;
@@ -552,8 +559,13 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
       const invoiceStatus = actionType === 'send' ? 1 : 2;
 
       // ✅ حفظ الفاتورة مع البيانات الكاملة
+      // Calculate the applied discount percentage based on the current order summary.
+      const discountPercentageForSave = orderSummary.subtotal > 0
+        ? (orderSummary.discount / orderSummary.subtotal) * 100
+        : 0;
+
       const result = await saveInvoice(
-        orderSummary, // هذا يحتوي على العناصر الجديدة
+        orderSummary,
         orderType,
         defaultPayments,
         invoiceStatus,
@@ -566,11 +578,11 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
           selectedTable,
           servicePercentage: 0,
           taxPercentage: 0,
-          discountPercentage: 0,
-          // لا ترسل اسم العميل ضمن حقل الـ notes؛ سيتم إرسال الاسم والعنوان في حقول منفصلة
-          // عند تعديل فاتورة موجودة يجب إزالة المنتجات المحذوفة
+          discountPercentage: discountPercentageForSave,
+          // Do not send the customer name in the notes field; it will be sent separately
+          // When updating an existing invoice we remove deleted items if preserveMissingItems is false
           preserveMissingItems: !isEditMode ? true : false,
-          // إضافة الحقول الجديدة لشركات التوصيل
+          // Additional fields for delivery companies
           documentNumber: orderType === 'DeliveryCompany' ? documentNumber : null,
           defaultPaymentMethod: orderType === 'DeliveryCompany' ? defaultPaymentMethod : null
         }
@@ -648,6 +660,11 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
       const invoiceStatus = 3; // PAID
       
       // ✅ حفظ الفاتورة مع البيانات الكاملة والحقول الجديدة
+      // Calculate the applied discount percentage based on the current order summary.
+      const discountPercentageForSave = orderSummary.subtotal > 0
+        ? (orderSummary.discount / orderSummary.subtotal) * 100
+        : 0;
+
       const result = await saveInvoice(
         orderSummary,
         orderType,
@@ -662,10 +679,10 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
           selectedTable,
           servicePercentage: 0,
           taxPercentage: 0,
-          discountPercentage: 0,
-          // لا ترسل اسم العميل ضمن حقل الـ notes؛ سيتم إرسال الاسم والعنوان في حقول منفصلة
+          discountPercentage: discountPercentageForSave,
+          // Do not send the customer name in the notes field; it will be sent separately
           preserveMissingItems: !isEditMode ? true : false,
-          // إضافة الحقول الجديدة لشركات التوصيل
+          // Additional fields for delivery companies
           documentNumber: documentNumber,
           defaultPaymentMethod: paymentMethodId
         }
@@ -719,6 +736,11 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
       const invoiceStatus = 3; // PAID
 
       // ✅ حفظ الفاتورة مع البيانات الكاملة
+      // Calculate the applied discount percentage based on the current order summary.
+      const discountPercentageForSave = orderSummary.subtotal > 0
+        ? (orderSummary.discount / orderSummary.subtotal) * 100
+        : 0;
+
       const result = await saveInvoice(
         orderSummary,
         orderType,
@@ -733,10 +755,10 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
           selectedTable,
           servicePercentage: 0,
           taxPercentage: 0,
-          discountPercentage: 0,
-          // لا ترسل اسم العميل ضمن حقل الـ notes؛ سيتم إرسال الاسم والعنوان في حقول منفصلة
+          discountPercentage: discountPercentageForSave,
+          // Do not send the customer name in the notes field; it will be sent separately
           preserveMissingItems: !isEditMode ? true : false,
-          // إضافة الحقول الجديدة لشركات التوصيل
+          // Additional fields for delivery companies
           documentNumber: orderType === 'DeliveryCompany' ? documentNumber : null,
           defaultPaymentMethod: orderType === 'DeliveryCompany' ? defaultPaymentMethod : null
         }
@@ -1017,7 +1039,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
 
           <div className={styles.summaryRow}>
             <span>{t('pos.newSales.orderSummary.discount')}</span>
-            <span>{orderSummary.discount.toFixed(2)} <small>EGP</small></span>
+            <span>{aggregatedDiscount.toFixed(2)} <small>EGP</small></span>
           </div>
 
           <div className={styles.summaryRow}>

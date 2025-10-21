@@ -20,6 +20,7 @@ import TableSelectionPopup from './components/TableSelectionPopup';
 import InvoiceSelectionPopup from './components/InvoiceSelectionPopup';
 import SplitReceiptPopup from './components/SplitReceiptPopup';
 import { Invoice } from '../../../utils/api/pagesApi/invoicesApi';
+import * as invoicesApi from '../../../utils/api/pagesApi/invoicesApi';
 import { useInvoiceManager } from './hooks/useInvoiceManager';
 import { useTableManager } from './hooks/useTableManager';
 import { TableSelection } from './types/TableSystem';
@@ -32,6 +33,7 @@ import * as offersApi from '../../../utils/api/pagesApi/offersApi';
 import { Offer } from '../../../utils/api/pagesApi/offersApi';
 import OfferOptionsPopup from './components/OfferOptionsPopup';
 import { OfferData, SelectedOfferItem } from './types/PosSystem';
+import HeaderDiscountPopup from './components/HeaderDiscountPopup';
 
 const PosSystem: React.FC = () => {
   const { t, i18n } = useTranslation();
@@ -130,6 +132,29 @@ const {
   
   // Order States
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
+
+  // =====================
+  // Header Discount State
+  // =====================
+  /**
+   * Controls the visibility of the discount popup that appears when
+   * the user clicks the discount button in the header.  When true the
+   * HeaderDiscountPopup component will be rendered; when false it is
+   * hidden.  The popup allows entering a discount percentage or a
+   * fixed amount and keeps them in sync.
+   */
+  const [showHeaderDiscountPopup, setShowHeaderDiscountPopup] = useState(false);
+  /**
+   * Holds the currently applied header discount percentage.  This
+   * value is passed to the invoice API as HeaderDiscountPercentage.
+   */
+  const [headerDiscountPercentage, setHeaderDiscountPercentage] = useState<number>(0);
+  /**
+   * Holds the currently applied header discount value (absolute).  This
+   * value is reflected in orderSummary.discount and sent to the API
+   * via HeaderDiscountValue when saving an invoice.
+   */
+  const [headerDiscountValue, setHeaderDiscountValue] = useState<number>(0);
 
   // الحصول على البيانات الحالية
   const isAdditionMode = isExtraMode || isWithoutMode;
@@ -279,14 +304,16 @@ const getProductByPriceId = useCallback(async (priceId: string) => {
     const subtotal = orderItems.reduce((sum, item) => sum + item.totalPrice, 0);
     const serviceCharge = getServiceCharge();
     const service = (subtotal * serviceCharge) / 100;
-    const discountPercentage = 0;
-    const discount = (subtotal * discountPercentage) / 100;
+    // Item‑level discounts are already reflected in each item's totalPrice.
+    // Apply the header discount value to the subtotal.  This value is
+    // controlled via the HeaderDiscountPopup and stored in state.
+    const discount = headerDiscountValue;
     const tax = 0;
-    
-    // حساب المجاميع بالترتيب الصحيح
+
+    // Calculate totals in the correct order: discount first, then tax and service.
     const totalAfterDiscount = subtotal - discount;
     const totalAfterTaxAndService = totalAfterDiscount + tax + service + deliveryCharge;
-    
+
     return {
       items: orderItems,
       subtotal,
@@ -297,7 +324,7 @@ const getProductByPriceId = useCallback(async (priceId: string) => {
       totalAfterDiscount,
       totalAfterTaxAndService
     };
-  }, [orderItems, getServiceCharge, deliveryCharge]);
+  }, [orderItems, getServiceCharge, deliveryCharge, headerDiscountValue]);
   // واستخدمه في كل مرة:
   const orderSummary = calculateOrderSummary();
 
@@ -375,7 +402,9 @@ const displayedProducts = useMemo(() => {
           selectedTable: selection,
           servicePercentage: selection.section.serviceCharge || 0,
           taxPercentage: 0,
-          discountPercentage: 0,
+          // Pass through the applied header discount percentage so it
+          // persists when moving the order to a new table
+          discountPercentage: headerDiscountPercentage,
           notes: undefined
         }
       );
@@ -388,7 +417,7 @@ const displayedProducts = useMemo(() => {
     } finally {
       setShowTablePopup(false);
     }
-  }, [currentInvoiceId, calculateOrderSummary, selectedOrderType, currentInvoiceStatus, selectedCustomer, selectedAddress, selectedDeliveryCompany, selectTable, saveInvoice, showSuccess, showError]);
+  }, [currentInvoiceId, calculateOrderSummary, selectedOrderType, currentInvoiceStatus, selectedCustomer, selectedAddress, selectedDeliveryCompany, selectTable, saveInvoice, showSuccess, showError, headerDiscountPercentage]);
 
   // معالج اختيار شركة التوصيل مع الحقول الإضافية
   const handleDeliveryCompanySelectWithDetails = useCallback((
@@ -415,6 +444,31 @@ const displayedProducts = useMemo(() => {
     setSelectedOrderItemForDetails(item);
     setShowOrderDetailsPopup(true);
   }, []);
+
+  /**
+   * Handler invoked when the discount button in the header is clicked.
+   * If there are no items in the current order a warning is shown.  Otherwise
+   * it opens the HeaderDiscountPopup for the user to enter a discount.
+   */
+  const handleHeaderDiscountClick = useCallback(() => {
+    if (orderItems.length === 0) {
+      showWarning('لا توجد عناصر لتطبيق الخصم عليها');
+      return;
+    }
+    setShowHeaderDiscountPopup(true);
+  }, [orderItems, showWarning]);
+
+  /**
+   * Callback executed when the user applies a discount in the popup.  It
+   * updates both the percentage and absolute discount value so that the
+   * order summary and invoice saving logic reflect the user choice.
+   */
+  const handleApplyHeaderDiscount = useCallback((percentage: number, amount: number) => {
+    setHeaderDiscountPercentage(percentage);
+    setHeaderDiscountValue(amount);
+  }, []);
+
+
 
   // إضافة معالج تحديث المنتج للـ OrderItemDetailsPopup
   const handleUpdateOrderItem = useCallback((itemId: string, updates: {
@@ -912,6 +966,18 @@ const handleProductClick = useCallback((product: PosProduct) => {
       setDeliveryCharge(convertedData.deliveryCharge);
       setCurrentInvoiceId(invoiceData.id);
 
+      // عند تحميل الفاتورة قم بتعيين قيم الخصم الرأسية لتظهر بشكل صحيح فى الواجهة
+      if (typeof invoiceData.headerDiscountPercentage === 'number') {
+        setHeaderDiscountPercentage(invoiceData.headerDiscountPercentage);
+      } else {
+        setHeaderDiscountPercentage(0);
+      }
+      if (typeof invoiceData.headerDiscountValue === 'number') {
+        setHeaderDiscountValue(invoiceData.headerDiscountValue);
+      } else {
+        setHeaderDiscountValue(0);
+      }
+
       if (convertedData.selectedCustomer) {
         setSelectedCustomer(convertedData.selectedCustomer);
         setCustomerName(`${convertedData.selectedCustomer.name} - ${convertedData.selectedCustomer.phone1}`);
@@ -1103,6 +1169,10 @@ const handleProductClick = useCallback((product: PosProduct) => {
     setIsExtraMode(false);
     setIsWithoutMode(false);
     setShowOffers(false); // إضافة هذا السطر
+
+    // Reset any header discount when starting a fresh order
+    setHeaderDiscountPercentage(0);
+    setHeaderDiscountValue(0);
     setSelectedChips([]);
     handleBackToMainProducts();
     setSearchQuery('');
@@ -1150,6 +1220,32 @@ const handleProductClick = useCallback((product: PosProduct) => {
     console.log('تم إعادة تعيين النظام بنجاح');
   }, [handleResetOrder]);
 
+
+    /**
+   * Handler invoked when the user clicks the void button in the header.  If
+   * there is no active invoice the user is warned.  Otherwise the user is
+   * prompted to enter a cancellation reason.  Upon confirmation the
+   * cancelInvoice API is called and the current order is reset.
+   */
+  const handleVoidClick = useCallback(async () => {
+    if (!currentInvoiceId) {
+      showWarning('لا يوجد طلب لإلغائه');
+      return;
+    }
+    const reason = window.prompt('سبب الإلغاء', '') ?? null;
+    if (reason === null) {
+      return;
+    }
+    try {
+      await invoicesApi.cancelInvoice(currentInvoiceId, null, reason);
+      showSuccess('تم إلغاء الفاتورة بنجاح');
+      handleResetOrder();
+    } catch (error) {
+      console.error('خطأ أثناء إلغاء الفاتورة:', error);
+      showError('فشل إلغاء الفاتورة');
+    }
+  }, [currentInvoiceId, showWarning, showSuccess, showError, handleResetOrder]);
+  
   // عرض حالة التحميل
   if (loading) {
     return (
@@ -1191,6 +1287,10 @@ const handleProductClick = useCallback((product: PosProduct) => {
         hasCurrentOrder={!!currentInvoiceId}
         onDeliveryCompanySelectWithDetails={handleDeliveryCompanySelectWithDetails}
         triggerReopenDeliveryPopup={triggerReopenDeliveryPopup}
+        // Pass discount and void handlers to the header.  When these props
+        // are provided the header will call them instead of navigating.
+        onDiscountClick={handleHeaderDiscountClick}
+        onVoidClick={handleVoidClick}
       />
       <main className="main-content">
         <section className="products-section">
@@ -1378,6 +1478,20 @@ const handleProductClick = useCallback((product: PosProduct) => {
         onSplitComplete={(remainingItems) => {
           setOrderItems(remainingItems);
         }}
+      />
+
+      {/* Header discount popup.  This is shown when the user clicks the
+          discount button in the header.  It allows entering either a
+          percentage or a fixed amount and synchronizes the two.  The
+          subtotal is passed so the popup can calculate the value from
+          the percentage and vice versa. */}
+      <HeaderDiscountPopup
+        isOpen={showHeaderDiscountPopup}
+        onClose={() => setShowHeaderDiscountPopup(false)}
+        onApply={handleApplyHeaderDiscount}
+        subtotal={orderSummary.subtotal}
+        initialPercentage={headerDiscountPercentage}
+        initialAmount={headerDiscountValue}
       />
     </div>
   );

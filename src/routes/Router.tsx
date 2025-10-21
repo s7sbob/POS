@@ -116,7 +116,7 @@ const Router = [
 
       {path: '/settings/printer', element: <PrinterSettingsPage />},
       {path: '/settings', element: <SettingsPage />}, 
-        {path: '/settings/printers', element: <PrinterManagement />},
+      {path: '/settings/printers', element: <PrinterManagement />},
       {path: '/print-test', element: <PrintTestPage />},
 
 

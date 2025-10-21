@@ -253,6 +253,11 @@ const convertOrderItemToInvoiceItem = (
     setIsSubmitting(true);
 
     try {
+        // 🧮 حساب إجمالي الخصومات على مستوى العناصر لإرساله ضمن الطلب
+        const itemDiscountTotal = orderSummary.items.reduce((sum, item) => {
+          return sum + (item.discountAmount || 0);
+        }, 0);
+
         const invoiceData: invoicesApi.CreateInvoiceRequest = {
         backInvoiceCode: null, // استخدام الكود الجديد من الـ API
         InvoiceType: getInvoiceType(orderType),
@@ -270,7 +275,15 @@ const convertOrderItemToInvoiceItem = (
         DeliveryAgentId: null,
         TaxPercentage: taxPercentage,
         ServicePercentage: servicePercentage,
-        HeaderDiscountPercentage: discountPercentage,
+        // Round the discount percentage to two decimals before sending
+        HeaderDiscountPercentage: parseFloat(discountPercentage.toFixed(2)),
+        // Send the absolute discount value (rounded to two decimals) based on the order summary
+        HeaderDiscountValue: parseFloat(orderSummary.discount.toFixed(2)),
+        ItemDiscountTotal: itemDiscountTotal,
+        // Include calculated totals so the API does not need to derive them
+        TotalBeforeDiscount: orderSummary.subtotal,
+        TotalAfterDiscount: orderSummary.totalAfterDiscount,
+        TotalAfterTaxAndService: orderSummary.total,
         PreparedAt: new Date().toISOString(),
         CompletedAt: new Date().toISOString(),
         Notes: notes || `طلب ${orderType}`,
@@ -280,6 +293,23 @@ const convertOrderItemToInvoiceItem = (
         DocumentNumber: documentNumber,
         DefaultPaymentMethod: defaultPaymentMethod
       };
+
+      // 🧮 توزيع الخصم الكلي على كل عنصر في الفاتورة الجديدة
+      // نحسب قيمة الخصم لكل عنصر بناءً على نسبة مساهمته في إجمالي المبلغ قبل الخصم
+      if (invoiceData.Items && invoiceData.Items.length > 0) {
+        const subtotal = orderSummary.subtotal || 0;
+        const totalHeaderDiscount = orderSummary.discount || 0;
+        invoiceData.Items.forEach((invItem, index) => {
+          const orderItem = orderSummary.items[index];
+          const ratio = subtotal > 0 ? (orderItem.totalPrice / subtotal) : 0;
+          let share = ratio * totalHeaderDiscount;
+          // قم بتقريب قيمة الخصم إلى منزلتين عشريتين لتجنب مشاكل الكسور
+          share = parseFloat(share.toFixed(2));
+          // قم بتعيين الخصم الكلي للعنصر وقيمة النسبة 0 لأن القيمة هي الأساس
+          (invItem as any).HeaderDiscountValue = share;
+          (invItem as any).HeaderDiscountPercentage = 0;
+        });
+      }
 
       const result = await invoicesApi.addInvoice(invoiceData);
       showSuccess(`تم إنشاء الفاتورة رقم ${result.invoiceNumber} بنجاح`);
@@ -355,6 +385,10 @@ const convertOrderItemToInvoiceItem = (
       const processedItemsKeys = new Set<string>();
 
       // 1. معالجة العناصر من الواجهة الحالية
+      // نحسب الخصم الكلي الخاص بالفاتورة ونوزعه على العناصر وفق مساهمة كل عنصر في المجموع الفرعي
+      const subtotalForUpdate = orderSummary.subtotal || 0;
+      const totalHeaderDiscountForUpdate = orderSummary.discount || 0;
+
       orderSummary.items.forEach(currentItem => {
         const itemKey = `${currentItem.product.id}-${currentItem.selectedPrice.id}`;
         processedItemsKeys.add(itemKey);
@@ -364,6 +398,15 @@ const convertOrderItemToInvoiceItem = (
         
         // تحويل العنصر مع الاحتفاظ بالـ ID إذا كان موجود
         const invoiceItem = convertOrderItemToInvoiceItem(currentItem, matchingOriginalItem);
+
+        // 🧮 حساب حصة الخصم الكلي لهذا العنصر
+        const ratio = subtotalForUpdate > 0 ? (currentItem.totalPrice / subtotalForUpdate) : 0;
+        let share = ratio * totalHeaderDiscountForUpdate;
+        // تقريب حصة الخصم إلى منزلتين عشريتين لمنع الفروق الناتجة عن الكسور
+        share = parseFloat(share.toFixed(2));
+        (invoiceItem as any).HeaderDiscountValue = share;
+        (invoiceItem as any).HeaderDiscountPercentage = 0;
+
         allItems.push(invoiceItem);
       });
 
@@ -390,6 +433,9 @@ const convertOrderItemToInvoiceItem = (
               ServicePercentage: originalItem.servicePercentage,
               WareHouseId: originalItem.wareHouseId,
               Components: originalItem.components || [],
+              // احتفاظ بقيم الخصم الكلي الأصلية على مستوى العنصر
+              HeaderDiscountPercentage: (originalItem as any).headerDiscountPercentage ?? 0,
+              HeaderDiscountValue: (originalItem as any).headerDiscountValue ?? 0,
             };
             allItems.push(preservedItem);
             console.log(`🔒 الاحتفاظ بعنصر أصلي: ${originalItem.id} (${originalItem.posPriceName})`);
@@ -423,6 +469,12 @@ const convertOrderItemToInvoiceItem = (
       });
 
       // ✅ بناء طلب التحديث الشامل
+      // 🧮 حساب إجمالي الخصومات على مستوى العناصر الحالية والمحفوظة
+      const newItemDiscountTotal = allItems.reduce((sum, current) => {
+        const value = (current as any).ItemDiscountValue || 0;
+        return sum + value;
+      }, 0);
+
       const updateData: invoicesApi.UpdateInvoiceRequest = {
         id: invoiceId,
         backInvoiceCode: originalInvoice.backInvoiceCode,
@@ -445,13 +497,20 @@ const convertOrderItemToInvoiceItem = (
         ReturnShiftCode: originalInvoice.returnShiftCode,
         TaxPercentage: taxPercentage,
         ServicePercentage: servicePercentage,
-        HeaderDiscountPercentage: discountPercentage,
-        ItemDiscountTotal: originalInvoice.itemDiscountTotal,
-        HeaderDiscountValue: originalInvoice.headerDiscountValue,
+        // Round the discount percentage to two decimals before sending
+        HeaderDiscountPercentage: parseFloat(discountPercentage.toFixed(2)),
+        // استخدم الإجمالي الجديد للخصومات على العناصر بدلاً من إجمالي الفاتورة الأصلية
+        ItemDiscountTotal: newItemDiscountTotal,
+        // Use the current order summary discount (rounded to two decimals) as the header discount value
+        HeaderDiscountValue: parseFloat(orderSummary.discount.toFixed(2)),
         TaxAmount: originalInvoice.taxAmount,
         ServiceAmount: originalInvoice.serviceAmount,
+        // Update the invoice totals to reflect the current order summary.  The
+        // subtotal comes from the order summary directly; TotalAfterDiscount
+        // uses the summary's totalAfterDiscount, and TotalAfterTaxAndService
+        // uses the summary's total (which already includes tax, service and delivery).
         TotalBeforeDiscount: orderSummary.subtotal,
-        TotalAfterDiscount: orderSummary.total,
+        TotalAfterDiscount: orderSummary.totalAfterDiscount,
         TotalAfterTaxAndService: orderSummary.total,
         TotalCost: originalInvoice.totalCost,
         GrossProfit: originalInvoice.grossProfit,

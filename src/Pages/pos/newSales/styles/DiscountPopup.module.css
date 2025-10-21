@@ -1,0 +1,186 @@
+/* DiscountPopup.module.css */
+
+/* Overlay covers the entire viewport with a semi‑transparent backdrop */
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+}
+
+/* The popup container itself */
+.popup {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  width: 90%;
+  max-width: 480px;
+  max-height: 90vh;
+  overflow: hidden;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Header styles */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e5e7eb;
+  background: linear-gradient(135deg, #667eea 0%, #0373ed 100%);
+  color: #ffffff;
+}
+
+.title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.closeBtn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #ffffff;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+}
+
+.closeBtn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Content container */
+.content {
+  padding: 24px;
+  overflow-y: auto;
+}
+
+/* Order info section (displays total) */
+.orderInfo {
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 24px;
+  border: 1px solid #e2e8f0;
+}
+
+.totalAmount {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.label {
+  font-weight: 500;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.amount {
+  font-weight: 700;
+  color: #059669;
+  font-size: 16px;
+}
+
+/* Input sections for percentage and amount */
+.inputSection {
+  margin-bottom: 20px;
+}
+
+.inputLabel {
+  display: block;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.discountInput {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 16px;
+  transition: all 0.2s;
+  box-sizing: border-box;
+}
+
+.discountInput:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* Row summarising final total */
+.summaryRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  font-weight: 600;
+  font-size: 15px;
+}
+
+/* Action buttons container */
+.actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.cancelBtn,
+.confirmBtn {
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  min-width: 100px;
+}
+
+.cancelBtn {
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #d1d5db;
+}
+
+.cancelBtn:hover {
+  background: #e5e7eb;
+}
+
+.confirmBtn {
+  background: #667eea;
+  color: #ffffff;
+}
+
+.confirmBtn:hover {
+  background: #5a67d8;
+}

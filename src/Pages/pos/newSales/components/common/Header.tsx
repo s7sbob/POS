@@ -57,11 +57,23 @@ interface HeaderProps {
   
   // إضافة trigger لإعادة فتح popup شركة التوصيل
   triggerReopenDeliveryPopup?: boolean;
+
+  /**
+   * دالة تستدعى عند الضغط على زر الخصم فى الهيدر. عند تعريفها من قبل
+   * المكون الأعلى (صفحة المبيعات) يتم فتح شاشة الخصم لإدخال نسبة أو قيمة.
+   */
+  onDiscountClick?: () => void;
+
+  /**
+   * دالة تستدعى عند الضغط على زر الإلغاء/المرتجع فى الهيدر. عند تعريفها من قبل
+   * المكون الأعلى يجب أن تقوم بتنفيذ منطق إلغاء الفاتورة (أو المرتجعات).
+   */
+  onVoidClick?: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ 
-  selectedOrderType, 
-  onOrderTypeChange, 
+const Header: React.FC<HeaderProps> = ({
+  selectedOrderType,
+  onOrderTypeChange,
   onResetOrder,
   onTableClick,
   tableDisplayName = 'Table',
@@ -78,7 +90,9 @@ const Header: React.FC<HeaderProps> = ({
   onSplitReceipt,
   hasCurrentOrder,
   onDeliveryCompanySelectWithDetails,
-  triggerReopenDeliveryPopup
+  triggerReopenDeliveryPopup,
+  onDiscountClick,
+  onVoidClick
 }) => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
@@ -768,12 +782,28 @@ const Header: React.FC<HeaderProps> = ({
               </a>
             )}
 
-            <a href="#" className="nav-item">
+            {/* زر الخصم: يستدعى onDiscountClick عند الضغط إذا تم تمريرها */}
+            <a
+              href="#"
+              className="nav-item"
+              onClick={(e) => {
+                e.preventDefault();
+                if (onDiscountClick) onDiscountClick();
+              }}
+            >
               <img src="/images/img_discount_tag_01.svg" alt="Discount" />
               <span>{t('pos.newSales.header.discount')}</span>
             </a>
 
-            <a href="#" className="nav-item">
+            {/* زر الإلغاء/المرتجعات: يستدعى onVoidClick عند الضغط إذا تم تمريرها */}
+            <a
+              href="#"
+              className="nav-item"
+              onClick={(e) => {
+                e.preventDefault();
+                if (onVoidClick) onVoidClick();
+              }}
+            >
               <img src="/images/img_delete_01.svg" alt="Void" />
               <span>{t('pos.newSales.header.void')}</span>
             </a>
