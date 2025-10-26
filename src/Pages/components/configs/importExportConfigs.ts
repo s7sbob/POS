@@ -505,6 +505,82 @@ export const suppliersImportExportConfig: ImportExportConfig = {
   maxRows: 1000
 };
 
+/* ───── Employees Configuration ───── */
+export const employeesImportExportConfig: ImportExportConfig = {
+  moduleName: 'Employees',
+  moduleNameEn: 'Employees',
+  fileName: 'employees',
+  title: 'hr.employees.title',
+  titleEn: 'hr.employees.title',
+  columns: [
+    {
+      field: 'name',
+      headerName: 'hr.employees.name',
+      headerNameEn: 'hr.employees.name',
+      type: 'string',
+      required: true,
+      example: 'أحمد محمد',
+      exampleEn: 'Ahmed Mohamed',
+      validate: (value) => {
+        if (!value || value.length < 2) return 'اسم الموظف يجب أن يكون أكثر من حرفين';
+        if (value.length > 200) return 'اسم الموظف طويل جداً';
+        return null;
+      }
+    },
+    {
+      field: 'workingHours',
+      headerName: 'hr.employees.workingHours',
+      headerNameEn: 'hr.employees.workingHours',
+      type: 'number',
+      required: true,
+      example: '8',
+      exampleEn: '8',
+      validate: (value) => {
+        if (!value || value < 1) return 'ساعات العمل يجب أن تكون أكثر من صفر';
+        if (value > 24) return 'ساعات العمل لا يمكن أن تكون أكثر من 24';
+        return null;
+      }
+    },
+    {
+      field: 'hourSalary',
+      headerName: 'hr.employees.hourSalary',
+      headerNameEn: 'hr.employees.hourSalary',
+      type: 'number',
+      required: true,
+      example: '150',
+      exampleEn: '150',
+      validate: (value) => {
+        if (!value || value < 0) return 'أجر الساعة لا يمكن أن يكون سالب';
+        return null;
+      }
+    },
+    {
+      field: 'isActive',
+      headerName: 'status.active',
+      headerNameEn: 'status.active',
+      type: 'boolean',
+      required: false,
+      example: 'نعم',
+      exampleEn: 'Yes'
+    }
+  ],
+  onImport: async (data) => {
+    const results = { success: 0, errors: [] as string[] };
+    
+    for (let i = 0; i < data.length; i++) {
+      try {
+        // Implementation here
+        results.success++;
+      } catch (error: any) {
+        results.errors.push(`الصف ${i + 1}: ${error.message || 'خطأ في الإضافة'}`);
+      }
+    }
+    
+    return results;
+  },
+  maxRows: 1000
+};
+
 /* ───── Warehouses Configuration ───── */
 export const warehousesImportExportConfig: ImportExportConfig = {
   moduleName: 'Warehouses',

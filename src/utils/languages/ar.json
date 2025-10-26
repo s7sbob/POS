@@ -292,6 +292,8 @@
     }
   },
   "sidebar": {
+    "hr": "الموارد البشرية",
+    "employees": "الموظفين",
     "stock": "المخزون",
     "tableSections": "أقسام الطاولات",
     "posProducts": "منتجات نقاط البيع",
@@ -2317,6 +2319,49 @@
       "copyright": "جميع الحقوق محفوظة لشركة POS System",
       "madeWith": "صُنع بـ",
       "madeIn": "في مصر"
+    }
+  },
+  "hr": {
+    "employees": {
+      "title": "الموظفين",
+      "add": "إضافة موظف",
+      "edit": "تعديل موظف",
+      "search": "بحث عن موظف...",
+      "code": "كود الموظف",
+      "name": "اسم الموظف",
+      "workingHours": "ساعات العمل",
+      "hourSalary": "أجر الساعة",
+      "hours": "ساعة",
+      "currency": "جنيه",
+      "status": "الحالة",
+      "active": "نشط",
+      "inactive": "غير نشط",
+      "created": "تاريخ الإنشاء",
+      "nameRequired": "اسم الموظف مطلوب",
+      "nameMinLength": "اسم الموظف يجب أن يكون أكثر من حرفين",
+      "workingHoursRequired": "ساعات العمل مطلوبة",
+      "workingHoursInvalid": "ساعات العمل يجب أن تكون رقم صحيح",
+      "workingHoursMin": "ساعات العمل يجب أن تكون على الأقل 1",
+      "hourSalaryRequired": "أجر الساعة مطلوب",
+      "hourSalaryInvalid": "أجر الساعة يجب أن يكون رقم صحيح",
+      "hourSalaryMin": "أجر الساعة يجب أن يكون أكبر من صفر",
+      "saveAndExit": "حفظ وإغلاق",
+      "saveAndNew": "حفظ وإضافة جديد",
+      "filter": {
+        "title": "فلترة الموظفين",
+        "search": "البحث",
+        "searchPlaceholder": "ابحث عن موظف...",
+        "filters": "الفلاتر",
+        "sorting": "الترتيب",
+        "sortBy": "ترتيب حسب",
+        "sortOrder": "نوع الترتيب",
+        "ascending": "تصاعدي",
+        "descending": "تنازلي",
+        "results": "النتائج",
+        "activeFilters": "فلتر نشط",
+        "apply": "تطبيق",
+        "clear": "مسح الكل"
+      }
     }
   }
 }

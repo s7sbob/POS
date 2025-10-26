@@ -463,6 +463,8 @@
     "title": "Information"
   },
   "sidebar": {
+    "hr": "HR",
+    "employees": "Employees",
     "inventory": "Inventory",
     "posProducts": "POS Products",
     "hallCaptains": "Hall Captains",
@@ -2315,6 +2317,49 @@
       "copyright": "All rights reserved by POS System Company",
       "madeWith": "Made with",
       "madeIn": "in Egypt"
+    }
+  },
+  "hr": {
+    "employees": {
+      "title": "Employees",
+      "add": "Add Employee",
+      "edit": "Edit Employee",
+      "search": "Search for employee...",
+      "code": "Employee Code",
+      "name": "Employee Name",
+      "workingHours": "Working Hours",
+      "hourSalary": "Hour Salary",
+      "hours": "hours",
+      "currency": "EGP",
+      "status": "Status",
+      "active": "Active",
+      "inactive": "Inactive",
+      "created": "Created On",
+      "nameRequired": "Employee name is required",
+      "nameMinLength": "Employee name must be at least 2 characters",
+      "workingHoursRequired": "Working hours is required",
+      "workingHoursInvalid": "Working hours must be a valid number",
+      "workingHoursMin": "Working hours must be at least 1",
+      "hourSalaryRequired": "Hour salary is required",
+      "hourSalaryInvalid": "Hour salary must be a valid number",
+      "hourSalaryMin": "Hour salary must be greater than zero",
+      "saveAndExit": "Save & Exit",
+      "saveAndNew": "Save & Add New",
+      "filter": {
+        "title": "Filter Employees",
+        "search": "Search",
+        "searchPlaceholder": "Search for employee...",
+        "filters": "Filters",
+        "sorting": "Sorting",
+        "sortBy": "Sort By",
+        "sortOrder": "Sort Order",
+        "ascending": "Ascending",
+        "descending": "Descending",
+        "results": "Results",
+        "activeFilters": "active filter",
+        "apply": "Apply",
+        "clear": "Clear All"
+      }
     }
   }
 }

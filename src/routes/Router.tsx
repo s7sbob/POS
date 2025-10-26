@@ -91,6 +91,10 @@ const ViewPurchasePage = createProtectedPage(ViewPurchasePageOriginal, 'PURCHASE
 const ProductBalanceReportPage = createProtectedPage(ProductBalanceReportPageOriginal, 'REPORTS');
 const PosProductsPage = createProtectedPage(PosProductsPageOriginal, 'POS_PRODUCTS');
 const AdditionProducts = createProtectedPage(AdditionProductsPage, 'ADDITION_PRODUCTS');
+
+/* ****HR Pages***** */
+const EmployeesPageOriginal = Loadable(lazy(() => import('../Pages/hr/EmployeesPage')));
+const EmployeesPage = createProtectedPage(EmployeesPageOriginal, 'EMPLOYEES');
 const Router = [
 
   {
@@ -124,6 +128,9 @@ const Router = [
       { path: '/users', element: <UsersManagement /> },
       { path: '/company', element: <CompanySettings /> },
       { path: '/permissions', element: <PermissionsPage /> },
+
+      // HR Routes
+      { path: '/hr/employees', element: <EmployeesPage /> },
  
       // Product Management Routes
       { path: '/products', element: <ProductsPage /> },
