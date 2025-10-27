@@ -7,12 +7,14 @@ import {
   IconPrinter, IconSettings, IconDevices, IconNetwork,
   IconArrowRight
 } from '@tabler/icons-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
 const SettingsPage: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  // Retrieve tenantId so that navigation remains within the tenant
+  const { tenantId } = useParams<{ tenantId: string }>();
 
   const settingsOptions = [
     {
@@ -69,7 +71,12 @@ const SettingsPage: React.FC = () => {
                   boxShadow: 3
                 }
               }}
-              onClick={() => navigate(option.path)}
+              onClick={() => {
+                // Build a tenant-aware path.  If a tenantId is present we
+                // prefix it to the option path, otherwise use the path as is.
+                const target = tenantId ? `/${tenantId}${option.path}` : option.path;
+                navigate(target);
+              }}
             >
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
@@ -107,7 +114,10 @@ const SettingsPage: React.FC = () => {
             إجراءات سريعة
           </Typography>
           <List>
-            <ListItemButton onClick={() => navigate('/settings/printers')}>
+            <ListItemButton onClick={() => {
+              const target = tenantId ? `/${tenantId}/settings/printers` : '/settings/printers';
+              navigate(target);
+            }}>
               <ListItemIcon>
                 <IconPrinter />
               </ListItemIcon>
@@ -117,7 +127,10 @@ const SettingsPage: React.FC = () => {
               />
             </ListItemButton>
             <Divider />
-            <ListItemButton onClick={() => navigate('/settings/printer-settings')}>
+            <ListItemButton onClick={() => {
+              const target = tenantId ? `/${tenantId}/settings/printer-settings` : '/settings/printer-settings';
+              navigate(target);
+            }}>
               <ListItemIcon>
                 <IconSettings />
               </ListItemIcon>

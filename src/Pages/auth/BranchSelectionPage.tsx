@@ -1,6 +1,6 @@
 // File: src/pages/auth/BranchSelectionPage.tsx
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { 
   Grid, 
   Box, 
@@ -22,6 +22,10 @@ import { Branch } from 'src/utils/api/authApi';
 const BranchSelectionPage: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  // Obtain the tenantId from the route so that navigation stays
+  // within the current company context. Without this prefix the
+  // navigation would drop the tenantId and cause redirect loops.
+  const { tenantId } = useParams<{ tenantId: string }>();
   const { branches, selectBranch, logout, user, isLoading } = useAuth();
   const [selectedBranchId, setSelectedBranchId] = React.useState<string | null>(null);
 
@@ -30,7 +34,12 @@ const BranchSelectionPage: React.FC = () => {
       setSelectedBranchId(branch.id);
       await selectBranch(branch);
       setTimeout(() => {
-        navigate('/dashboard', { replace: true });
+        // Navigate to the tenant-specific dashboard after branch selection
+        if (tenantId) {
+          navigate(`/${tenantId}/dashboard`, { replace: true });
+        } else {
+          navigate('/dashboard', { replace: true });
+        }
       }, 100);
     } catch (error) {
       console.error('Error selecting branch:', error);
@@ -40,7 +49,12 @@ const BranchSelectionPage: React.FC = () => {
 
   const handleLogout = () => {
     logout();
-    navigate('/auth/login', { replace: true });
+    // Redirect to the tenant-specific login page on logout
+    if (tenantId) {
+      navigate(`/${tenantId}/auth/login`, { replace: true });
+    } else {
+      navigate('/auth/login', { replace: true });
+    }
   };
 
   if (branches.length === 0) {

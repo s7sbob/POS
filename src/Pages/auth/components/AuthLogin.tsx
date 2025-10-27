@@ -16,7 +16,7 @@ import { useTranslation } from 'react-i18next';
 import CustomCheckbox from 'src/components/forms/theme-elements/CustomCheckbox';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
-import { Link } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 
 interface Props {
   title?: React.ReactNode;
@@ -33,7 +33,13 @@ const AuthLogin: React.FC<Props> = ({
   isLoading = false 
 }) => {
   const { t } = useTranslation();
-  const [tenantId, setTenantId] = React.useState(''); // ⭐ إضافة tenantId state
+  // tenantId is controlled by the company code input.  When this component is
+  // rendered under the `/:tenantId/auth/login` route we populate the field
+  // from the URL parameter.  If the user edits the company code the URL is
+  // updated accordingly.
+  const params = useParams<{ tenantId: string }>();
+  const navigate = useNavigate();
+  const [tenantId, setTenantId] = React.useState('');
   const [phone, setPhone] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [showPassword, setShowPassword] = React.useState(false);
@@ -51,6 +57,16 @@ const AuthLogin: React.FC<Props> = ({
     
     if (savedRemember && savedTenantId) {
       setTenantId(savedTenantId);
+      // Persist the tenant in tenant_id so that API requests include it.
+      localStorage.setItem('tenant_id', savedTenantId);
+    }
+
+    // If the URL contains a tenantId (e.g. `/myCompany/auth/login`) and
+    // there is no remembered tenant, populate the field from the URL.
+    if (params.tenantId && !savedTenantId) {
+      setTenantId(params.tenantId);
+      // Persist the tenant when coming from the URL so that API requests include it.
+      localStorage.setItem('tenant_id', params.tenantId);
     }
   }, []);
 
@@ -87,7 +103,21 @@ const AuthLogin: React.FC<Props> = ({
               id="tenantId" 
               fullWidth 
               value={tenantId} 
-              onChange={(e: { target: { value: React.SetStateAction<string>; }; }) => setTenantId(e.target.value)}
+              onChange={(e: { target: { value: React.SetStateAction<string>; }; }) => {
+                const value = e.target.value as string;
+                setTenantId(value);
+                // Persist the tenantId in localStorage so that it is used for API headers.
+                // Only store non-empty values.
+                if (value && value.trim().length > 0) {
+                  localStorage.setItem('tenant_id', value.trim());
+                  // When the user edits the company code update the URL to
+                  // reflect the new tenantId.  Only navigate when there is
+                  // actual input to avoid empty prefixes.
+                  navigate(`/${value}/auth/login`, { replace: true });
+                } else {
+                  localStorage.removeItem('tenant_id');
+                }
+              }}
               placeholder={t('auth.login.tenantPlaceholder')}
               disabled={isLoading}
               InputProps={{
@@ -165,7 +195,8 @@ const AuthLogin: React.FC<Props> = ({
             </FormGroup>
             <Typography 
               component={Link} 
-              to="/auth/forgot-password" 
+              // Provide a relative path so that the tenant prefix is preserved.
+              to="auth/forgot-password"
               sx={{ 
                 color: 'primary.main', 
                 textDecoration: 'none',

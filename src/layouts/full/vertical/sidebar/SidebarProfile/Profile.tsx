@@ -12,7 +12,7 @@ import { useSelector } from 'src/store/Store';
 import { AppState } from 'src/store/Store';
 import img1 from 'src/assets/images/profile/user-1.jpg';
 import { clearAuth } from 'src/utils/auth';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 export const Profile: React.FC = () => {
   /* --------- collapse logic --------- */
@@ -23,9 +23,15 @@ export const Profile: React.FC = () => {
   const hideMenu = lgUp ? isCollapse && !isSidebarHover : false;
 
   const navigate = useNavigate();
+  // Grab tenantId so we can redirect to the correct tenant login on logout
+  const { tenantId } = useParams<{ tenantId: string }>();
   const logout = () => {
     clearAuth();
-    navigate('/auth/login', { replace: true });
+    if (tenantId) {
+      navigate(`/${tenantId}/auth/login`, { replace: true });
+    } else {
+      navigate('/auth/login', { replace: true });
+    }
   };
 
   if (hideMenu) return null;

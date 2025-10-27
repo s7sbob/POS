@@ -1,10 +1,13 @@
-import { Outlet } from "react-router";
+import { Outlet } from 'react-router';
+import TenantPrefixGuard from 'src/components/TenantPrefixGuard';
 import LoadingBar from '../../LoadingBar';
 
 const BlankLayout = () => (
   <>
     <LoadingBar />
-    <Outlet />
+    <TenantPrefixGuard>
+      <Outlet />
+    </TenantPrefixGuard>
   </>
 );
 

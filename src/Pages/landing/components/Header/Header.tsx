@@ -30,7 +30,7 @@ import { setDarkMode } from 'src/store/customizer/CustomizerSlice';
 import Logo from 'src/layouts/full/shared/logo/Logo';
 import Language from 'src/layouts/full/vertical/header/Language';
 import Navigation from './Navigation';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useParams } from 'react-router-dom';
 
 const Header: React.FC = () => {
   const { t } = useTranslation();
@@ -38,7 +38,9 @@ const Header: React.FC = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const dispatch = useDispatch();
   const customizer = useSelector((state: AppState) => state.customizer);
-   const navigate = useNavigate();
+  const navigate = useNavigate();
+  // Extract tenantId so that the login button points to the proper tenant
+  const { tenantId } = useParams<{ tenantId: string }>();
   const location = useLocation();
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -56,7 +58,11 @@ const Header: React.FC = () => {
   };
 
  const handleSignIn = () => {
-    navigate('/auth/login');
+    if (tenantId) {
+      navigate(`/${tenantId}/auth/login`);
+    } else {
+      navigate('auth/login');
+    }
   };
 
   const scrollToSection = (href: string) => {

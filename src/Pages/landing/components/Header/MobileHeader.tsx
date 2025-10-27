@@ -26,7 +26,7 @@ import {
   IconSun,
   IconWorld,
 } from '@tabler/icons-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useSelector, useDispatch } from 'src/store/Store';
 import { AppState } from 'src/store/Store';
@@ -37,6 +37,8 @@ const MobileHeader: React.FC = () => {
   const { t, i18n } = useTranslation();
   const theme = useTheme();
   const navigate = useNavigate();
+  // Determine tenantId so that mobile login button keeps tenant prefix
+  const { tenantId } = useParams<{ tenantId: string }>();
   const dispatch = useDispatch();
   const customizer = useSelector((state: AppState) => state.customizer);
   
@@ -51,7 +53,11 @@ const MobileHeader: React.FC = () => {
   ];
 
   const handleSignIn = () => {
-    navigate('/auth/login');
+    if (tenantId) {
+      navigate(`/${tenantId}/auth/login`);
+    } else {
+      navigate('auth/login');
+    }
     setMobileMenuOpen(false);
   };
 

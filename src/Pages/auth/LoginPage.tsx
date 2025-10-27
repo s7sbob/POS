@@ -1,6 +1,6 @@
 // File: src/Pages/auth/LoginPage.tsx
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Grid, Box, Card, Stack, Typography, Snackbar, Alert } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import PageContainer from 'src/components/container/PageContainer';
@@ -12,6 +12,9 @@ import { Branch } from 'src/utils/api/authApi';
 const LoginPage: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  // Grab the tenantId from the URL.  All auth routes are prefixed with
+  // `/:tenantId`, so this hook will provide the current company/tenant code.
+  const { tenantId } = useParams<{ tenantId: string }>();
   const { login, isLoading } = useAuth();
   const [msg, setMsg] = React.useState('');
 
@@ -25,13 +28,13 @@ const LoginPage: React.FC = () => {
         
         if (branches.length === 1 && selectedBranch) {
           console.log('➡️ Redirecting to dashboard (single branch)');
-          navigate('/dashboard', { replace: true });
+          navigate(`/${tenantId}/dashboard`, { replace: true });
         } else if (branches.length > 1) {
           console.log('➡️ Redirecting to branch selection (multiple branches)');
-          navigate('/auth/branch-selection', { replace: true });
+          navigate(`/${tenantId}/auth/branch-selection`, { replace: true });
         } else {
           console.log('➡️ Redirecting to no branches page');
-          navigate('/auth/no-branches', { replace: true });
+          navigate(`/${tenantId}/auth/no-branches`, { replace: true });
         }
       });
       
@@ -70,7 +73,12 @@ const LoginPage: React.FC = () => {
                     <Typography color="textSecondary" variant="h6">
                       {t('auth.login.newUser')}
                     </Typography>
-                    <Typography component={Link} to="/auth/register" sx={{ color: 'primary.main' }}>
+              <Typography component={Link} 
+                // Use the tenantId from the current URL to build the correct
+                // registration path.  Without this the link would point to
+                // `/auth/register` and drop the tenant prefix.
+                to={`/${tenantId}/auth/register`} 
+                sx={{ color: 'primary.main' }}>
                       {t('auth.login.createAccount')}
                     </Typography>
                   </Stack>

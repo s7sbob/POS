@@ -12,7 +12,7 @@ import {
   Stack,
   Theme,
 } from '@mui/material';
-import { Link } from 'react-router-dom'; // ⭐ إضافة Link
+import { Link, useParams } from 'react-router-dom'; // ⭐ إضافة Link وuseParams
 
 import { useSelector, useDispatch } from 'src/store/Store';
 import { toggleMobileSidebar, setDarkMode } from 'src/store/customizer/CustomizerSlice';
@@ -32,6 +32,11 @@ const Header = () => {
   const lgDown = useMediaQuery((theme: Theme) => theme.breakpoints.down('lg'));
   const lgUp = useMediaQuery((theme: Theme) => theme.breakpoints.up('lg'));
   const { selectedBranch } = useAuth();
+
+  // Grab tenantId from the current route so that the POS sales icon uses
+  // the tenant-aware path.  Without this prefix the route will fall back
+  // to "/pos/sales" which is outside the tenant scope and causes loops.
+  const { tenantId } = useParams<{ tenantId?: string }>();
 
   // drawer
   const customizer = useSelector((state: AppState) => state.customizer);
@@ -105,7 +110,7 @@ const Header = () => {
           <IconButton
             color="inherit"
             component={Link}
-            to="/pos/sales"
+            to={tenantId ? `/${tenantId}/pos/sales` : '/pos/sales'}
             aria-label="Sales"
             title="المبيعات"
             size="large"

@@ -3,17 +3,24 @@ import React from 'react';
 import { Box, Typography, Button, Container, Alert } from '@mui/material';
 import { IconBuilding, IconLogout } from '@tabler/icons-react';
 import { useAuth } from 'src/contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
 const NoBranchesPage: React.FC = () => {
   const { t } = useTranslation();
   const { logout } = useAuth();
   const navigate = useNavigate();
+  // Use tenantId from the URL to keep the user in the correct
+  // company context when redirecting to the login page.
+  const { tenantId } = useParams<{ tenantId: string }>();
 
   const handleLogout = () => {
     logout();
-    navigate('/auth/login');
+    if (tenantId) {
+      navigate(`/${tenantId}/auth/login`);
+    } else {
+      navigate('/auth/login');
+    }
   };
 
   return (

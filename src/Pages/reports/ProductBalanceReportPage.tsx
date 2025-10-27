@@ -14,6 +14,7 @@ import {
 import { IconHome, IconReportAnalytics, IconFilter } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import ProductBalanceFilters from './components/ProductBalanceFilters';
 import ProductBalanceStats from './components/ProductBalanceStats';
 import ProductBalanceTable from './components/ProductBalanceTable';
@@ -25,6 +26,7 @@ import { GroupedProductBalance } from 'src/utils/api/reportsApi';
 const ProductBalanceReportPage: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { tenantId } = useParams<{ tenantId?: string }>();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
@@ -181,9 +183,17 @@ const ProductBalanceReportPage: React.FC = () => {
           <Link
             color="inherit"
             href="#"
-            onClick={(e) => {
+              onClick={(e) => {
               e.preventDefault();
-              navigate('/');
+              // When the breadcrumb home link is clicked navigate to the
+              // appropriate landing page.  If a tenantId is present
+              // (meaning the user is within a tenant context) preserve the
+              // tenant prefix.  Otherwise fall back to the root path.
+              if (tenantId) {
+                navigate(`/${tenantId}`);
+              } else {
+                navigate('/');
+              }
             }}
             sx={{ 
               display: 'flex', 

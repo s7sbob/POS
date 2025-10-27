@@ -12,6 +12,12 @@ import PaymentPopup from './PaymentPopup';
 import SimplePaymentChoicePopup from './SimplePaymentChoicePopup';
 import { useInvoiceManager } from '../hooks/useInvoiceManager';
 
+// Popups for selecting delivery agents and hall captains before printing or sending orders.
+import SelectDeliveryAgentPopup from './SelectDeliveryAgentPopup';
+import SelectHallCaptainPopup from './SelectHallCaptainPopup';
+import { DeliveryAgent } from 'src/utils/api/pagesApi/deliveryAgentsApi';
+import { HallCaptain } from 'src/utils/api/pagesApi/hallCaptainsApi';
+
 interface OrderSummaryProps {
   orderSummary: OrderSummaryType;
   customerName: string;
@@ -95,6 +101,17 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
   const lastSearchQuery = useRef<string>('');
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [selectedActionType, setSelectedActionType] = useState<'send' | 'print' | 'pay'>('pay');
+
+  // ================================
+  // Delivery agent and hall captain selection
+  // When printing or sending a Delivery or Dine‑in order the API requires
+  // assigning a delivery agent or hall captain.  These state variables
+  // track the currently selected values and control the popups.
+  const [showDeliveryAgentPopup, setShowDeliveryAgentPopup] = useState(false);
+  const [showHallCaptainPopup, setShowHallCaptainPopup] = useState(false);
+  const [selectedDeliveryAgent, setSelectedDeliveryAgent] = useState<DeliveryAgent | null>(null);
+  const [selectedHallCaptain, setSelectedHallCaptain] = useState<HallCaptain | null>(null);
+  const [pendingActionType, setPendingActionType] = useState<'send' | 'print' | null>(null);
 
   // تحميل كود الفاتورة التالي عند تحميل المكون أو تغيير نوع الطلب
   useEffect(() => {
@@ -584,7 +601,10 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
           preserveMissingItems: !isEditMode ? true : false,
           // Additional fields for delivery companies
           documentNumber: orderType === 'DeliveryCompany' ? documentNumber : null,
-          defaultPaymentMethod: orderType === 'DeliveryCompany' ? defaultPaymentMethod : null
+          defaultPaymentMethod: orderType === 'DeliveryCompany' ? defaultPaymentMethod : null,
+          // New: assign selected delivery agent or hall captain depending on order type
+          deliveryAgentId: selectedDeliveryAgent ? selectedDeliveryAgent.id : null,
+          hallCaptainId: selectedHallCaptain ? selectedHallCaptain.id : null,
         }
       );
 
@@ -604,7 +624,8 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
     }
   }, [saveInvoice, orderSummary, orderType, isEditMode, currentInvoiceId,
     selectedCustomer, selectedAddress, selectedDeliveryCompany, selectedTable,
-    customerName, onOrderCompleted]);
+    customerName, onOrderCompleted, selectedDeliveryAgent, selectedHallCaptain,
+    documentNumber, defaultPaymentMethod]);
 
 
       // دالة الدفع المباشر لشركات التوصيل
@@ -807,6 +828,21 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
         setShowPaymentPopup(true);
       }
     } else {
+      // For send or print actions we need to ensure a delivery agent or hall
+      // captain is selected depending on the order type.  The API will
+      // reject updates to the status without these assignments.  When
+      // necessary we open the appropriate popup and defer invoking
+      // handleDirectSave until the selection is made.
+      if ((actionType === 'send' || actionType === 'print') && orderType === 'Delivery') {
+        setPendingActionType(actionType);
+        setShowDeliveryAgentPopup(true);
+        return;
+      }
+      if ((actionType === 'send' || actionType === 'print') && orderType === 'Dine-in') {
+        setPendingActionType(actionType);
+        setShowHallCaptainPopup(true);
+        return;
+      }
       await handleDirectSave(actionType);
     }
   }, [canOpenPayment, orderSummary.items.length, handleDirectSave, orderType, handleDeliveryCompanyDirectPayment]);
@@ -867,6 +903,37 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
       </div>
     );
   };
+
+  /**
+   * Callback invoked when a delivery agent is chosen from the selection popup.
+   * Stores the selected agent and then proceeds with the pending action
+   * (print or send) if one is queued.  After running the action the
+   * pending flag is cleared.
+   */
+  const handleDeliveryAgentSelect = useCallback((agent: DeliveryAgent) => {
+    setSelectedDeliveryAgent(agent);
+    setShowDeliveryAgentPopup(false);
+    if (pendingActionType) {
+      // trigger the save now that we have a delivery agent
+      handleDirectSave(pendingActionType);
+      setPendingActionType(null);
+    }
+  }, [pendingActionType, handleDirectSave]);
+
+  /**
+   * Callback invoked when a hall captain is chosen from the selection popup.
+   * Stores the selected captain and then proceeds with the pending action
+   * (print or send) if one is queued.  After running the action the
+   * pending flag is cleared.
+   */
+  const handleHallCaptainSelect = useCallback((captain: HallCaptain) => {
+    setSelectedHallCaptain(captain);
+    setShowHallCaptainPopup(false);
+    if (pendingActionType) {
+      handleDirectSave(pendingActionType);
+      setPendingActionType(null);
+    }
+  }, [pendingActionType, handleDirectSave]);
 
   const renderOptions = (options: any[]) => {
     return options.map((option: any, index: number) => (
@@ -1135,6 +1202,21 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
             }
           }
         }}
+      />
+
+      {/* Delivery agent selection popup.  Appears when printing or sending a
+          Delivery order before status update. */}
+      <SelectDeliveryAgentPopup
+        open={showDeliveryAgentPopup}
+        onClose={() => setShowDeliveryAgentPopup(false)}
+        onSelect={handleDeliveryAgentSelect}
+      />
+      {/* Hall captain selection popup.  Appears when printing or sending a
+          Dine‑in order before status update. */}
+      <SelectHallCaptainPopup
+        open={showHallCaptainPopup}
+        onClose={() => setShowHallCaptainPopup(false)}
+        onSelect={handleHallCaptainSelect}
       />
 
       {/* Customer Form Popup */}

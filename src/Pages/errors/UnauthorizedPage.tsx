@@ -2,12 +2,16 @@
 import React from 'react';
 import { Box, Typography, Button, Container } from '@mui/material';
 import { IconLock } from '@tabler/icons-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
 const UnauthorizedPage: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  // Extract tenantId to construct tenant-aware navigation. Without
+  // including this param the button would navigate to '/dashboard'
+  // which is not defined and would trigger an auth redirect loop.
+  const { tenantId } = useParams<{ tenantId: string }>();
 
   return (
     <Container maxWidth="sm">
@@ -30,7 +34,13 @@ const UnauthorizedPage: React.FC = () => {
         </Typography>
         <Button
           variant="contained"
-          onClick={() => navigate('/dashboard')}
+          onClick={() => {
+            if (tenantId) {
+              navigate(`/${tenantId}/dashboard`);
+            } else {
+              navigate('/dashboard');
+            }
+          }}
         >
           {t('errors.unauthorized.backToDashboard')}
         </Button>

@@ -248,7 +248,11 @@ const convertOrderItemToInvoiceItem = (
     notes?: string,
     // إضافة الحقول الجديدة
     documentNumber?: string | null,
-    defaultPaymentMethod?: string | null
+    defaultPaymentMethod?: string | null,
+    // New optional assignments for delivery agent and hall captain when creating a
+    // Delivery or Dine‑in invoice.  If provided these will be sent to the API.
+    deliveryAgentId?: string | null,
+    hallCaptainId?: string | null
   ): Promise<invoicesApi.InvoiceResponse> => {
     setIsSubmitting(true);
 
@@ -270,9 +274,9 @@ const convertOrderItemToInvoiceItem = (
         // Send the ID of the selected address rather than the address text itself
         CustomerAddressId: selectedAddress?.id || null,
         TableId: selectedTable?.table.id || null,
-        HallCaptainId: null,
+        HallCaptainId: hallCaptainId ?? null,
         DeliveryCompanyId: selectedDeliveryCompany?.id || null,
-        DeliveryAgentId: null,
+        DeliveryAgentId: deliveryAgentId ?? null,
         TaxPercentage: taxPercentage,
         ServicePercentage: servicePercentage,
         // Round the discount percentage to two decimals before sending
@@ -366,6 +370,11 @@ const convertOrderItemToInvoiceItem = (
     // إضافة الحقول الجديدة
     documentNumber?: string | null,
     defaultPaymentMethod?: string | null
+    // New optional assignments for delivery agent and hall captain when updating a
+    // Delivery or Dine‑in invoice.  If provided these will override the
+    // existing values from the original invoice.
+    , deliveryAgentId?: string | null,
+    hallCaptainId?: string | null
   ): Promise<invoicesApi.InvoiceResponse> => {
     setIsSubmitting(true);
 
@@ -485,9 +494,9 @@ const convertOrderItemToInvoiceItem = (
         RawBranchId: originalInvoice.rawBranchId,
         CustomerId: selectedCustomer?.id || originalInvoice.customerId,
         TableId: selectedTable?.table.id || originalInvoice.tableId,
-        HallCaptainId: originalInvoice.hallCaptainId,
+        HallCaptainId: hallCaptainId ?? originalInvoice.hallCaptainId,
         DeliveryCompanyId: selectedDeliveryCompany?.id || originalInvoice.deliveryCompanyId,
-        DeliveryAgentId: originalInvoice.deliveryAgentId,
+        DeliveryAgentId: deliveryAgentId ?? originalInvoice.deliveryAgentId,
         CustomerName: selectedCustomer?.name || originalInvoice.customerName,
         // Send the ID of the selected address; the API will populate the full address
         CustomerAddressId: selectedAddress?.id || (originalInvoice as any).customerAddressId,
@@ -598,6 +607,9 @@ const convertOrderItemToInvoiceItem = (
       // إضافة الحقول الجديدة
       documentNumber?: string | null;
       defaultPaymentMethod?: string | null;
+      // معرفات المندوب والكابتن لإسناد الطلب عند الطباعة/الإرسال
+      deliveryAgentId?: string | null;
+      hallCaptainId?: string | null;
     } = {}
   ): Promise<invoicesApi.InvoiceResponse> => {
     const {
@@ -613,7 +625,9 @@ const convertOrderItemToInvoiceItem = (
       notes,
       preserveMissingItems = true,
       documentNumber = null,
-      defaultPaymentMethod = null
+      defaultPaymentMethod = null,
+      deliveryAgentId = null,
+      hallCaptainId = null
     } = options;
 
     if (isEditMode && invoiceId) {
@@ -633,7 +647,10 @@ const convertOrderItemToInvoiceItem = (
         notes,
         preserveMissingItems,
         documentNumber,
-        defaultPaymentMethod
+        defaultPaymentMethod,
+        // تمرير معرف المندوب والكابتن لتحديث الفاتورة إن وجد
+        deliveryAgentId,
+        hallCaptainId
       );
     } else {
       return await createInvoice(
@@ -650,7 +667,10 @@ const convertOrderItemToInvoiceItem = (
         discountPercentage,
         notes,
         documentNumber,
-        defaultPaymentMethod
+        defaultPaymentMethod,
+        // تمرير معرف المندوب والكابتن لإنشاء الفاتورة إن وجد
+        deliveryAgentId,
+        hallCaptainId
       );
     }
   };

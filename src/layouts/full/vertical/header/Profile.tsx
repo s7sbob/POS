@@ -1,6 +1,6 @@
 // File: src/layouts/full/vertical/header/Profile.tsx
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
   Avatar,
   Box,
@@ -28,6 +28,8 @@ const Profile = () => {
   const [anchorEl2, setAnchorEl2] = useState(null);
   const { user, logout, selectedBranch } = useAuth();
   const navigate = useNavigate();
+  // Retrieve tenantId to build tenant-specific navigation paths
+  const { tenantId } = useParams<{ tenantId: string }>();
 
   const handleClick2 = (event: any) => {
     setAnchorEl2(event.currentTarget);
@@ -39,7 +41,11 @@ const Profile = () => {
 
   const handleLogout = () => {
     logout();
-    navigate('/auth/login');
+    if (tenantId) {
+      navigate(`/${tenantId}/auth/login`);
+    } else {
+      navigate('/auth/login');
+    }
     handleClose2();
   };
 
@@ -116,7 +122,7 @@ const Profile = () => {
         <Divider />
 
         {/* Menu Items */}
-        <MenuItem component={Link} to="/users" onClick={handleClose2}>
+        <MenuItem component={Link} to={tenantId ? `/${tenantId}/users` : '/users'} onClick={handleClose2}>
           <ListItemIcon>
             <IconUser width={20} />
           </ListItemIcon>
@@ -125,7 +131,7 @@ const Profile = () => {
           </ListItemText>
         </MenuItem>
 
-        <MenuItem component={Link} to="/company" onClick={handleClose2}>
+        <MenuItem component={Link} to={tenantId ? `/${tenantId}/company` : '/company'} onClick={handleClose2}>
           <ListItemIcon>
             <IconBuilding width={20} />
           </ListItemIcon>
@@ -134,7 +140,7 @@ const Profile = () => {
           </ListItemText>
         </MenuItem>
 
-        <MenuItem component={Link} to="/permissions" onClick={handleClose2}>
+        <MenuItem component={Link} to={tenantId ? `/${tenantId}/permissions` : '/permissions'} onClick={handleClose2}>
           <ListItemIcon>
             <IconSettings width={20} />
           </ListItemIcon>

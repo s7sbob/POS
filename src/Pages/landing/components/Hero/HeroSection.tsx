@@ -21,12 +21,15 @@ import {
   IconChartBar,
 } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 const HeroSection: React.FC = () => {
   const { t } = useTranslation();
   const theme = useTheme();
   const navigate = useNavigate();
+  // Use tenantId from the current route (if present) so that the
+  // Get Started button directs the user to the correct tenant login page.
+  const { tenantId } = useParams<{ tenantId: string }>();
 
   const stats = [
     { icon: IconUsers, value: '10,000+', label: t('landing.hero.stats.users') },
@@ -35,7 +38,12 @@ const HeroSection: React.FC = () => {
   ];
 
   const handleGetStarted = () => {
-    navigate('/auth/login');
+    if (tenantId) {
+      navigate(`/${tenantId}/auth/login`);
+    } else {
+      // Use relative path if we are on tenant landing page without param
+      navigate('auth/login');
+    }
   };
 
   const handleWatchDemo = () => {

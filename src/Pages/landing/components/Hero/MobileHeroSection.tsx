@@ -23,12 +23,14 @@ import {
   IconChevronDown,
 } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 const MobileHeroSection: React.FC = () => {
   const { t } = useTranslation();
   const theme = useTheme();
   const navigate = useNavigate();
+  // Extract tenantId to build a tenant-aware login path
+  const { tenantId } = useParams<{ tenantId: string }>();
   const [expanded, setExpanded] = useState(false);
 
   const stats = [
@@ -38,7 +40,11 @@ const MobileHeroSection: React.FC = () => {
   ];
 
   const handleGetStarted = () => {
-    navigate('/auth/login');
+    if (tenantId) {
+      navigate(`/${tenantId}/auth/login`);
+    } else {
+      navigate('auth/login');
+    }
   };
 
   return (

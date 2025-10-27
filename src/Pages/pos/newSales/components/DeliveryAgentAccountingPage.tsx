@@ -149,6 +149,11 @@ const theme = createTheme({
 const DeliveryAgentAccountingPage: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  // Grab tenantId from the route so we can build absolute URLs with the
+  // correct company code prefix. Without using this param navigation to
+  // absolute paths like "/pos/..." would drop the tenant segment and
+  // cause redirect loops.
+  const { tenantId } = useParams<{ tenantId: string }>();
   const { agentId } = useParams<{ agentId: string }>();
   
   const [agent, setAgent] = useState<deliveryAgentsApi.DeliveryAgent | null>(null);
@@ -233,7 +238,7 @@ const DeliveryAgentAccountingPage: React.FC = () => {
             <IconButton
               edge="start"
               color="inherit"
-              onClick={() => navigate('/pos/delivery/management')}
+              onClick={() => navigate(`/${tenantId}/pos/delivery/management`)}
               sx={{ mr: 2 }}
             >
               <ArrowBackIcon />
@@ -374,7 +379,7 @@ const DeliveryAgentAccountingPage: React.FC = () => {
             </Button>
             <Button
               variant="outlined"
-              onClick={() => navigate('/pos/delivery/management')}
+              onClick={() => navigate(`/${tenantId}/pos/delivery/management`)}
             >
               العودة
             </Button>

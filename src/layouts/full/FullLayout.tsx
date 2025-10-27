@@ -2,6 +2,7 @@ import { FC } from 'react';
 import { styled, Container, Box, useTheme } from '@mui/material';
 import { useSelector } from 'src/store/Store';
 import { Outlet } from 'react-router';
+import TenantPrefixGuard from 'src/components/TenantPrefixGuard';
 import { AppState } from 'src/store/Store';
 import Header from './vertical/header/Header';
 import Sidebar from './vertical/sidebar/Sidebar';
@@ -70,7 +71,9 @@ const FullLayout: FC = () => {
 
             <Box sx={{ minHeight: 'calc(100vh - 170px)' }}>
               <ScrollToTop>
-                <Outlet />
+                <TenantPrefixGuard>
+                  <Outlet />
+                </TenantPrefixGuard>
               </ScrollToTop>
             </Box>
 

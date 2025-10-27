@@ -25,12 +25,13 @@ import {
   IconX,
 } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 const PricingSection: React.FC = () => {
   const { t } = useTranslation();
   const theme = useTheme();
   const navigate = useNavigate();
+  const { tenantId } = useParams<{ tenantId: string }>();
   const [isYearly, setIsYearly] = useState(false);
 
   const pricingPlans = [
@@ -88,7 +89,11 @@ const PricingSection: React.FC = () => {
   ];
 
   const handleGetStarted = (planName: string) => {
-    navigate('/auth/login');
+    if (tenantId) {
+      navigate(`/${tenantId}/auth/login`);
+    } else {
+      navigate('auth/login');
+    }
   };
 
   return (
