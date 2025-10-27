@@ -36,12 +36,15 @@ import {
   IconUser,
   IconPhone,
   IconMail,
-  IconRefresh
+  IconRefresh,
+  IconShield
 } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
 import { getAllUsers, register, User } from 'src/utils/api/authApi';
 import ImportExportManager from '../components/ImportExportManager';
 import { usersImportExportConfig } from '../components/configs/importExportConfigs';
+// POS roles dialog for managing per‑user POS permissions
+import PosRolesDialog from './components/PosRolesDialog';
 
 const UsersManagementPage: React.FC = () => {
   const { t } = useTranslation();
@@ -61,6 +64,10 @@ const UsersManagementPage: React.FC = () => {
     message: '',
     severity: 'success'
   });
+
+  // State to manage the POS roles dialog
+  const [rolesDialogOpen, setRolesDialogOpen] = useState(false);
+  const [selectedUserIdForRoles, setSelectedUserIdForRoles] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     userName: '',
@@ -111,6 +118,12 @@ const UsersManagementPage: React.FC = () => {
       isActive: user.isActive ?? true
     });
     setDialogOpen(true);
+  };
+
+  // فتح dialog لصلاحيات POS
+  const handleRolesClick = (user: User) => {
+    setSelectedUserIdForRoles(user.id);
+    setRolesDialogOpen(true);
   };
 
   // حفظ المستخدم
@@ -208,10 +221,21 @@ const UsersManagementPage: React.FC = () => {
           </Box>
           
           <Stack direction="row" spacing={1}>
+            {/* POS roles button */}
+            <IconButton
+              size="small"
+              onClick={() => handleRolesClick(user)}
+              color="secondary"
+              title={t('users.posRoles') || 'POS Roles'}
+            >
+              <IconShield size={16} />
+            </IconButton>
+            {/* Edit button */}
             <IconButton
               size="small"
               onClick={() => handleEdit(user)}
               color="primary"
+              title={t('users.edit') || 'Edit'}
             >
               <IconEdit size={16} />
             </IconButton>
@@ -331,13 +355,24 @@ const UsersManagementPage: React.FC = () => {
                       />
                     </TableCell>
                     <TableCell>
-                      <IconButton
-                        size="small"
-                        onClick={() => handleEdit(user)}
-                        color="primary"
-                      >
-                        <IconEdit size={16} />
-                      </IconButton>
+                      <Stack direction="row" spacing={1}>
+                        <IconButton
+                          size="small"
+                          onClick={() => handleRolesClick(user)}
+                          color="secondary"
+                          title={t('users.posRoles') || 'POS Roles'}
+                        >
+                          <IconShield size={16} />
+                        </IconButton>
+                        <IconButton
+                          size="small"
+                          onClick={() => handleEdit(user)}
+                          color="primary"
+                          title={t('users.edit') || 'Edit'}
+                        >
+                          <IconEdit size={16} />
+                        </IconButton>
+                      </Stack>
                     </TableCell>
                   </TableRow>
                 ))
@@ -414,6 +449,15 @@ const UsersManagementPage: React.FC = () => {
           {snackbar.message}
         </Alert>
       </Snackbar>
+
+      {/* POS Roles Dialog */}
+      {selectedUserIdForRoles && (
+        <PosRolesDialog
+          open={rolesDialogOpen}
+          onClose={() => setRolesDialogOpen(false)}
+          userId={selectedUserIdForRoles}
+        />
+      )}
     </Container>
   );
 };

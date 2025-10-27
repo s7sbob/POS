@@ -1489,7 +1489,19 @@
     "errors": {
       "loadFailed": "Error loading users",
       "saveFailed": "Error saving user"
-    }
+    },
+    "noRoles": "No roles found for this module.",
+    "noChanges": "You have not made any changes.",
+    "module": "Module",
+    "role": "Role",
+    "before": "Before",
+    "after": "After",
+    "posRolesTitle": "POS Roles",
+    "all": "All",
+    "back": "Back",
+    "preview": "Preview",
+    "posRoles": "POS Roles",
+    "edit": "Edit"
   },
   "company": {
     "title": "Company & Branch Settings",
