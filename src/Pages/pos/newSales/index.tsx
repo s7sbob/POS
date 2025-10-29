@@ -34,6 +34,9 @@ import { Offer } from '../../../utils/api/pagesApi/offersApi';
 import OfferOptionsPopup from './components/OfferOptionsPopup';
 import { OfferData, SelectedOfferItem } from './types/PosSystem';
 import HeaderDiscountPopup from './components/HeaderDiscountPopup';
+// استيراد popups اختيار المندوب والكابتن لتغييرهم من قائمة الأدوات
+import SelectDeliveryAgentPopup from './components/SelectDeliveryAgentPopup';
+import SelectHallCaptainPopup from './components/SelectHallCaptainPopup';
 
 const PosSystem: React.FC = () => {
   const { t, i18n } = useTranslation();
@@ -178,8 +181,91 @@ const {
   const [invoiceOptions, setInvoiceOptions] = useState<Invoice[]>([]);
   const [moveTableMode, setMoveTableMode] = useState(false);
 
+  // popups لطلب تغيير مندوب التوصيل أو كابتن الصالة
+  const [showChangeDeliveryAgentPopup, setShowChangeDeliveryAgentPopup] = useState(false);
+  const [showChangeCaptainPopup, setShowChangeCaptainPopup] = useState(false);
+
+  // ⚠️ We declare orderSummary here so that it is defined before being used in any callbacks.
+  // Its value will be assigned later after calculateOrderSummary is defined.
+  let orderSummary: any;
+
   // استخدم مدير الفاتورة لإنشاء وتحديث الفواتير خارج الـ OrderSummary
   const { saveInvoice } = useInvoiceManager();
+
+  // =============================================================
+  // دوال تغيير مندوب التوصيل والكابتن من قائمة الأدوات
+  /**
+   * عند اختيار تغيير مندوب التوصيل من قائمة الأدوات يتم فتح نافذة اختيار المندوب.
+   * إذا لم يكن هناك فاتورة حالية أو نوع الطلب ليس توصيل يتم إظهار تحذير أو تجاهل.
+   */
+  const handleChangeDeliveryMan = useCallback(() => {
+    if (!currentInvoiceId) {
+      showWarning('لا يوجد طلب حالى لتغيير مندوب التوصيل');
+      return;
+    }
+    if (selectedOrderType !== 'Delivery') {
+      // الزر معطل بالفعل فى الواجهة إذا لم يكن الطلب توصيل
+      return;
+    }
+    setShowChangeDeliveryAgentPopup(true);
+  }, [currentInvoiceId, selectedOrderType, showWarning]);
+
+  /**
+   * عند اختيار تغيير كابتن الصالة من قائمة الأدوات يتم فتح نافذة اختيار الكابتن.
+   */
+  const handleChangeCaptain = useCallback(() => {
+    if (!currentInvoiceId) {
+      showWarning('لا يوجد طلب حالى لتغيير الكابتن');
+      return;
+    }
+    if (selectedOrderType !== 'Dine-in') {
+      return;
+    }
+    setShowChangeCaptainPopup(true);
+  }, [currentInvoiceId, selectedOrderType, showWarning]);
+
+  /**
+   * بعد اختيار مندوب توصيل جديد يتم إرسال تحديث للفاتورة لتغيير المندوب.
+   */
+  const handleSelectNewDeliveryAgent = useCallback(async (agent: any) => {
+    setShowChangeDeliveryAgentPopup(false);
+    if (!currentInvoiceId) return;
+    try {
+      await saveInvoice(orderSummary, selectedOrderType, [], currentInvoiceStatus, {
+        isEditMode: true,
+        invoiceId: currentInvoiceId,
+        deliveryAgentId: agent.id
+      });
+      showSuccess('تم تغيير مندوب التوصيل بنجاح');
+    } catch (err) {
+      showError('حدث خطأ أثناء تغيير مندوب التوصيل');
+    }
+  }, [currentInvoiceId, saveInvoice, selectedOrderType, currentInvoiceStatus, showSuccess, showError]);
+
+  /**
+   * بعد اختيار كابتن جديد يتم إرسال تحديث للفاتورة لتغيير الكابتن.
+   */
+  const handleSelectNewCaptain = useCallback(async (captain: any) => {
+    setShowChangeCaptainPopup(false);
+    if (!currentInvoiceId) return;
+    try {
+      await saveInvoice(orderSummary, selectedOrderType, [], currentInvoiceStatus, {
+        isEditMode: true,
+        invoiceId: currentInvoiceId,
+        hallCaptainId: captain.id
+      });
+      showSuccess('تم تغيير الكابتن بنجاح');
+    } catch (err) {
+      showError('حدث خطأ أثناء تغيير الكابتن');
+    }
+  }, [currentInvoiceId, saveInvoice, selectedOrderType, currentInvoiceStatus, showSuccess, showError]);
+
+  /**
+   * تغيير طريقة الدفع من الأدوات (غير مفعلة حالياً).
+   */
+  const handleChangePaymentMethod = useCallback(() => {
+    showWarning('ميزة تغيير طريقة الدفع ستتوفر لاحقاً.');
+  }, [showWarning]);
 
   /**
    * تنفيذ عملية النقل عند الضغط على زر الأدوات فى الهيدر.
@@ -326,7 +412,10 @@ const getProductByPriceId = useCallback(async (priceId: string) => {
     };
   }, [orderItems, getServiceCharge, deliveryCharge, headerDiscountValue]);
   // واستخدمه في كل مرة:
-  const orderSummary = calculateOrderSummary();
+  // Assign the calculated order summary to the variable declared earlier.  This allows
+  // callbacks defined above to capture and use the up‑to‑date order summary without
+  // triggering a temporal dead zone error.
+  orderSummary = calculateOrderSummary();
 
 
   // دالة تحويل العرض إلى شكل منتج للعرض
@@ -1291,6 +1380,10 @@ const handleProductClick = useCallback((product: PosProduct) => {
         // are provided the header will call them instead of navigating.
         onDiscountClick={handleHeaderDiscountClick}
         onVoidClick={handleVoidClick}
+        // تمرير الدوال الجديدة لقائمة الأدوات: تغيير طريقة الدفع، تغيير مندوب التوصيل، تغيير الكابتن
+        onChangePaymentMethod={handleChangePaymentMethod}
+        onChangeDeliveryMan={handleChangeDeliveryMan}
+        onChangeCaptain={handleChangeCaptain}
       />
       <main className="main-content">
         <section className="products-section">
@@ -1375,7 +1468,8 @@ const handleProductClick = useCallback((product: PosProduct) => {
               onCustomerSelect={handleCustomerSelect}
               orderType={selectedOrderType}
               onDeliveryChargeChange={handleDeliveryChargeChange}
-              readOnly={false}
+              /* Set readOnly to true when the invoice has been fully paid (status 3) */
+              readOnly={currentInvoiceStatus === 3}
               onOrderCompleted={handleOrderCompleted}
               selectedTable={selectedTable}
               selectedDeliveryCompany={selectedDeliveryCompany}
@@ -1478,6 +1572,18 @@ const handleProductClick = useCallback((product: PosProduct) => {
         onSplitComplete={(remainingItems) => {
           setOrderItems(remainingItems);
         }}
+      />
+
+      {/* Popups لتغيير مندوب التوصيل وكابتن الصالة من قائمة الأدوات */}
+      <SelectDeliveryAgentPopup
+        open={showChangeDeliveryAgentPopup}
+        onClose={() => setShowChangeDeliveryAgentPopup(false)}
+        onSelect={handleSelectNewDeliveryAgent}
+      />
+      <SelectHallCaptainPopup
+        open={showChangeCaptainPopup}
+        onClose={() => setShowChangeCaptainPopup(false)}
+        onSelect={handleSelectNewCaptain}
       />
 
       {/* Header discount popup.  This is shown when the user clicks the

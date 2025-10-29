@@ -1,5 +1,13 @@
 // src/Pages/pos/newSales/components/Header.tsx
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+// import MUI icons to use as tool icons instead of missing images
+import TableRestaurantIcon from '@mui/icons-material/TableRestaurant';
+import CallSplitIcon from '@mui/icons-material/CallSplit';
+import PaymentIcon from '@mui/icons-material/Payment';
+import LocalShippingIcon from '@mui/icons-material/LocalShipping';
+import SupervisorAccountIcon from '@mui/icons-material/SupervisorAccount';
+import UndoIcon from '@mui/icons-material/Undo';
+import PercentIcon from '@mui/icons-material/Percent';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Customer, CustomerAddress } from 'src/utils/api/pagesApi/customersApi';
@@ -69,6 +77,27 @@ interface HeaderProps {
    * المكون الأعلى يجب أن تقوم بتنفيذ منطق إلغاء الفاتورة (أو المرتجعات).
    */
   onVoidClick?: () => void;
+
+  /**
+   * Callback executed when the user chooses to change the payment method.  When provided
+   * by the parent component, this should open a popup or otherwise allow the user to
+   * select a different payment method for the current order.
+   */
+  onChangePaymentMethod?: () => void;
+
+  /**
+   * Callback executed when the user chooses to change the delivery person for a
+   * delivery order.  When provided by the parent component, this should open a
+   * selection popup and update the invoice accordingly.
+   */
+  onChangeDeliveryMan?: () => void;
+
+  /**
+   * Callback executed when the user chooses to change the hall captain for a dine‑in
+   * order.  When provided by the parent component, this should open a selection
+   * popup and update the invoice accordingly.
+   */
+  onChangeCaptain?: () => void;
 }
 
 const Header: React.FC<HeaderProps> = ({
@@ -92,7 +121,10 @@ const Header: React.FC<HeaderProps> = ({
   onDeliveryCompanySelectWithDetails,
   triggerReopenDeliveryPopup,
   onDiscountClick,
-  onVoidClick
+  onVoidClick,
+  onChangePaymentMethod,
+  onChangeDeliveryMan,
+  onChangeCaptain
 }) => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
@@ -782,34 +814,38 @@ const Header: React.FC<HeaderProps> = ({
               </a>
             )}
 
-            {/* زر الخصم: يستدعى onDiscountClick عند الضغط إذا تم تمريرها */}
-            <a
-              href="#"
-              className="nav-item"
-              onClick={(e) => {
-                e.preventDefault();
-                if (onDiscountClick) onDiscountClick();
-              }}
-            >
-              <img src="/images/img_discount_tag_01.svg" alt="Discount" />
-              <span>{t('pos.newSales.header.discount')}</span>
-            </a>
+            {/* قمنا بنقل أزرار الخصم والإلغاء إلى قائمة الأدوات، لذا لا يتم عرضها في الهيدر مباشرة */}
+            {false && (
+              <>
+                {/* زر الخصم: يستدعى onDiscountClick عند الضغط إذا تم تمريرها */}
+                <a
+                  href="#"
+                  className="nav-item"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (onDiscountClick) onDiscountClick();
+                  }}
+                >
+                  <img src="/images/img_discount_tag_01.svg" alt="Discount" />
+                  <span>{t('pos.newSales.header.discount')}</span>
+                </a>
+                {/* زر الإلغاء/المرتجعات: يستدعى onVoidClick عند الضغط إذا تم تمريرها */}
+                <a
+                  href="#"
+                  className="nav-item"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (onVoidClick) onVoidClick();
+                  }}
+                >
+                  <img src="/images/img_delete_01.svg" alt="Void" />
+                  <span>{t('pos.newSales.header.void')}</span>
+                </a>
+              </>
+            )}
 
-            {/* زر الإلغاء/المرتجعات: يستدعى onVoidClick عند الضغط إذا تم تمريرها */}
-            <a
-              href="#"
-              className="nav-item"
-              onClick={(e) => {
-                e.preventDefault();
-                if (onVoidClick) onVoidClick();
-              }}
-            >
-              <img src="/images/img_delete_01.svg" alt="Void" />
-              <span>{t('pos.newSales.header.void')}</span>
-            </a>
-
-            {/* أدوات: تظهر فقط فى حالة Dine‑in مع وجود طلب حالي */}
-            {selectedOrderType === 'Dine-in' && hasCurrentOrder && (
+            {/* أدوات: تظهر فقط عند وجود طلب حالي بغض النظر عن نوع الطلب */}
+            {hasCurrentOrder && (
               <div ref={toolsRef} className="tools-container" style={{ position: 'relative' }}>
                 <button
                   className="nav-item"
@@ -817,7 +853,7 @@ const Header: React.FC<HeaderProps> = ({
                     e.preventDefault();
                     setIsToolsOpen(!isToolsOpen);
                   }}
-                  title="أدوات"
+                  title={t('pos.newSales.header.tools.name')} 
                   style={{
                     background: isToolsOpen ? '#f8f9ff' : 'transparent',
                     borderRadius: '8px',
@@ -825,7 +861,7 @@ const Header: React.FC<HeaderProps> = ({
                   }}
                 >
                   <img src="/images/img_menu_01.svg" alt="Tools" />
-                  <span>أدوات</span>
+                  <span>{t('pos.newSales.tools.name')}</span>
                 </button>
                 {isToolsOpen && (
                   <div
@@ -853,34 +889,46 @@ const Header: React.FC<HeaderProps> = ({
                         className="tools-option-card"
                         onClick={(e) => {
                           e.preventDefault();
-                          setIsToolsOpen(false);
-                          onMoveTable && onMoveTable();
-                        }}
-                        style={{
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          padding: '16px 12px',
-                          background: '#f8f9fa',
-                          border: '1px solid #e9ecef',
-                          borderRadius: '8px',
-                          cursor: 'pointer',
-                          transition: 'all 0.2s ease',
-                          textAlign: 'center'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.background = '#f8f9ff';
-                          e.currentTarget.style.borderColor = '#5D87FF';
-                          e.currentTarget.style.transform = 'translateY(-2px)';
-                          e.currentTarget.style.boxShadow = '0 4px 12px rgba(93, 135, 255, 0.15)';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.background = '#f8f9fa';
-                          e.currentTarget.style.borderColor = '#e9ecef';
-                          e.currentTarget.style.transform = 'translateY(0)';
-                          e.currentTarget.style.boxShadow = 'none';
-                        }}
-                      >
+    // اسمح بالنقر فقط إذا كان النوع Dine‑in
+    if (selectedOrderType === 'Dine-in') {
+      setIsToolsOpen(false);
+      onMoveTable && onMoveTable();
+    }
+  }}
+  style={{
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    padding: '16px 12px',
+    background: '#f8f9fa',
+    border: '1px solid #e9ecef',
+    borderRadius: '8px',
+    // يظهر المؤشر ويكون قابلاً للنقر في حالة Dine‑in فقط
+    cursor: selectedOrderType === 'Dine-in' ? 'pointer' : 'not-allowed',
+    // تصبح البطاقة باهتة عندما لا تكون Dine‑in
+    opacity: selectedOrderType === 'Dine-in' ? 1 : 0.5,
+    textAlign: 'center',
+    transition: 'all 0.2s ease'
+  }}
+  // في onMouseEnter/onMouseLeave يمكنك بنفس الطريقة إضافة التحقق من النوع
+  onMouseEnter={(e) => {
+    if (selectedOrderType === 'Dine-in') {
+      // تأثير الحركة والظل
+      e.currentTarget.style.background = '#f8f9ff';
+      e.currentTarget.style.borderColor = '#5D87FF';
+      e.currentTarget.style.transform = 'translateY(-2px)';
+      e.currentTarget.style.boxShadow = '0 4px 12px rgba(93, 135, 255, 0.15)';
+    }
+  }}
+  onMouseLeave={(e) => {
+    if (selectedOrderType === 'Dine-in') {
+      e.currentTarget.style.background = '#f8f9fa';
+      e.currentTarget.style.borderColor = '#e9ecef';
+      e.currentTarget.style.transform = 'translateY(0)';
+      e.currentTarget.style.boxShadow = 'none';
+    }
+  }}
+>
                         <div style={{
                           width: '32px',
                           height: '32px',
@@ -903,7 +951,7 @@ const Header: React.FC<HeaderProps> = ({
                           color: '#2A3547',
                           lineHeight: '1.2'
                         }}>
-                          نقل ترابيزة
+                          {t('pos.newSales.tools.moveTable')}
                         </span>
                       </div>
 
@@ -911,34 +959,46 @@ const Header: React.FC<HeaderProps> = ({
                         className="tools-option-card"
                         onClick={(e) => {
                           e.preventDefault();
-                          setIsToolsOpen(false);
+                             // اسمح بالنقر فقط إذا كان النوع Dine‑in
+    if (selectedOrderType === 'Dine-in') {
+      setIsToolsOpen(false);
                           onSplitReceipt && onSplitReceipt();
-                        }}
-                        style={{
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          padding: '16px 12px',
-                          background: '#f8f9fa',
-                          border: '1px solid #e9ecef',
-                          borderRadius: '8px',
-                          cursor: 'pointer',
-                          transition: 'all 0.2s ease',
-                          textAlign: 'center'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.background = '#f8f9ff';
-                          e.currentTarget.style.borderColor = '#5D87FF';
-                          e.currentTarget.style.transform = 'translateY(-2px)';
-                          e.currentTarget.style.boxShadow = '0 4px 12px rgba(93, 135, 255, 0.15)';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.background = '#f8f9fa';
-                          e.currentTarget.style.borderColor = '#e9ecef';
-                          e.currentTarget.style.transform = 'translateY(0)';
-                          e.currentTarget.style.boxShadow = 'none';
-                        }}
-                      >
+    }
+  }}
+  style={{
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    padding: '16px 12px',
+    background: '#f8f9fa',
+    border: '1px solid #e9ecef',
+    borderRadius: '8px',
+    // يظهر المؤشر ويكون قابلاً للنقر في حالة Dine‑in فقط
+    cursor: selectedOrderType === 'Dine-in' ? 'pointer' : 'not-allowed',
+    // تصبح البطاقة باهتة عندما لا تكون Dine‑in
+    opacity: selectedOrderType === 'Dine-in' ? 1 : 0.5,
+    textAlign: 'center',
+    transition: 'all 0.2s ease'
+  }}
+  // في onMouseEnter/onMouseLeave يمكنك بنفس الطريقة إضافة التحقق من النوع
+  onMouseEnter={(e) => {
+    if (selectedOrderType === 'Dine-in') {
+      // تأثير الحركة والظل
+      e.currentTarget.style.background = '#f8f9ff';
+      e.currentTarget.style.borderColor = '#5D87FF';
+      e.currentTarget.style.transform = 'translateY(-2px)';
+      e.currentTarget.style.boxShadow = '0 4px 12px rgba(93, 135, 255, 0.15)';
+    }
+  }}
+  onMouseLeave={(e) => {
+    if (selectedOrderType === 'Dine-in') {
+      e.currentTarget.style.background = '#f8f9fa';
+      e.currentTarget.style.borderColor = '#e9ecef';
+      e.currentTarget.style.transform = 'translateY(0)';
+      e.currentTarget.style.boxShadow = 'none';
+    }
+  }}
+>
                         <div style={{
                           width: '32px',
                           height: '32px',
@@ -962,9 +1022,324 @@ const Header: React.FC<HeaderProps> = ({
                           color: '#2A3547',
                           lineHeight: '1.2'
                         }}>
-                          فصل الشيك
+                          {t('pos.newSales.tools.splitCheck')}
                         </span>
                       </div>
+
+                      {/* خيار تغيير طريقة الدفع */}
+                      <div
+                        className="tools-option-card"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          // Change payment method is always enabled when there is an order
+                          setIsToolsOpen(false);
+                          onChangePaymentMethod && onChangePaymentMethod();
+                        }}
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          padding: '16px 12px',
+                          background: '#f8f9fa',
+                          border: '1px solid #e9ecef',
+                          borderRadius: '8px',
+                          cursor: hasCurrentOrder ? 'pointer' : 'not-allowed',
+                          opacity: hasCurrentOrder ? 1 : 0.5,
+                          textAlign: 'center',
+                          transition: 'all 0.2s ease'
+                        }}
+                        onMouseEnter={(e) => {
+                          if (hasCurrentOrder) {
+                            e.currentTarget.style.background = '#f8f9ff';
+                            e.currentTarget.style.borderColor = '#5D87FF';
+                            e.currentTarget.style.transform = 'translateY(-2px)';
+                            e.currentTarget.style.boxShadow = '0 4px 12px rgba(93, 135, 255, 0.15)';
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (hasCurrentOrder) {
+                            e.currentTarget.style.background = '#f8f9fa';
+                            e.currentTarget.style.borderColor = '#e9ecef';
+                            e.currentTarget.style.transform = 'translateY(0)';
+                            e.currentTarget.style.boxShadow = 'none';
+                          }
+                        }}
+                      >
+                        <div style={{
+                          width: '32px',
+                          height: '32px',
+                          backgroundColor: '#5D87FF',
+                          borderRadius: '50%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          marginBottom: '8px'
+                        }}>
+                          {/* أيقونة تغيير طريقة الدفع */}
+                          <PaymentIcon sx={{ width: 20, height: 20, color: '#fff' }} />
+                        </div>
+                        <span style={{
+                          fontSize: '12px',
+                          fontWeight: '500',
+                          color: '#2A3547',
+                          lineHeight: '1.2'
+                        }}>
+                          {t('pos.newSales.tools.changePaymentMethod')}
+                        </span>
+                      </div>
+
+                      {/* خيار الخصم */}
+                      <div
+                        className="tools-option-card"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          if (onDiscountClick) {
+                            setIsToolsOpen(false);
+                            onDiscountClick();
+                          }
+                        }}
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          padding: '16px 12px',
+                          background: '#f8f9fa',
+                          border: '1px solid #e9ecef',
+                          borderRadius: '8px',
+                          cursor: onDiscountClick ? 'pointer' : 'not-allowed',
+                          opacity: onDiscountClick ? 1 : 0.5,
+                          textAlign: 'center',
+                          transition: 'all 0.2s ease'
+                        }}
+                        onMouseEnter={(e) => {
+                          if (onDiscountClick) {
+                            e.currentTarget.style.background = '#f8f9ff';
+                            e.currentTarget.style.borderColor = '#5D87FF';
+                            e.currentTarget.style.transform = 'translateY(-2px)';
+                            e.currentTarget.style.boxShadow = '0 4px 12px rgba(93, 135, 255, 0.15)';
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (onDiscountClick) {
+                            e.currentTarget.style.background = '#f8f9fa';
+                            e.currentTarget.style.borderColor = '#e9ecef';
+                            e.currentTarget.style.transform = 'translateY(0)';
+                            e.currentTarget.style.boxShadow = 'none';
+                          }
+                        }}
+                      >
+                        <div style={{
+                          width: '32px',
+                          height: '32px',
+                          backgroundColor: '#5D87FF',
+                          borderRadius: '50%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          marginBottom: '8px'
+                        }}>
+                          {/* أيقونة الخصم */}
+                          <PercentIcon sx={{ width: 20, height: 20, color: '#fff' }} />
+                        </div>
+                        <span style={{
+                          fontSize: '12px',
+                          fontWeight: '500',
+                          color: '#2A3547',
+                          lineHeight: '1.2'
+                        }}>
+                          {t('pos.newSales.tools.discount')}
+                        </span>
+                      </div>
+
+                      {/* خيار المرتجع / الإلغاء */}
+                      <div
+                        className="tools-option-card"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          if (onVoidClick) {
+                            setIsToolsOpen(false);
+                            onVoidClick();
+                          }
+                        }}
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          padding: '16px 12px',
+                          background: '#f8f9fa',
+                          border: '1px solid #e9ecef',
+                          borderRadius: '8px',
+                          cursor: onVoidClick ? 'pointer' : 'not-allowed',
+                          opacity: onVoidClick ? 1 : 0.5,
+                          textAlign: 'center',
+                          transition: 'all 0.2s ease'
+                        }}
+                        onMouseEnter={(e) => {
+                          if (onVoidClick) {
+                            e.currentTarget.style.background = '#f8f9ff';
+                            e.currentTarget.style.borderColor = '#5D87FF';
+                            e.currentTarget.style.transform = 'translateY(-2px)';
+                            e.currentTarget.style.boxShadow = '0 4px 12px rgba(93, 135, 255, 0.15)';
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (onVoidClick) {
+                            e.currentTarget.style.background = '#f8f9fa';
+                            e.currentTarget.style.borderColor = '#e9ecef';
+                            e.currentTarget.style.transform = 'translateY(0)';
+                            e.currentTarget.style.boxShadow = 'none';
+                          }
+                        }}
+                      >
+                        <div style={{
+                          width: '32px',
+                          height: '32px',
+                          backgroundColor: '#5D87FF',
+                          borderRadius: '50%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          marginBottom: '8px'
+                        }}>
+                          {/* أيقونة المرتجع / الإلغاء */}
+                          <UndoIcon sx={{ width: 20, height: 20, color: '#fff' }} />
+                        </div>
+                        <span style={{
+                          fontSize: '12px',
+                          fontWeight: '500',
+                          color: '#2A3547',
+                          lineHeight: '1.2'
+                        }}>
+                          {t('pos.newSales.tools.return')}
+                        </span>
+                      </div>
+
+                      {/* خيار تغيير مندوب التوصيل */}
+                      <div
+                        className="tools-option-card"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          if (selectedOrderType === 'Delivery') {
+                            setIsToolsOpen(false);
+                            onChangeDeliveryMan && onChangeDeliveryMan();
+                          }
+                        }}
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          padding: '16px 12px',
+                          background: '#f8f9fa',
+                          border: '1px solid #e9ecef',
+                          borderRadius: '8px',
+                          cursor: selectedOrderType === 'Delivery' ? 'pointer' : 'not-allowed',
+                          opacity: selectedOrderType === 'Delivery' ? 1 : 0.5,
+                          textAlign: 'center',
+                          transition: 'all 0.2s ease'
+                        }}
+                        onMouseEnter={(e) => {
+                          if (selectedOrderType === 'Delivery') {
+                            e.currentTarget.style.background = '#f8f9ff';
+                            e.currentTarget.style.borderColor = '#5D87FF';
+                            e.currentTarget.style.transform = 'translateY(-2px)';
+                            e.currentTarget.style.boxShadow = '0 4px 12px rgba(93, 135, 255, 0.15)';
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (selectedOrderType === 'Delivery') {
+                            e.currentTarget.style.background = '#f8f9fa';
+                            e.currentTarget.style.borderColor = '#e9ecef';
+                            e.currentTarget.style.transform = 'translateY(0)';
+                            e.currentTarget.style.boxShadow = 'none';
+                          }
+                        }}
+                      >
+                        <div style={{
+                          width: '32px',
+                          height: '32px',
+                          backgroundColor: '#5D87FF',
+                          borderRadius: '50%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          marginBottom: '8px'
+                        }}>
+                          {/* أيقونة تغيير المندوب */}
+                          <LocalShippingIcon sx={{ width: 20, height: 20, color: '#fff' }} />
+                        </div>
+                        <span style={{
+                          fontSize: '12px',
+                          fontWeight: '500',
+                          color: '#2A3547',
+                          lineHeight: '1.2'
+                        }}>
+                          {t('pos.newSales.tools.changeDeliveryMan')}
+                        </span>
+                      </div>
+
+                      {/* خيار تغيير الكابتن */}
+                      <div
+                        className="tools-option-card"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          if (selectedOrderType === 'Dine-in') {
+                            setIsToolsOpen(false);
+                            onChangeCaptain && onChangeCaptain();
+                          }
+                        }}
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          padding: '16px 12px',
+                          background: '#f8f9fa',
+                          border: '1px solid #e9ecef',
+                          borderRadius: '8px',
+                          cursor: selectedOrderType === 'Dine-in' ? 'pointer' : 'not-allowed',
+                          opacity: selectedOrderType === 'Dine-in' ? 1 : 0.5,
+                          textAlign: 'center',
+                          transition: 'all 0.2s ease'
+                        }}
+                        onMouseEnter={(e) => {
+                          if (selectedOrderType === 'Dine-in') {
+                            e.currentTarget.style.background = '#f8f9ff';
+                            e.currentTarget.style.borderColor = '#5D87FF';
+                            e.currentTarget.style.transform = 'translateY(-2px)';
+                            e.currentTarget.style.boxShadow = '0 4px 12px rgba(93, 135, 255, 0.15)';
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (selectedOrderType === 'Dine-in') {
+                            e.currentTarget.style.background = '#f8f9fa';
+                            e.currentTarget.style.borderColor = '#e9ecef';
+                            e.currentTarget.style.transform = 'translateY(0)';
+                            e.currentTarget.style.boxShadow = 'none';
+                          }
+                        }}
+                      >
+                        <div style={{
+                          width: '32px',
+                          height: '32px',
+                          backgroundColor: '#5D87FF',
+                          borderRadius: '50%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          marginBottom: '8px'
+                        }}>
+                          {/* أيقونة تغيير الكابتن */}
+                          <SupervisorAccountIcon sx={{ width: 20, height: 20, color: '#fff' }} />
+                        </div>
+                        <span style={{
+                          fontSize: '12px',
+                          fontWeight: '500',
+                          color: '#2A3547',
+                          lineHeight: '1.2'
+                        }}>
+                          {t('pos.newSales.tools.changeCaptain')}
+                        </span>
+                      </div>
+
                     </div>
                   </div>
                 )}

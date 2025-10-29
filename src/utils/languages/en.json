@@ -39,7 +39,17 @@
     "print": "Print",
     "pay": "Pay",
      "newSales": {
-      "customer": {
+     "tools": {
+      "name": "Tools",
+       "moveTable": "Move Table",
+       "splitCheck": "Split Check",
+       "changePaymentMethod": "Change Payment Method",
+       "changeDeliveryMan": "Change Delivery Man",
+       "changeCaptain": "Change Captain",
+       "discount": "Discount",
+       "return": "Return"
+     },
+     "customer": {
         "details": "Customer Details",
         "basicInfo": "Basic Information",
         "name": "Name",
@@ -170,7 +180,8 @@
         "table": "Table",
         "discount": "Discount",
         "void": "Void",
-        "vip": "VIP"
+    "vip": "VIP",
+    "tools": "Tools"
       },
       "table": {
         "selection": "Table Selection",

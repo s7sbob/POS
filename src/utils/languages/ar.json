@@ -39,7 +39,17 @@
     "print": "طباعة",
     "pay": "دفع",
     "newSales": {
-      "customer": {
+     "tools": {
+      "name": "أدوات",
+       "moveTable": "نقل ترابيزة",
+       "splitCheck": "فصل الشيك",
+       "changePaymentMethod": "تغيير طريقة الدفع",
+       "changeDeliveryMan": "تغيير مندوب التوصيل",
+       "changeCaptain": "تغيير الكابتن",
+       "discount": "خصم",
+       "return": "مرتجع"
+     },
+     "customer": {
         "details": "تفاصيل العميل",
         "basicInfo": "المعلومات الأساسية",
         "name": "الاسم",
@@ -170,7 +180,8 @@
         "table": "طاولة",
         "discount": "خصم",
         "void": "إلغاء",
-        "vip": "VIP"
+        "vip": "VIP",
+        "tools": "أدوات"
       },
       "table": {
         "selection": "اختيار الطاولة",
