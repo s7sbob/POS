@@ -24,6 +24,14 @@
     "table": "Table",
     "discount": "Discount",
     "void": "Void",
+    "roles": {
+      "permissionRequired": "Permission required",
+      "youDoNotHavePermission": "You do not have permission to perform this action.",
+      "requiredRole": "Required permission: {{role}}",
+      "enterHigherUserCredentials": "Please enter credentials of a higher-level user:",
+      "invalidCredentials": "Invalid credentials",
+      "loginFailed": "Login failed"
+    },
     "takeaway": "Takeaway",
     "search": "Search",
     "extra": "Extra",
@@ -1422,6 +1430,8 @@
     }
   },
   "auth": {
+    "phoneNo": "Phone Number",
+    "password": "Password",
     "login": {
       "title": "Login",
       "tenantId": "Company Code",

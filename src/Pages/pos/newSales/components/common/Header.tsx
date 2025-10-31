@@ -98,6 +98,16 @@ interface HeaderProps {
    * popup and update the invoice accordingly.
    */
   onChangeCaptain?: () => void;
+
+  /**
+   * Optional callback used to determine whether the Today Orders popup
+   * should be opened.  When provided, the handler is invoked before
+   * displaying the popup and should return `true` (or a promise that
+   * resolves to `true`) if the popup may be shown.  If it returns
+   * `false` the popup will not be opened and the parent component
+   * should handle any necessary UI (e.g. permission dialogs).
+   */
+  onTodayOrdersRequest?: () => boolean | Promise<boolean>;
 }
 
 const Header: React.FC<HeaderProps> = ({
@@ -124,7 +134,8 @@ const Header: React.FC<HeaderProps> = ({
   onVoidClick,
   onChangePaymentMethod,
   onChangeDeliveryMan,
-  onChangeCaptain
+  onChangeCaptain,
+  onTodayOrdersRequest
 }) => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
@@ -585,9 +596,21 @@ const Header: React.FC<HeaderProps> = ({
     setSelectedDeliveryCompanyForPopup(null);
   };
 
-  const handleTodayOrdersClick = (e: React.MouseEvent) => {
+  const handleTodayOrdersClick = async (e: React.MouseEvent) => {
     e.preventDefault();
-    setShowTodayOrders(true);
+    // If the parent has supplied a permission handler, defer to it
+    if (typeof onTodayOrdersRequest === 'function') {
+      try {
+        const result = await onTodayOrdersRequest();
+        if (result) {
+          setShowTodayOrders(true);
+        }
+      } catch (err) {
+        // ignore errors; parent handler will display its own UI
+      }
+    } else {
+      setShowTodayOrders(true);
+    }
   };
 
   const handleViewOrder = (invoiceData: Invoice & { isEditMode: boolean }) => {

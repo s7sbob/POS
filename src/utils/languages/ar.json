@@ -24,6 +24,14 @@
     "table": "طاولة",
     "discount": "خصم",
     "void": "إلغاء",
+    "roles": {
+      "permissionRequired": "صلاحية مطلوبة",
+      "youDoNotHavePermission": "ليس لديك الصلاحية لتنفيذ هذا الإجراء.",
+      "requiredRole": "الصلاحية المطلوبة: {{role}}",
+      "enterHigherUserCredentials": "يرجى إدخال بيانات مستخدم لديه صلاحية أعلى:",
+      "invalidCredentials": "بيانات الاعتماد غير صحيحة",
+      "loginFailed": "فشل تسجيل الدخول"
+    },
     "takeaway": "تيك أواي",
     "search": "بحث",
     "extra": "إضافي",
@@ -1494,6 +1502,8 @@
     "importError": "خطأ في الاستيراد"
   },
   "auth": {
+    "phoneNo": "رقم الهاتف",
+    "password": "كلمة المرور",
     "login": {
       "title": "تسجيل الدخول",
       "tenantId": "كود الشركة",

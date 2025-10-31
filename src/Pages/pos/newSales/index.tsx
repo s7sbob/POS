@@ -7,6 +7,10 @@ import PriceSelectionPopup from './components/PriceSelectionPopup';
 import ProductOptionsPopup from './components/ProductOptionsPopup';
 import ProductCard from './components/ProductCard';
 import Header from './components/common/Header';
+// Import the POS role helpers and authentication dialog
+import { userHasPosRole, validateHigherUserCredentials } from 'src/utils/api/posRolesApi';
+import PosRoleAuthDialog from 'src/components/PosRoleAuthDialog';
+import { useAuth } from 'src/contexts/AuthContext';
 import ActionButtons from './components/ActionButtons';
 import OrderSummary from './components/OrderSummary';
 import { useOrderManager } from './components/OrderManager';
@@ -39,6 +43,10 @@ import SelectDeliveryAgentPopup from './components/SelectDeliveryAgentPopup';
 import SelectHallCaptainPopup from './components/SelectHallCaptainPopup';
 
 const PosSystem: React.FC = () => {
+  // Retrieve current authenticated user from context.  This is used
+  // when performing POS role checks to identify the user making the
+  // request.  If user is null the permission check will fail.
+  const { user } = useAuth();
   const { t, i18n } = useTranslation();
   
   // RTL/LTR Support
@@ -175,6 +183,170 @@ const {
   const [currentBackInvoiceCode, setCurrentBackInvoiceCode] = useState<string | null>(null);
   const [currentInvoiceStatus, setCurrentInvoiceStatus] = useState<number>(1);
 
+  // =============================================================
+  // POS Role authorization state and helpers
+  // =============================================================
+  /**
+   * Indicates whether the POS role login dialog is visible.  When
+   * the current user lacks permission for an action the pending
+   * callback and requested role details are stored below and this
+   * flag is set to true.
+   */
+  const [posRoleDialogOpen, setPosRoleDialogOpen] = useState(false);
+  /**
+   * Stores the action that should be executed once a higher‑level
+   * user successfully authenticates.  We store it as a function
+   * reference so it can be invoked later.
+   */
+  const [pendingPosAction, setPendingPosAction] = useState<(() => void) | null>(null);
+  /**
+   * The role key corresponding to the action that triggered the
+   * permission check.  This value is passed to the login API to
+   * validate the higher‑level user's permissions.
+   */
+  const [requestedRoleKey, setRequestedRoleKey] = useState<string>('');
+  /**
+   * The module ID corresponding to the current order type.  This
+   * value is passed to the login API to validate the higher user.
+   */
+  const [requestedModuleId, setRequestedModuleId] = useState<number>(1);
+
+  /**
+   * Maps the current order type string to its numeric module id
+   * defined by the backend.  Takeaway → 1, Dine‑in → 2, Delivery → 3,
+   * Pickup → 4 and DeliveryCompany → 5.
+   */
+  const mapOrderTypeToModuleId = useCallback((type: string): number => {
+    switch (type) {
+      case 'Dine-in':
+        return 2;
+      case 'Delivery':
+        return 3;
+      case 'Pickup':
+        return 4;
+      case 'DeliveryCompany':
+        return 5;
+      case 'Takeaway':
+      default:
+        return 1;
+    }
+  }, []);
+
+  /**
+   * Performs a POS role check for the current user.  If the user has
+   * the required role, the provided callback is executed immediately.
+   * Otherwise the login dialog is opened so a higher‑level user can
+   * authenticate.  The callback will run automatically after
+   * successful authentication.
+   *
+   * @param roleKey   The posRoleKey to check (e.g. 'return_button')
+   * @param moduleId  The module id (1–5) for the current order type
+   * @param action    The callback to execute if permission is granted
+   * @returns Promise<boolean> resolves to true if allowed, false otherwise
+   */
+  const checkAndExecutePosRole = useCallback(
+    async (
+      roleKey: string,
+      moduleId: number,
+      action: () => void
+    ): Promise<boolean> => {
+      try {
+        // Determine the current user id.  Prefer the authenticated user
+        // from context; fall back to reading from localStorage if
+        // necessary.  If the user is still unknown we deny the
+        // action.
+        let userId: string | null = user?.id || null;
+        if (!userId) {
+          const stored = localStorage.getItem('user_data');
+          if (stored) {
+            try {
+              const parsed = JSON.parse(stored);
+              userId = parsed.id;
+            } catch {
+              userId = null;
+            }
+          }
+        }
+        if (!userId) {
+          // If we cannot determine the user id, deny the action
+          showWarning('تعذر تحديد المستخدم الحالي');
+          return false;
+        }
+        const hasPermission = await userHasPosRole(userId, roleKey, moduleId);
+        if (hasPermission) {
+          action();
+          return true;
+        }
+        // User lacks permission – prepare for higher user login
+        setRequestedRoleKey(roleKey);
+        setRequestedModuleId(moduleId);
+        setPendingPosAction(() => action);
+        setPosRoleDialogOpen(true);
+        return false;
+      } catch (error) {
+        console.error('Error checking POS role:', error);
+        setRequestedRoleKey(roleKey);
+        setRequestedModuleId(moduleId);
+        setPendingPosAction(() => action);
+        setPosRoleDialogOpen(true);
+        return false;
+      }
+    },
+    [showWarning, user]
+  );
+
+  /**
+   * Handler invoked by the POS role login dialog.  This method
+   * attempts to validate the supplied credentials against the
+   * backend.  If the credentials are valid the pending action
+   * registered in `checkAndExecutePosRole` will be executed.
+   *
+   * @param username The higher user’s username or phone number
+   * @param password The higher user’s password
+   */
+  const handlePosRoleLogin = useCallback(
+    async (username: string, password: string): Promise<boolean> => {
+      try {
+        const success = await validateHigherUserCredentials(
+          username,
+          password,
+          requestedRoleKey,
+          requestedModuleId
+        );
+        if (success) {
+          // Execute pending action and clear it
+          if (pendingPosAction) pendingPosAction();
+          setPendingPosAction(null);
+          setRequestedRoleKey('');
+          setRequestedModuleId(1);
+          setPosRoleDialogOpen(false);
+          return true;
+        }
+        return false;
+      } catch (err) {
+        console.error('Error during pos role login:', err);
+        return false;
+      }
+    },
+    [pendingPosAction, requestedRoleKey, requestedModuleId]
+  );
+
+  /**
+   * Determines whether the Today Orders popup should be opened.  It
+   * performs the appropriate role check based on the current
+   * order type.  When invoked by the header the return value
+   * controls whether the popup is shown.
+   */
+  const handleTodayOrdersRequest = useCallback(async (): Promise<boolean> => {
+    const moduleId = mapOrderTypeToModuleId(selectedOrderType);
+    const roleKey = 'today_orders_button';
+    // Provide a no‑op action since the header will control the popup
+    const allowed = await checkAndExecutePosRole(roleKey, moduleId, () => {});
+    return allowed;
+  }, [selectedOrderType, mapOrderTypeToModuleId, checkAndExecutePosRole]);
+
+
+
   // إدارة الانقسام والنقل
   const [showSplitPopup, setShowSplitPopup] = useState(false);
   const [showInvoiceSelectPopup, setShowInvoiceSelectPopup] = useState(false);
@@ -185,9 +357,52 @@ const {
   const [showChangeDeliveryAgentPopup, setShowChangeDeliveryAgentPopup] = useState(false);
   const [showChangeCaptainPopup, setShowChangeCaptainPopup] = useState(false);
 
-  // ⚠️ We declare orderSummary here so that it is defined before being used in any callbacks.
-  // Its value will be assigned later after calculateOrderSummary is defined.
-  let orderSummary: any;
+  // ===========================================================================
+  // Order summary calculation
+  // ===========================================================================
+  /**
+   * Calculates the order summary including service charge, discount and delivery
+   * charge. Item level discounts are already reflected in each item's totalPrice.
+   * The header discount value is applied to the subtotal prior to adding
+   * service charges and taxes.
+   */
+  const calculateOrderSummary = useCallback((): OrderSummaryType => {
+    const subtotal = orderItems.reduce((sum, item) => sum + item.totalPrice, 0);
+    const serviceCharge = getServiceCharge();
+    const service = (subtotal * serviceCharge) / 100;
+    // Item‑level discounts are already reflected in each item's totalPrice.
+    // Apply the header discount value to the subtotal.  This value is
+    // controlled via the HeaderDiscountPopup and stored in state.
+    const discount = headerDiscountValue;
+    const tax = 0;
+
+    // Calculate totals in the correct order: discount first, then tax and service.
+    const totalAfterDiscount = subtotal - discount;
+    const totalAfterTaxAndService = totalAfterDiscount + tax + service + deliveryCharge;
+
+    return {
+      items: orderItems,
+      subtotal,
+      discount,
+      tax,
+      service,
+      total: totalAfterTaxAndService,
+      totalAfterDiscount,
+      totalAfterTaxAndService
+    };
+  }, [orderItems, getServiceCharge, deliveryCharge, headerDiscountValue]);
+
+  // ============================
+  // Order summary memoization
+  // ============================
+  /**
+   * Computes the current order summary using the memoized
+   * calculateOrderSummary function.  Using useMemo ensures
+   * that the summary is recomputed only when the dependencies of
+   * calculateOrderSummary change, and keeps the hook order
+   * consistent between renders.
+   */
+  const orderSummary = useMemo(() => calculateOrderSummary(), [calculateOrderSummary]);
 
   // استخدم مدير الفاتورة لإنشاء وتحديث الفواتير خارج الـ OrderSummary
   const { saveInvoice } = useInvoiceManager();
@@ -385,37 +600,6 @@ const getProductByPriceId = useCallback(async (priceId: string) => {
 }, [getProducts]);
 
 
-  // تعديل حساب ملخص الطلب ليشمل الخدمة
-  const calculateOrderSummary = useCallback((): OrderSummaryType => {
-    const subtotal = orderItems.reduce((sum, item) => sum + item.totalPrice, 0);
-    const serviceCharge = getServiceCharge();
-    const service = (subtotal * serviceCharge) / 100;
-    // Item‑level discounts are already reflected in each item's totalPrice.
-    // Apply the header discount value to the subtotal.  This value is
-    // controlled via the HeaderDiscountPopup and stored in state.
-    const discount = headerDiscountValue;
-    const tax = 0;
-
-    // Calculate totals in the correct order: discount first, then tax and service.
-    const totalAfterDiscount = subtotal - discount;
-    const totalAfterTaxAndService = totalAfterDiscount + tax + service + deliveryCharge;
-
-    return {
-      items: orderItems,
-      subtotal,
-      discount,
-      tax,
-      service,
-      total: totalAfterTaxAndService,
-      totalAfterDiscount,
-      totalAfterTaxAndService
-    };
-  }, [orderItems, getServiceCharge, deliveryCharge, headerDiscountValue]);
-  // واستخدمه في كل مرة:
-  // Assign the calculated order summary to the variable declared earlier.  This allows
-  // callbacks defined above to capture and use the up‑to‑date order summary without
-  // triggering a temporal dead zone error.
-  orderSummary = calculateOrderSummary();
 
 
   // دالة تحويل العرض إلى شكل منتج للعرض
@@ -559,47 +743,53 @@ const displayedProducts = useMemo(() => {
 
 
 
-  // إضافة معالج تحديث المنتج للـ OrderItemDetailsPopup
+  // إضافة معالج تحديث المنتج للـ OrderItemDetailsPopup مع التحقق من صلاحية خصم الأصناف
   const handleUpdateOrderItem = useCallback((itemId: string, updates: {
     quantity?: number;
     notes?: string;
     discountPercentage?: number;
     discountAmount?: number;
   }) => {
-    setOrderItems(prev => prev.map(item => {
-      if (item.id === itemId) {
-        const updatedItem = { ...item };
-        
-        if (updates.quantity !== undefined) {
-          updatedItem.quantity = updates.quantity;
+    // دالة داخلية لتنفيذ تحديث العنصر فى الواجهة. يتم استدعاؤها سواء مباشرة
+    // أو بعد التحقق من صلاحية خصم الأصناف.
+    const performUpdate = () => {
+      setOrderItems(prev => prev.map(item => {
+        if (item.id === itemId) {
+          const updatedItem = { ...item };
+          if (updates.quantity !== undefined) {
+            updatedItem.quantity = updates.quantity;
+          }
+          if (updates.notes !== undefined) {
+            updatedItem.notes = updates.notes;
+          }
+          if (updates.discountPercentage !== undefined) {
+            updatedItem.discountPercentage = updates.discountPercentage;
+          }
+          if (updates.discountAmount !== undefined) {
+            updatedItem.discountAmount = updates.discountAmount;
+          }
+          const basePrice = item.selectedPrice.price * (updates.quantity ?? item.quantity);
+          const subItemsTotal = item.subItems?.reduce((sum, subItem) => {
+            return sum + (subItem.type === 'without' ? 0 : subItem.price);
+          }, 0) || 0;
+          const totalBeforeDiscount = basePrice + subItemsTotal;
+          const discountAmount = updates.discountAmount ?? item.discountAmount ?? 0;
+          updatedItem.totalPrice = totalBeforeDiscount - discountAmount;
+          return updatedItem;
         }
-        
-        if (updates.notes !== undefined) {
-          updatedItem.notes = updates.notes;
-        }
-        
-        if (updates.discountPercentage !== undefined) {
-          updatedItem.discountPercentage = updates.discountPercentage;
-        }
-        
-        if (updates.discountAmount !== undefined) {
-          updatedItem.discountAmount = updates.discountAmount;
-        }
-        
-        const basePrice = item.selectedPrice.price * (updates.quantity || item.quantity);
-        const subItemsTotal = item.subItems?.reduce((sum, subItem) => {
-          return sum + (subItem.type === 'without' ? 0 : subItem.price);
-        }, 0) || 0;
-        
-        const totalBeforeDiscount = basePrice + subItemsTotal;
-        const discountAmount = updates.discountAmount || item.discountAmount || 0;
-        updatedItem.totalPrice = totalBeforeDiscount - discountAmount;
-        
-        return updatedItem;
-      }
-      return item;
-    }));
-  }, []);
+        return item;
+      }));
+    };
+    // نحدد ما إذا كان هناك تحديث فى الخصم على مستوى الصنف. إذا كان كذلك
+    // نقوم بالتحقق من صلاحية item_discount بناءً على نوع الطلب الحالى.
+    const moduleId = mapOrderTypeToModuleId(selectedOrderType);
+    const hasDiscountUpdate = (updates.discountAmount !== undefined || updates.discountPercentage !== undefined);
+    if (hasDiscountUpdate) {
+      checkAndExecutePosRole('item_discount', moduleId, performUpdate);
+    } else {
+      performUpdate();
+    }
+  }, [setOrderItems, mapOrderTypeToModuleId, selectedOrderType, checkAndExecutePosRole]);
 
   // إضافة معالج حذف sub-item
   const handleRemoveSubItem = useCallback((orderItemId: string, subItemId: string) => {
@@ -1334,6 +1524,72 @@ const handleProductClick = useCallback((product: PosProduct) => {
       showError('فشل إلغاء الفاتورة');
     }
   }, [currentInvoiceId, showWarning, showSuccess, showError, handleResetOrder]);
+
+  // ===========================================================================
+  // POS role action wrappers
+  // ===========================================================================
+  /**
+   * Wrapper for moving the current order to another table.  Only
+   * performs the underlying action if the user has the appropriate
+   * permission for Dine‑in orders (module 2).
+   */
+  const handleMoveTableWithCheck = useCallback(() => {
+    const moduleId = 2;
+    const roleKey = 'transfer_table';
+    checkAndExecutePosRole(roleKey, moduleId, () => {
+      handleToolsMoveTable();
+    });
+  }, [checkAndExecutePosRole, handleToolsMoveTable]);
+
+  /**
+   * Wrapper for splitting the current check into multiple receipts.
+   */
+  const handleSplitReceiptWithCheck = useCallback(() => {
+    const moduleId = 2;
+    const roleKey = 'split_table';
+    checkAndExecutePosRole(roleKey, moduleId, () => {
+      handleToolsSplitReceipt();
+    });
+  }, [checkAndExecutePosRole, handleToolsSplitReceipt]);
+
+  /**
+   * Wrapper for changing the payment method.  According to the
+   * updated backend configuration, the role key is always
+   * `change_payment_method_after_close` across all order types.
+   */
+  const handleChangePaymentMethodWithCheck = useCallback(() => {
+    const moduleId = mapOrderTypeToModuleId(selectedOrderType);
+    const roleKey = 'change_payment_method_after_close';
+    checkAndExecutePosRole(roleKey, moduleId, () => {
+      handleChangePaymentMethod();
+    });
+  }, [checkAndExecutePosRole, handleChangePaymentMethod, selectedOrderType, mapOrderTypeToModuleId]);
+
+  /**
+   * Wrapper for applying a header discount.  The backend now uses
+   * `invoice_discount_button` for invoice-level discounts across all
+   * order types.  Item-level discounts have their own role key
+   * (`item_discount`) which is handled elsewhere.
+   */
+  const handleDiscountClickWithCheck = useCallback(() => {
+    const moduleId = mapOrderTypeToModuleId(selectedOrderType);
+    const roleKey = 'invoice_discount_button';
+    checkAndExecutePosRole(roleKey, moduleId, () => {
+      handleHeaderDiscountClick();
+    });
+  }, [checkAndExecutePosRole, handleHeaderDiscountClick, selectedOrderType, mapOrderTypeToModuleId]);
+
+  /**
+   * Wrapper for voiding (cancelling) the current order.  Uses the
+   * universal `return_button` role key across all modules.
+   */
+  const handleVoidClickWithCheck = useCallback(() => {
+    const moduleId = mapOrderTypeToModuleId(selectedOrderType);
+    const roleKey = 'return_button';
+    checkAndExecutePosRole(roleKey, moduleId, () => {
+      handleVoidClick();
+    });
+  }, [checkAndExecutePosRole, handleVoidClick, selectedOrderType, mapOrderTypeToModuleId]);
   
   // عرض حالة التحميل
   if (loading) {
@@ -1371,19 +1627,21 @@ const handleProductClick = useCallback((product: PosProduct) => {
         customerName={customerName}
         onCustomerNameChange={setCustomerName}
         onCustomerSelect={handleCustomerSelect}
-        onMoveTable={handleToolsMoveTable}
-        onSplitReceipt={handleToolsSplitReceipt}
+        onMoveTable={handleMoveTableWithCheck}
+        onSplitReceipt={handleSplitReceiptWithCheck}
         hasCurrentOrder={!!currentInvoiceId}
         onDeliveryCompanySelectWithDetails={handleDeliveryCompanySelectWithDetails}
         triggerReopenDeliveryPopup={triggerReopenDeliveryPopup}
         // Pass discount and void handlers to the header.  When these props
         // are provided the header will call them instead of navigating.
-        onDiscountClick={handleHeaderDiscountClick}
-        onVoidClick={handleVoidClick}
+        onDiscountClick={handleDiscountClickWithCheck}
+        onVoidClick={handleVoidClickWithCheck}
         // تمرير الدوال الجديدة لقائمة الأدوات: تغيير طريقة الدفع، تغيير مندوب التوصيل، تغيير الكابتن
-        onChangePaymentMethod={handleChangePaymentMethod}
+        onChangePaymentMethod={handleChangePaymentMethodWithCheck}
         onChangeDeliveryMan={handleChangeDeliveryMan}
         onChangeCaptain={handleChangeCaptain}
+        // تمرير دالة التحقق من صلاحية زر أوردرات اليوم
+        onTodayOrdersRequest={handleTodayOrdersRequest}
       />
       <main className="main-content">
         <section className="products-section">
@@ -1598,6 +1856,20 @@ const handleProductClick = useCallback((product: PosProduct) => {
         subtotal={orderSummary.subtotal}
         initialPercentage={headerDiscountPercentage}
         initialAmount={headerDiscountValue}
+      />
+
+      {/* Dialog prompting for higher‑level user credentials when the
+          current user lacks the necessary POS role. */}
+      <PosRoleAuthDialog
+        open={posRoleDialogOpen}
+        onClose={() => {
+          setPosRoleDialogOpen(false);
+          setPendingPosAction(null);
+          setRequestedRoleKey('');
+          setRequestedModuleId(1);
+        }}
+        onLogin={handlePosRoleLogin}
+        roleDescription={requestedRoleKey}
       />
     </div>
   );
